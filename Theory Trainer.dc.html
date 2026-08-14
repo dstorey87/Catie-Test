@@ -1,0 +1,1883 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0E7C6B">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Theory Trainer">
+<link rel="apple-touch-icon" href="./icon.png">
+<template id="__bundler_thumbnail"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" fill="#0E7C6B"/><g transform="translate(50 50)"><circle r="20" fill="none" stroke="#fff" stroke-width="5"/><circle r="5" fill="#fff"/><path d="M0 5 L0 20 M-4 -1 L-19 -6 M4 -1 L19 -6" stroke="#fff" stroke-width="5"/></g></svg></template>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@700;800;900&family=Atkinson+Hyperlegible:wght@400;700&family=Lexend:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0E7C6B">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Theory Trainer">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<script src="sync.js"></script>
+<script>try{ if('serviceWorker' in navigator && window.top===window) navigator.serviceWorker.register('sw.js'); }catch(e){}</script>
+<style>
+body{margin:0;background:#FAF6EF;background-image:radial-gradient(1100px 520px at 50% -180px, #FFFDF8, #FAF6EF)}
+button{transition:transform .08s ease}
+button:active{transform:scale(.985)}
+a{color:#0E7C6B}a:hover{color:#0A5D50}
+button{font-family:inherit}
+input,select{font-family:inherit}
+@keyframes ttpop{0%{transform:scale(.97)}60%{transform:scale(1.015)}100%{transform:scale(1)}}
+@media print{.app-chrome{display:none!important}body{background:#fff}.pbreak{page-break-after:always}}
+@page{size:A4;margin:8mm}
+</style>
+</helmet>
+<div style="min-height:100vh;background:#FAF6EF;color:#2A2C33;font-family:'Atkinson Hyperlegible',system-ui,sans-serif">
+<div style="{{ dynStyle }}">
+
+<div class="app-chrome">
+<div style="max-width:680px;margin:0 auto;padding:20px 20px calc(28px + env(safe-area-inset-bottom))">
+
+<!-- ============ LOGIN ============ -->
+<sc-if value="{{ vLogin }}" hint-placeholder-val="{{ false }}">
+<div data-screen-label="Login" style="min-height:82vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;text-align:center">
+  <div style="width:72px;height:72px;border-radius:22px;background:#0E7C6B;display:flex;align-items:center;justify-content:center">
+    <svg width="42" height="42" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="#fff" stroke-width="2.4"/><circle cx="12" cy="12" r="2.4" fill="#fff"/><path d="M12 14.2 L12 21 M10 12.6 L3.6 10.4 M14 12.6 L20.4 10.4" stroke="#fff" stroke-width="2.2"/></svg>
+  </div>
+  <div style="font-family:'Nunito',sans-serif;font-weight:900;font-size:30px;margin-top:8px">Theory Trainer</div>
+  <div style="font-size:17px;color:#6E6A5E;margin-bottom:18px">Who's here today?</div>
+  <div style="display:flex;flex-direction:column;gap:12px;width:100%;max-width:340px">
+    <sc-for list="{{ loginUsers }}" as="u" hint-placeholder-count="1">
+      <button onClick="{{ u.pick }}" style="display:flex;align-items:center;gap:14px;background:#0E7C6B;color:#fff;border:none;border-radius:20px;padding:18px 22px;cursor:pointer;text-align:left;min-height:72px">
+        <span style="flex:none;width:44px;height:44px;border-radius:50%;background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;font-family:'Nunito',sans-serif;font-weight:900;font-size:20px">{{ u.initial }}</span>
+        <span><span style="display:block;font-family:'Nunito',sans-serif;font-weight:900;font-size:20px">{{ u.name }}</span><span style="display:block;font-size:14px;opacity:.85">Learner</span></span>
+      </button>
+    </sc-for>
+    <button onClick="{{ loginAdmin }}" style="display:flex;align-items:center;gap:14px;background:#fff;border:2px solid #E8E1D2;border-radius:20px;padding:18px 22px;cursor:pointer;text-align:left;min-height:72px">
+      <span style="flex:none;width:44px;height:44px;border-radius:50%;background:#EFE9DC;color:#6E6A5E;display:flex;align-items:center;justify-content:center;font-family:'Nunito',sans-serif;font-weight:900;font-size:20px">{{ parentInitial }}</span>
+      <span><span style="display:block;font-family:'Nunito',sans-serif;font-weight:900;font-size:20px;color:#2A2C33">{{ parentName }}</span><span style="display:block;font-size:14px;color:#6E6A5E">Admin · progress &amp; editing</span></span>
+    </button>
+    <button onClick="{{ addLearner }}" style="background:none;border:none;color:#0E7C6B;font-size:14.5px;font-weight:700;cursor:pointer;padding:10px;min-height:44px">+ Add another learner</button>
+    <sc-if value="{{ cloudNotConfigured }}" hint-placeholder-val="{{ false }}">
+      <button onClick="{{ goCloudLogin }}" style="background:none;border:none;color:#6E6A5E;font-size:13.5px;cursor:pointer;padding:8px;min-height:44px;text-decoration:underline">Set up family sync</button>
+    </sc-if>
+    <sc-if value="{{ cloudConfigured }}" hint-placeholder-val="{{ false }}">
+      <div style="font-size:13px;color:#B5AE9E;padding:6px">Family sync on · {{ syncRepoName }}</div>
+    </sc-if>
+  </div>
+</div>
+</sc-if>
+
+<!-- ============ FAMILY SYNC (GitHub) ============ -->
+<sc-if value="{{ vCloudLogin }}" hint-placeholder-val="{{ false }}">
+<div data-screen-label="Family sync" style="max-width:380px;margin:0 auto;padding-top:30px">
+  <div style="display:flex;align-items:center;gap:10px;margin-bottom:18px">
+    <button onClick="{{ goLogin }}" style="background:#fff;border:1px solid #E8E1D2;border-radius:12px;width:44px;height:44px;cursor:pointer;font-size:18px">←</button>
+    <div style="font-family:'Nunito',sans-serif;font-weight:900;font-size:24px">Family sync</div>
+  </div>
+  <div style="background:#fff;border:1px solid #E8E1D2;border-radius:20px;padding:20px;display:flex;flex-direction:column;gap:12px">
+    <div style="font-size:13px;color:#6E6A5E;line-height:1.5">Scores back up to your own GitHub repo and follow you to every connected device. Enter the same two values on each device — setup steps are in SETUP.md §3.</div>
+    <label style="font-size:13.5px;color:#6E6A5E">Repository (owner/name)<input value="{{ syncUrl }}" name="url" onChange="{{ syncChange }}" onKeyDown="{{ cloudKey }}" placeholder="dstorey87/Catie-Test-data" autocapitalize="none" style="display:block;width:100%;box-sizing:border-box;margin-top:4px;padding:12px;border:1px solid #E8E1D2;border-radius:10px;font-size:16px"></label>
+    <label style="font-size:13.5px;color:#6E6A5E">Access token
+      <span style="display:flex;gap:8px;margin-top:4px">
+        <input type="{{ passType }}" value="{{ syncKey }}" name="key" onChange="{{ syncChange }}" onKeyDown="{{ cloudKey }}" placeholder="github_pat_…" autocapitalize="none" style="flex:1;box-sizing:border-box;padding:12px;border:1px solid #E8E1D2;border-radius:10px;font-size:16px;min-width:0">
+        <button onClick="{{ togglePass }}" style="flex:none;background:#EFE9DC;border:none;border-radius:10px;padding:0 14px;font-size:13.5px;font-weight:700;color:#6E6A5E;cursor:pointer;min-height:44px">{{ passToggleLabel }}</button>
+      </span>
+    </label>
+    <button onClick="{{ connectSyncBtn }}" style="background:#0E7C6B;color:#fff;border:none;border-radius:14px;min-height:52px;font-family:'Nunito',sans-serif;font-weight:900;font-size:17px;cursor:pointer">{{ connectBtnLabel }}</button>
+    <div style="font-size:13.5px;color:#B8433D;min-height:18px;line-height:1.4">{{ cloudMsg }}</div>
+    <div style="font-size:13px;color:#6E6A5E;line-height:1.5">Once connected, learners and their progress appear here automatically, and answers made offline are sent when the device is back online. The token stays on this device only.</div>
+  </div>
+</div>
+</sc-if>
+
+<!-- ============ PAYWALL ============ -->
+<sc-if value="{{ vPaywall }}" hint-placeholder-val="{{ false }}">
+<div data-screen-label="Subscribe" style="max-width:380px;margin:0 auto;padding-top:44px;text-align:center">
+  <div style="width:64px;height:64px;border-radius:20px;background:#0E7C6B;display:flex;align-items:center;justify-content:center;margin:0 auto 14px">
+    <svg width="36" height="36" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="#fff" stroke-width="2.4"/><circle cx="12" cy="12" r="2.4" fill="#fff"/><path d="M12 14.2 L12 21 M10 12.6 L3.6 10.4 M14 12.6 L20.4 10.4" stroke="#fff" stroke-width="2.2"/></svg>
+  </div>
+  <div style="font-family:'Nunito',sans-serif;font-weight:900;font-size:26px">Keep learning with Theory Trainer</div>
+  <div style="font-size:16px;color:#6E6A5E;margin-top:8px;line-height:1.5">This account needs a subscription to practise. It takes a minute and helps keep the app running.</div>
+  <div style="display:flex;flex-direction:column;gap:12px;max-width:320px;margin:26px auto 0">
+    <button onClick="{{ openSub }}" style="background:#0E7C6B;color:#fff;border:none;border-radius:18px;min-height:58px;font-family:'Nunito',sans-serif;font-weight:900;font-size:19px;cursor:pointer">Subscribe</button>
+    <button onClick="{{ goLogin }}" style="background:#fff;border:1px solid #E8E1D2;border-radius:18px;min-height:52px;font-size:16px;cursor:pointer;font-weight:700">Switch user</button>
+    <div style="font-size:13.5px;color:#6E6A5E;line-height:1.5">Already subscribed? The admin can unlock this account from the dashboard.</div>
+  </div>
+</div>
+</sc-if>
+
+<!-- ============ HOME ============ -->
+<sc-if value="{{ vHome }}" hint-placeholder-val="{{ true }}">
+<div data-screen-label="Home">
+  <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:6px">
+    <div style="display:flex;align-items:center;gap:10px">
+      <div style="width:40px;height:40px;border-radius:12px;background:#0E7C6B;display:flex;align-items:center;justify-content:center;flex:none">
+        <svg width="24" height="24" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="#fff" stroke-width="2.4"/><circle cx="12" cy="12" r="2.4" fill="#fff"/><path d="M12 14.2 L12 21 M10 12.6 L3.6 10.4 M14 12.6 L20.4 10.4" stroke="#fff" stroke-width="2.2"/></svg>
+      </div>
+      <div style="font-family:'Nunito',sans-serif;font-weight:900;font-size:20px">Theory Trainer</div>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center">
+      <button onClick="{{ setLearnerProfile }}" style="{{ learnerChipStyle }}">{{ learnerName }}</button>
+      <button onClick="{{ setParentProfile }}" style="{{ parentChipStyle }}">{{ parentName }}</button>
+    </div>
+  </div>
+  <div style="font-family:'Nunito',sans-serif;font-weight:900;font-size:30px;margin:22px 0 4px">{{ greeting }}</div>
+  <div style="font-size:17px;color:#6E6A5E;margin-bottom:22px">{{ homeSub }}</div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+    <button onClick="{{ goLearn }}" style="grid-column:1/-1;display:flex;align-items:center;gap:16px;background:#0E7C6B;color:#fff;border:none;border-radius:22px;padding:22px 22px;cursor:pointer;text-align:left;min-height:96px">
+      <svg width="40" height="40" viewBox="0 0 24 24" style="flex:none"><path d="M5 4.5 C8 3.2 10.5 3.4 12 4.6 C13.5 3.4 16 3.2 19 4.5 L19 19 C16 17.8 13.5 18 12 19.2 C10.5 18 8 17.8 5 19 Z" fill="none" stroke="#fff" stroke-width="2"/><path d="M12 4.6 L12 19.2" stroke="#fff" stroke-width="2"/></svg>
+      <span><span style="display:block;font-family:'Nunito',sans-serif;font-weight:900;font-size:22px">Practise</span><span style="display:block;font-size:15px;opacity:.9;margin-top:2px">Friendly questions, read aloud</span></span>
+    </button>
+    <button onClick="{{ startFocusDrill }}" style="grid-column:1/-1;display:flex;align-items:center;gap:16px;background:#FBF1DC;color:#2A2C33;border:2px solid #F2A93B;border-radius:22px;padding:18px 22px;cursor:pointer;text-align:left">
+      <svg width="34" height="34" viewBox="0 0 24 24" style="flex:none"><circle cx="12" cy="12" r="9" fill="none" stroke="#C77E14" stroke-width="2"/><circle cx="12" cy="12" r="5" fill="none" stroke="#C77E14" stroke-width="2"/><circle cx="12" cy="12" r="1.8" fill="#C77E14"/></svg>
+      <span><span style="display:block;font-family:'Nunito',sans-serif;font-weight:900;font-size:19px">Focus Drill</span><span style="display:block;font-size:14.5px;color:#6E6A5E;margin-top:2px">{{ focusDesc }}</span></span>
+    </button>
+    <button onClick="{{ goTest }}" style="display:flex;flex-direction:column;align-items:flex-start;gap:8px;background:#fff;border:1px solid #E8E1D2;border-radius:22px;padding:18px;cursor:pointer;text-align:left">
+      <svg width="30" height="30" viewBox="0 0 24 24"><circle cx="12" cy="13" r="8" fill="none" stroke="#0E7C6B" stroke-width="2"/><path d="M12 13 L12 8.5 M9.5 3 L14.5 3" stroke="#0E7C6B" stroke-width="2" stroke-linecap="round"/></svg>
+      <span style="font-family:'Nunito',sans-serif;font-weight:900;font-size:18px">Mock Test</span>
+      <span style="font-size:14px;color:#6E6A5E">50 questions, just like the real one</span>
+    </button>
+    <button onClick="{{ goSigns }}" style="display:flex;flex-direction:column;align-items:flex-start;gap:8px;background:#fff;border:1px solid #E8E1D2;border-radius:22px;padding:18px;cursor:pointer;text-align:left">
+      <svg width="30" height="30" viewBox="0 0 24 24"><path d="M12 3 L21.5 20 L2.5 20 Z" fill="none" stroke="#C22A2A" stroke-width="2.2" stroke-linejoin="round"/><path d="M12 10 L12 14.5" stroke="#2A2C33" stroke-width="2.2" stroke-linecap="round"/><circle cx="12" cy="17.2" r="1.2" fill="#2A2C33"/></svg>
+      <span style="font-family:'Nunito',sans-serif;font-weight:900;font-size:18px">Road Signs</span>
+      <span style="font-size:14px;color:#6E6A5E">Learn and quiz the signs</span>
+    </button>
+    <button onClick="{{ goProgress }}" style="display:flex;flex-direction:column;align-items:flex-start;gap:8px;background:#fff;border:1px solid #E8E1D2;border-radius:22px;padding:18px;cursor:pointer;text-align:left">
+      <svg width="30" height="30" viewBox="0 0 24 24"><path d="M4 20 L4 12 M10 20 L10 6 M16 20 L16 10 M22 20 L2 20" stroke="#0E7C6B" stroke-width="2" stroke-linecap="round"/></svg>
+      <span style="font-family:'Nunito',sans-serif;font-weight:900;font-size:18px">My Progress</span>
+      <span style="font-size:14px;color:#6E6A5E">See how you are doing</span>
+    </button>
+    <button onClick="{{ goPrint }}" style="display:flex;flex-direction:column;align-items:flex-start;gap:8px;background:#fff;border:1px solid #E8E1D2;border-radius:22px;padding:18px;cursor:pointer;text-align:left">
+      <svg width="30" height="30" viewBox="0 0 24 24"><path d="M7 8 L7 3 L17 3 L17 8 M7 17 L7 21 L17 21 L17 17" fill="none" stroke="#0E7C6B" stroke-width="2"/><rect x="3" y="8" width="18" height="9" rx="2" fill="none" stroke="#0E7C6B" stroke-width="2"/></svg>
+      <span style="font-family:'Nunito',sans-serif;font-weight:900;font-size:18px">Print</span>
+      <span style="font-size:14px;color:#6E6A5E">Flashcards and papers</span>
+    </button>
+  </div>
+  <div style="display:flex;gap:12px;margin-top:18px">
+    <button onClick="{{ goSettings }}" style="flex:1;background:none;border:1px solid #E8E1D2;border-radius:14px;padding:12px;cursor:pointer;font-size:15px;color:#6E6A5E">Settings</button>
+  </div>
+</div>
+</sc-if>
+
+<!-- ============ LEARN SETUP ============ -->
+<sc-if value="{{ vLearnSetup }}" hint-placeholder-val="{{ false }}">
+<div data-screen-label="Practise setup">
+  <div style="display:flex;align-items:center;gap:10px;margin-bottom:18px">
+    <button onClick="{{ goHome }}" style="background:#fff;border:1px solid #E8E1D2;border-radius:12px;width:44px;height:44px;cursor:pointer;font-size:18px">←</button>
+    <div style="font-family:'Nunito',sans-serif;font-weight:900;font-size:24px">Practise</div>
+  </div>
+  <div style="font-family:'Nunito',sans-serif;font-weight:800;font-size:17px;margin:14px 0 10px">What shall we practise?</div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+    <sc-for list="{{ topicChoices }}" as="t" hint-placeholder-count="4">
+      <button onClick="{{ t.pick }}" style="{{ t.style }}">
+        <span style="display:block;font-weight:700;font-size:15.5px;line-height:1.25">{{ t.name }}</span>
+        <span style="display:block;font-size:13px;color:#6E6A5E;margin-top:3px">{{ t.sub }}</span>
+      </button>
+    </sc-for>
+  </div>
+  <sc-if value="{{ showLen }}" hint-placeholder-val="{{ true }}">
+    <div style="font-family:'Nunito',sans-serif;font-weight:800;font-size:17px;margin:20px 0 10px">How many questions?</div>
+    <div style="display:flex;gap:10px">
+      <sc-for list="{{ lenChoices }}" as="l" hint-placeholder-count="3">
+        <button onClick="{{ l.pick }}" style="{{ l.style }}">{{ l.label }}</button>
+      </sc-for>
+    </div>
+  </sc-if>
+  <sc-if value="{{ showMix }}" hint-placeholder-val="{{ false }}">
+    <div style="font-family:'Nunito',sans-serif;font-weight:800;font-size:17px;margin:20px 0 10px">How many from each topic? <span style="color:#6E6A5E;font-weight:400;font-size:14px">({{ mixTotal }} picked)</span></div>
+    <div style="background:#fff;border:1px solid #E8E1D2;border-radius:18px;padding:4px 16px">
+      <sc-for list="{{ mixRows }}" as="m" hint-placeholder-count="5">
+        <div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid #F2EDE1">
+          <span style="flex:1;font-size:14.5px;line-height:1.3">{{ m.name }}</span>
+          <button onClick="{{ m.dec }}" aria-label="Fewer" style="flex:none;width:44px;height:44px;border-radius:12px;background:#EFE9DC;border:none;font-size:20px;cursor:pointer;color:#6E6A5E">−</button>
+          <span style="width:30px;text-align:center;font-family:'Nunito',sans-serif;font-weight:900;font-size:17px;flex:none">{{ m.count }}</span>
+          <button onClick="{{ m.inc }}" aria-label="More" style="flex:none;width:44px;height:44px;border-radius:12px;background:#E4F2EF;border:none;font-size:20px;cursor:pointer;color:#0A5D50">+</button>
+        </div>
+      </sc-for>
+    </div>
+  </sc-if>
+  <button onClick="{{ startLearn }}" style="width:100%;margin-top:26px;background:#0E7C6B;color:#fff;border:none;border-radius:18px;min-height:60px;font-family:'Nunito',sans-serif;font-weight:900;font-size:20px;cursor:pointer">Start</button>
+</div>
+</sc-if>
+
+<!-- ============ LEARN QUESTION ============ -->
+<sc-if value="{{ vLearnQ }}" hint-placeholder-val="{{ false }}">
+<div data-screen-label="Practise question">
+  <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">
+    <button onClick="{{ quitLearn }}" style="background:#fff;border:1px solid #E8E1D2;border-radius:12px;width:44px;height:44px;cursor:pointer;font-size:17px;color:#6E6A5E">✕</button>
+    <div style="flex:1;height:10px;background:#EFE9DC;border-radius:6px;overflow:hidden"><div style="{{ learnBarStyle }}"></div></div>
+    <div style="font-size:15px;color:#6E6A5E;white-space:nowrap">{{ qNum }} of {{ qTotal }}</div>
+    <button onClick="{{ toggleQFlag }}" aria-label="Save this question for extra practice" style="{{ qFlagStyle }}">
+      <svg width="16" height="16" viewBox="0 0 24 24"><path d="M6 21 L6 4 L18 4 L14.5 8.5 L18 13 L6 13" fill="currentColor" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
+      {{ qFlagLabel }}
+    </button>
+  </div>
+  <sc-if value="{{ hasSign }}" hint-placeholder-val="{{ false }}">
+    <div style="display:flex;justify-content:center;margin:10px 0 14px">
+      <x-import component-from-global-scope="SignImage" from="./signs.js" hint="{{ qSignHint }}" size="{{ signSize }}" hint-size="128px,128px"></x-import>
+    </div>
+  </sc-if>
+  <div style="background:#fff;border:1px solid #E8E1D2;border-radius:22px;padding:22px;display:flex;gap:14px;align-items:flex-start">
+    <div style="flex:1;font-size:22px;line-height:1.45;font-weight:700">{{ qText }}</div>
+    <button onClick="{{ speakQ }}" aria-label="Read the question aloud" style="flex:none;width:52px;height:52px;border-radius:50%;background:#E4F2EF;border:none;cursor:pointer;color:#0E7C6B;display:flex;align-items:center;justify-content:center">
+      <svg width="26" height="26" viewBox="0 0 24 24"><path d="M4 9 L8 9 L13 4 L13 20 L8 15 L4 15 Z" fill="currentColor"/><path d="M16.5 8.5 Q19.5 12 16.5 15.5 M18.5 6 Q23 12 18.5 18" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/></svg>
+    </button>
+  </div>
+  <sc-if value="{{ hintReady }}" hint-placeholder-val="{{ false }}">
+    <div style="display:flex;justify-content:flex-end;margin-top:10px">
+      <button onClick="{{ useHint }}" style="background:#fff;border:1px solid #E8E1D2;border-radius:12px;padding:10px 16px;cursor:pointer;font-size:14.5px;color:#0E7C6B;font-weight:700;min-height:44px">Hint: take two away</button>
+    </div>
+  </sc-if>
+  <div style="display:flex;flex-direction:column;gap:12px;margin-top:16px">
+    <sc-for list="{{ opts }}" as="o" hint-placeholder-count="4">
+      <div onClick="{{ o.pick }}" style="{{ o.style }}">
+        <span style="{{ o.letterStyle }}">{{ o.letter }}</span>
+        <span style="flex:1;font-size:19px;line-height:1.4">{{ o.text }}</span>
+        <button onClick="{{ o.speak }}" aria-label="Read this answer aloud" style="flex:none;width:44px;height:44px;border-radius:50%;background:rgba(0,0,0,.05);border:none;cursor:pointer;color:#6E6A5E;display:flex;align-items:center;justify-content:center">
+          <svg width="20" height="20" viewBox="0 0 24 24"><path d="M4 9 L8 9 L13 4 L13 20 L8 15 L4 15 Z" fill="currentColor"/><path d="M16.5 8.5 Q19.5 12 16.5 15.5" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/></svg>
+        </button>
+      </div>
+    </sc-for>
+  </div>
+  <sc-if value="{{ answered }}" hint-placeholder-val="{{ false }}">
+    <div style="{{ feedbackStyle }}">
+      <div style="display:flex;align-items:flex-start;gap:12px">
+        <div style="flex:1">
+          <div style="font-family:'Nunito',sans-serif;font-weight:900;font-size:19px">{{ microTitle }}</div>
+          <div style="font-size:17px;line-height:1.5;margin-top:6px">{{ explanation }}</div>
+          <div style="font-size:14px;color:#6E6A5E;margin-top:8px">{{ ruleRef }}</div>
+          <sc-if value="{{ wrongTipShow }}" hint-placeholder-val="{{ false }}">
+            <div style="margin-top:10px;padding-top:10px;border-top:1px dashed rgba(0,0,0,.18);font-size:15px;line-height:1.5"><b>Remember:</b> {{ wrongTip }}</div>
+          </sc-if>
+          <sc-if value="{{ hasTip }}" hint-placeholder-val="{{ false }}">
+            <div style="margin-top:10px;padding:10px 12px;background:rgba(255,255,255,.7);border-radius:12px;font-size:15px;line-height:1.5"><b>Remember:</b> {{ tipText }}</div>
+          </sc-if>
+        </div>
+        <button onClick="{{ speakExp }}" aria-label="Read the explanation aloud" style="flex:none;width:48px;height:48px;border-radius:50%;background:rgba(255,255,255,.7);border:none;cursor:pointer;color:#2A2C33;display:flex;align-items:center;justify-content:center">
+          <svg width="22" height="22" viewBox="0 0 24 24"><path d="M4 9 L8 9 L13 4 L13 20 L8 15 L4 15 Z" fill="currentColor"/><path d="M16.5 8.5 Q19.5 12 16.5 15.5" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/></svg>
+        </button>
+      </div>
+    </div>
+    <button onClick="{{ nextQ }}" style="width:100%;margin-top:14px;background:#0E7C6B;color:#fff;border:none;border-radius:18px;min-height:60px;font-family:'Nunito',sans-serif;font-weight:900;font-size:20px;cursor:pointer">{{ nextLabel }}</button>
+  </sc-if>
+</div>
+</sc-if>
+
+<!-- ============ LEARN DONE ============ -->
+<sc-if value="{{ vLearnDone }}" hint-placeholder-val="{{ false }}">
+<div data-screen-label="Practise finished" style="text-align:center;padding-top:40px">
+  <div style="font-size:56px;font-family:'Nunito',sans-serif;font-weight:900;color:#0E7C6B">{{ doneScore }} / {{ doneTotal }}</div>
+  <div style="font-family:'Nunito',sans-serif;font-weight:900;font-size:24px;margin-top:10px">{{ doneTitle }}</div>
+  <div style="font-size:17px;color:#6E6A5E;margin-top:8px;max-width:400px;margin-left:auto;margin-right:auto">{{ doneMsg }}</div>
+  <sc-if value="{{ doneTipShow }}" hint-placeholder-val="{{ false }}">
+    <div style="max-width:420px;margin:20px auto 0;background:#FBF1DC;border:1px solid #F0D9A8;border-radius:16px;padding:14px 16px;font-size:15.5px;text-align:left;line-height:1.5"><b>Remember:</b> {{ doneTip }}</div>
+  </sc-if>
+  <sc-if value="{{ hasSessRows }}" hint-placeholder-val="{{ false }}">
+    <div style="max-width:420px;margin:22px auto 0;background:#fff;border:1px solid #E8E1D2;border-radius:18px;padding:8px 18px;text-align:left">
+      <div style="font-family:'Nunito',sans-serif;font-weight:800;font-size:15px;padding:8px 0 2px">This session by topic</div>
+      <sc-for list="{{ sessRows }}" as="r" hint-placeholder-count="3">
+        <div style="display:flex;align-items:center;gap:12px;padding:9px 0;border-bottom:1px solid #F2EDE1">
+          <span style="flex:1;font-size:14px;line-height:1.3">{{ r.name }}</span>
+          <span style="width:110px;height:9px;background:#EFE9DC;border-radius:5px;overflow:hidden;flex:none"><span style="{{ r.barStyle }}"></span></span>
+          <span style="width:40px;text-align:right;font-size:13.5px;font-weight:700;flex:none">{{ r.label }}</span>
+        </div>
+      </sc-for>
+    </div>
+  </sc-if>
+  <div style="display:flex;flex-direction:column;gap:12px;max-width:360px;margin:30px auto 0">
+    <sc-if value="{{ hasFlagged }}" hint-placeholder-val="{{ false }}">
+      <button onClick="{{ practiseFlagged }}" style="background:#FBF1DC;border:2px solid #F2A93B;color:#2A2C33;border-radius:18px;min-height:58px;font-family:'Nunito',sans-serif;font-weight:900;font-size:18px;cursor:pointer">Practise your saved ones ({{ flaggedCount }})</button>
+    </sc-if>
+    <button onClick="{{ goLearn }}" style="background:#0E7C6B;color:#fff;border:none;border-radius:18px;min-height:58px;font-family:'Nunito',sans-serif;font-weight:900;font-size:19px;cursor:pointer">Practise again</button>
+    <button onClick="{{ goHome }}" style="background:#fff;border:1px solid #E8E1D2;border-radius:18px;min-height:58px;font-family:'Nunito',sans-serif;font-weight:800;font-size:18px;cursor:pointer">Home</button>
+  </div>
+</div>
+</sc-if>
+
+<!-- ============ MY PROGRESS (learner) ============ -->
+<sc-if value="{{ vProgress }}" hint-placeholder-val="{{ false }}">
+<div data-screen-label="My progress">
+  <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
+    <button onClick="{{ goHome }}" style="background:#fff;border:1px solid #E8E1D2;border-radius:12px;width:44px;height:44px;cursor:pointer;font-size:18px">←</button>
+    <div style="font-family:'Nunito',sans-serif;font-weight:900;font-size:24px;flex:1">My Progress</div>
+  </div>
+  <div style="background:#fff;border:1px solid #E8E1D2;border-radius:22px;padding:20px;display:flex;align-items:center;gap:20px">
+    <svg viewBox="0 0 140 140" style="width:132px;flex:none">
+      <circle cx="70" cy="70" r="58" stroke="#EFE9DC" stroke-width="13" fill="none"></circle>
+      <circle cx="70" cy="70" r="58" stroke="{{ readyColor }}" stroke-width="13" fill="none" stroke-linecap="round" stroke-dasharray="{{ readyDash }}" transform="rotate(-90 70 70)"></circle>
+      <text x="70" y="76" text-anchor="middle" font-family="Nunito,sans-serif" font-weight="900" font-size="30" fill="#2A2C33">{{ readyPct }}%</text>
+      <text x="70" y="94" text-anchor="middle" font-size="11" fill="#6E6A5E">ready</text>
+    </svg>
+    <div style="flex:1">
+      <div style="font-family:'Nunito',sans-serif;font-weight:900;font-size:22px">{{ readyLabel }}</div>
+      <div style="font-size:14.5px;color:#6E6A5E;margin-top:6px;line-height:1.5">{{ readySub }}</div>
+    </div>
+  </div>
+  <div style="background:#E4F2EF;border:1px solid #BFE0D8;border-radius:22px;padding:18px 20px;margin-top:14px">
+    <div style="font-family:'Nunito',sans-serif;font-weight:900;font-size:17px;margin-bottom:10px;color:#0A5D50">Your coach says</div>
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <sc-for list="{{ coachLines }}" as="c" hint-placeholder-count="3">
+        <div style="display:flex;gap:10px;font-size:15.5px;line-height:1.5"><span style="flex:none;color:#0E7C6B;font-weight:900">→</span><span style="flex:1">{{ c.text }}</span></div>
+      </sc-for>
+    </div>
+  </div>
+  <button onClick="{{ startFocusDrill }}" style="width:100%;margin-top:14px;background:#FBF1DC;border:2px solid #F2A93B;border-radius:16px;min-height:56px;font-family:'Nunito',sans-serif;font-weight:900;font-size:18px;cursor:pointer;color:#2A2C33">Focus Drill: {{ focusDesc }}</button>
+  <div style="font-family:'Nunito',sans-serif;font-weight:800;font-size:18px;margin:26px 0 10px">Your topics</div>
+  <div style="background:#fff;border:1px solid #E8E1D2;border-radius:20px;padding:8px 18px">
+    <sc-for list="{{ progTopics }}" as="t" hint-placeholder-count="6">
+      <div style="padding:10px 0;border-bottom:1px solid #F2EDE1">
+        <div style="display:flex;align-items:center;gap:12px">
+          <span style="{{ t.dotStyle }}"></span>
+          <span style="flex:1;font-size:15px;line-height:1.3">{{ t.name }}</span>
+          <span style="width:110px;height:10px;background:#EFE9DC;border-radius:5px;overflow:hidden;flex:none"><span style="{{ t.barStyle }}"></span></span>
+          <span style="{{ t.statusStyle }}">{{ t.status }}</span>
+        </div>
+        <sc-if value="{{ t.showAdvice }}" hint-placeholder-val="{{ false }}">
+          <div style="margin:7px 0 2px 24px;font-size:13.5px;color:#6E6A5E;line-height:1.5">{{ t.advice }}</div>
+        </sc-if>
+      </div>
+    </sc-for>
+  </div>
+  <sc-if value="{{ hasTests }}" hint-placeholder-val="{{ false }}">
+    <div style="font-family:'Nunito',sans-serif;font-weight:800;font-size:18px;margin:26px 0 10px">Your mock tests</div>
+    <div style="background:#fff;border:1px solid #E8E1D2;border-radius:20px;padding:16px">
+      <svg viewBox="0 0 340 130" style="width:100%;display:block">
+        <line x1="12" y1="{{ passLineY }}" x2="328" y2="{{ passLineY }}" stroke="#F2A93B" stroke-width="1.5" stroke-dasharray="5 4"></line>
+        <text x="328" y="{{ passLabelY }}" text-anchor="end" font-size="9" fill="#C77E14" font-family="sans-serif">pass 43</text>
+        <polyline points="{{ chartPts }}" fill="none" stroke="#0E7C6B" stroke-width="2.5" stroke-linejoin="round"></polyline>
+        <sc-for list="{{ chartDots }}" as="d" hint-placeholder-count="3">
+          <circle cx="{{ d.x }}" cy="{{ d.y }}" r="4" fill="{{ d.fill }}"></circle>
+        </sc-for>
+      </svg>
+    </div>
+  </sc-if>
+  <div style="font-family:'Nunito',sans-serif;font-weight:800;font-size:18px;margin:26px 0 10px">Worth remembering</div>
+  <div style="display:flex;flex-direction:column;gap:10px">
+    <sc-for list="{{ progTips }}" as="t" hint-placeholder-count="3">
+      <div style="background:#FBF1DC;border:1px solid #F0D9A8;border-radius:16px;padding:13px 16px">
+        <div style="font-size:12px;font-weight:800;color:#C77E14;text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px">{{ t.topic }}</div>
+        <div style="font-size:15.5px;line-height:1.5">{{ t.text }}</div>
+      </div>
+    </sc-for>
+  </div>
+  <button onClick="{{ goLearn }}" style="width:100%;margin-top:20px;background:#0E7C6B;color:#fff;border:none;border-radius:18px;min-height:58px;font-family:'Nunito',sans-serif;font-weight:900;font-size:19px;cursor:pointer">Practise now</button>
+</div>
+</sc-if>
+
+<!-- ============ SIGNS ============ -->
+<sc-if value="{{ vSigns }}" hint-placeholder-val="{{ false }}">
+<div data-screen-label="Road signs">
+  <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
+    <button onClick="{{ goHome }}" style="background:#fff;border:1px solid #E8E1D2;border-radius:12px;width:44px;height:44px;cursor:pointer;font-size:18px">←</button>
+    <div style="font-family:'Nunito',sans-serif;font-weight:900;font-size:24px;flex:1">Road Signs</div>
+  </div>
+  <button onClick="{{ startSignPractice }}" style="width:100%;background:#0E7C6B;color:#fff;border:none;border-radius:18px;min-height:60px;font-family:'Nunito',sans-serif;font-weight:900;font-size:19px;cursor:pointer;margin-bottom:8px">Quiz me on the signs</button>
+  <div style="font-size:14.5px;color:#6E6A5E;margin:6px 0 16px;text-align:center">Or tap any sign to hear what it means.</div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+    <sc-for list="{{ signTiles }}" as="s" hint-placeholder-count="6">
+      <div onClick="{{ s.speak }}" style="background:#fff;border:1px solid #E8E1D2;border-radius:18px;padding:16px 12px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center">
+        <x-import component-from-global-scope="SignImage" from="./signs.js" hint="{{ s.hint }}" size="{{ signTileSize }}" hint-size="92px,92px"></x-import>
+        <span style="font-size:14.5px;font-weight:700;line-height:1.3">{{ s.label }}</span>
+      </div>
+    </sc-for>
+  </div>
+</div>
+</sc-if>
+
+<!-- ============ TEST INTRO ============ -->
+<sc-if value="{{ vTestIntro }}" hint-placeholder-val="{{ false }}">
+<div data-screen-label="Mock test intro">
+  <div style="display:flex;align-items:center;gap:10px;margin-bottom:18px">
+    <button onClick="{{ goHome }}" style="background:#fff;border:1px solid #E8E1D2;border-radius:12px;width:44px;height:44px;cursor:pointer;font-size:18px">←</button>
+    <div style="font-family:'Nunito',sans-serif;font-weight:900;font-size:24px">Mock Test</div>
+  </div>
+  <div style="background:#fff;border:1px solid #E8E1D2;border-radius:22px;padding:24px">
+    <div style="display:flex;flex-direction:column;gap:16px;font-size:18px;line-height:1.5">
+      <div style="display:flex;gap:12px;align-items:center"><span style="flex:none;width:38px;height:38px;border-radius:12px;background:#E4F2EF;color:#0E7C6B;display:flex;align-items:center;justify-content:center;font-family:'Nunito',sans-serif;font-weight:900">50</span>questions from every topic</div>
+      <div style="display:flex;gap:12px;align-items:center"><span style="flex:none;width:38px;height:38px;border-radius:12px;background:#E4F2EF;color:#0E7C6B;display:flex;align-items:center;justify-content:center;font-family:'Nunito',sans-serif;font-weight:900">57</span>minutes on the clock</div>
+      <div style="display:flex;gap:12px;align-items:center"><span style="flex:none;width:38px;height:38px;border-radius:12px;background:#E4F2EF;color:#0E7C6B;display:flex;align-items:center;justify-content:center;font-family:'Nunito',sans-serif;font-weight:900">43</span>correct answers to pass</div>
+    </div>
+    <div style="font-size:15.5px;color:#6E6A5E;margin-top:18px;line-height:1.5">No feedback until the end, just like the real test. You can flag a question and come back to it. The speaker buttons still work — the real test has a voiceover option too.</div>
+  </div>
+  <div style="font-family:'Nunito',sans-serif;font-weight:800;font-size:16px;margin:18px 0 8px">Which kind of test?</div>
+  <div style="display:flex;gap:10px">
+    <sc-for list="{{ testModeChoices }}" as="m" hint-placeholder-count="2">
+      <button onClick="{{ m.pick }}" style="{{ m.style }}"><span style="display:block;font-weight:800;font-size:15.5px">{{ m.name }}</span><span style="display:block;font-size:13px;color:#6E6A5E;margin-top:2px">{{ m.sub }}</span></button>
+    </sc-for>
+  </div>
+  <button onClick="{{ startTest }}" style="width:100%;margin-top:20px;background:#0E7C6B;color:#fff;border:none;border-radius:18px;min-height:60px;font-family:'Nunito',sans-serif;font-weight:900;font-size:20px;cursor:pointer">Start the test</button>
+</div>
+</sc-if>
+
+<!-- ============ TEST RUNNING ============ -->
+<sc-if value="{{ vTestRun }}" hint-placeholder-val="{{ false }}">
+<div data-screen-label="Mock test question">
+  <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
+    <div style="{{ timerStyle }}">{{ testTimer }}</div>
+    <div style="flex:1;text-align:center;font-size:15px;color:#6E6A5E">{{ tQNum }} of 50</div>
+    <button onClick="{{ toggleFlag }}" style="{{ flagStyle }}">
+      <svg width="18" height="18" viewBox="0 0 24 24"><path d="M6 21 L6 4 L18 4 L14.5 8.5 L18 13 L6 13" fill="currentColor" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
+      {{ flagLabel }}
+    </button>
+  </div>
+  <sc-if value="{{ tHasSign }}" hint-placeholder-val="{{ false }}">
+    <div style="display:flex;justify-content:center;margin:8px 0 12px">
+      <x-import component-from-global-scope="SignImage" from="./signs.js" hint="{{ tSignHint }}" size="{{ signSize }}" hint-size="128px,128px"></x-import>
+    </div>
+  </sc-if>
+  <div style="background:#fff;border:1px solid #E8E1D2;border-radius:22px;padding:20px;display:flex;gap:12px;align-items:flex-start">
+    <div style="flex:1;font-size:20px;line-height:1.45;font-weight:700">{{ tQText }}</div>
+    <button onClick="{{ speakTQ }}" aria-label="Read the question aloud" style="flex:none;width:48px;height:48px;border-radius:50%;background:#E4F2EF;border:none;cursor:pointer;color:#0E7C6B;display:flex;align-items:center;justify-content:center">
+      <svg width="23" height="23" viewBox="0 0 24 24"><path d="M4 9 L8 9 L13 4 L13 20 L8 15 L4 15 Z" fill="currentColor"/><path d="M16.5 8.5 Q19.5 12 16.5 15.5 M18.5 6 Q23 12 18.5 18" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/></svg>
+    </button>
+  </div>
+  <div style="display:flex;flex-direction:column;gap:11px;margin-top:14px">
+    <sc-for list="{{ tOpts }}" as="o" hint-placeholder-count="4">
+      <div onClick="{{ o.pick }}" style="{{ o.style }}">
+        <span style="{{ o.letterStyle }}">{{ o.letter }}</span>
+        <span style="flex:1;font-size:18px;line-height:1.4">{{ o.text }}</span>
+        <button onClick="{{ o.speak }}" aria-label="Read this answer aloud" style="flex:none;width:42px;height:42px;border-radius:50%;background:rgba(0,0,0,.05);border:none;cursor:pointer;color:#6E6A5E;display:flex;align-items:center;justify-content:center">
+          <svg width="19" height="19" viewBox="0 0 24 24"><path d="M4 9 L8 9 L13 4 L13 20 L8 15 L4 15 Z" fill="currentColor"/><path d="M16.5 8.5 Q19.5 12 16.5 15.5" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/></svg>
+        </button>
+      </div>
+    </sc-for>
+  </div>
+  <div style="display:flex;gap:10px;margin-top:18px">
+    <button onClick="{{ prevTQ }}" style="flex:1;background:#fff;border:1px solid #E8E1D2;border-radius:16px;min-height:54px;font-family:'Nunito',sans-serif;font-weight:800;font-size:17px;cursor:pointer">← Back</button>
+    <button onClick="{{ goReview }}" style="flex:1;background:#fff;border:1px solid #E8E1D2;border-radius:16px;min-height:54px;font-family:'Nunito',sans-serif;font-weight:800;font-size:17px;cursor:pointer">Review</button>
+    <button onClick="{{ nextTQ }}" style="flex:1;background:#0E7C6B;color:#fff;border:none;border-radius:16px;min-height:54px;font-family:'Nunito',sans-serif;font-weight:800;font-size:17px;cursor:pointer">Next →</button>
+  </div>
+</div>
+</sc-if>
+
+<!-- ============ TEST REVIEW ============ -->
+<sc-if value="{{ vTestReview }}" hint-placeholder-val="{{ false }}">
+<div data-screen-label="Mock test review">
+  <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+    <div style="{{ timerStyle }}">{{ testTimer }}</div>
+    <div style="font-family:'Nunito',sans-serif;font-weight:900;font-size:22px">Review</div>
+  </div>
+  <div style="font-size:15.5px;color:#6E6A5E;margin-bottom:14px">{{ reviewSummary }}</div>
+  <div style="display:grid;grid-template-columns:repeat(10,1fr);gap:7px">
+    <sc-for list="{{ reviewCells }}" as="c" hint-placeholder-count="10">
+      <button onClick="{{ c.go }}" style="{{ c.style }}">{{ c.n }}</button>
+    </sc-for>
+  </div>
+  <div style="display:flex;gap:14px;margin-top:14px;font-size:13.5px;color:#6E6A5E;flex-wrap:wrap">
+    <span style="display:flex;align-items:center;gap:6px"><span style="width:14px;height:14px;border-radius:4px;background:#0E7C6B;display:inline-block"></span>Answered</span>
+    <span style="display:flex;align-items:center;gap:6px"><span style="width:14px;height:14px;border-radius:4px;background:#fff;border:2px solid #F2A93B;display:inline-block"></span>Flagged</span>
+    <span style="display:flex;align-items:center;gap:6px"><span style="width:14px;height:14px;border-radius:4px;background:#fff;border:1px solid #D8D0BF;display:inline-block"></span>Not answered</span>
+  </div>
+  <div style="display:flex;gap:10px;margin-top:22px">
+    <button onClick="{{ backToTest }}" style="flex:1;background:#fff;border:1px solid #E8E1D2;border-radius:16px;min-height:56px;font-family:'Nunito',sans-serif;font-weight:800;font-size:17px;cursor:pointer">Keep going</button>
+    <button onClick="{{ endTest }}" style="flex:1;background:#B8433D;color:#fff;border:none;border-radius:16px;min-height:56px;font-family:'Nunito',sans-serif;font-weight:800;font-size:17px;cursor:pointer">End test</button>
+  </div>
+</div>
+</sc-if>
+
+<!-- ============ TEST RESULTS ============ -->
+<sc-if value="{{ vTestResults }}" hint-placeholder-val="{{ false }}">
+<div data-screen-label="Mock test results">
+  <div style="{{ resultBannerStyle }}">
+    <div style="font-family:'Nunito',sans-serif;font-weight:900;font-size:44px">{{ resultScore }} / 50</div>
+    <div style="font-family:'Nunito',sans-serif;font-weight:900;font-size:26px;margin-top:4px">{{ resultLabel }}</div>
+    <div style="font-size:16px;margin-top:6px;opacity:.85">{{ resultMsg }}</div>
+  </div>
+  <sc-if value="{{ hasWrong }}" hint-placeholder-val="{{ false }}">
+    <div style="font-family:'Nunito',sans-serif;font-weight:800;font-size:18px;margin:24px 0 10px">Worth another look ({{ wrongN }})</div>
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <sc-for list="{{ wrongRows }}" as="w" hint-placeholder-count="3">
+        <div style="background:#fff;border:1px solid #E8E1D2;border-radius:18px;padding:16px;display:flex;gap:14px">
+          <sc-if value="{{ w.hasSign }}" hint-placeholder-val="{{ false }}">
+            <div style="flex:none"><x-import component-from-global-scope="SignImage" from="./signs.js" hint="{{ w.sign }}" size="{{ wrongSignSize }}" hint-size="72px,72px"></x-import></div>
+          </sc-if>
+          <div style="flex:1;min-width:0">
+            <div style="font-size:15.5px;font-weight:700;line-height:1.4">{{ w.q }}</div>
+            <div style="font-size:14px;color:#B8433D;margin-top:6px">{{ w.yours }}</div>
+            <div style="font-size:14.5px;color:#1C6B3C;font-weight:700;margin-top:3px">Correct — {{ w.right }}</div>
+            <div style="font-size:14px;color:#6E6A5E;line-height:1.5;margin-top:6px">{{ w.explanation }} · {{ w.ruleRef }}</div>
+            <button onClick="{{ w.flag }}" style="{{ w.flagStyle }}">{{ w.flagLabel }}</button>
+          </div>
+        </div>
+      </sc-for>
+    </div>
+  </sc-if>
+  <div style="font-family:'Nunito',sans-serif;font-weight:800;font-size:18px;margin:24px 0 10px">By topic</div>
+  <div style="background:#fff;border:1px solid #E8E1D2;border-radius:20px;padding:6px 18px">
+    <sc-for list="{{ resultTopicRows }}" as="r" hint-placeholder-count="5">
+      <div style="display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid #F2EDE1">
+        <span style="flex:1;font-size:15.5px">{{ r.name }}</span>
+        <span style="width:110px;height:9px;background:#EFE9DC;border-radius:5px;overflow:hidden;flex:none"><span style="{{ r.barStyle }}"></span></span>
+        <span style="width:44px;text-align:right;font-weight:700;font-size:15px;flex:none">{{ r.label }}</span>
+      </div>
+    </sc-for>
+  </div>
+  <div style="display:flex;gap:10px;margin-top:22px">
+    <button onClick="{{ goProgress }}" style="flex:1;background:#fff;border:1px solid #E8E1D2;border-radius:16px;min-height:56px;font-family:'Nunito',sans-serif;font-weight:800;font-size:17px;cursor:pointer">My Progress</button>
+    <button onClick="{{ goHome }}" style="flex:1;background:#0E7C6B;color:#fff;border:none;border-radius:16px;min-height:56px;font-family:'Nunito',sans-serif;font-weight:800;font-size:17px;cursor:pointer">Home</button>
+  </div>
+</div>
+</sc-if>
+
+<!-- ============ DASHBOARD ============ -->
+<sc-if value="{{ vDash }}" hint-placeholder-val="{{ false }}">
+<div data-screen-label="Progress dashboard">
+  <div style="display:flex;align-items:center;gap:10px;margin-bottom:18px">
+    <button onClick="{{ goHome }}" style="background:#fff;border:1px solid #E8E1D2;border-radius:12px;width:44px;height:44px;cursor:pointer;font-size:18px">←</button>
+    <div style="font-family:'Nunito',sans-serif;font-weight:900;font-size:24px;flex:1">Progress</div>
+    <button onClick="{{ toggleRange }}" style="{{ rangeChipStyle }}">{{ rangeLabel }}</button>
+  </div>
+  <sc-if value="{{ hasManyUsers }}" hint-placeholder-val="{{ false }}">
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:-6px 0 14px">
+      <span style="font-size:13.5px;color:#6E6A5E">Learner:</span>
+      <sc-for list="{{ dashUsers }}" as="u" hint-placeholder-count="2">
+        <button onClick="{{ u.pick }}" style="{{ u.style }}">{{ u.name }}</button>
+      </sc-for>
+    </div>
+  </sc-if>
+
+  <div style="background:#E4F2EF;border:1px solid #BFE0D8;border-radius:20px;padding:16px 18px;margin-bottom:16px">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px">
+      <div style="font-family:'Nunito',sans-serif;font-weight:900;font-size:16px;color:#0A5D50;flex:1">Coach summary</div>
+      <div style="font-family:'Nunito',sans-serif;font-weight:900;font-size:15px;color:{{ readyColor }}">{{ readyPct }}% ready</div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <sc-for list="{{ coachLines }}" as="c" hint-placeholder-count="3">
+        <div style="display:flex;gap:9px;font-size:14px;line-height:1.5"><span style="flex:none;color:#0E7C6B;font-weight:900">→</span><span style="flex:1">{{ c.text }}</span></div>
+      </sc-for>
+    </div>
+  </div>
+  <div style="font-family:'Nunito',sans-serif;font-weight:800;font-size:18px;margin:6px 0 10px">Topics — weakest first</div>
+  <div style="background:#fff;border:1px solid #E8E1D2;border-radius:20px;padding:8px 18px">
+    <sc-for list="{{ topicBars }}" as="t" hint-placeholder-count="6">
+      <div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid #F2EDE1">
+        <span style="flex:1;font-size:15px;line-height:1.3">{{ t.name }}</span>
+        <span style="width:150px;height:10px;background:#EFE9DC;border-radius:5px;overflow:hidden;flex:none"><span style="{{ t.barStyle }}"></span></span>
+        <span style="width:76px;text-align:right;font-size:14px;color:#6E6A5E;flex:none">{{ t.label }}</span>
+      </div>
+    </sc-for>
+  </div>
+  <button onClick="{{ startFocusDrill }}" style="width:100%;margin-top:14px;display:flex;align-items:center;justify-content:center;gap:10px;background:#FBF1DC;border:2px solid #F2A93B;border-radius:16px;min-height:56px;font-family:'Nunito',sans-serif;font-weight:900;font-size:18px;cursor:pointer;color:#2A2C33">Focus Drill: {{ focusDesc }}</button>
+
+  <div style="font-family:'Nunito',sans-serif;font-weight:800;font-size:18px;margin:28px 0 10px">Mock test scores</div>
+  <sc-if value="{{ hasTests }}" hint-placeholder-val="{{ false }}">
+    <div style="background:#fff;border:1px solid #E8E1D2;border-radius:20px;padding:16px">
+      <svg viewBox="0 0 340 130" style="width:100%;display:block">
+        <line x1="12" y1="{{ passLineY }}" x2="328" y2="{{ passLineY }}" stroke="#F2A93B" stroke-width="1.5" stroke-dasharray="5 4"></line>
+        <text x="328" y="{{ passLabelY }}" text-anchor="end" font-size="9" fill="#C77E14" font-family="sans-serif">pass 43</text>
+        <polyline points="{{ chartPts }}" fill="none" stroke="#0E7C6B" stroke-width="2.5" stroke-linejoin="round"></polyline>
+        <sc-for list="{{ chartDots }}" as="d" hint-placeholder-count="3">
+          <circle cx="{{ d.x }}" cy="{{ d.y }}" r="4" fill="{{ d.fill }}"></circle>
+        </sc-for>
+      </svg>
+    </div>
+    <div style="background:#fff;border:1px solid #E8E1D2;border-radius:20px;padding:4px 18px;margin-top:12px">
+      <sc-for list="{{ historyRows }}" as="h" hint-placeholder-count="3">
+        <div onClick="{{ h.pick }}" style="padding:12px 0;border-bottom:1px solid #F2EDE1;cursor:pointer">
+          <div style="display:flex;align-items:center;gap:10px">
+            <span style="flex:1;font-size:15px">{{ h.date }}</span>
+            <span style="font-size:13px;color:#6E6A5E">{{ h.src }}</span>
+            <span style="font-weight:700;font-size:15.5px">{{ h.score }}</span>
+            <span style="{{ h.passStyle }}">{{ h.passLabel }}</span>
+          </div>
+          <sc-if value="{{ h.open }}" hint-placeholder-val="{{ false }}">
+            <div style="margin-top:10px;display:grid;grid-template-columns:1fr 1fr;gap:4px 18px">
+              <sc-for list="{{ h.detail }}" as="d" hint-placeholder-count="2">
+                <div style="display:flex;justify-content:space-between;font-size:13.5px;color:#6E6A5E"><span>{{ d.name }}</span><span style="font-weight:700;color:#2A2C33">{{ d.val }}</span></div>
+              </sc-for>
+            </div>
+          </sc-if>
+        </div>
+      </sc-for>
+    </div>
+  </sc-if>
+  <sc-if value="{{ noTests }}" hint-placeholder-val="{{ false }}">
+    <div style="background:#fff;border:1px dashed #D8D0BF;border-radius:20px;padding:22px;text-align:center;color:#6E6A5E;font-size:15.5px">No mock tests yet. Scores will appear here after the first one.</div>
+  </sc-if>
+  <button onClick="{{ toggleLogForm }}" style="width:100%;margin-top:12px;background:#fff;border:1px solid #E8E1D2;border-radius:16px;min-height:50px;font-size:15.5px;cursor:pointer;color:#0E7C6B;font-weight:700">{{ logFormLabel }}</button>
+  <sc-if value="{{ showLogForm }}" hint-placeholder-val="{{ false }}">
+    <div style="background:#fff;border:1px solid #E8E1D2;border-radius:20px;padding:18px;margin-top:10px">
+      <div style="font-size:14px;color:#6E6A5E;margin-bottom:12px">Enter a result from Theory Test Pro or a Safe Driving for Life mock, so everything lives in one place.</div>
+      <div style="display:flex;gap:10px;margin-bottom:12px">
+        <label style="flex:1;font-size:13.5px;color:#6E6A5E">Date<input type="date" value="{{ logDate }}" onChange="{{ setLogDate }}" style="display:block;width:100%;box-sizing:border-box;margin-top:4px;padding:10px;border:1px solid #E8E1D2;border-radius:10px;font-size:15px"></label>
+        <label style="flex:1;font-size:13.5px;color:#6E6A5E">Score out of 50<input type="number" min="0" max="50" value="{{ logScore }}" onChange="{{ setLogScore }}" style="display:block;width:100%;box-sizing:border-box;margin-top:4px;padding:10px;border:1px solid #E8E1D2;border-radius:10px;font-size:15px"></label>
+      </div>
+      <div style="font-size:13.5px;color:#6E6A5E;margin-bottom:8px">Per-topic (optional): correct / asked</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px 16px">
+        <sc-for list="{{ logTopics }}" as="t" hint-placeholder-count="4">
+          <div style="display:flex;align-items:center;gap:6px;font-size:13px">
+            <span style="flex:1;line-height:1.2">{{ t.name }}</span>
+            <input type="number" min="0" max="20" value="{{ t.c }}" name="{{ t.cName }}" onChange="{{ logTopicChange }}" style="width:44px;padding:7px 4px;border:1px solid #E8E1D2;border-radius:8px;text-align:center;font-size:14px">
+            <span style="color:#B5AE9E">/</span>
+            <input type="number" min="0" max="20" value="{{ t.n }}" name="{{ t.nName }}" onChange="{{ logTopicChange }}" style="width:44px;padding:7px 4px;border:1px solid #E8E1D2;border-radius:8px;text-align:center;font-size:14px">
+          </div>
+        </sc-for>
+      </div>
+      <button onClick="{{ saveLog }}" style="width:100%;margin-top:14px;background:#0E7C6B;color:#fff;border:none;border-radius:14px;min-height:50px;font-family:'Nunito',sans-serif;font-weight:800;font-size:16px;cursor:pointer">Save result</button>
+    </div>
+  </sc-if>
+
+  <div style="font-family:'Nunito',sans-serif;font-weight:800;font-size:18px;margin:28px 0 10px">Flagged for extra revision</div>
+  <sc-if value="{{ hasRevFlags }}" hint-placeholder-val="{{ false }}">
+    <div style="background:#fff;border:1px solid #E8E1D2;border-radius:20px;padding:4px 18px">
+      <sc-for list="{{ revRows }}" as="r" hint-placeholder-count="3">
+        <div style="display:flex;gap:12px;align-items:center;padding:10px 0;border-bottom:1px solid #F2EDE1">
+          <span style="flex:1;font-size:14.5px;line-height:1.35">{{ r.text }}</span>
+          <span style="flex:none;font-size:12.5px;color:#6E6A5E;white-space:nowrap">{{ r.meta }}</span>
+          <button onClick="{{ r.unflag }}" style="flex:none;background:#E7F6EC;color:#1C6B3C;border:none;border-radius:10px;padding:8px 12px;font-size:13px;font-weight:700;cursor:pointer">Got it now</button>
+        </div>
+      </sc-for>
+    </div>
+    <button onClick="{{ practiseFlagged }}" style="width:100%;margin-top:12px;background:#FBF1DC;border:2px solid #F2A93B;border-radius:16px;min-height:52px;font-family:'Nunito',sans-serif;font-weight:900;font-size:17px;cursor:pointer;color:#2A2C33">Practise the flagged ones ({{ flaggedCount }})</button>
+  </sc-if>
+  <sc-if value="{{ noRevFlags }}" hint-placeholder-val="{{ false }}">
+    <div style="background:#fff;border:1px dashed #D8D0BF;border-radius:20px;padding:22px;text-align:center;color:#6E6A5E;font-size:15.5px">Nothing flagged yet. The flag button on any practice or test question saves it here.</div>
+  </sc-if>
+
+  <div style="font-family:'Nunito',sans-serif;font-weight:800;font-size:18px;margin:28px 0 10px">20 hardest questions</div>
+  <sc-if value="{{ hasHard }}" hint-placeholder-val="{{ false }}">
+    <div style="background:#fff;border:1px solid #E8E1D2;border-radius:20px;padding:4px 18px">
+      <sc-for list="{{ hardRows }}" as="h" hint-placeholder-count="5">
+        <div style="display:flex;gap:12px;align-items:baseline;padding:10px 0;border-bottom:1px solid #F2EDE1">
+          <span style="flex:none;width:24px;font-family:'Nunito',sans-serif;font-weight:900;color:#B5AE9E;font-size:14px">{{ h.rank }}</span>
+          <span style="flex:1;font-size:14.5px;line-height:1.35">{{ h.text }}</span>
+          <span style="flex:none;font-size:12.5px;color:#6E6A5E;white-space:nowrap">{{ h.meta }}</span>
+        </div>
+      </sc-for>
+    </div>
+  </sc-if>
+  <sc-if value="{{ noHard }}" hint-placeholder-val="{{ false }}">
+    <div style="background:#fff;border:1px dashed #D8D0BF;border-radius:20px;padding:22px;text-align:center;color:#6E6A5E;font-size:15.5px">Answer some questions first and the tricky ones will show up here.</div>
+  </sc-if>
+
+  <div style="font-family:'Nunito',sans-serif;font-weight:800;font-size:18px;margin:28px 0 10px">Question packs</div>
+  <div style="background:#fff;border:1px solid #E8E1D2;border-radius:20px;padding:4px 18px">
+    <div style="display:flex;gap:12px;padding:10px 0 2px;font-size:11.5px;color:#B5AE9E;font-weight:700;text-transform:uppercase;letter-spacing:.04em"><span style="flex:1"></span><span style="width:66px;text-align:center">Practise</span><span style="width:66px;text-align:center">Tests</span><span style="width:26px"></span></div>
+    <sc-for list="{{ packRows }}" as="p" hint-placeholder-count="4">
+      <div style="display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid #F2EDE1">
+        <span style="flex:1;min-width:0"><span style="display:block;font-size:15px;font-weight:700">{{ p.name }}</span><span style="display:block;font-size:12.5px;color:#6E6A5E;margin-top:2px">{{ p.meta }}</span></span>
+        <span style="width:66px;display:flex;justify-content:center;flex:none"><button onClick="{{ p.flipLearn }}" aria-label="Use in practise" style="{{ p.learnStyle }}"><span style="{{ p.learnKnob }}"></span></button></span>
+        <span style="width:66px;display:flex;justify-content:center;flex:none"><button onClick="{{ p.flipTest }}" aria-label="Use in tests" style="{{ p.testStyle }}"><span style="{{ p.testKnob }}"></span></button></span>
+        <span style="width:26px;display:flex;justify-content:center;flex:none"><sc-if value="{{ p.canDelete }}" hint-placeholder-val="{{ false }}"><button onClick="{{ p.del }}" aria-label="Remove this pack" style="background:none;border:none;color:#B8433D;font-size:16px;cursor:pointer;padding:4px">✕</button></sc-if></span>
+      </div>
+    </sc-for>
+  </div>
+  <label style="display:flex;align-items:center;justify-content:center;width:100%;box-sizing:border-box;margin-top:12px;background:#E4F2EF;border:2px dashed #0E7C6B;color:#0A5D50;border-radius:16px;min-height:52px;font-size:15.5px;cursor:pointer;font-weight:700">Load a question pack (JSON file)…<input type="file" accept=".json,application/json" onChange="{{ importPack }}" style="display:none"></label>
+  <div style="font-size:13px;color:#6E6A5E;margin-top:8px;line-height:1.5">A pack is a JSON list using the same fields as the exported bank (question, options ×4, correctIndex, explanation, ruleRef, topic 1–14). Questions you write or have a licence for can be loaded here, then switched on or off for practise and tests separately.</div>
+
+  <div style="font-family:'Nunito',sans-serif;font-weight:800;font-size:18px;margin:28px 0 10px">Subscription</div>
+  <div style="background:#fff;border:1px solid #E8E1D2;border-radius:20px;padding:18px">
+    <div style="font-size:14px;color:#6E6A5E;line-height:1.55;margin-bottom:12px">{{ subStatus }}</div>
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:6px 0 12px">
+      <span style="font-size:15px">Require a subscription to practise</span>
+      <button onClick="{{ subToggle }}" aria-label="Require subscription" style="{{ subTrackStyle }}"><span style="{{ subKnobStyle }}"></span></button>
+    </div>
+    <label style="font-size:13.5px;color:#6E6A5E">Payment link (e.g. a Stripe Payment Link — free to create; Stripe hosts the checkout)<input value="{{ subLink }}" onChange="{{ subLinkChange }}" placeholder="https://buy.stripe.com/…" style="display:block;width:100%;box-sizing:border-box;margin-top:4px;padding:11px;border:1px solid #E8E1D2;border-radius:10px;font-size:14px"></label>
+    <button onClick="{{ grantToggle }}" style="width:100%;margin-top:12px;background:#E4F2EF;color:#0A5D50;border:none;border-radius:12px;min-height:48px;font-size:15px;font-weight:700;cursor:pointer">{{ grantLabel }}</button>
+    <div style="font-size:13px;color:#6E6A5E;line-height:1.5;margin-top:10px">When a payment comes in (Stripe emails you), unlock that learner here. The lock is app-level, not copy-protection.</div>
+  </div>
+
+  <div style="font-family:'Nunito',sans-serif;font-weight:800;font-size:18px;margin:28px 0 10px">Family sync (GitHub)</div>
+  <div style="background:#fff;border:1px solid #E8E1D2;border-radius:20px;padding:18px">
+    <div style="font-size:14px;color:#6E6A5E;line-height:1.55;margin-bottom:12px">{{ cloudStatus }}</div>
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <label style="font-size:13.5px;color:#6E6A5E">Repository (owner/name)<input value="{{ syncUrl }}" name="url" onChange="{{ syncChange }}" placeholder="dstorey87/Catie-Test-data" autocapitalize="none" style="display:block;width:100%;box-sizing:border-box;margin-top:4px;padding:11px;border:1px solid #E8E1D2;border-radius:10px;font-size:14px"></label>
+      <label style="font-size:13.5px;color:#6E6A5E">Access token (Contents read &amp; write on that repo)
+        <span style="display:flex;gap:8px;margin-top:4px">
+          <input type="{{ passType }}" value="{{ syncKey }}" name="key" onChange="{{ syncChange }}" placeholder="github_pat_…" autocapitalize="none" style="flex:1;box-sizing:border-box;padding:11px;border:1px solid #E8E1D2;border-radius:10px;font-size:14px;min-width:0">
+          <button onClick="{{ togglePass }}" style="flex:none;background:#EFE9DC;border:none;border-radius:10px;padding:0 14px;font-size:13.5px;font-weight:700;color:#6E6A5E;cursor:pointer;min-height:44px">{{ passToggleLabel }}</button>
+        </span>
+      </label>
+      <button onClick="{{ saveSync }}" style="background:#0E7C6B;color:#fff;border:none;border-radius:12px;min-height:46px;font-size:15px;font-weight:700;cursor:pointer">Save &amp; connect</button>
+      <div style="display:flex;gap:10px">
+        <button onClick="{{ syncNow }}" style="flex:1;background:#E4F2EF;color:#0A5D50;border:none;border-radius:12px;min-height:46px;font-size:15px;font-weight:700;cursor:pointer">Sync now</button>
+        <button onClick="{{ cloudSignOutBtn }}" style="flex:1;background:#fff;border:1px solid #E8E1D2;border-radius:12px;min-height:46px;font-size:15px;cursor:pointer">Disconnect this device</button>
+      </div>
+      <div style="font-size:13px;color:#6E6A5E;line-height:1.5">Best kept in a separate <b>private</b> repo (e.g. Catie-Test-data) so progress isn’t public — the token only needs access to that one repo. Steps: SETUP.md §3.</div>
+    </div>
+  </div>
+
+  <div style="font-family:'Nunito',sans-serif;font-weight:800;font-size:18px;margin:28px 0 10px">Data</div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+    <button onClick="{{ exportData }}" style="background:#fff;border:1px solid #E8E1D2;border-radius:14px;min-height:50px;font-size:15px;cursor:pointer">Export backup</button>
+    <label style="background:#fff;border:1px solid #E8E1D2;border-radius:14px;min-height:50px;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center">Import backup<input type="file" accept=".json,application/json" onChange="{{ importFile }}" style="display:none"></label>
+    <button onClick="{{ goEditor }}" style="background:#fff;border:1px solid #E8E1D2;border-radius:14px;min-height:50px;font-size:15px;cursor:pointer">Edit questions</button>
+    <button onClick="{{ goPrint }}" style="background:#fff;border:1px solid #E8E1D2;border-radius:14px;min-height:50px;font-size:15px;cursor:pointer">Print</button>
+  </div>
+</div>
+</sc-if>
+
+<!-- ============ EDITOR ============ -->
+<sc-if value="{{ vEditor }}" hint-placeholder-val="{{ false }}">
+<div data-screen-label="Question editor">
+  <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
+    <button onClick="{{ goDash }}" style="background:#fff;border:1px solid #E8E1D2;border-radius:12px;width:44px;height:44px;cursor:pointer;font-size:18px">←</button>
+    <div style="font-family:'Nunito',sans-serif;font-weight:900;font-size:24px;flex:1">Questions</div>
+    <button onClick="{{ exportBank }}" style="background:#fff;border:1px solid #E8E1D2;border-radius:12px;padding:0 14px;height:44px;cursor:pointer;font-size:14px;color:#0E7C6B;font-weight:700">Export bank</button>
+  </div>
+  <select value="{{ edTopic }}" onChange="{{ setEdTopic }}" style="width:100%;padding:12px;border:1px solid #E8E1D2;border-radius:12px;font-size:16px;background:#fff;margin-bottom:12px">
+    <sc-for list="{{ edTopicOpts }}" as="t" hint-placeholder-count="3">
+      <option value="{{ t.v }}">{{ t.label }}</option>
+    </sc-for>
+  </select>
+  <sc-if value="{{ edEditing }}" hint-placeholder-val="{{ false }}">
+    <div style="background:#fff;border:1px solid #E8E1D2;border-radius:20px;padding:18px;display:flex;flex-direction:column;gap:12px">
+      <label style="font-size:13.5px;color:#6E6A5E">Question<textarea name="question" value="{{ edQ.question }}" onChange="{{ edChange }}" rows="3" style="display:block;width:100%;box-sizing:border-box;margin-top:4px;padding:10px;border:1px solid #E8E1D2;border-radius:10px;font-size:15px;font-family:inherit;resize:vertical"></textarea></label>
+      <sc-for list="{{ edOpts }}" as="o" hint-placeholder-count="4">
+        <div style="display:flex;gap:8px;align-items:center">
+          <button onClick="{{ o.pickCorrect }}" title="Mark as the correct answer" style="{{ o.radioStyle }}">✓</button>
+          <input value="{{ o.val }}" name="{{ o.name }}" onChange="{{ edChange }}" style="flex:1;padding:10px;border:1px solid #E8E1D2;border-radius:10px;font-size:15px">
+        </div>
+      </sc-for>
+      <label style="font-size:13.5px;color:#6E6A5E">Explanation<textarea name="explanation" value="{{ edQ.explanation }}" onChange="{{ edChange }}" rows="2" style="display:block;width:100%;box-sizing:border-box;margin-top:4px;padding:10px;border:1px solid #E8E1D2;border-radius:10px;font-size:15px;font-family:inherit;resize:vertical"></textarea></label>
+      <div style="display:flex;gap:10px">
+        <label style="flex:1;font-size:13.5px;color:#6E6A5E">Rule reference<input name="ruleRef" value="{{ edQ.ruleRef }}" onChange="{{ edChange }}" style="display:block;width:100%;box-sizing:border-box;margin-top:4px;padding:10px;border:1px solid #E8E1D2;border-radius:10px;font-size:15px"></label>
+        <label style="flex:1;font-size:13.5px;color:#6E6A5E">Sign image<select name="imageHint" value="{{ edQ.imageHint }}" onChange="{{ edChange }}" style="display:block;width:100%;box-sizing:border-box;margin-top:4px;padding:10px;border:1px solid #E8E1D2;border-radius:10px;font-size:15px;background:#fff"><sc-for list="{{ signOpts }}" as="s" hint-placeholder-count="3"><option value="{{ s.v }}">{{ s.label }}</option></sc-for></select></label>
+      </div>
+      <div style="display:flex;gap:10px">
+        <button onClick="{{ edCancel }}" style="flex:1;background:#fff;border:1px solid #E8E1D2;border-radius:14px;min-height:48px;font-size:15px;cursor:pointer">Cancel</button>
+        <button onClick="{{ edDelete }}" style="flex:1;background:#FBEAE9;border:1px solid #D14B45;color:#B8433D;border-radius:14px;min-height:48px;font-size:15px;cursor:pointer;font-weight:700">Delete</button>
+        <button onClick="{{ edSave }}" style="flex:2;background:#0E7C6B;color:#fff;border:none;border-radius:14px;min-height:48px;font-size:15px;cursor:pointer;font-weight:700">Save</button>
+      </div>
+    </div>
+  </sc-if>
+  <sc-if value="{{ edListShow }}" hint-placeholder-val="{{ false }}">
+    <input value="{{ edSearch }}" onChange="{{ setEdSearch }}" placeholder="Search all questions…" style="width:100%;box-sizing:border-box;padding:12px;border:1px solid #E8E1D2;border-radius:12px;font-size:15px;margin-bottom:10px;background:#fff">
+    <button onClick="{{ edAdd }}" style="width:100%;background:#E4F2EF;border:2px dashed #0E7C6B;color:#0A5D50;border-radius:16px;min-height:52px;font-size:15.5px;cursor:pointer;font-weight:700;margin-bottom:12px">+ Add a question to this topic</button>
+    <div style="background:#fff;border:1px solid #E8E1D2;border-radius:20px;padding:4px 18px">
+      <sc-for list="{{ edList }}" as="q" hint-placeholder-count="6">
+        <div onClick="{{ q.pick }}" style="display:flex;gap:10px;align-items:baseline;padding:12px 0;border-bottom:1px solid #F2EDE1;cursor:pointer">
+          <span style="flex:1;font-size:14.5px;line-height:1.35">{{ q.text }}</span>
+          <span style="flex:none;font-size:12px;color:#6E6A5E">{{ q.tag }}</span>
+        </div>
+      </sc-for>
+    </div>
+  </sc-if>
+</div>
+</sc-if>
+
+<!-- ============ PRINT SETUP ============ -->
+<sc-if value="{{ vPrint }}" hint-placeholder-val="{{ false }}">
+<div data-screen-label="Print">
+  <div style="display:flex;align-items:center;gap:10px;margin-bottom:18px">
+    <button onClick="{{ goHome }}" style="background:#fff;border:1px solid #E8E1D2;border-radius:12px;width:44px;height:44px;cursor:pointer;font-size:18px">←</button>
+    <div style="font-family:'Nunito',sans-serif;font-weight:900;font-size:24px">Print</div>
+  </div>
+  <div style="font-family:'Nunito',sans-serif;font-weight:800;font-size:17px;margin:8px 0 10px">What would you like?</div>
+  <div style="display:flex;flex-direction:column;gap:10px">
+    <sc-for list="{{ printFormatChoices }}" as="f" hint-placeholder-count="2">
+      <button onClick="{{ f.pick }}" style="{{ f.style }}">
+        <span style="display:block;font-weight:700;font-size:16px">{{ f.name }}</span>
+        <span style="display:block;font-size:13.5px;color:#6E6A5E;margin-top:3px">{{ f.sub }}</span>
+      </button>
+    </sc-for>
+  </div>
+  <sc-if value="{{ printIsCards }}" hint-placeholder-val="{{ false }}">
+    <div style="font-family:'Nunito',sans-serif;font-weight:800;font-size:17px;margin:18px 0 10px">Which questions?</div>
+    <select value="{{ printScope }}" onChange="{{ setPrintScope }}" style="width:100%;padding:12px;border:1px solid #E8E1D2;border-radius:12px;font-size:16px;background:#fff">
+      <sc-for list="{{ printScopeOpts }}" as="s" hint-placeholder-count="3">
+        <option value="{{ s.v }}">{{ s.label }}</option>
+      </sc-for>
+    </select>
+  </sc-if>
+  <div style="font-size:14px;color:#6E6A5E;margin-top:16px;line-height:1.5">{{ printHint }}</div>
+  <button onClick="{{ printGo }}" style="width:100%;margin-top:18px;background:#0E7C6B;color:#fff;border:none;border-radius:18px;min-height:58px;font-family:'Nunito',sans-serif;font-weight:900;font-size:19px;cursor:pointer">{{ printBtnLabel }}</button>
+</div>
+</sc-if>
+
+<!-- ============ SETTINGS ============ -->
+<sc-if value="{{ vSettings }}" hint-placeholder-val="{{ false }}">
+<div data-screen-label="Settings">
+  <div style="display:flex;align-items:center;gap:10px;margin-bottom:18px">
+    <button onClick="{{ goHome }}" style="background:#fff;border:1px solid #E8E1D2;border-radius:12px;width:44px;height:44px;cursor:pointer;font-size:18px">←</button>
+    <div style="font-family:'Nunito',sans-serif;font-weight:900;font-size:24px">Settings</div>
+  </div>
+  <div style="background:#fff;border:1px solid #E8E1D2;border-radius:20px;padding:6px 18px">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 0;border-bottom:1px solid #F2EDE1">
+      <span style="font-size:16.5px">Text size</span>
+      <div style="display:flex;gap:6px">
+        <sc-for list="{{ sizeChoices }}" as="s" hint-placeholder-count="3">
+          <button onClick="{{ s.pick }}" style="{{ s.style }}">{{ s.label }}</button>
+        </sc-for>
+      </div>
+    </div>
+    <sc-for list="{{ toggleRows }}" as="t" hint-placeholder-count="4">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 0;border-bottom:1px solid #F2EDE1">
+        <span style="font-size:16.5px;flex:1">{{ t.name }}<span style="display:block;font-size:13px;color:#6E6A5E;margin-top:2px">{{ t.sub }}</span></span>
+        <button onClick="{{ t.flip }}" aria-label="{{ t.name }}" style="{{ t.trackStyle }}"><span style="{{ t.knobStyle }}"></span></button>
+      </div>
+    </sc-for>
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 0;border-bottom:1px solid #F2EDE1">
+      <span style="font-size:16.5px;flex:none">Voice</span>
+      <select value="{{ voiceSel }}" onChange="{{ setVoice }}" style="flex:1;max-width:250px;padding:10px;border:1px solid #E8E1D2;border-radius:10px;font-size:14px;background:#fff">
+        <sc-for list="{{ voiceOpts }}" as="v" hint-placeholder-count="2"><option value="{{ v.v }}">{{ v.label }}</option></sc-for>
+      </select>
+    </div>
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 0;border-bottom:1px solid #F2EDE1">
+      <span style="font-size:16.5px">Voice speed</span>
+      <div style="display:flex;gap:6px">
+        <sc-for list="{{ speedChoices }}" as="s" hint-placeholder-count="3"><button onClick="{{ s.pick }}" style="{{ s.style }}">{{ s.label }}</button></sc-for>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 0">
+      <span style="font-size:16.5px">Hear the voice</span>
+      <button onClick="{{ testVoice }}" style="background:#E4F2EF;color:#0A5D50;border:none;border-radius:12px;padding:10px 18px;font-size:15px;font-weight:700;cursor:pointer">Play sample</button>
+    </div>
+  </div>
+  <sc-if value="{{ hasVoiceNotice }}" hint-placeholder-val="{{ false }}">
+    <div style="background:#FBEAE9;border:1px solid #E8B7B4;border-radius:16px;padding:14px 16px;margin-top:12px;font-size:13.5px;color:#6E6A5E;line-height:1.55"><b style="color:#B8433D">Why it sounds robotic here:</b> {{ voiceNotice }}</div>
+  </sc-if>
+  <div style="background:#FBF1DC;border:1px solid #F0D9A8;border-radius:16px;padding:14px 16px;margin-top:12px;font-size:13.5px;color:#6E6A5E;line-height:1.55"><b style="color:#2A2C33">Get a much nicer voice on iPhone or iPad:</b> in the device's Settings app go to Accessibility → Spoken Content → Voices → English (UK) and download an <b>Enhanced</b> or <b>Premium</b> voice such as Kate or Serena. It will then appear in the Voice list above — marked with a ★.</div>
+  <div style="font-family:'Nunito',sans-serif;font-weight:800;font-size:18px;margin:24px 0 10px">Profiles</div>
+  <div style="background:#fff;border:1px solid #E8E1D2;border-radius:20px;padding:18px;display:flex;gap:12px">
+    <label style="flex:1;font-size:13.5px;color:#6E6A5E">Learner's name<input value="{{ learnerName }}" name="learner" onChange="{{ nameChange }}" style="display:block;width:100%;box-sizing:border-box;margin-top:4px;padding:11px;border:1px solid #E8E1D2;border-radius:10px;font-size:16px"></label>
+    <label style="flex:1;font-size:13.5px;color:#6E6A5E">Parent's name<input value="{{ parentName }}" name="parent" onChange="{{ nameChange }}" style="display:block;width:100%;box-sizing:border-box;margin-top:4px;padding:11px;border:1px solid #E8E1D2;border-radius:10px;font-size:16px"></label>
+  </div>
+  <button onClick="{{ addLearner }}" style="width:100%;margin-top:12px;background:#fff;border:1px solid #E8E1D2;border-radius:14px;min-height:50px;font-size:15px;cursor:pointer;color:#0E7C6B;font-weight:700">+ Add another learner</button>
+  <button onClick="{{ resetProgress }}" style="width:100%;margin-top:24px;background:none;border:1px solid #D14B45;color:#B8433D;border-radius:14px;min-height:50px;font-size:15px;cursor:pointer">Reset all progress…</button>
+</div>
+</sc-if>
+
+</div>
+</div>
+
+<!-- ============ PRINT AREA ============ -->
+<sc-if value="{{ printPreview }}" hint-placeholder-val="{{ false }}">
+<div data-screen-label="Print preview" style="background:#fff;color:#111;font-family:'Atkinson Hyperlegible',sans-serif">
+  <div class="app-chrome" style="max-width:680px;margin:0 auto;padding:14px 20px;display:flex;gap:10px;align-items:center">
+    <button onClick="{{ printBack }}" style="background:#fff;border:1px solid #E8E1D2;border-radius:12px;padding:10px 16px;cursor:pointer;font-size:15px">← Back</button>
+    <button onClick="{{ printNow }}" style="background:#0E7C6B;color:#fff;border:none;border-radius:12px;padding:10px 20px;cursor:pointer;font-size:15px;font-weight:700">Print</button>
+    <span style="font-size:13.5px;color:#6E6A5E">{{ printPreviewHint }}</span>
+  </div>
+  <sc-if value="{{ printIsCards }}" hint-placeholder-val="{{ false }}">
+    <sc-for list="{{ printPages }}" as="page" hint-placeholder-count="1">
+      <div class="pbreak" style="width:194mm;margin:0 auto;padding:0">
+        <sc-for list="{{ page.cards }}" as="c" hint-placeholder-count="4">
+          <div style="display:flex;height:69mm;border-bottom:1.5px dashed #999;position:relative;box-sizing:border-box">
+            <div style="width:50%;box-sizing:border-box;padding:6mm 7mm;border-right:1.5px dashed #bbb;display:flex;flex-direction:column">
+              <div style="font-size:8.5pt;color:#888;margin-bottom:2mm">{{ c.topicName }} · {{ c.id }}</div>
+              <div style="font-size:11.5pt;font-weight:700;line-height:1.35">{{ c.question }}</div>
+              <div style="margin-top:2.5mm;display:flex;flex-direction:column;gap:1.2mm">
+                <sc-for list="{{ c.opts }}" as="o" hint-placeholder-count="4">
+                  <div style="font-size:9.5pt;line-height:1.3"><b>{{ o.letter }}</b>&nbsp; {{ o.text }}</div>
+                </sc-for>
+              </div>
+            </div>
+            <div style="width:50%;box-sizing:border-box;padding:6mm 7mm;display:flex;flex-direction:column;justify-content:center">
+              <div style="font-size:13pt;font-weight:800">{{ c.answerLetter }} — {{ c.answerText }}</div>
+              <div style="font-size:9.5pt;line-height:1.4;margin-top:2.5mm">{{ c.explanation }}</div>
+              <div style="font-size:8.5pt;color:#888;margin-top:2mm">{{ c.ruleRef }}</div>
+            </div>
+          </div>
+        </sc-for>
+        <div style="text-align:center;font-size:8pt;color:#aaa;padding:2mm 0">Theory Trainer · fold along the centre line, cut along the dashes · {{ page.label }}</div>
+      </div>
+    </sc-for>
+  </sc-if>
+  <sc-if value="{{ printIsPaper }}" hint-placeholder-val="{{ false }}">
+    <div style="width:194mm;margin:0 auto">
+      <div style="font-size:16pt;font-weight:800;padding:4mm 0 1mm">Theory Trainer — practice paper</div>
+      <div style="font-size:10pt;color:#555;padding-bottom:4mm">50 questions · 57 minutes · pass mark 43 · answer key on the last page</div>
+      <sc-for list="{{ printQs }}" as="q" hint-placeholder-count="5">
+        <div style="padding:2.5mm 0;border-bottom:1px solid #eee;break-inside:avoid">
+          <div style="font-size:10.5pt;font-weight:700;line-height:1.35"><span style="color:#888">{{ q.n }}.</span> {{ q.question }}</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:1mm 6mm;margin-top:1.5mm">
+            <sc-for list="{{ q.opts }}" as="o" hint-placeholder-count="4">
+              <div style="font-size:9.5pt;line-height:1.3"><b>{{ o.letter }}</b>&nbsp; {{ o.text }}</div>
+            </sc-for>
+          </div>
+        </div>
+      </sc-for>
+      <div class="pbreak"></div>
+      <div style="font-size:14pt;font-weight:800;padding:6mm 0 3mm">Answer key</div>
+      <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:1.5mm 6mm">
+        <sc-for list="{{ printKey }}" as="k" hint-placeholder-count="10">
+          <div style="font-size:10pt"><span style="color:#888">{{ k.n }}.</span> <b>{{ k.a }}</b></div>
+        </sc-for>
+      </div>
+    </div>
+  </sc-if>
+  <sc-if value="{{ printIsBook }}" hint-placeholder-val="{{ false }}">
+    <div style="width:194mm;margin:0 auto">
+      <div style="font-size:16pt;font-weight:800;padding:4mm 0 1mm">Theory Trainer — full question &amp; answer book</div>
+      <div style="font-size:10pt;color:#555;padding-bottom:2mm">{{ bookCount }} questions · every option shown · correct answer marked ✓ · Highway Code reference on each</div>
+      <sc-for list="{{ bookTopics }}" as="bt" hint-placeholder-count="2">
+        <div>
+          <div style="font-size:13pt;font-weight:800;padding:5mm 0 2mm;border-bottom:2px solid #333">{{ bt.name }}</div>
+          <sc-for list="{{ bt.qs }}" as="q" hint-placeholder-count="4">
+            <div style="padding:2.5mm 0;border-bottom:1px solid #eee;break-inside:avoid">
+              <div style="font-size:10.5pt;font-weight:700;line-height:1.35"><span style="color:#888">{{ q.n }}.</span> {{ q.question }} <span style="font-weight:400;color:#999;font-size:8.5pt">[{{ q.id }}]</span></div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:1mm 6mm;margin-top:1.5mm">
+                <sc-for list="{{ q.opts }}" as="o" hint-placeholder-count="4">
+                  <div style="{{ o.style }}"><b>{{ o.letter }}</b>&nbsp; {{ o.text }} {{ o.mark }}</div>
+                </sc-for>
+              </div>
+              <div style="font-size:9pt;color:#444;margin-top:1.5mm">{{ q.explanation }} <span style="color:#999">· {{ q.ruleRef }}</span></div>
+            </div>
+          </sc-for>
+        </div>
+      </sc-for>
+    </div>
+  </sc-if>
+</div>
+</sc-if>
+
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;defaultSessionLength&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[10,20,30],&quot;default&quot;:10,&quot;tsType&quot;:&quot;number&quot;,&quot;section&quot;:&quot;Behaviour&quot;},&quot;speechRate&quot;:{&quot;editor&quot;:&quot;range&quot;,&quot;min&quot;:0.7,&quot;max&quot;:1.3,&quot;step&quot;:0.05,&quot;default&quot;:0.95,&quot;unit&quot;:&quot;x&quot;,&quot;tsType&quot;:&quot;number&quot;,&quot;section&quot;:&quot;Behaviour&quot;},&quot;showSignImages&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Behaviour&quot;}}">
+class Component extends DCLogic {
+  constructor(props){
+    super(props);
+    this.TOPICS = ["Alertness","Attitude","Safety and your vehicle","Safety margins","Hazard awareness","Vulnerable road users","Other types of vehicle","Vehicle handling","Motorway rules","Rules of the road","Road and traffic signs","Essential documents","Incidents and emergencies","Vehicle loading"];
+    this.KEY = 'theoryTrainer.v1';
+    this.COACH = [
+      {tip:"Before anything changes \u2014 moving off, slowing, turning \u2014 it\u2019s Mirrors, Signal, Manoeuvre. M-S-M.", low:"Most of these come down to two answers: check your mirrors, or stop somewhere safe and rest. Ask \u2018what do I need to SEE first?\u2019"},
+      {tip:"The calm answer is the right answer: hold back, give way, let them pass. Never wave anyone across.", low:"Cross out any option that flashes, revs, honks or hurries someone \u2014 what\u2019s left is usually correct."},
+      {tip:"Three numbers to know: 1.6 mm of tread, read a plate from 20 metres, and a red dashboard light means stop.", low:"Make a fridge card of the numbers \u2014 1.6 mm tread \u00b7 20 m eyesight \u00b7 red light = stop \u2014 then practise just this topic."},
+      {tip:"Stopping distances: 12, 23, 36, 53, 73, 96 metres. Double it in rain, ten times on ice.", low:"Write the six stopping distances out by hand a few times \u2014 12, 23, 36, 53, 73, 96 \u2014 most questions here are these numbers in disguise."},
+      {tip:"Play \u2018what could step out?\u2019 \u2014 a ball means a child, a stopped bus means crossing passengers, a parked van hides everything.", low:"These are picture questions. Read slowly and imagine the street; the answer that expects trouble early is right."},
+      {tip:"Whoever is easiest to hurt goes first: pedestrians, then cyclists, then horses. 1.5 m for bikes; 2 m and 10 mph for horses.", low:"Learn three gaps by heart \u2014 1.5 metres for cyclists, 2 metres for horses, and full patience for everyone on foot."},
+      {tip:"Big vehicles swing wide and stop slowly \u2014 never slip up the left side of a lorry, bus or tram.", low:"If an option involves squeezing past or cutting in on something big, it\u2019s wrong. Hold back and you get the mark."},
+      {tip:"Gentle wins: gentle brakes on ice, second gear to pull away in snow, low gear down long hills.", low:"Pair each surface with its trick: ice \u2192 gentle + huge gaps, snow \u2192 2nd gear, long hills \u2192 low gear, deep water \u2192 slow then test brakes."},
+      {tip:"Red X means leave the lane now. Studs: red on the left edge, amber by the central reservation, white between lanes, green at slip roads.", low:"Draw the motorway once \u2014 red studs left, amber right, white between lanes, green at exits \u2014 and the stud questions become free marks."},
+      {tip:"Park 10 m from a junction, never on zigzags. Street lights mean 30 mph in England \u2014 20 in Wales.", low:"One card covers most misses: 20 Wales towns \u00b7 30 England towns \u00b7 60 single \u00b7 70 dual and motorway \u00b7 10 m from junctions."},
+      {tip:"Circles order, triangles warn, rectangles inform. A red ring says don\u2019t; a blue circle says do.", low:"Sort every sign into circle, triangle or rectangle first \u2014 the shape gives away half the answer before you read it."},
+      {tip:"3 years old = first MOT. 43 out of 50 to pass. 6 points in your first 2 years and the licence is gone.", low:"It\u2019s a numbers topic: MOT at 3 years \u00b7 pass at 43/50 \u00b7 6 points = revoked \u00b7 7 days to show documents \u00b7 theory certificate lasts 2 years."},
+      {tip:"DR ABC: Danger, Response, Airway, Breathing, Circulation. Compressions 100\u2013120 a minute, 5\u20136 cm deep.", low:"Rehearse DR ABC out loud until it\u2019s automatic, and remember: make the scene safe first, move casualties only from real danger."},
+      {tip:"Heavy things live low, central and strapped down \u2014 and the driver always carries the blame.", low:"Two ideas cover nearly everything: secure the load low and central, and responsibility always sits with the driver."}
+    ];
+    this.SIGNMETA = [
+      {k:'stop', label:'Stop', desc:'You must stop completely at the line, every time.', ref:'HC Rule 171'},
+      {k:'giveWay', label:'Give way', desc:'Let traffic on the major road go first.', ref:'HC Rule 172'},
+      {k:'speed30', label:'Speed limit 30 mph', desc:'You must not drive faster than 30 miles per hour.', ref:'HC Rule 124'},
+      {k:'speed20', label:'Speed limit 20 mph', desc:'You must not drive faster than 20 miles per hour. This is the usual town limit in Wales.', ref:'HC Rule 124'},
+      {k:'natLimit', label:'National speed limit applies', desc:'The local limit has ended. The national limit for the road type now applies.', ref:'HC Rule 124'},
+      {k:'minSpeed', label:'Minimum speed 30 mph', desc:'A blue circle gives an order: drive at 30 or faster where safe.', ref:'Traffic signs'},
+      {k:'noEntry', label:'No entry', desc:'Do not drive in. The white bar on red means the road is closed to you.', ref:'Traffic signs'},
+      {k:'noOvertaking', label:'No overtaking', desc:'The red car shows the banned action: do not overtake here.', ref:'HC Rule 129'},
+      {k:'roadNarrows', label:'Road narrows on both sides', desc:'The road ahead gets narrower. Slow down and watch for oncoming traffic.', ref:'Traffic signs'},
+      {k:'schoolAhead', label:'Children crossing ahead', desc:'Slow down. Children may be crossing near a school ahead.', ref:'HC Rule 208'},
+      {k:'slippery', label:'Slippery road ahead', desc:'The surface ahead may be slippery. Slow down and steer gently.', ref:'Traffic signs'},
+      {k:'bendLeft', label:'Sharp bend to the left', desc:'Slow down before the bend, not in it.', ref:'Traffic signs'},
+      {k:'trafficLights', label:'Traffic signals', desc:'The order is green, amber, red, then red and amber, then green again.', ref:'HC Rule 175'},
+      {k:'redX', label:'Lane closed — red X', desc:'Do not use this motorway lane. Move out as soon as it is safe.', ref:'HC Rule 258'},
+      {k:'boxJunction', label:'Box junction', desc:'Only enter the yellow box when your exit road is clear.', ref:'HC Rule 174'},
+      {k:'doubleWhite', label:'Double white lines', desc:'When the line nearest you is solid, do not cross it except to turn in or pass something very slow.', ref:'HC Rule 129'},
+      {k:'zebra', label:'Zebra crossing', desc:'Give way to people waiting to cross, and stop once they are on the crossing.', ref:'HC Rule 195'},
+      {k:'levelCrossing', label:'Level crossing with barrier', desc:'A railway crosses the road ahead. Stop when the lights flash.', ref:'HC Rule 293'},
+      {k:'motorway', label:'Start of motorway', desc:'Motorway rules apply from here. Signs on motorways are blue.', ref:'HC Rule 253'},
+      {k:'oneWay', label:'One-way traffic', desc:'All traffic here moves in the direction of the arrow.', ref:'HC Rule 143'}
+    ];
+    this.TIPS = {
+      1:['Only a fool breaks the two-second rule \u2014 say it as the car ahead passes a marker. Finish early? Drop back.','Tired? Only sleep fixes it. Stop somewhere safe and rest \u2014 opening the window does not work.','Phone in the glovebox before you set off = no temptation at all.'],
+      2:['A headlight flash only means \u201cI am here\u201d \u2014 never \u201cgo ahead\u201d.','Never wave anyone across the road \u2014 you cannot promise the other cars will stop.','Tailgater behind? Slow gently and grow YOUR gap in front \u2014 it protects you both.'],
+      3:['Tyre tread: 1.6 mm \u2014 do the 20p test: if the coin\u2019s rim is hidden in the groove, the tread is fine.','Red dashboard light = stop and check as soon as it is safe. Amber = get it checked soon.','No horn in town between 11.30 pm and 7 am \u2014 except real danger.'],
+      4:['Say the stopping distances like a phone number: 12, 23, 36, 53, 73, 96.','Wet road = double the gap (4 seconds). Ice = up to 10 times the distance.','Steering suddenly light in rain? You are floating on water \u2014 ease off the gas gently.'],
+      5:['A ball rolling into the road means a child is coming after it.','Parked cars hide people \u2014 watch for feet moving underneath them.','Angry, upset or half-asleep? The biggest hazard is inside the car. Calm down first.'],
+      6:['Cyclists: at least 1.5 metres when passing at up to 30 mph \u2014 a car door\u2019s width.','Horses: 10 and 2 \u2014 no faster than 10 mph, at least 2 metres of space.','A white cane with a red band means the person is deaf AND blind.'],
+      7:['If you cannot see a lorry\u2019s mirrors, the driver cannot see you.','Long lorries swing RIGHT to turn LEFT \u2014 never sneak up their left side.','Trams cannot steer around you \u2014 the rails decide where they go.'],
+      8:['Fog lights only when you can see less than 100 m \u2014 one football pitch. Sky clears? Switch them off.','Snow or ice: pull away in 2nd gear and make every move gentle.','Just crossed a ford? Test your brakes softly straight after.'],
+      9:['Motorway studs: RED left edge, AMBER by the barrier, WHITE between lanes, GREEN at slip roads.','A red X means the lane is closed \u2014 even if it looks empty.','Keep left unless overtaking \u2014 then move back left again.'],
+      10:['Towns: Wales = 20 mph, England and Scotland = 30, unless a sign says otherwise.','Yellow box: only drive in when your way OUT is clear (except waiting to turn right).','Park at least 10 metres from a junction so everyone can see.'],
+      11:['Circles give orders, triangles warn, rectangles inform.','Blue circle = you MUST. Red ring = you must NOT.','STOP is the only octagon \u2014 you can tell it even covered in snow.'],
+      12:['The test: 50 questions, 57 minutes, 43 to pass \u2014 you can only drop 7.','6 points in your first 2 years = licence revoked. Guard those points.','MOT from age 3 \u00b7 theory certificate lasts 2 years \u00b7 7 days to show documents.'],
+      13:['CPR: 100\u2013120 pushes a minute, 5\u20136 cm deep \u2014 the beat of \u201cStayin\u2019 Alive\u201d.','An AED decides by itself whether to shock \u2014 switch it on and follow the voice. No training needed.','Keep a hurt motorcyclist\u2019s helmet ON, unless they stop breathing.'],
+      14:['Heavy things travel low, central and strapped down.','Caravan snaking? Ease off gently \u2014 never brake hard or speed up.','Loaded car: pump the tyres up, aim the headlights down.']
+    };
+    this.BASE = 'theoryTrainer';
+    let users = null, saved = {}, content = {};
+    try { users = JSON.parse(localStorage.getItem(this.BASE+'.users')); } catch(e) {}
+    let legacy = {};
+    try { legacy = JSON.parse(localStorage.getItem('theoryTrainer.v1')) || {}; } catch(e) {}
+    if(!users || !users.length){
+      users = [{id:'u1', name:(legacy.settings && legacy.settings.learnerName && legacy.settings.learnerName!=='Learner')? legacy.settings.learnerName : 'Catie'}];
+      try {
+        localStorage.setItem(this.BASE+'.users', JSON.stringify(users));
+        if(legacy.settings) localStorage.setItem(this.BASE+'.d.u1', JSON.stringify(legacy));
+        localStorage.setItem(this.BASE+'.content', JSON.stringify({overrides:legacy.overrides||{}, custom:legacy.custom||[], deleted:legacy.deleted||[], packNames:legacy.packNames||{}, packLearn:legacy.packLearn||{}, packTest:legacy.packTest||{}}));
+      } catch(e) {}
+    }
+    this.users = users;
+    const activeId = localStorage.getItem(this.BASE+'.active') || users[0].id;
+    try { saved = JSON.parse(localStorage.getItem(this.BASE+'.d.'+activeId)) || {}; } catch(e) {}
+    try { content = JSON.parse(localStorage.getItem(this.BASE+'.content')) || {}; } catch(e) {}
+    let syncCfg = null;
+    try { syncCfg = JSON.parse(localStorage.getItem('theoryTrainer.sync')) || null; } catch(e) {}
+    this.state = {
+      view: 'login', bank: [], loaded: false,
+      settings: Object.assign({textSize:1, dyslexiaFont:false, highContrast:false, autoRead:false, reducedMotion:false, learnerName:'Learner', parentName:'Parent', voiceName:'', voiceRate:0.95, fiftyFifty:true, autoAdvance:false}, saved.settings),
+      profile: 'learner', userId: activeId,
+      leitner: saved.leitner || {}, attempts: saved.attempts || [], tests: saved.tests || [],
+      overrides: content.overrides || {}, custom: content.custom || [], deleted: content.deleted || [],
+      revisionFlags: saved.revisionFlags || {},
+      packLearn: content.packLearn || {}, packTest: content.packTest || {}, packNames: content.packNames || {},
+      learnTopic: 'weak', learnLen: props.defaultSessionLength || 10, session: null, learnMix: {}, testMode: 'balanced', edSearch: '',
+      cloudMsg: '', cloudBusy: false, showPass: false,
+      plan: saved.plan || '', sub: content.sub || {required:false, link:''},
+      syncUrl: (syncCfg && syncCfg.repo) || '', syncKey: (syncCfg && syncCfg.token) || '',
+      test: saved.testInProgress || null, testView: 'run', now: Date.now(),
+      range: 'all', openTest: -1, showLogForm: false,
+      logDate: new Date().toISOString().slice(0,10), logScore: '', logPT: {},
+      edTopic: 1, edId: null, edDraft: null,
+      printFormat: 'cards', printScope: 'all', printPreview: false, printData: null, printRendered: 0
+    };
+    const au = users.find(x=>x.id===activeId) || users[0];
+    if(!saved.settings || !saved.settings.learnerName || saved.settings.learnerName==='Learner') this.state.settings.learnerName = au.name;
+    if(this.state.settings.parentName==='Parent') this.state.settings.parentName = 'Admin';
+  }
+  componentDidMount(){
+    Promise.all([1,2,3,4,5].map(n => fetch('./data/questions-'+n+'.json').then(r=>r.json())))
+      .then(parts => this.setState({bank: [].concat.apply([], parts), loaded: true}))
+      .catch(e => console.error('bank load failed', e));
+    this.tick = setInterval(()=>{ if(this.state.test && !this.state.test.ended) this.setState({now: Date.now()}); }, 500);
+    if(window.speechSynthesis){ speechSynthesis.getVoices(); speechSynthesis.onvoiceschanged = ()=>this.forceUpdate(); }
+    window.addEventListener('online', ()=>this.flushCloud());
+    setTimeout(()=>this.pullCloud(), 800);
+  }
+  componentWillUnmount(){ clearInterval(this.tick); }
+  persist(extra){
+    const s = this.state;
+    const user = {settings:s.settings, plan:s.plan, leitner:s.leitner, attempts:s.attempts, tests:s.tests, revisionFlags:s.revisionFlags, updatedAt: Date.now(), testInProgress: (s.test && !s.test.ended) ? s.test : null};
+    const content = {overrides:s.overrides, custom:s.custom, deleted:s.deleted, packNames:s.packNames, packLearn:s.packLearn, packTest:s.packTest, sub:s.sub, updatedAt: Date.now()};
+    Object.assign(user, extra||{});
+    const u = this.users.find(x=>x.id===s.userId);
+    if(u && s.settings.learnerName && u.name!==s.settings.learnerName){ u.name = s.settings.learnerName; try{ localStorage.setItem(this.BASE+'.users', JSON.stringify(this.users)); }catch(e){} }
+    try { localStorage.setItem(this.BASE+'.d.'+s.userId, JSON.stringify(user)); localStorage.setItem(this.BASE+'.content', JSON.stringify(content)); } catch(e) {}
+    this._dirty = true;
+    if(window.TTSync && TTSync.configured()){ clearTimeout(this._pushT); this._pushT = setTimeout(()=>this.flushCloud(), 2500); }
+  }
+  set(patch){ this.setState(patch, ()=>this.persist()); }
+  loadUser(id){
+    let blob = {}; try { blob = JSON.parse(localStorage.getItem(this.BASE+'.d.'+id)) || {}; } catch(e) {}
+    try { localStorage.setItem(this.BASE+'.active', id); } catch(e) {}
+    const u = this.users.find(x=>x.id===id);
+    const st = Object.assign({textSize:1, dyslexiaFont:false, highContrast:false, autoRead:false, reducedMotion:false, learnerName:(u&&u.name)||'Learner', parentName:'Admin', voiceName:'', voiceRate:0.95, fiftyFifty:true, autoAdvance:false}, blob.settings);
+    if(!blob.settings || !blob.settings.learnerName) st.learnerName = (u&&u.name)||st.learnerName;
+    this.setState({userId:id, settings:st, plan: blob.plan||'', leitner:blob.leitner||{}, attempts:blob.attempts||[], tests:blob.tests||[], revisionFlags:blob.revisionFlags||{}, test:blob.testInProgress||null, session:null, openTest:-1}, ()=>this.persist());
+  }
+  addLearner(){
+    const name = prompt('New learner\u2019s name?'); if(!name || !name.trim()) return;
+    const id = 'u'+Date.now();
+    this.users = this.users.concat([{id, name:name.trim()}]);
+    try { localStorage.setItem(this.BASE+'.users', JSON.stringify(this.users)); } catch(e) {}
+    this.loadUser(id);
+  }
+  connectSync(){
+    if(!window.TTSync){ this.setState({cloudMsg:'Sync helper is still loading \u2014 try again in a second.'}); return; }
+    const repo = (this.state.syncUrl||'').trim().replace(/^https?:\/\/(www\.)?github\.com\//i,'').replace(/\.git$/,'').replace(/\/+$/,''), tok = (this.state.syncKey||'').trim();
+    if(!/^[\w.-]+\/[\w.-]+$/.test(repo) || !tok){ this.setState({cloudMsg:'Enter the repo as owner/name (e.g. dstorey87/Catie-Test-data) and paste the access token.'}); return; }
+    this.setState({cloudBusy:true, cloudMsg:'Connecting\u2026'});
+    TTSync.setConfig(repo, tok);
+    TTSync.test().then(()=>{
+      this._dirty = true;
+      this.setState({cloudBusy:false, syncUrl:repo, cloudMsg:'Connected', view: this.state.view==='cloudLogin'? 'login' : this.state.view});
+      this.pullCloud();
+    }).catch(e=>{ TTSync.signOut(); this.setState({cloudBusy:false, cloudMsg:String(e.message||e)}); });
+  }
+  snapshot(){
+    const data = {};
+    this.users.forEach(u=>{ try { const d = JSON.parse(localStorage.getItem(this.BASE+'.d.'+u.id)); if(d) data[u.id] = d; } catch(e) {} });
+    let content = null; try { content = JSON.parse(localStorage.getItem(this.BASE+'.content')); } catch(e) {}
+    return {v:2, updatedAt: Date.now(), users: this.users.map(u=>({id:u.id, name:u.name})), data, content};
+  }
+  mergeSnapshot(b){
+    let changed = false;
+    (b.users||[]).forEach(ru=>{ if(!this.users.find(u=>u.id===ru.id)){ this.users = this.users.concat([{id:ru.id, name:ru.name}]); changed = true; } });
+    if(changed){ try { localStorage.setItem(this.BASE+'.users', JSON.stringify(this.users)); } catch(e) {} }
+    const data = b.data||{}; let reloadMe = false;
+    Object.keys(data).forEach(id=>{
+      let loc = {}; try { loc = JSON.parse(localStorage.getItem(this.BASE+'.d.'+id)) || {}; } catch(e) {}
+      if((data[id].updatedAt||0) > (loc.updatedAt||0)){
+        try { localStorage.setItem(this.BASE+'.d.'+id, JSON.stringify(data[id])); } catch(e) {}
+        if(id===this.state.userId) reloadMe = true;
+      }
+    });
+    let locC = {}; try { locC = JSON.parse(localStorage.getItem(this.BASE+'.content')) || {}; } catch(e) {}
+    const rc = b.content;
+    if(rc && (rc.updatedAt||0) > (locC.updatedAt||0)){
+      try { localStorage.setItem(this.BASE+'.content', JSON.stringify(rc)); } catch(e) {}
+      this.setState({overrides:rc.overrides||{}, custom:rc.custom||[], deleted:rc.deleted||[], packNames:rc.packNames||this.state.packNames, packLearn:rc.packLearn||this.state.packLearn, packTest:rc.packTest||this.state.packTest, sub:rc.sub||this.state.sub});
+    }
+    if(reloadMe) this.loadUser(this.state.userId);
+    this.forceUpdate();
+  }
+  pullCloud(){
+    if(!(window.TTSync && TTSync.configured())) return;
+    TTSync.pull().then(snap=>{
+      if(snap && snap.blob) this.mergeSnapshot(snap.blob); else this._dirty = true;
+      if(this._dirty) this.flushCloud(); else this.setState({cloudMsg:'Up to date'});
+    }).catch(e=>this.setState({cloudMsg:'Sync problem: ' + String(e.message||e)}));
+  }
+  flushCloud(){
+    if(!(window.TTSync && TTSync.configured()) || !navigator.onLine || !this._dirty || this._pushing) return;
+    this._pushing = true;
+    TTSync.pull().then(snap=>{ if(snap && snap.blob) this.mergeSnapshot(snap.blob); return TTSync.push(this.snapshot()); })
+      .then(()=>{ this._pushing = false; this._dirty = false; this.setState({cloudMsg:'Synced just now'}); })
+      .catch(e=>{ this._pushing = false; this.setState({cloudMsg: navigator.onLine? ('Sync problem: ' + String(e.message||e)) : 'Offline \u2014 will sync when back online'}); });
+  }
+  // ---------- bank ----------
+  questions(){
+    const del = new Set(this.state.deleted), ov = this.state.overrides;
+    return this.state.bank.filter(q=>!del.has(q.id)).map(q=> ov[q.id] ? Object.assign({}, q, ov[q.id]) : q).concat(this.state.custom.filter(q=>!del.has(q.id)));
+  }
+  rec(id){ return this.state.leitner[id] || {box:1, seen:0, correct:0, wrong:0}; }
+  seedPerm(id){
+    id = String(id||'x'); let h = 9;
+    for(let i=0;i<id.length;i++) h = Math.imul(h ^ id.charCodeAt(i), 2654435761);
+    const rnd = ()=>{ h = Math.imul(h ^ (h>>>15), 1|h); h ^= h + Math.imul(h ^ (h>>>7), 61|h); return ((h ^ (h>>>14))>>>0)/4294967296; };
+    const p = [0,1,2,3];
+    for(let i=3;i>0;i--){ const j = Math.floor(rnd()*(i+1)); const t=p[i]; p[i]=p[j]; p[j]=t; }
+    return p;
+  }
+  viewQ(q){ const p = this.seedPerm(q.id); return {options: p.map(i=>q.options[i]), correctIndex: p.indexOf(q.correctIndex)}; }
+  // ---------- speech ----------
+  speak(text){
+    if(!window.speechSynthesis || !text) return;
+    speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.voice = this.bestVoice();
+    u.rate = this.state.settings.voiceRate || this.props.speechRate || 0.95;
+    speechSynthesis.speak(u);
+  }
+  speakQFull(q){ const v = this.viewQ(q); this.speak(q.question + '. Option A: ' + v.options[0] + '. Option B: ' + v.options[1] + '. Option C: ' + v.options[2] + '. Option D: ' + v.options[3]); }
+  // ---------- learn ----------
+  buildSession(ids, label){
+    if(!ids.length) return;
+    this.setState({session:{ids, i:0, correct:0, picked:-1, hint:null, wrongTopics:[], log:[], label}, view:'learnQ'}, ()=>{
+      const q = this.qById(ids[0]);
+      if(this.state.settings.autoRead && q) this.speakQFull(q);
+    });
+  }
+  qById(id){ return this.questions().find(q=>q.id===id) || this.signBank().find(q=>q.id===id); }
+  signBank(){
+    if(this._sb) return this._sb;
+    const labels = this.SIGNMETA.map(m=>m.label);
+    this._sb = this.SIGNMETA.map(m=>{
+      const id = 'sg-'+m.k; let h = 7;
+      for(let i=0;i<id.length;i++) h = Math.imul(h ^ id.charCodeAt(i), 2654435761);
+      const rnd = ()=>{ h = Math.imul(h ^ (h>>>15), 1|h); h ^= h + Math.imul(h ^ (h>>>7), 61|h); return ((h ^ (h>>>14))>>>0)/4294967296; };
+      const pool = labels.filter(l=>l!==m.label);
+      const opts = [m.label];
+      for(let i=0;i<3;i++) opts.push(pool.splice(Math.floor(rnd()*pool.length), 1)[0]);
+      return {id, topic:11, question:'What does this sign mean?', options:opts, correctIndex:0, explanation:m.desc, ruleRef:m.ref, imageHint:m.k};
+    });
+    return this._sb;
+  }
+  toggleRevFlag(id){
+    const rf = Object.assign({}, this.state.revisionFlags);
+    if(rf[id]) delete rf[id]; else rf[id] = {t: Date.now(), src:'learn'};
+    this.set({revisionFlags: rf});
+  }
+  isPackOn(mode, id){ const m = mode==='test' ? this.state.packTest : this.state.packLearn; return (id in m) ? !!m[id] : id!=='signs'; }
+  questionsFor(mode){
+    const base = this.questions().filter(q=>this.isPackOn(mode, q.pack||'p1'));
+    return this.isPackOn(mode, 'signs') ? base.concat(this.signBank()) : base;
+  }
+  packList(){
+    const counts = {};
+    this.questions().forEach(q=>{ const p = q.pack||'p1'; counts[p] = (counts[p]||0)+1; });
+    counts.signs = this.signBank().length;
+    const names = Object.assign({p1:'Set 1 \u00b7 Core', p2:'Set 2 \u00b7 Core', p3:'Set 3 \u00b7 Extension', signs:'Road-sign quiz', custom:'Added by hand'}, this.state.packNames);
+    const order = ['p1','p2','p3','signs','custom'].concat(Object.keys(this.state.packNames));
+    const seen = new Set(), out = [];
+    order.forEach(id=>{ if(seen.has(id) || !counts[id]) return; seen.add(id); out.push({id, name: names[id]||id, count: counts[id], imported: !!this.state.packNames[id]}); });
+    return out;
+  }
+  togglePack(mode, id){
+    const key = mode==='test' ? 'packTest' : 'packLearn';
+    const m = Object.assign({}, this.state[key]); m[id] = !this.isPackOn(mode, id);
+    this.set({[key]: m});
+  }
+  deletePack(id){
+    const names = Object.assign({}, this.state.packNames); delete names[id];
+    this.set({custom: this.state.custom.filter(q=>q.pack!==id), packNames: names});
+  }
+  voices(){ return window.speechSynthesis ? speechSynthesis.getVoices().filter(v=>/^en/i.test(v.lang)) : []; }
+  scoreVoice(v){
+    let sc = 0; const n = v.name.toLowerCase();
+    if(/premium/.test(n)) sc += 3; if(/enhanced/.test(n)) sc += 2.5; if(/natural|neural/.test(n)) sc += 2;
+    if(v.lang==='en-GB') sc += 1.5; if(/kate|serena|sonia|martha|stephanie|daniel/.test(n)) sc += 1;
+    if(/google uk english/.test(n)) sc += 1.2; if(/compact/.test(n)) sc -= 2;
+    return sc;
+  }
+  bestVoice(){
+    const vs = this.voices(); if(!vs.length) return null;
+    const chosen = vs.find(v=>v.name===this.state.settings.voiceName);
+    return chosen || vs.slice().sort((a,b)=>this.scoreVoice(b)-this.scoreVoice(a))[0];
+  }
+  drawPool(topic){
+    let pool = this.questionsFor('learn');
+    const sh = a => a.map(x=>[Math.random(),x]).sort((p,q)=>p[0]-q[0]).map(p=>p[1]);
+    const grp = qs => sh(qs.filter(q=>this.rec(q.id).box===1)).concat(sh(qs.filter(q=>this.rec(q.id).box===2)), sh(qs.filter(q=>this.rec(q.id).box===3)));
+    if(topic==='smart'){
+      const acc = this.combinedTopicAcc();
+      const weights = acc.map(a=>Math.max(0.15, 1.1 - (a.acc===null ? 0.5 : a.acc)));
+      const byTopic = this.TOPICS.map((_,i)=>grp(pool.filter(q=>q.topic===i+1)));
+      const out = []; let guard = 0;
+      while(guard++ < 6000){
+        let total = 0;
+        byTopic.forEach((qs,i)=>{ if(qs.length) total += weights[i]; });
+        if(total<=0) break;
+        let r = Math.random()*total;
+        for(let i=0;i<byTopic.length;i++){
+          if(!byTopic[i].length) continue;
+          r -= weights[i];
+          if(r<=0){ out.push(byTopic[i].shift()); break; }
+        }
+      }
+      return out;
+    }
+    if(topic==='weak'){ const w = this.weakestTopics(2); pool = pool.filter(q=>w.includes(q.topic)); }
+    else if(topic!=='all'){ pool = pool.filter(q=>q.topic===topic); }
+    return grp(pool);
+  }
+  answerLearn(i){
+    const s = this.state.session; if(!s || s.picked>=0) return;
+    const q = this.qById(s.ids[s.i]); if(!q) return;
+    const vq = this.viewQ(q);
+    const ok = i===vq.correctIndex;
+    const r = Object.assign({}, this.rec(q.id));
+    r.seen++; if(ok){ r.correct++; r.box = Math.min(3, r.box+1); } else { r.wrong=(r.wrong||0)+1; r.box = 1; }
+    const leitner = Object.assign({}, this.state.leitner); leitner[q.id]=r;
+    const attempts = this.state.attempts.concat([{q:q.id, t:Date.now(), ok, topic:q.topic}]).slice(-3000);
+    this.setState({session: Object.assign({}, s, {picked:i, correct: s.correct + (ok?1:0), wrongTopics: ok ? (s.wrongTopics||[]) : (s.wrongTopics||[]).concat([q.topic]), log:(s.log||[]).concat([{t:q.topic, ok}])}), leitner, attempts}, ()=>{
+      this.persist();
+      if(this.state.settings.autoRead) this.speak((ok?'Correct. ':'The answer is ' + 'ABCD'[vq.correctIndex] + ', ' + vq.options[vq.correctIndex] + '. ') + q.explanation);
+      if(ok && this.state.settings.autoAdvance){
+        clearTimeout(this._adv);
+        const at = s.i;
+        this._adv = setTimeout(()=>{ const cs = this.state.session; if(this.state.view==='learnQ' && cs && cs.i===at && cs.picked>=0) this.nextLearn(); }, this.state.settings.autoRead ? 4500 : 1600);
+      }
+    });
+  }
+  nextLearn(){
+    clearTimeout(this._adv);
+    const s = this.state.session;
+    if(s.i+1 >= s.ids.length){ this.setState({view:'learnDone'}); return; }
+    this.setState({session: Object.assign({}, s, {i:s.i+1, picked:-1, hint:null})}, ()=>{
+      const q = this.qById(this.state.session.ids[this.state.session.i]);
+      if(this.state.settings.autoRead && q) this.speakQFull(q);
+    });
+  }
+  // ---------- stats ----------
+  tipAt(topic, salt){ const arr = this.TIPS[topic]||[]; return arr.length ? arr[Math.abs(salt)%arr.length] : ''; }
+  mockTopicAcc(){
+    const ts = this.state.tests.filter(t=>t.perTopic && Object.keys(t.perTopic).length).slice(-3);
+    const agg = {};
+    ts.forEach(t=>Object.keys(t.perTopic).forEach(k=>{ agg[k] = agg[k]||{c:0,n:0}; agg[k].c += t.perTopic[k].c; agg[k].n += t.perTopic[k].n; }));
+    return agg;
+  }
+  combinedTopicAcc(){
+    const st = this.topicStats('all'), mock = this.mockTopicAcc();
+    return this.TOPICS.map((_,i)=>{
+      const t = i+1, p = st[i];
+      const pa = p.n ? p.c/p.n : null;
+      const m = mock[t] && mock[t].n ? mock[t].c/mock[t].n : null;
+      let acc = null;
+      if(pa!==null && m!==null) acc = 0.45*pa + 0.55*m; else if(pa!==null) acc = pa; else if(m!==null) acc = m;
+      return {t, acc, n: p.n + (mock[t] ? mock[t].n : 0)};
+    });
+  }
+  readiness(){
+    const qs = this.questions();
+    const recs = qs.map(q=>this.rec(q.id));
+    const seen = recs.filter(r=>r.seen>0);
+    const coverage = qs.length ? seen.length/qs.length : 0;
+    const box3 = seen.length ? seen.filter(r=>r.box===3).length/seen.length : 0;
+    const at = this.state.attempts.slice(-120);
+    const totSeen = seen.reduce((a,r)=>a+r.seen,0);
+    const recentAcc = at.length>=10 ? at.filter(a=>a.ok).length/at.length : (totSeen ? seen.reduce((a,r)=>a+r.correct,0)/totSeen : 0);
+    const mocks = this.state.tests.slice(-3).map(t=>t.score/(t.total||50));
+    let r;
+    if(mocks.length){ const m = mocks.reduce((a,x)=>a+x,0)/mocks.length; r = 0.5*m + 0.25*recentAcc + 0.15*box3 + 0.10*coverage; }
+    else r = Math.min(0.6, 0.45*recentAcc + 0.1*box3 + 0.1*coverage);
+    return Math.round(100*Math.max(0, Math.min(1, r)));
+  }
+  advise(){
+    const out = [], T = this.TOPICS;
+    const mocks = this.state.tests;
+    const last = mocks[mocks.length-1];
+    if(!mocks.length){
+      out.push('Do a first mock test when you feel ready \u2014 it unlocks the smart practice mix and a proper readiness score.');
+    } else {
+      if(last.pass) out.push('Last mock: ' + last.score + '/50 \u2014 a PASS. One more pass in a row and it is time to book the real thing.');
+      else out.push('Last mock: ' + last.score + '/50. The pass mark is 43, so ' + (43-last.score) + ' more right answers gets you there.');
+      if(last.perTopic && !last.pass){
+        const lost = Object.keys(last.perTopic).map(k=>({k, l: last.perTopic[k].n - last.perTopic[k].c})).filter(x=>x.l>0).sort((a,b)=>b.l-a.l).slice(0,2);
+        if(lost.length){
+          const sum = lost.reduce((a,x)=>a+x.l,0);
+          out.push('Most marks slipped in ' + lost.map(x=>T[x.k-1]).join(' and ') + ' \u2014 ' + sum + ' marks waiting to be won back there. Focus Drill hits them first.');
+        }
+      }
+      if(mocks.length>=2){
+        const diff = last.score - mocks[0].score;
+        if(diff>1) out.push('Scores are climbing \u2014 up ' + diff + ' since the first mock. Keep the little-and-often rhythm.');
+        else if(diff<-1) out.push('The last scores dipped. Short, calm sessions on weak topics beat long cramming.');
+      }
+    }
+    const cta = this.combinedTopicAcc().filter(x=>x.acc!==null && x.acc<0.6 && x.n>=5).sort((a,b)=>a.acc-b.acc).slice(0,2);
+    if(cta.length) out.push('Weakest right now: ' + cta.map(x=>T[x.t-1]+' ('+Math.round(x.acc*100)+'%)').join(', ') + '. Ten questions a day there moves the dial fastest.');
+    const unseen = this.questions().filter(q=>!this.rec(q.id).seen).length;
+    if(unseen>0 && out.length<4) out.push(unseen + ' questions have never come up yet \u2014 \u201cA bit of everything\u201d will bring them round.');
+    const flags = Object.keys(this.state.revisionFlags).length;
+    if(flags && out.length<4) out.push(flags + ' saved as tricky \u2014 practise them until each one earns a \u201cGot it now\u201d.');
+    return out.slice(0,4);
+  }
+  topicStats(range){
+    const cutoff = range==='7d' ? Date.now() - 7*864e5 : 0;
+    const st = this.TOPICS.map(()=>({c:0,n:0}));
+    if(range==='7d'){
+      this.state.attempts.forEach(a=>{ if(a.t>=cutoff && a.topic>=1){ st[a.topic-1].n++; if(a.ok) st[a.topic-1].c++; } });
+    } else {
+      this.questions().forEach(q=>{ const r=this.rec(q.id); st[q.topic-1].n += r.seen; st[q.topic-1].c += r.correct; });
+    }
+    return st;
+  }
+  weakestTopics(k){
+    return this.combinedTopicAcc()
+      .sort((a,b)=> (a.acc===null?0.001:a.acc) - (b.acc===null?0.001:b.acc))
+      .slice(0,k).map(x=>x.t);
+  }
+  focusDrill(){
+    const w = this.weakestTopics(2);
+    const pool = this.questionsFor('learn');
+    const sh = a => a.map(x=>[Math.random(),x]).sort((p,q)=>p[0]-q[0]).map(p=>p[1]);
+    const box1 = pool.filter(q=>{const r=this.rec(q.id); return r.seen>0 && r.box===1;});
+    const weakQ = pool.filter(q=>w.includes(q.topic));
+    const flagged = Object.keys(this.state.revisionFlags).map(id=>this.qById(id)).filter(Boolean);
+    const ids = []; const seen = new Set();
+    sh(flagged).concat(sh(box1), sh(weakQ)).forEach(q=>{ if(!seen.has(q.id)){ seen.add(q.id); ids.push(q.id); } });
+    this.buildSession(ids.slice(0,20), 'Focus Drill');
+  }
+  // ---------- test ----------
+  startTest(){
+    const sh = a => a.map(x=>[Math.random(),x]).sort((p,q)=>p[0]-q[0]).map(p=>p[1]);
+    const tq = this.questionsFor('test');
+    if(tq.length < 50){ alert('Not enough questions are switched on for a full 50-question test. Turn more packs on in the Admin dashboard.'); return; }
+    let ids;
+    if(this.state.testMode==='random'){
+      ids = sh(tq).slice(0,50).map(q=>q.id);
+    } else {
+      const byTopic = this.TOPICS.map((_,i)=> sh(tq.filter(q=>q.topic===i+1)));
+      ids = []; let round = 0;
+      while(ids.length<50 && round<25){ for(let t=0;t<14 && ids.length<50;t++){ const q = byTopic[t][round]; if(q) ids.push(q.id); } round++; }
+    }
+    const test = {ids: sh(ids).slice(0,50), answers:{}, flags:{}, i:0, endAt: Date.now() + 57*60000, ended:false};
+    this.setState({test, view:'test', testView:'run'}, ()=>this.persist());
+  }
+  answerTest(i){
+    const t = this.state.test; const answers = Object.assign({}, t.answers); answers[t.i]=i;
+    this.setState({test: Object.assign({}, t, {answers})}, ()=>this.persist());
+  }
+  endTest(){
+    const t = this.state.test; if(!t) return;
+    let score = 0; const pt = {};
+    t.ids.forEach((id, idx)=>{
+      const q = this.qById(id); if(!q) return;
+      pt[q.topic] = pt[q.topic] || {c:0,n:0}; pt[q.topic].n++;
+      if(t.answers[idx]===this.viewQ(q).correctIndex){ score++; pt[q.topic].c++; }
+    });
+    const rec = {date: new Date().toISOString().slice(0,10), score, total:50, pass: score>=43, perTopic: pt, source:'app'};
+    const rf = Object.assign({}, this.state.revisionFlags);
+    Object.keys(t.flags).forEach(k=>{ if(t.flags[k] && t.ids[k] && !rf[t.ids[k]]) rf[t.ids[k]] = {t: Date.now(), src:'test'}; });
+    this.setState({test: Object.assign({}, t, {ended:true, score, perTopic:pt}), tests: this.state.tests.concat([rec]), revisionFlags: rf, testView:'results'}, ()=>this.persist());
+  }
+  // ---------- export / import ----------
+  download(name, obj){
+    const blob = new Blob([JSON.stringify(obj, null, 1)], {type:'application/json'});
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; a.click();
+    setTimeout(()=>URL.revokeObjectURL(a.href), 5000);
+  }
+  // ---------- print ----------
+  buildPrint(){
+    const s = this.state; let qs = this.questions();
+    if(s.printFormat==='paper'){
+      const sh = a => a.map(x=>[Math.random(),x]).sort((p,q)=>p[0]-q[0]).map(p=>p[1]);
+      const tq = this.questionsFor('test');
+      const byTopic = this.TOPICS.map((_,i)=> sh(tq.filter(q=>q.topic===i+1)));
+      const pick = []; let round=0;
+      while(pick.length<50 && round<25){ for(let t=0;t<14 && pick.length<50;t++){ const q=byTopic[t][round]; if(q) pick.push(q); } round++; }
+      return {paper: pick.slice(0,50)};
+    }
+    if(s.printFormat==='book'){
+      return {book: this.TOPICS.map((name,i)=>({name:(i+1)+'. '+name, qs: qs.filter(q=>q.topic===i+1)}))};
+    }
+    if(s.printScope==='wrong') qs = qs.filter(q=>{const r=this.rec(q.id); return (r.wrong||0)>0;});
+    else if(s.printScope!=='all') qs = qs.filter(q=>q.topic===Number(s.printScope));
+    const pages = [];
+    for(let i=0;i<qs.length;i+=4) pages.push(qs.slice(i,i+4));
+    return {pages};
+  }
+  growPrint(){
+    const d = this.state.printData, total = d ? (d.pages ? d.pages.length : (d.book ? d.book.length : 0)) : 0;
+    if(this.state.printPreview && this.state.printRendered < total)
+      setTimeout(()=>this.setState({printRendered: this.state.printRendered + (d.pages ? 8 : 3)}, ()=>this.growPrint()), 40);
+  }
+  adaptive(){ return this.state.tests.length >= 2; }
+  fmtDate(d){ try { return new Date(d+'T12:00').toLocaleDateString('en-GB', {day:'numeric', month:'short', year:'2-digit'}); } catch(e){ return d; } }
+
+  renderVals(){
+    const s = this.state, st = s.settings, T = this.TOPICS;
+    const nav = v => () => this.setState({view:v, printPreview:false});
+    const chip = on => 'padding:9px 14px;border-radius:12px;border:none;cursor:pointer;font-size:14px;font-weight:700;' + (on ? 'background:#0E7C6B;color:#fff' : 'background:#EFE9DC;color:#6E6A5E');
+    const miniTrack = on => 'flex:none;width:46px;height:27px;border-radius:14px;border:none;cursor:pointer;position:relative;transition:background .2s;background:'+(on?'#0E7C6B':'#D8D0BF');
+    const miniKnob = on => 'position:absolute;top:3px;width:21px;height:21px;border-radius:50%;background:#fff;transition:left .2s;left:'+(on?'22px':'3px');
+    const zoom = [1, 1.12, 1.25][st.textSize] || 1;
+    const dyn = {};
+    if(zoom!==1) dyn.zoom = zoom;
+    if(st.dyslexiaFont) dyn.fontFamily = "'Lexend', sans-serif";
+    if(st.highContrast) dyn.filter = 'contrast(1.3) saturate(1.15)';
+    const anim = st.reducedMotion ? '' : 'animation:ttpop .25s ease;';
+    const isParent = s.profile==='parent';
+    const subCfg = s.sub || {};
+    const locked = !isParent && !!subCfg.required && s.plan!=='granted';
+    const view = s.printPreview ? 'printPreview' : s.view;
+
+    // ----- home -----
+    const stAll = this.topicStats('all');
+    const totalSeen = stAll.reduce((a,x)=>a+x.n,0);
+    const weak = this.weakestTopics(2);
+    const focusDesc = totalSeen ? ('your tricky ones: ' + T[weak[0]-1] + ' & ' + T[weak[1]-1]) : 'practise a bit first, then this targets weak spots';
+
+    // ----- learn setup -----
+    const topicChoiceStyle = on => 'text-align:left;padding:14px;border-radius:16px;cursor:pointer;min-height:64px;' + (on ? 'background:#E4F2EF;border:2px solid #0E7C6B' : 'background:#fff;border:1px solid #E8E1D2');
+    const smartOn = s.tests.length>=2;
+    const effSel = (smartOn && s.learnTopic==='weak') ? 'smart' : s.learnTopic;
+    const topicChoices = [
+      smartOn ? {name:'Coach\u2019s smart mix', sub:'shaped by her mock results \u2014 weak topics come up more', v:'smart'}
+              : {name:'My weakest topics', sub: totalSeen? (T[weak[0]-1]+', '+T[weak[1]-1]) : 'a smart mix', v:'weak'},
+      {name:'A bit of everything', sub:'all 14 topics mixed', v:'all'},
+      {name:'Build my own mix', sub:'choose how many from each topic', v:'mix'}
+    ].concat(T.map((n,i)=>{
+      const a = stAll[i];
+      return {name:n, sub: a.n? Math.round(100*a.c/a.n)+'% right so far' : 'not tried yet', v:i+1};
+    })).map(c => ({name:c.name, sub:c.sub, style: topicChoiceStyle(effSel===c.v), pick:()=>this.setState({learnTopic:c.v})}));
+    const lenChoices = [10,20,30].map(v=>({label:String(v), pick:()=>this.setState({learnLen:v}),
+      style:'flex:1;min-height:56px;border-radius:16px;cursor:pointer;font-family:Nunito,sans-serif;font-weight:900;font-size:20px;'+(s.learnLen===v?'background:#0E7C6B;color:#fff;border:none':'background:#fff;border:1px solid #E8E1D2')}));
+
+    // ----- learn question -----
+    let learnVals = {};
+    const sess = s.session;
+    if(view==='learnQ' && sess){
+      const q = this.qById(sess.ids[sess.i]) || {question:'', options:['','','',''], correctIndex:0, explanation:'', ruleRef:''};
+      const vq = this.viewQ(q);
+      const picked = sess.picked, answered = picked>=0;
+      const optStyle = i => {
+        let base = 'display:flex;align-items:center;gap:12px;padding:14px 16px;border-radius:18px;cursor:pointer;min-height:56px;';
+        if(!answered) return base + 'background:#fff;border:2px solid #E8E1D2';
+        if(i===vq.correctIndex) return base + anim + 'background:#E7F6EC;border:2px solid #2E9E5B';
+        if(i===picked) return base + 'background:#FBEAE9;border:2px solid #D14B45';
+        return base + 'background:#fff;border:2px solid #EFE9DC;opacity:.6';
+      };
+      const letterStyle = i => {
+        let c = '#EFE9DC;color:#6E6A5E';
+        if(answered && i===vq.correctIndex) c = '#2E9E5B;color:#fff';
+        else if(answered && i===sess.picked) c = '#D14B45;color:#fff';
+        return 'flex:none;width:38px;height:38px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-family:Nunito,sans-serif;font-weight:900;font-size:17px;background:'+c;
+      };
+      const ok = answered && picked===vq.correctIndex;
+      const goodWords = ['Nice one!','You got it!','Brilliant!','That\u2019s right!','Great remembering!'];
+      const tryWords = ['Good try \u2014 have a look:','Nearly! Here\u2019s the tip:','No worries \u2014 remember this:','Tricky one! Here\u2019s why:'];
+      learnVals = {
+        qNum: sess.i+1, qTotal: sess.ids.length,
+        learnBarStyle: 'height:100%;background:#0E7C6B;border-radius:6px;width:'+Math.round(100*(sess.i+(answered?1:0))/sess.ids.length)+'%;transition:width .3s',
+        qText: q.question, hasSign: !!q.imageHint && (this.props.showSignImages !== false), qSignHint: q.imageHint || '',
+        opts: vq.options.map((text,i)=>{
+          const hidden = (sess.hint||[]).indexOf(i)>=0 && !answered;
+          return {letter:'ABCD'[i], text, style: optStyle(i) + (hidden?';opacity:.22;pointer-events:none':''), letterStyle: letterStyle(i),
+            pick: ()=>{ if(!hidden) this.answerLearn(i); },
+            speak: e=>{ e.stopPropagation(); this.speak(text); }};
+        }),
+        hintReady: st.fiftyFifty!==false && !answered && !(sess.hint && sess.hint.length),
+        useHint: ()=>{ const wrongs = [0,1,2,3].filter(x=>x!==vq.correctIndex).map(x=>[Math.random(),x]).sort((a,b)=>a[0]-b[0]).map(p=>p[1]).slice(0,2); this.setState({session: Object.assign({}, this.state.session, {hint: wrongs})}); },
+        answered,
+        feedbackStyle: 'margin-top:16px;border-radius:20px;padding:18px;'+anim+(ok?'background:#E7F6EC;border:1px solid #BCE3C8':'background:#FBF1DC;border:1px solid #F0D9A8'),
+        microTitle: ok ? goodWords[(sess.i)%goodWords.length] : tryWords[(sess.i)%tryWords.length],
+        explanation: q.explanation, ruleRef: q.ruleRef,
+        wrongTipShow: !ok && !!this.tipAt(q.topic, sess.i), wrongTip: this.tipAt(q.topic, sess.i),
+        speakQ: ()=>this.speakQFull(q),
+        speakExp: ()=>this.speak(q.explanation + '. ' + q.ruleRef),
+        hasTip: answered && picked!==vq.correctIndex && !!this.tipAt(q.topic, sess.i),
+        tipText: this.tipAt(q.topic, sess.i),
+        nextLabel: sess.i+1>=sess.ids.length ? 'Finish' : 'Next question',
+        nextQ: ()=>this.nextLearn(),
+        qFlagLabel: s.revisionFlags[q.id] ? 'Saved' : 'Tricky?',
+        qFlagStyle: 'flex:none;display:flex;align-items:center;gap:6px;height:44px;padding:0 12px;border-radius:12px;cursor:pointer;font-size:13.5px;font-weight:700;'+(s.revisionFlags[q.id]?'background:#F2A93B;color:#fff;border:none':'background:#fff;border:1px solid #E8E1D2;color:#6E6A5E'),
+        toggleQFlag: ()=>this.toggleRevFlag(q.id),
+        quitLearn: ()=>this.setState({view: (sess.i>0 || sess.picked>=0)? 'learnDone':'home'})
+      };
+    }
+    const doneScore = sess? sess.correct : 0, doneAsked = sess? Math.min(sess.i + (sess.picked>=0?1:0), sess.ids.length) : 0;
+    const frac = doneAsked? doneScore/doneAsked : 0;
+    const doneTitle = frac>=0.9?'Superstar!':frac>=0.7?'Really good work!':frac>=0.5?'Good effort!':'Every go makes you stronger';
+    const slog = (sess && sess.log) || [];
+    const sessAgg = {};
+    slog.forEach(e=>{ sessAgg[e.t] = sessAgg[e.t]||{c:0,n:0}; sessAgg[e.t].n++; if(e.ok) sessAgg[e.t].c++; });
+    const sessRows = Object.keys(sessAgg).map(k=>{ const p = sessAgg[k], pct = Math.round(100*p.c/p.n);
+      return {name:T[k-1], label:p.c+'/'+p.n, barStyle:'display:block;height:100%;border-radius:5px;width:'+pct+'%;background:'+(pct>=80?'#2E9E5B':pct>=50?'#F2A93B':'#D14B45')}; }).sort((a,b)=>a.name.localeCompare(b.name));
+    const doneMsg = frac>=0.7? 'Keep this up and the real test will feel easy.' : 'The ones you missed will come round again soon \u2014 that\u2019s how the boxes work.';
+
+    // ----- test -----
+    let testVals = {};
+    const t = s.test;
+    if(t && !t.ended){
+      const remain = Math.max(0, t.endAt - s.now);
+      if(remain===0 && s.view==='test' && s.testView!=='results') setTimeout(()=>this.endTest(), 10);
+      const mm = Math.floor(remain/60000), ss = Math.floor(remain%60000/1000);
+      const q = this.qById(t.ids[t.i]) || {question:'', options:['','','',''], correctIndex:0, topic:1};
+      const vq = this.viewQ(q);
+      const sel = t.answers[t.i];
+      testVals = {
+        testTimer: mm + ':' + String(ss).padStart(2,'0'),
+        timerStyle: 'font-family:Nunito,sans-serif;font-weight:900;font-size:19px;padding:8px 14px;border-radius:12px;'+(remain<5*60000?'background:#FBEAE9;color:#B8433D':'background:#fff;border:1px solid #E8E1D2'),
+        tQNum: 'Question ' + (t.i+1), tQText: q.question,
+        tHasSign: !!q.imageHint && (this.props.showSignImages !== false), tSignHint: q.imageHint || '',
+        speakTQ: ()=>this.speakQFull(q),
+        flagLabel: t.flags[t.i]? 'Flagged' : 'Flag',
+        flagStyle: 'display:flex;align-items:center;gap:6px;padding:0 14px;height:44px;border-radius:12px;cursor:pointer;font-size:14.5px;font-weight:700;'+(t.flags[t.i]?'background:#F2A93B;color:#fff;border:none':'background:#fff;border:1px solid #E8E1D2;color:#6E6A5E'),
+        toggleFlag: ()=>{ const flags = Object.assign({}, t.flags); flags[t.i] = !flags[t.i]; this.set({test: Object.assign({}, t, {flags})}); },
+        tOpts: vq.options.map((text,i)=>({
+          letter:'ABCD'[i], text,
+          style: 'display:flex;align-items:center;gap:12px;padding:13px 15px;border-radius:16px;cursor:pointer;min-height:52px;'+(sel===i?'background:#E4F2EF;border:2px solid #0E7C6B':'background:#fff;border:2px solid #E8E1D2'),
+          letterStyle: 'flex:none;width:36px;height:36px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-family:Nunito,sans-serif;font-weight:900;font-size:16px;'+(sel===i?'background:#0E7C6B;color:#fff':'background:#EFE9DC;color:#6E6A5E'),
+          pick: ()=>this.answerTest(i),
+          speak: e=>{ e.stopPropagation(); this.speak(text); }
+        })),
+        prevTQ: ()=>this.set({test: Object.assign({}, t, {i: Math.max(0, t.i-1)})}),
+        nextTQ: ()=>{ if(t.i>=49) this.setState({testView:'review'}); else this.set({test: Object.assign({}, t, {i: t.i+1})}); },
+        goReview: ()=>this.setState({testView:'review'}),
+        backToTest: ()=>this.setState({testView:'run'}),
+        endTest: ()=>this.endTest(),
+        reviewCells: t.ids.map((_,i)=>{
+          const done = t.answers[i]!==undefined, fl = t.flags[i];
+          let sty = 'aspect-ratio:1;border-radius:9px;cursor:pointer;font-size:13px;font-weight:700;padding:0;';
+          if(fl) sty += 'background:#fff;border:2.5px solid #F2A93B;color:#2A2C33';
+          else if(done) sty += 'background:#0E7C6B;border:none;color:#fff';
+          else sty += 'background:#fff;border:1px solid #D8D0BF;color:#6E6A5E';
+          return {n:i+1, style:sty, go:()=>this.setState({testView:'run', test:Object.assign({},t,{i})})};
+        }),
+        reviewSummary: (()=>{ const a = Object.keys(t.answers).length, f = Object.keys(t.flags).filter(k=>t.flags[k]).length; return a+' answered · '+(50-a)+' not answered · '+f+' flagged'; })()
+      };
+    }
+    let resultVals = {};
+    if(t && t.ended){
+      const pass = t.score>=43;
+      const wrongRows = t.ids.map((id,idx)=>{
+        const q = this.qById(id); if(!q) return null;
+        const v = this.viewQ(q);
+        if(t.answers[idx]===v.correctIndex) return null;
+        const yours = t.answers[idx];
+        const fl = !!s.revisionFlags[id];
+        return {q:q.question,
+          yours: yours===undefined? 'No answer given' : 'You picked '+'ABCD'[yours]+': '+v.options[yours],
+          right: 'ABCD'[v.correctIndex]+': '+v.options[v.correctIndex],
+          explanation:q.explanation, ruleRef:q.ruleRef, hasSign: !!q.imageHint, sign: q.imageHint||'',
+          flagLabel: fl? 'Saved for revision' : 'Save for revision',
+          flagStyle: 'margin-top:10px;padding:9px 14px;border-radius:10px;font-size:13.5px;font-weight:700;cursor:pointer;'+(fl?'background:#F2A93B;color:#fff;border:none':'background:#FBF1DC;border:1px solid #F0D9A8;color:#8A5A0B'),
+          flag: ()=>this.toggleRevFlag(id)};
+      }).filter(Boolean);
+      resultVals = {
+        hasWrong: wrongRows.length>0, wrongN: wrongRows.length, wrongRows, wrongSignSize: 72,
+        resultScore: t.score, resultLabel: pass? 'PASS' : 'Not this time',
+        resultMsg: pass? 'That would be a pass on the real test. Amazing!' : 'You need 43 to pass \u2014 the dashboard shows exactly what to practise.',
+        resultBannerStyle: 'border-radius:24px;padding:30px;text-align:center;'+(pass?'background:#E7F6EC;border:2px solid #2E9E5B;color:#1C6B3C':'background:#FBF1DC;border:2px solid #F2A93B;color:#8A5A0B'),
+        resultTopicRows: Object.keys(t.perTopic||{}).map(k=>{
+          const p = t.perTopic[k], pct = p.n? Math.round(100*p.c/p.n):0;
+          return {name: T[k-1], label: p.c+'/'+p.n, barStyle:'display:block;height:100%;border-radius:5px;width:'+pct+'%;background:'+(pct>=80?'#2E9E5B':pct>=50?'#F2A93B':'#D14B45')};
+        }).sort((a,b)=>a.name.localeCompare(b.name))
+      };
+    }
+
+    // ----- dashboard + progress -----
+    const rdy = this.readiness();
+    const rdyColor = rdy>=75 ? '#2E9E5B' : rdy>=50 ? '#F2A93B' : '#D14B45';
+    const stats = this.topicStats(s.range);
+    const topicBars = stats.map((x,i)=>({name:T[i], n:x.n, pct: x.n? Math.round(100*x.c/x.n) : 0}))
+      .sort((a,b)=> (a.n? a.pct:-1) - (b.n? b.pct:-1))
+      .map(x=>({name:x.name, label: x.n? (x.pct+'% ('+x.n+')') : 'not tried',
+        barStyle:'display:block;height:100%;border-radius:5px;width:'+(x.n?x.pct:0)+'%;background:'+(x.pct>=80?'#2E9E5B':x.pct>=50?'#F2A93B':'#D14B45')}));
+    const tests = s.tests;
+    const W=316, H=110, X0=12, Y0=10;
+    const px = i => tests.length<2 ? X0+W/2 : X0 + i*(W/(tests.length-1));
+    const py = v => Y0 + (1 - v/50)*H;
+    const chartPts = tests.map((r,i)=>px(i)+','+py(r.score)).join(' ');
+    const chartDots = tests.map((r,i)=>({x:px(i), y:py(r.score), fill: r.score>=43?'#2E9E5B':'#D14B45'}));
+    const historyRows = tests.map((r,i)=>({
+      date: this.fmtDate(r.date), score: r.score+'/50',
+      src: r.source==='app'? '' : (r.source||'external'),
+      passLabel: r.pass? 'PASS':'FAIL',
+      passStyle: 'font-size:12px;font-weight:800;padding:4px 9px;border-radius:8px;'+(r.pass?'background:#E7F6EC;color:#1C6B3C':'background:#FBEAE9;color:#B8433D'),
+      pick: ()=>this.setState({openTest: s.openTest===i? -1 : i}),
+      open: s.openTest===i,
+      detail: Object.keys(r.perTopic||{}).map(k=>({name:T[k-1], val:r.perTopic[k].c+'/'+r.perTopic[k].n}))
+    })).reverse();
+    const hard = this.questions().map(q=>({q, r:this.rec(q.id)})).filter(x=>x.r.seen>0)
+      .sort((a,b)=> (a.r.correct/a.r.seen) - (b.r.correct/b.r.seen) || b.r.seen - a.r.seen).slice(0,20);
+    const hardRows = hard.map((x,i)=>({rank:i+1, text:x.q.question, meta: x.r.correct+'/'+x.r.seen+' · '+T[x.q.topic-1]}));
+    const revRows = Object.keys(s.revisionFlags).map(id=>{
+      const q = this.qById(id); if(!q) return null;
+      const f = s.revisionFlags[id], r = this.rec(id);
+      return {text: q.question, meta: T[q.topic-1] + (f.src==='test'?' · from a test':'') + (r.seen? ' · '+r.correct+'/'+r.seen:''), unflag: ()=>this.toggleRevFlag(id)};
+    }).filter(Boolean);
+
+    // ----- editor -----
+    const edQs = this.questions().filter(q=>q.topic===s.edTopic);
+    const draft = s.edDraft;
+    const edVals = {
+      edTopic: s.edTopic, setEdTopic: e=>this.setState({edTopic: Number(e.target.value), edId:null, edDraft:null}),
+      edTopicOpts: T.map((n,i)=>({v:i+1, label:(i+1)+'. '+n})),
+      edEditing: !!draft, edListShow: !draft,
+      edSearch: s.edSearch, setEdSearch: e=>this.setState({edSearch: e.target.value}),
+      edList: (s.edSearch && s.edSearch.trim() ? this.questions().filter(q=>(q.question+' '+q.id).toLowerCase().indexOf(s.edSearch.trim().toLowerCase())>=0).slice(0,60) : edQs).map(q=>({text:q.question, tag: (s.edSearch && s.edSearch.trim() ? q.topic+'. '+T[q.topic-1]+' · ' : '') + (q.id.indexOf('c')===0||q.id.indexOf('imp')===0?'custom': s.overrides[q.id]?'edited':''), pick:()=>this.setState({edId:q.id, edDraft: Object.assign({}, q, {options: q.options.slice()})})})),
+      edAdd: ()=>this.setState({edId:null, edDraft:{id:'c'+Date.now(), topic:s.edTopic, pack:'custom', question:'', options:['','','',''], correctIndex:0, explanation:'', ruleRef:'', imageHint:''}}),
+      edQ: draft || {question:'',explanation:'',ruleRef:'',imageHint:''},
+      edChange: e=>{ const d = Object.assign({}, s.edDraft); const n = e.target.name;
+        if(/^opt\d$/.test(n)){ d.options = d.options.slice(); d.options[Number(n[3])] = e.target.value; } else d[n] = e.target.value;
+        this.setState({edDraft:d}); },
+      edOpts: (draft? draft.options : ['','','','']).map((val,i)=>({
+        val, name:'opt'+i,
+        radioStyle: 'flex:none;width:40px;height:40px;border-radius:12px;cursor:pointer;font-size:16px;font-weight:900;'+(draft && draft.correctIndex===i?'background:#2E9E5B;color:#fff;border:none':'background:#fff;border:1px solid #E8E1D2;color:#C9C2B2'),
+        pickCorrect: ()=>this.setState({edDraft: Object.assign({}, s.edDraft, {correctIndex:i})})
+      })),
+      signOpts: [{v:'', label:'none'}].concat((window.__signKeys||[]).map(k=>({v:k, label:k}))),
+      edCancel: ()=>this.setState({edDraft:null, edId:null}),
+      edSave: ()=>{
+        const d = s.edDraft; if(!d.question.trim()) return;
+        if(!d.imageHint) delete d.imageHint;
+        if(s.edId && !s.edId.startsWith('c')){ const ov = Object.assign({}, s.overrides); ov[s.edId]=d; this.set({overrides:ov, edDraft:null, edId:null}); }
+        else { const others = s.custom.filter(q=>q.id!==d.id); this.set({custom: others.concat([d]), edDraft:null, edId:null}); }
+      },
+      edDelete: ()=>{ if(!s.edId){ this.setState({edDraft:null}); return; }
+        if(s.edId.startsWith('c')) this.set({custom: s.custom.filter(q=>q.id!==s.edId), edDraft:null, edId:null});
+        else this.set({deleted: s.deleted.concat([s.edId]), edDraft:null, edId:null}); },
+      exportBank: ()=>this.download('theory-trainer-question-bank.json', this.questions())
+    };
+
+    // ----- print -----
+    const pd = s.printData || {};
+    const printFormatChoices = [
+      {v:'cards', name:'Flashcards', sub:'4 per page · questions left, answers right · fold down the middle'},
+      {v:'paper', name:'Test paper', sub:'50 numbered questions, answer key on the last page'},
+      {v:'book', name:'Full answer book', sub:'every question in the bank with its correct answer, explanation and rule'}
+    ].map(f=>({name:f.name, sub:f.sub, style:'text-align:left;padding:15px 16px;border-radius:16px;cursor:pointer;'+(s.printFormat===f.v?'background:#E4F2EF;border:2px solid #0E7C6B':'background:#fff;border:1px solid #E8E1D2'), pick:()=>this.setState({printFormat:f.v})}));
+    const wrongCount = this.questions().filter(q=>(this.rec(q.id).wrong||0)>0).length;
+    const printTotal = pd.pages ? pd.pages.length : (pd.book ? pd.book.length : 0);
+    const printReady = s.printFormat==='paper' || (s.printRendered||0) >= printTotal;
+    const printVals = {
+      printFormatChoices, printIsCards: (s.printFormat==='cards'), printIsPaper: (s.printFormat==='paper'),
+      printScope: s.printScope, setPrintScope: e=>this.setState({printScope: e.target.value}),
+      printScopeOpts: [{v:'all', label:'The whole bank ('+this.questions().length+' questions)'}, {v:'wrong', label:'Wrong answers only ('+wrongCount+' questions)'}].concat(T.map((n,i)=>({v:String(i+1), label:(i+1)+'. '+n}))),
+      printHint: s.printFormat==='cards' ? 'Print single-sided on A4, fold each page along the centre line so answers sit behind questions, then cut along the dashed lines.' : s.printFormat==='paper' ? 'A fresh 50-question sample across all topics, like the real test.' : 'The complete accounting: all ' + this.questions().length + ' questions with every option, the correct answer marked, the explanation and the Highway Code reference.',
+      printBtnLabel: 'Preview and print',
+      printGo: ()=>{ const data = this.buildPrint(); if(s.printFormat==='cards' && (!data.pages || !data.pages.length)) return; this.setState({printPreview:true, printData:data, printRendered: data.pages?8:3}, ()=>this.growPrint()); },
+      printBack: ()=>this.setState({printPreview:false}),
+      printNow: ()=>{ if(printReady) window.print(); },
+      printPreviewHint: printReady ? 'Use single-sided printing on A4.' : ('Building\u2026 ' + Math.min(s.printRendered||0, printTotal) + ' of ' + printTotal),
+      printIsBook: (s.printFormat==='book'),
+      bookCount: this.questions().length,
+      bookTopics: (pd.book||[]).slice(0, s.printRendered||3).map(bt=>({name:bt.name, qs: bt.qs.map((q,i)=>{
+        const v = this.viewQ(q);
+        return {n:i+1, id:q.id, question:q.question, explanation:q.explanation, ruleRef:q.ruleRef,
+          opts: v.options.map((text,j)=>({letter:'ABCD'[j], text, mark: j===v.correctIndex?'\u2713':'', style:'font-size:9.5pt;line-height:1.3;'+(j===v.correctIndex?'font-weight:800':'color:#555')}))};
+      })})),
+      printPages: (pd.pages||[]).slice(0, s.printRendered||8).map((cards,pi)=>({label:'page '+(pi+1), cards: cards.map(c=>{
+        const v = this.viewQ(c);
+        return {id:c.id, topicName: T[c.topic-1], question:c.question,
+          opts: v.options.map((text,i)=>({letter:'ABCD'[i], text})),
+          answerLetter:'ABCD'[v.correctIndex], answerText: v.options[v.correctIndex],
+          explanation: c.explanation, ruleRef: c.ruleRef};
+      })})),
+      printQs: (pd.paper||[]).map((q,i)=>({n:i+1, question:q.question, opts:this.viewQ(q).options.map((text,j)=>({letter:'ABCD'[j], text}))})),
+      printKey: (pd.paper||[]).map((q,i)=>({n:i+1, a:'ABCD'[this.viewQ(q).correctIndex]}))
+    };
+
+    // ----- settings -----
+    const toggles = [
+      ['autoRead','Read questions aloud automatically','The voice reads each question and answer as it appears'],
+      ['fiftyFifty','Hint button (50:50)','Adds a button that takes away two wrong answers'],
+      ['autoAdvance','Move on by itself','After a correct answer, goes to the next question automatically'],
+      ['dyslexiaFont','Easy-reading font','Switches to a font that is easier to read'],
+      ['highContrast','High contrast','Stronger colours and darker text'],
+      ['reducedMotion','Reduce motion','Turns off little animations']
+    ];
+    const setSetting = (k,v) => this.set({settings: Object.assign({}, st, {[k]:v})});
+    const settingsVals = {
+      sizeChoices: [0,1,2].map(i=>({label:'A', pick:()=>setSetting('textSize',i),
+        style:'width:'+(38+i*8)+'px;height:'+(38+i*8)+'px;border-radius:12px;cursor:pointer;font-weight:900;font-size:'+(14+i*4)+'px;'+(st.textSize===i?'background:#0E7C6B;color:#fff;border:none':'background:#fff;border:1px solid #E8E1D2;color:#6E6A5E')})),
+      toggleRows: toggles.map(([k,name,sub])=>({name, sub, flip:()=>setSetting(k,!st[k]),
+        trackStyle:'flex:none;width:56px;height:32px;border-radius:16px;border:none;cursor:pointer;position:relative;transition:background .2s;background:'+(st[k]?'#0E7C6B':'#D8D0BF'),
+        knobStyle:'position:absolute;top:3px;width:26px;height:26px;border-radius:50%;background:#fff;transition:left .2s;left:'+(st[k]?'27px':'3px')})),
+      testVoice: ()=>this.speak('Hello '+st.learnerName+'! This is how I will read your questions.'),
+      voiceOpts: this.voices().slice().sort((a,b)=>this.scoreVoice(b)-this.scoreVoice(a)).map(v=>({v:v.name, label: v.name + (this.scoreVoice(v)>=2.5?' \u2605':'')})),
+      voiceSel: st.voiceName || (this.bestVoice() ? this.bestVoice().name : ''),
+      voiceNotice: (()=>{ const vs = this.voices(); if(!vs.length) return 'This browser has no speech voices at all. On her iPad or iPhone the app will use Apple\u2019s built-in voices instead.'; const b = this.bestVoice(); return this.scoreVoice(b) < 2.5 ? 'This browser only offers basic voices, so it sounds robotic here. On an iPad or iPhone the app uses Apple\u2019s own voices \u2014 download an Enhanced one (tip below) and it will sound natural.' : ''; })(),
+      hasVoiceNotice: (()=>{ const vs = this.voices(); if(!vs.length) return true; return this.scoreVoice(this.bestVoice()) < 2.5; })(),
+      setVoice: e=>{ setSetting('voiceName', e.target.value); setTimeout(()=>this.speak('Hello! I am the new voice.'), 200); },
+      speedChoices: [['Slower',0.85],['Normal',0.95],['Faster',1.1]].map(p=>({label:p[0], pick:()=>setSetting('voiceRate',p[1]),
+        style:'padding:9px 13px;border-radius:11px;cursor:pointer;font-size:13.5px;font-weight:700;'+(Math.abs((st.voiceRate||0.95)-p[1])<0.01?'background:#0E7C6B;color:#fff;border:none':'background:#fff;border:1px solid #E8E1D2;color:#6E6A5E')})),
+      nameChange: e=>setSetting(e.target.name==='learner'?'learnerName':'parentName', e.target.value),
+      resetProgress: ()=>{ if(confirm('Really wipe all progress, scores and history? Questions you added are kept.')) this.set({leitner:{}, attempts:[], tests:[], openTest:-1}); }
+    };
+
+    // ----- log external mock -----
+    const logVals = {
+      showLogForm: s.showLogForm, toggleLogForm: ()=>this.setState({showLogForm:!s.showLogForm}),
+      logFormLabel: s.showLogForm? 'Hide the form' : '+ Log an external mock result',
+      logDate: s.logDate, setLogDate: e=>this.setState({logDate:e.target.value}),
+      logScore: s.logScore, setLogScore: e=>this.setState({logScore:e.target.value}),
+      logTopics: T.map((n,i)=>({name:n, c:(s.logPT[i+1]||{}).c||'', n:(s.logPT[i+1]||{}).n||'', cName:'c'+(i+1), nName:'n'+(i+1)})),
+      logTopicChange: e=>{ const m = e.target.name, k = Number(m.slice(1)); const pt = Object.assign({}, s.logPT); pt[k] = Object.assign({}, pt[k]); pt[k][m[0]] = e.target.value; this.setState({logPT:pt}); },
+      saveLog: ()=>{
+        const score = Number(s.logScore); if(!(score>=0 && score<=50) || s.logScore==='') return;
+        const perTopic = {};
+        Object.keys(s.logPT).forEach(k=>{ const p = s.logPT[k]; if(p && p.n) perTopic[k] = {c:Number(p.c)||0, n:Number(p.n)||0}; });
+        const rec = {date: s.logDate, score, total:50, pass: score>=43, perTopic, source:'external'};
+        this.set({tests: s.tests.concat([rec]).sort((a,b)=>a.date<b.date?-1:1), showLogForm:false, logScore:'', logPT:{}});
+      }
+    };
+
+    return Object.assign({
+      dynStyle: dyn,
+      vHome: view==='home' && !locked, vPaywall: view==='home' && locked, vLearnSetup: view==='learnSetup', vLearnQ: view==='learnQ', vLearnDone: view==='learnDone',
+      vTestIntro: view==='test' && (!t || t.ended && s.testView!=='results') ? false : (view==='testIntro'),
+      vTestRun: view==='test' && t && !t.ended && s.testView==='run',
+      vTestReview: view==='test' && t && !t.ended && s.testView==='review',
+      vTestResults: view==='test' && t && t.ended && s.testView==='results',
+      vDash: view==='dash', vSettings: view==='settings', vEditor: view==='editor', vPrint: view==='print',
+      vLogin: view==='login', vSigns: view==='signs', vCloudLogin: view==='cloudLogin',
+      goLogin: nav('login'),
+      vProgress: view==='progress',
+      goProgress: nav('progress'),
+      readyPct: rdy, readyDash: (rdy*3.64).toFixed(0)+' 365', readyColor: rdyColor,
+      readyLabel: rdy>=90?'Ready to book!':rdy>=75?'Nearly ready':rdy>=50?'Getting there':'Keep practising',
+      readySub: s.tests.length ? 'Based on her mocks, practice answers and memory boxes.' : 'Do a mock test to make this score properly accurate.',
+      coachLines: this.advise().map(t=>({text:t})),
+      progTopics: this.combinedTopicAcc().slice().sort((a,b)=>(a.acc===null?-0.01:a.acc)-(b.acc===null?-0.01:b.acc)).map(x=>{
+        const pct = x.acc===null? 0 : Math.round(x.acc*100);
+        const few = x.acc===null || x.n<5;
+        const col = few? '#B5AE9E' : pct<50? '#D14B45' : pct<70? '#F2A93B' : '#2E9E5B';
+        const needy = !few && pct<70;
+        return {name: T[x.t-1],
+          status: few? 'Not tried much' : pct<50? 'Needs work' : pct<70? 'Shaky' : pct<85? 'Good' : 'Strong',
+          statusStyle: 'width:96px;text-align:right;font-size:13px;font-weight:800;flex:none;color:'+col,
+          dotStyle: 'flex:none;width:12px;height:12px;border-radius:50%;background:'+col,
+          showAdvice: needy, advice: needy? (this.COACH[x.t-1]||{}).low || '' : '',
+          barStyle: 'display:block;height:100%;border-radius:5px;width:'+(few?0:pct)+'%;background:'+col};
+      }),
+      progTips: this.weakestTopics(2).reduce((a,t)=>a.concat((this.TIPS[t]||[]).slice(0,2).map(x=>({text:x, topic:T[t-1]}))),[]).slice(0,4),
+      loginUsers: this.users.map(u=>({name:u.name, initial:(u.name||'?')[0].toUpperCase(), pick:()=>{ if(u.id!==s.userId) this.loadUser(u.id); this.setState({profile:'learner', view:'home'}); }})),
+      addLearner: ()=>this.addLearner(),
+      cloudConfigured: !!(window.TTSync && window.TTSync.configured()),
+      cloudNotConfigured: !(window.TTSync && window.TTSync.configured()),
+      syncRepoName: (window.TTSync && window.TTSync.configured() && TTSync.config().repo) || '',
+      goCloudLogin: ()=>this.setState({view:'cloudLogin', cloudMsg:''}),
+      connectSyncBtn: ()=>this.connectSync(),
+      connectBtnLabel: s.cloudBusy? 'Connecting\u2026' : 'Connect',
+      cloudMsg: s.cloudMsg,
+      passType: s.showPass? 'text' : 'password', passToggleLabel: s.showPass? 'Hide' : 'Show',
+      togglePass: ()=>this.setState({showPass: !s.showPass}),
+      cloudKey: e=>{ if(e.key==='Enter') this.connectSync(); },
+      openSub: ()=>{ const l = subCfg.link||''; if(l) window.open(l, '_blank'); else alert('No payment link has been set yet \u2014 Admin \u2192 Subscription.'); },
+      subTrackStyle: miniTrack(!!subCfg.required), subKnobStyle: miniKnob(!!subCfg.required),
+      subToggle: ()=>this.set({sub: Object.assign({}, subCfg, {required: !subCfg.required})}),
+      subLink: subCfg.link||'',
+      subLinkChange: e=>this.set({sub: Object.assign({}, subCfg, {link: e.target.value})}),
+      grantLabel: s.plan==='granted'? ('Revoke ' + st.learnerName + '\u2019s access') : ('Grant ' + st.learnerName + ' full access \u2014 free'),
+      grantToggle: ()=>this.set({plan: s.plan==='granted'? '' : 'granted'}),
+      subStatus: st.learnerName + (s.plan==='granted'? ' has full access (granted by admin).' : (subCfg.required? ' is locked until granted here or subscribed.' : ' has free access \u2014 no subscription required.')),
+      syncUrl: s.syncUrl, syncKey: s.syncKey,
+      syncChange: e=>this.setState(e.target.name==='url'? {syncUrl:e.target.value} : {syncKey:e.target.value}),
+      saveSync: ()=>this.connectSync(),
+      syncNow: ()=>{ if(!(window.TTSync && TTSync.configured())){ this.setState({cloudMsg:'Connect first \u2014 repo + token above.'}); return; } this._dirty = true; this.pullCloud(); },
+      cloudSignOutBtn: ()=>{ if(window.TTSync){ TTSync.signOut(); this.setState({cloudMsg:'Disconnected \u2014 scores stay on this device.'}); } },
+      cloudStatus: !(window.TTSync && TTSync.configured())? 'Not connected \u2014 scores live safely on this device only. Free setup: a private GitHub repo + one token (SETUP.md \u00a73).' : ('Connected to ' + TTSync.config().repo + ' \u2014 backing up automatically. ' + (s.cloudMsg||'')),
+      hasManyUsers: this.users.length>1,
+      dashUsers: this.users.map(u=>({name:u.name, style: chip(u.id===s.userId), pick:()=>{ if(u.id!==s.userId) this.loadUser(u.id); }})),
+      loginAdmin: ()=>{ this.setState({profile:'parent', view:'dash'}); },
+      parentInitial: (st.parentName||'A')[0].toUpperCase(),
+      goSigns: nav('signs'), signTileSize: 92,
+      signTiles: this.SIGNMETA.map(m=>({hint:m.k, label:m.label, speak:()=>this.speak(m.label+'. '+m.desc)})),
+      startSignPractice: ()=>{ const ids = this.signBank().map(q=>q.id).map(x=>[Math.random(),x]).sort((a,b)=>a[0]-b[0]).map(p=>p[1]); this.buildSession(ids, 'Road signs'); },
+      hasFlagged: revRows.length>0, flaggedCount: revRows.length,
+      packRows: this.packList().map(p=>({
+        name: p.name, meta: p.count + ' questions' + (p.imported ? ' \u00b7 imported' : ''),
+        learnStyle: miniTrack(this.isPackOn('learn',p.id)), learnKnob: miniKnob(this.isPackOn('learn',p.id)),
+        testStyle: miniTrack(this.isPackOn('test',p.id)), testKnob: miniKnob(this.isPackOn('test',p.id)),
+        flipLearn: ()=>this.togglePack('learn', p.id), flipTest: ()=>this.togglePack('test', p.id),
+        canDelete: p.imported, del: ()=>{ if(confirm('Remove this pack and all its questions?')) this.deletePack(p.id); }
+      })),
+      importPack: e=>{
+        const f = e.target.files && e.target.files[0]; if(!f) return;
+        const rd = new FileReader();
+        rd.onload = ()=>{ try {
+          const d = JSON.parse(rd.result);
+          const arr = Array.isArray(d) ? d : (d.questions || []);
+          const pid = 'imp' + Date.now();
+          const good = arr.filter(x=>x && x.question && Array.isArray(x.options) && x.options.length===4 && x.correctIndex>=0 && x.correctIndex<=3)
+            .map((x,i)=>({id: pid+'-'+(x.id||i), topic: Math.min(14, Math.max(1, Number(x.topic)||1)), pack: pid, question: String(x.question), options: x.options.map(String), correctIndex: Number(x.correctIndex), explanation: String(x.explanation||''), ruleRef: String(x.ruleRef||''), imageHint: x.imageHint || undefined}));
+          if(!good.length){ alert('No usable questions found. The file needs the same fields as the exported bank: question, options (4), correctIndex, explanation, ruleRef, topic 1-14.'); return; }
+          const names = Object.assign({}, s.packNames); names[pid] = String(d.name || f.name.replace(/\.json$/i,''));
+          this.set({custom: s.custom.concat(good), packNames: names});
+          alert('Loaded ' + good.length + ' questions as \u201c' + names[pid] + '\u201d. Toggle where it is used in Question packs.');
+        } catch(err){ alert('That file is not valid JSON.'); } };
+        rd.readAsText(f); e.target.value = '';
+      },
+      hasRevFlags: revRows.length>0, noRevFlags: revRows.length===0, revRows,
+      practiseFlagged: ()=>{ const ids = Object.keys(s.revisionFlags).filter(id=>this.qById(id)).map(x=>[Math.random(),x]).sort((a,b)=>a[0]-b[0]).map(p=>p[1]); this.buildSession(ids.slice(0,30), 'Flagged'); },
+      printPreview: s.printPreview,
+      greeting: 'Hi ' + (isParent? st.parentName : st.learnerName) + '!',
+      homeSub: isParent? 'The dashboard has all the tracking and editing tools.' : (smartOn? 'Your practice now adapts to your mock scores.' : 'A little practice every day beats a lot all at once.'),
+      learnerName: st.learnerName, parentName: st.parentName,
+      learnerChipStyle: chip(!isParent), parentChipStyle: chip(isParent),
+      setLearnerProfile: ()=>this.set({profile:'learner'}),
+      setParentProfile: ()=>{ this.set({profile:'parent'}); this.setState({view:'dash'}); },
+      goHome: nav('home'), goDash: nav('dash'), goSettings: nav('settings'), goEditor: nav('editor'), goPrint: nav('print'),
+      goLearn: ()=>this.setState({view:'learnSetup', printPreview:false}),
+      goTest: ()=>{ if(t && !t.ended){ this.setState({view:'test', testView:'run'}); } else this.setState({view:'testIntro', test: t && t.ended? null : t}); },
+      startFocusDrill: ()=>this.focusDrill(),
+      focusDesc,
+      topicChoices, lenChoices,
+      showLen: s.learnTopic!=='mix', showMix: s.learnTopic==='mix',
+      mixTotal: T.reduce((a,_,i)=>a+(s.learnMix[i+1]||0), 0),
+      mixRows: T.map((n,i)=>({name:n, count: s.learnMix[i+1]||0,
+        inc: ()=>{ const m = Object.assign({}, s.learnMix); m[i+1] = Math.min(20,(m[i+1]||0)+1); this.setState({learnMix:m}); },
+        dec: ()=>{ const m = Object.assign({}, s.learnMix); m[i+1] = Math.max(0,(m[i+1]||0)-1); this.setState({learnMix:m}); }})),
+      startLearn: ()=>{ if(s.learnTopic==='mix'){ const sh = a=>a.map(x=>[Math.random(),x]).sort((p,q)=>p[0]-q[0]).map(p=>p[1]); const ids = []; T.forEach((_,i)=>{ const n = s.learnMix[i+1]||0; if(n>0){ const tp = this.drawPool(i+1); ids.push.apply(ids, tp.slice(0,n).map(q=>q.id)); } }); if(!ids.length){ alert('Add at least one question to the mix first.'); return; } this.buildSession(sh(ids), 'Practice'); } else { const pool = this.drawPool(effSel); this.buildSession(pool.slice(0, s.learnLen).map(q=>q.id), 'Practice'); } },
+      startTest: ()=>this.startTest(),
+      testModeChoices: [{v:'balanced', name:'Like the real test', sub:'even spread across all topics'}, {v:'random', name:'Surprise mix', sub:'50 pulled at random from everything'}].map(m=>({name:m.name, sub:m.sub, pick:()=>this.setState({testMode:m.v}), style:'flex:1;text-align:left;padding:13px 14px;border-radius:14px;cursor:pointer;'+((s.testMode||'balanced')===m.v?'background:#E4F2EF;border:2px solid #0E7C6B':'background:#fff;border:1px solid #E8E1D2')})),
+      doneScore, doneTotal: doneAsked, doneTitle, doneMsg, hasSessRows: sessRows.length>1, sessRows,
+      doneTip: sess ? this.tipAt((sess.wrongTopics&&sess.wrongTopics[0]) || weak[0] || 1, doneAsked + (sess.wrongTopics? sess.wrongTopics.length:0)) : '',
+      doneTipShow: !!(sess && doneAsked>0),
+      signSize: 132,
+      rangeLabel: s.range==='all'? 'All time' : 'Last 7 days',
+      rangeChipStyle: 'padding:10px 16px;border-radius:12px;border:1px solid #E8E1D2;background:#fff;cursor:pointer;font-size:14px;font-weight:700;color:#0E7C6B',
+      toggleRange: ()=>this.setState({range: s.range==='all'?'7d':'all'}),
+      topicBars,
+      hasTests: tests.length>0, noTests: tests.length===0,
+      chartPts, chartDots, passLineY: py(43), passLabelY: py(43)-5,
+      historyRows,
+      hasHard: hardRows.length>0, noHard: hardRows.length===0, hardRows,
+      exportData: ()=>this.download('theory-trainer-backup.json', {settings:st, leitner:s.leitner, attempts:s.attempts, tests:s.tests, overrides:s.overrides, custom:s.custom, deleted:s.deleted}),
+      importFile: e=>{
+        const f = e.target.files && e.target.files[0]; if(!f) return;
+        const rd = new FileReader();
+        rd.onload = ()=>{ try {
+          const d = JSON.parse(rd.result);
+          this.set({settings: Object.assign({}, st, d.settings||{}), leitner:d.leitner||{}, attempts:d.attempts||[], tests:d.tests||[], overrides:d.overrides||{}, custom:d.custom||[], deleted:d.deleted||[]});
+          alert('Backup loaded!');
+        } catch(err){ alert('That file did not look like a Theory Trainer backup.'); } };
+        rd.readAsText(f);
+        e.target.value = '';
+      }
+    }, learnVals, testVals, resultVals, edVals, printVals, settingsVals, logVals);
+  }
+}
+</script>
+</body>
+</html>
