@@ -45,6 +45,11 @@ create table if not exists public.questions (
   free_sample   boolean not null default false,
   updated_at    timestamptz not null default now()
 );
+-- Upgrades for a database that ran an earlier version of this file (create
+-- table if not exists is a no-op there). Both statements re-run harmlessly.
+alter table public.questions add column if not exists pack text not null default 'p1';
+alter table public.questions alter column topic type int using topic::int;
+
 create index if not exists questions_topic_idx on public.questions (topic);
 
 -- ---------- who has access ----------
