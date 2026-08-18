@@ -1,0 +1,17 @@
+- generic [ref=f1e8]:
+  - generic [ref=f1e14]: Theory Trainer
+  - generic [ref=f1e15]: Who's here today?
+  - generic [ref=f1e16]:
+    - button "C Catie Learner" [ref=f1e17] [cursor=pointer]:
+      - generic [ref=f1e18]: C
+      - generic [ref=f1e20]:
+        - generic [ref=f1e21]: Catie
+        - generic [ref=f1e22]: Learner
+    - button "A Admin Admin · progress & editing" [ref=f1e23] [cursor=pointer]:
+      - generic [ref=f1e24]: A
+      - generic [ref=f1e26]:
+        - generic [ref=f1e27]: Admin
+        - generic [ref=f1e28]: Admin · progress & editing
+    - button "+ Add another learner" [ref=f1e29] [cursor=pointer]
+    - button "Sign in or create an account" [ref=f1e30] [cursor=pointer]
+    - generic [ref=f1e31]: Progress is kept on this device

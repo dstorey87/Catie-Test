@@ -2,7 +2,7 @@
 // BUMP VERSION in every deploy that changes any file in CORE — the cache name is
 // the only update signal existing installs get. Merging without a bump ships a
 // stale shell to every install that is currently offline.
-const VERSION = 'v6-2026-08-19';
+const VERSION = 'v7-2026-08-19';
 const C = 'theory-trainer-' + VERSION;
 const CORE = ['./', './index.html', './Theory%20Trainer.dc.html', './support.js', './signs.js',
   './config.js', './backend.js', './manifest.json', './questions-free.json'];

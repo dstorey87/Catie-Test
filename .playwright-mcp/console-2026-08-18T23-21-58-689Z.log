@@ -1,0 +1,34 @@
+[     712ms] [ERROR] Error: <line> attribute y1: Expected length, "{{ passLineY }}". @ https://dstorey87.github.io/Catie-Test/Theory%20Trainer.dc.html:507
+[     712ms] [ERROR] Error: <line> attribute y2: Expected length, "{{ passLineY }}". @ https://dstorey87.github.io/Catie-Test/Theory%20Trainer.dc.html:507
+[     712ms] [ERROR] Error: <text> attribute y: Expected length, "{{ passLabelY }}". @ https://dstorey87.github.io/Catie-Test/Theory%20Trainer.dc.html:508
+[     712ms] [ERROR] Error: <polyline> attribute points: Expected number, "{{ chartPts }}". @ https://dstorey87.github.io/Catie-Test/Theory%20Trainer.dc.html:509
+[     712ms] [ERROR] Error: <circle> attribute cx: Expected length, "{{ d.x }}". @ https://dstorey87.github.io/Catie-Test/Theory%20Trainer.dc.html:511
+[     712ms] [ERROR] Error: <circle> attribute cy: Expected length, "{{ d.y }}". @ https://dstorey87.github.io/Catie-Test/Theory%20Trainer.dc.html:511
+[     713ms] [ERROR] Error: <line> attribute y1: Expected length, "{{ passLineY }}". @ https://dstorey87.github.io/Catie-Test/Theory%20Trainer.dc.html:745
+[     713ms] [ERROR] Error: <line> attribute y2: Expected length, "{{ passLineY }}". @ https://dstorey87.github.io/Catie-Test/Theory%20Trainer.dc.html:745
+[     713ms] [ERROR] Error: <text> attribute y: Expected length, "{{ passLabelY }}". @ https://dstorey87.github.io/Catie-Test/Theory%20Trainer.dc.html:746
+[     713ms] [ERROR] Error: <polyline> attribute points: Expected number, "{{ chartPts }}". @ https://dstorey87.github.io/Catie-Test/Theory%20Trainer.dc.html:747
+[     713ms] [ERROR] Error: <circle> attribute cx: Expected length, "{{ d.x }}". @ https://dstorey87.github.io/Catie-Test/Theory%20Trainer.dc.html:749
+[     713ms] [ERROR] Error: <circle> attribute cy: Expected length, "{{ d.y }}". @ https://dstorey87.github.io/Catie-Test/Theory%20Trainer.dc.html:749
+[     714ms] [WARNING] The specified value "{{ logDate }}" does not conform to the required format, "yyyy-MM-dd". @ https://dstorey87.github.io/Catie-Test/Theory%20Trainer.dc.html:781
+[     714ms] [WARNING] The specified value "{{ logScore }}" cannot be parsed, or is out of range. @ https://dstorey87.github.io/Catie-Test/Theory%20Trainer.dc.html:782
+[     714ms] [WARNING] The specified value "{{ t.c }}" cannot be parsed, or is out of range. @ https://dstorey87.github.io/Catie-Test/Theory%20Trainer.dc.html:789
+[     714ms] [WARNING] The specified value "{{ t.n }}" cannot be parsed, or is out of range. @ https://dstorey87.github.io/Catie-Test/Theory%20Trainer.dc.html:791
+[     714ms] [WARNING] The specified value "{{ planUntil }}" does not conform to the required format, "yyyy-MM-dd". @ https://dstorey87.github.io/Catie-Test/Theory%20Trainer.dc.html:861
+[     717ms] [WARNING] The specified value "{{ examDate }}" does not conform to the required format, "yyyy-MM-dd". @ https://dstorey87.github.io/Catie-Test/Theory%20Trainer.dc.html:1041
+[     899ms] [INFO] [dc-runtime] x-import: loading ./signs.js (js) @ https://dstorey87.github.io/Catie-Test/support.js:1197
+[     932ms] SyntaxError: Failed to execute 'appendChild' on 'Node': Unexpected token '-'
+    at https://dstorey87.github.io/Catie-Test/support.js:1446:22
+    at https://dstorey87.github.io/Catie-Test/support.js:479:59
+    at Array.map (<anonymous>)
+    at Object.render [as tpl] (https://dstorey87.github.io/Catie-Test/support.js:479:45)
+    at StreamableComponent.render (https://dstorey87.github.io/Catie-Test/support.js:1103:15)
+    at Af (https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js:133:101)
+    at ri (https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js:132:399)
+    at Qk (https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js:252:71)
+    at Ri (https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js:195:185)
+    at Ok (https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js:195:116)
+[    1152ms] [INFO] [dc-runtime] x-import: loaded ./signs.js — exports: [] window globals: [SignImage] @ https://dstorey87.github.io/Catie-Test/support.js:1230
+[    1159ms] [ERROR] Failed to load resource: the server responded with a status of 404 () @ https://dstorey87.github.io/favicon.ico:0
+[    1173ms] [WARNING] <meta name="apple-mobile-web-app-capable" content="yes"> is deprecated. Please include <meta name="mobile-web-app-capable" content="yes"> @ https://dstorey87.github.io/Catie-Test/Theory%20Trainer.dc.html:0
+[    1580ms] [ERROR] Failed to load resource: the server responded with a status of 404 () @ https://dstorey87.github.io/favicon.ico:0
