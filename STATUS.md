@@ -1,54 +1,56 @@
 # Theory Trainer — request checklist
 
-States: ✅ done & verified in preview · ⚠️ built, needs your account/keys to test live · 📋 your step (free, minutes) · ❌ not possible from this tool, honest alternative given.
+States: ✅ done & verified · ⚠️ built, needs your account/keys to go live · 📋 your step (minutes) · ❌ not possible, honest alternative given.
 
-## Content & learning
-- ✅ Question bank: 398 original questions, 14 DVSA topics, 4 options each, explanation + Highway Code ref (verified: counts, per-topic spread, no missing fields)
-- ❌ The *actual* DVSA question bank — it is licensed/copyrighted and not published; ✅ same format/facts, and licensed sets you obtain load via packs
-- ✅ Packs: Set 1/2/3, sign quiz, custom; per-pack Practise/Test toggles; JSON pack import/remove
-- ✅ Practise: read-aloud (question/options/explanation), Leitner boxes, 50:50 hint toggle, auto-advance toggle, 10/20/30 lengths
-- ✅ Custom mix: per-topic question counts with steppers
-- ✅ Signs section: browse 20 signs (tap = spoken meaning) + sign quiz in test format
-- ✅ Tips: on wrong answers, at session end, on progress screen, tip-of-day per weakest topics
+## The app
+- ✅ 378 original questions, 14 DVSA topics, 4 options, explanation + Highway Code ref; 20 signs with spoken meanings
+- ❌ The actual DVSA question bank — licensed and not published; ✅ same format and facts, and licensed sets you buy load in as packs
+- ✅ Practise (read-aloud, Leitner boxes, 50:50, auto-advance), mock test (50q/57min, flags, review grid, pass 43), build-your-own test, surprise mix, focus drill, signs quiz
+- ✅ Duolingo-style loop: daily goal, day streak, XP + levels, "Today's lesson" remix
+- ✅ Insights after every session, readiness dial, topic traffic-lights, mock trend, 20 hardest, external mock logging
+- ✅ Notes on any screen, question flagging, revision list, printable answer book / flashcards / test paper
+- ✅ Question editor with search, sign picker, pack import, bank export
+- ✅ Test-date countdown; accessibility (text size, dyslexia font, high contrast, reduced motion)
+- ✅ Works offline; a test in progress survives a reload or a flat battery
 
-## Testing
-- ✅ Mock test: 50q, 57:00, flag + review grid, pass 43, per-topic results; survives reload/crash (verified by reload mid-test)
-- ✅ Build-your-own test: pick topics + how many of each (steppers), timer on/off (time scales to length), pass mark scales (86%); results/history show real totals
-- ✅ Random "Surprise mix" test + balanced "like the real test" mode
-- ✅ Wrong answers reviewed after every test: your pick, correct answer, explanation, sign visual, save-for-revision
-- ✅ Flagging ("Tricky?") in practise + test; feeds revision list, Focus Drill, analytics
+## Duolingo-style habit loop
+- ✅ Levels with names (Provisional → Full Licence), XP bar on Home showing progress to the next level, level-up card at the end of a session
+- ✅ 10 badges earned from real activity: first go, ten in a row, century, five hundred, week/month streaks, mock passed, three mocks, topic mastered, every topic tried — with progress counts on the locked ones
+- ✅ Daily goal (10/20/30), day streak with flame, "Today's lesson" smart remix, XP for correct answers and mock passes
+- ✅ Daily reminders: each learner picks 8am / midday / 5pm / 8pm; the server nudges only on days with no practice, in their own timezone, once a day
+- ⚠️ Reminders while the app is closed need one keypair + one scheduled function (SETUP.md §5, ~10 min). Until then the app nudges in-app
+- ✅ iPhone/iPad handled honestly: Apple only allows notifications for home-screen apps, and the Reminders card says so
 
-## Insights & analytics
-- ✅ Session insights after every set, regardless of history (per-topic bars + tip)
-- ✅ Readiness dial, coach advice, topic traffic-lights with improvement actions, mock trend chart, history with per-topic detail, 20 hardest, external mock logging
-- ✅ Adaptive practice after 2 mocks (weak topics weighted)
-- ✅ Per-learner analytics; admin learner switcher
-- ✅ Duolingo-style loop: daily goal (10/20/30), day streak with flame, XP + levels (10/correct, +50 pass bonus), "Today's lesson" smart mix (reviews due + tricky flags + weak topics)
-- ✅ Theory-test-date countdown on Home (set in Settings)
-- ✅ Notes on any screen: pencil button bottom-right, saves per screen per learner, syncs; jump between screens' notes
+## Accounts — no tokens anywhere
+- ✅ Email + password sign-up and sign-in, on the app's own screens
+- ✅ Password reset by email; email confirmation on new accounts
+- ✅ One account covers every learner in a family and every device; progress merges (newest wins per learner)
+- ✅ Sign out / switch learner; profile photos; admin role
+- ✅ Progress syncs by itself: pulls on open, pushes a few seconds after answers, retries when signal returns. Learners never see a sync control
+- ⚠️ Needs your free Supabase project + the two public values pasted once (SETUP.md §2, ~10 min)
+- ✅ Every account's data is private at the database level, not by app-side checking
 
-## Users, login, subscription
-- ✅ Login screen listing learners + Admin; add learner; per-learner storage; profile photos (upload in Settings → shown on login)
-- ✅ Subscription manager in Admin: global on/off, price text shown on the lock screen, payment link, and per-learner access — Default / Always free / Free until a date (free months) / Suspended / Blocked. Changing the charged amount = edit price text + update your Stripe link (Stripe hosts checkout; card processing can't run inside a static app)
-- ✅ Real accounts reworked per your request — **no Supabase anywhere**. Sign-in is now GitHub family sync: connect any device with your repo + token (login screen → Set up family sync) and every learner + their progress appears on it. ⚠️ Live push/pull needs your one-time token (SETUP.md §3, ~3 min) — I can't create tokens on your account
-- ⚠️ Subscription gate: admin toggle, paywall screen, payment-link button, per-learner grant/revoke — app side done; needs your free Stripe Payment Link (Stripe hosts checkout; no gateway can be "downloaded" as static files)
-- ❌ Enforcement stronger than app-level lock — client code can't hide secrets; real DRM needs a server
+## Paying, enforced on the server
+- ✅ £4.99/month and £50/year, both in the app; Stripe hosts the card page
+- ✅ Access switches on the moment Stripe confirms, and off when a subscription is cancelled or a payment fails — no admin action, no emails to watch
+- ✅ Subscribers manage card, plan and cancellation themselves (Stripe portal, opened from the app)
+- ✅ **The question bank lives on the server and is only readable by an account with access** — so the paywall isn't a screen someone can skip in browser code. Editing the app in DevTools gets them nothing
+- ✅ 20-question free sample for trying before paying
+- ✅ Admin can still grant free access by hand (family, testers) and suspend or block a learner
+- ⚠️ Needs your Stripe prices + 3 server functions deployed (SETUP.md §3, ~15 min)
+- ❌ Nothing stops someone screenshotting questions they've paid for. That's true of every app
 
-## Data & sync
-- ✅ Offline-first: every answer saved to device instantly; test resumes after power loss
-- ⚠️ Cloud sync — now via **GitHub** (no Supabase): snapshot lives in your private repo at sync/data.json; pull on open, debounced push after answers, pull-merge before every push (newest wins per learner), retry on reconnect. Built + wired; end-to-end test needs your token (SETUP.md §3)
-- ✅ Export/Import backup files
-- ✅ Question editor: add/edit/delete, correct-answer marking, sign picker, search across all questions, bank export
-- ✅ Ready for more test types: packs carry a testType field (car, motorcycle, LGV…) so other theory tests load later as packs — no redesign
-- ✅ Full accounting: printable answer book (every question, answer marked ✓, explanation, ref), flashcards, test paper + key
+## All devices
+- ✅ Browser (any), plus installable to the home screen on iPhone, iPad, Android and desktop — fullscreen, own icon, works offline
+- ✅ Native iOS and Android builds: Capacitor project, config and step-by-step included (`capacitor/`)
+- 📋 Store submission needs the developer accounts (Apple ~£79/yr, Google ~£20 once) and a build on your machine — I can't sign or upload binaries
+- ⚠️ **Apple rejects Stripe for digital subscriptions in native apps** (rule 3.1.1). Options written up in `capacitor/README.md`: ship the iOS app sign-in-only and sell on the web, add Apple in-app purchase, or stay with the installable web app
 
-## Platforms & publishing
-- ✅ Installable app (PWA): manifest, icons, service worker, offline cache — iPhone/iPad/Android/PC via Add to Home Screen
-- 📋 Publish: upload the files to github.com/dstorey87/Catie-Test → enable Pages (SETUP.md §1) → live at https://dstorey87.github.io/Catie-Test/
-- ❌ Me uploading the files into Catie-Test — my GitHub connector is read-only (browse/import only); your upload is 2 minutes via the repo's Add file → Upload files (SETUP.md §1)
-- ❌ App Store / Play Store binaries — needs paid developer accounts + native build; PWA is the free route
-- ❌ "Non-stealable" code — served web code is always viewable; keep the site name unguessable and repo private; user data is per-account and safe
+## Publishing
+- ✅ Live at https://dstorey87.github.io/Catie-Test/ (public repo, GitHub Pages)
+- ✅ One-click updates: **Publish to GitHub.html** — writes every file into the repo, fills in `config.js`, uploads the question bank to Supabase, and takes the public question files down
+- ❌ Me pushing to GitHub directly — my access to your repo is read-only, which is why that page exists
 
 ## Voice
-- ✅ Best-voice auto-pick (Enhanced/Premium en-GB preferred), voice picker with ★, speed control, sample
-- 📋 One-time iPad/iPhone step for a genuinely nice voice: Settings → Accessibility → Spoken Content → Voices → English (UK) → download Enhanced (e.g. Kate)
+- ✅ Best-voice auto-pick (Enhanced/Premium en-GB preferred), voice picker, speed control, sample
+- 📋 One-time per iPhone/iPad: Settings → Accessibility → Spoken Content → Voices → English (UK) → download an Enhanced voice
