@@ -3,7 +3,7 @@
 // (subscription), TTBank (question bank). Runs in a browser, a PWA and a
 // Capacitor WebView unchanged.
 (function () {
-  var CFGKEY = 'tt.sb.cfg', SESSKEY = 'tt.sb.session', BANKKEY = 'tt.bank.v1';
+  var CFGKEY = 'tt.sb.cfg', SESSKEY = 'tt.sb.session', BANKKEY = 'tt.bank.v2';
 
   function readJSON(k) { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } }
   function writeJSON(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
@@ -186,12 +186,15 @@
       var out = null;
       if (cfg() && sess && navigator.onLine) {
         try {
-          var rows = await rest('/questions?select=qid,topic,question,options,correct_index,explanation,rule_ref,sign,test_type&order=qid');
+          var rows = await rest('/questions?select=qid,topic,question,options,correct_index,explanation,rule_ref,sign,test_type,pack&order=qid');
           if (rows && rows.length) {
             out = rows.map(function (r) {
-              return { id: r.qid, topic: r.topic, question: r.question, options: r.options,
+              // topic must be numeric (the app compares q.topic===n) and the
+              // sign hint must surface as imageHint (what every screen reads).
+              return { id: r.qid, topic: Number(r.topic), question: r.question, options: r.options,
                 correctIndex: r.correct_index, explanation: r.explanation, ruleRef: r.rule_ref,
-                sign: r.sign || '', testType: r.test_type || 'car' };
+                sign: r.sign || '', imageHint: r.sign || undefined,
+                pack: r.pack || 'p1', testType: r.test_type || 'car' };
             });
             writeJSON(BANKKEY, { at: Date.now(), rows: out });
             return { questions: out, source: 'server' };
@@ -209,9 +212,9 @@
       var chunk = 100, n = 0;
       for (var i = 0; i < list.length; i += chunk) {
         var rows = list.slice(i, i + chunk).map(function (q) {
-          return { qid: q.id, topic: q.topic, question: q.question, options: q.options,
+          return { qid: q.id, topic: Number(q.topic), question: q.question, options: q.options,
             correct_index: q.correctIndex, explanation: q.explanation || '', rule_ref: q.ruleRef || '',
-            sign: q.sign || '', test_type: q.testType || 'car' };
+            sign: q.imageHint || q.sign || '', pack: q.pack || 'p1', test_type: q.testType || 'car' };
         });
         await rest('/questions', { method: 'POST', headers: { Prefer: 'resolution=merge-duplicates,return=minimal' }, body: JSON.stringify(rows) });
         n += rows.length;

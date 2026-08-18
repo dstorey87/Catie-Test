@@ -24,7 +24,34 @@
 <link rel="apple-touch-icon" href="icon-180.png">
 <script src="config.js"></script>
 <script src="backend.js"></script>
-<script>try{ if('serviceWorker' in navigator && window.top===window) navigator.serviceWorker.register('sw.js'); }catch(e){}</script>
+<script>
+try{
+  if('serviceWorker' in navigator && window.top===window){
+    navigator.serviceWorker.register('sw.js').then(function(reg){
+      // Re-check for a new build whenever the app comes back to the foreground —
+      // a home-screen install can go days without a real navigation.
+      document.addEventListener('visibilitychange', function(){ if(!document.hidden) reg.update().catch(function(){}); });
+    }).catch(function(){});
+    // A controller swap after page load means a new version just took over.
+    // Offer a reload; never force one — a learner may be mid-mock.
+    var ttHadSW = !!navigator.serviceWorker.controller, ttNotified = false;
+    navigator.serviceWorker.addEventListener('controllerchange', function(){
+      if(!ttHadSW){ ttHadSW = true; return; }  // first install — nothing to announce
+      if(ttNotified) return; ttNotified = true;
+      var bar = document.createElement('div');
+      bar.setAttribute('role','status');
+      bar.style.cssText = 'position:fixed;left:50%;bottom:calc(14px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:99999;background:#2A2C33;color:#fff;padding:10px 10px 10px 16px;border-radius:14px;font:700 14.5px Nunito,sans-serif;display:flex;gap:12px;align-items:center;box-shadow:0 6px 24px rgba(0,0,0,.25);max-width:92vw';
+      bar.appendChild(document.createTextNode('Updated — reload for the latest version'));
+      var btn = document.createElement('button');
+      btn.textContent = 'Reload';
+      btn.style.cssText = 'background:#0E7C6B;color:#fff;border:none;border-radius:10px;padding:0 14px;min-height:36px;font:700 14.5px Nunito,sans-serif;cursor:pointer';
+      btn.onclick = function(){ location.reload(); };
+      bar.appendChild(btn);
+      document.body.appendChild(bar);
+    });
+  }
+}catch(e){}
+</script>
 <style>
 body{margin:0;background:#FAF6EF;background-image:radial-gradient(1100px 520px at 50% -180px, #FFFDF8, #FAF6EF)}
 button{transition:transform .08s ease}
@@ -1781,7 +1808,9 @@ class Component extends DCLogic {
     this.setState({test: Object.assign({}, t, {answers})}, ()=>this.persist());
   }
   endTest(){
-    const t = this.state.test; if(!t) return;
+    // t.ended guard: the timer path schedules this from render and can fire
+    // more than once for the same test — a repeat would double-log and double-award.
+    const t = this.state.test; if(!t || t.ended) return;
     let score = 0; const pt = {};
     t.ids.forEach((id, idx)=>{
       const q = this.qById(id); if(!q) return;
@@ -1858,7 +1887,7 @@ class Component extends DCLogic {
       : 'no subscription yet';
     const locked = !isParent && (hardLock || (!serverOk && s.plan!=='granted' && myPlan.type!=='free' && !compOk));
     const forceAuth = backendOn && !signedIn;
-    const view = forceAuth ? (s.view==='setup' ? 'setup' : 'auth') : (s.printPreview ? 'printPreview' : s.view);
+    const view = forceAuth ? (s.view==='setup' ? 'setup' : s.view==='login' ? 'login' : 'auth') : (s.printPreview ? 'printPreview' : s.view);
 
     // ----- home -----
     const stAll = this.topicStats('all');
@@ -1972,7 +2001,7 @@ class Component extends DCLogic {
           speak: e=>{ e.stopPropagation(); this.speak(text); }
         })),
         prevTQ: ()=>this.set({test: Object.assign({}, t, {i: Math.max(0, t.i-1)})}),
-        nextTQ: ()=>{ if(t.i>=49) this.setState({testView:'review'}); else this.set({test: Object.assign({}, t, {i: t.i+1})}); },
+        nextTQ: ()=>{ if(t.i>=t.ids.length-1) this.setState({testView:'review'}); else this.set({test: Object.assign({}, t, {i: t.i+1})}); },
         goReview: ()=>this.setState({testView:'review'}),
         backToTest: ()=>this.setState({testView:'run'}),
         endTest: ()=>this.endTest(),
@@ -1984,7 +2013,7 @@ class Component extends DCLogic {
           else sty += 'background:#fff;border:1px solid #D8D0BF;color:#6E6A5E';
           return {n:i+1, style:sty, go:()=>this.setState({testView:'run', test:Object.assign({},t,{i})})};
         }),
-        reviewSummary: (()=>{ const a = Object.keys(t.answers).length, f = Object.keys(t.flags).filter(k=>t.flags[k]).length; return a+' answered · '+(50-a)+' not answered · '+f+' flagged'; })()
+        reviewSummary: (()=>{ const a = Object.keys(t.answers).length, f = Object.keys(t.flags).filter(k=>t.flags[k]).length; return a+' answered · '+(t.ids.length-a)+' not answered · '+f+' flagged'; })()
       };
     }
     let resultVals = {};
