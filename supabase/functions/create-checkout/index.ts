@@ -23,6 +23,18 @@ function serverKey(): string {
   } catch { return ''; }
 }
 
+// Only ever send Stripe back to our own site, and keep the pathname's %20
+// intact (the app's filename contains a space). Anything else gets the
+// canonical app URL — this also closes an open redirect.
+const APP_URL = 'https://dstorey87.github.io/Catie-Test/Theory%20Trainer.dc.html';
+function safeReturnUrl(raw: unknown): string {
+  try {
+    const u = new URL(String(raw || ''));
+    if (u.origin === 'https://dstorey87.github.io') return u.origin + u.pathname;
+  } catch { /* fall through */ }
+  return APP_URL;
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: CORS });
 
@@ -34,6 +46,7 @@ Deno.serve(async (req) => {
     annual: Deno.env.get('STRIPE_PRICE_ANNUAL')
   };
   if (!STRIPE_KEY) return json({ error: 'Stripe is not configured on the server yet.' }, 500);
+  if (!SERVICE_KEY) return json({ error: 'Server key missing.' }, 500);
 
   // Who is asking? Verified against Supabase, not trusted from the body.
   const auth = req.headers.get('Authorization') || '';
@@ -47,11 +60,11 @@ Deno.serve(async (req) => {
   const plan = body.plan === 'annual' ? 'annual' : 'monthly';
   const price = PRICES[plan];
   if (!price) return json({ error: `No Stripe price set for the ${plan} plan.` }, 500);
-  const origin = String(body.origin || '').replace(/[^\w:/.\-]/g, '') || SUPABASE_URL;
+  const origin = safeReturnUrl(body.origin);
 
   // Reuse the Stripe customer if we already made one for this account.
   const ent = await fetch(`${SUPABASE_URL}/rest/v1/entitlements?user_id=eq.${user.id}&select=stripe_customer_id`, {
-    headers: { apikey: SERVICE_KEY }
+    headers: { apikey: SERVICE_KEY, Authorization: `Bearer ${SERVICE_KEY}` }
   }).then((r) => r.json()).catch(() => []);
   const customer = ent?.[0]?.stripe_customer_id || '';
 
@@ -70,7 +83,8 @@ Deno.serve(async (req) => {
 
   const r = await fetch('https://api.stripe.com/v1/checkout/sessions', {
     method: 'POST',
-    headers: { Authorization: `Bearer ${STRIPE_KEY}`, 'Content-Type': 'application/x-www-form-urlencoded' },
+    headers: { Authorization: `Bearer ${STRIPE_KEY}`, 'Content-Type': 'application/x-www-form-urlencoded',
+      'Stripe-Version': '2024-06-20', 'Idempotency-Key': crypto.randomUUID() },
     body: form
   });
   const session = await r.json();

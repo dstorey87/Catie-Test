@@ -8,7 +8,7 @@ import webpush from 'npm:web-push@3.6.7';
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
 const SERVICE_KEY = serverKey();
-const H = { apikey: SERVICE_KEY, 'Content-Type': 'application/json' };
+const H = { apikey: SERVICE_KEY, Authorization: `Bearer ${SERVICE_KEY}`, 'Content-Type': 'application/json' };
 
 // Accepts either key generation: legacy service_role, or sb_secret_ keys which
 // arrive as a JSON map in SUPABASE_SECRET_KEYS.
@@ -21,12 +21,6 @@ function serverKey(): string {
   } catch { return ''; }
 }
 
-webpush.setVapidDetails(
-  Deno.env.get('VAPID_SUBJECT') || 'mailto:admin@example.com',
-  Deno.env.get('VAPID_PUBLIC_KEY')!,
-  Deno.env.get('VAPID_PRIVATE_KEY')!
-);
-
 const LINES = [
   { title: 'Ten questions?', body: 'A short go now keeps your streak alive.' },
   { title: 'Your streak is waiting', body: 'Today\u2019s lesson takes about three minutes.' },
@@ -34,6 +28,17 @@ const LINES = [
 ];
 
 Deno.serve(async () => {
+  // Configure VAPID here, not at module load: a missing secret then answers
+  // cleanly instead of crashing the function on boot for every invocation.
+  const vapidPublic = Deno.env.get('VAPID_PUBLIC_KEY');
+  const vapidPrivate = Deno.env.get('VAPID_PRIVATE_KEY');
+  if (!vapidPublic || !vapidPrivate) {
+    return new Response(JSON.stringify({ error: 'VAPID keys not configured; nothing sent.' }),
+      { headers: { 'Content-Type': 'application/json' } });
+  }
+  if (!SERVICE_KEY) return new Response('server key missing', { status: 500 });
+  webpush.setVapidDetails(Deno.env.get('VAPID_SUBJECT') || 'mailto:admin@example.com', vapidPublic, vapidPrivate);
+
   const now = new Date();
   const utcMinutes = now.getUTCHours() * 60 + now.getUTCMinutes();
 
