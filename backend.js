@@ -42,8 +42,10 @@
     var c = cfg();
     if (!c) throw new Error('The app is not connected to its server yet (setup screen).');
     opts = opts || {};
+    // The project key always travels in the apikey header. Only a signed-in user's
+    // token goes in Authorization — the newer sb_publishable_ keys are rejected there.
     var h = Object.assign({ apikey: c.anonKey, 'Content-Type': 'application/json' }, opts.headers || {});
-    if (auth !== false) h.Authorization = 'Bearer ' + ((sess && sess.access_token) || c.anonKey);
+    if (auth !== false && sess && sess.access_token) h.Authorization = 'Bearer ' + sess.access_token;
     var r = await fetch(c.url.replace(/\/+$/, '') + path, Object.assign({}, opts, { headers: h, cache: 'no-store' }));
     var text = await r.text();
     var body = null; try { body = text ? JSON.parse(text) : null; } catch (e) {}
