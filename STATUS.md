@@ -62,9 +62,9 @@ Seeded from the Phase-0 plan; add rows as later roadmap phases are broken into s
 
 | Section | Lane | Branch | Status |
 |---|---|---|---|
-| SW caching fixes: per-deploy cache name, network-first navigations, update banner, stop caching `questions-*.json`, purge on activate | Platform/PWA | `section/pwa-caching` | unclaimed |
-| Supabase backend fixes: schema S1–S4 (trigger, backfill, RPC grants, null period end) + edge functions W1–W8 (auth header, fail-closed webhook, r.ok checks, Stripe API version, origin sanitiser) | Backend | `section/supabase-backend` | unclaimed |
-| App bug batch B1–B6: topic type, sign field, `pack`, mock length, endTest double-fire, forceAuth trap | App/UI (serialized) | `section/app-bugs-b1-b6` | unclaimed |
+| SW caching fixes: per-deploy cache name, network-first navigations, update banner, stop caching `questions-*.json`, purge on activate | Platform/PWA | `phase0-app-fixes` | **live on main** (2026-08-19, adversarially reviewed; done before this table existed — `section/pwa-caching` is stale, delete it) |
+| Supabase backend fixes: schema S1–S4 (trigger, backfill, RPC grants, null period end) + edge functions W1–W8 (auth header, fail-closed webhook, r.ok checks, Stripe API version, origin sanitiser) | Backend | `phase0-server-fixes` | **live on main** (2026-08-19; also re-runnable alter-table upgrades — `section/supabase-backend` is stale, delete it) |
+| App bug batch B1–B6: topic type, sign field, `pack`, mock length, endTest double-fire, forceAuth trap | App/UI (serialized) | `phase0-app-fixes` | **live on main** (2026-08-19; plus editor sign-clear fix) |
 | Vendor React/Babel same-origin + precache (true offline) | App/UI (serialized) | `section/vendor-react` | unclaimed |
 | Manifest/PWA polish: maskable icon, id/scope, viewport tags, offline fallback page | Platform/PWA | `section/manifest-polish` | unclaimed |
-| Remove public question bank after Supabase upload (delete `questions-1..5.json`, remove `local()` path, delete dead `sync.js`) | App/UI + data (serialized) | `section/bank-removal` | unclaimed |
+| Remove public question bank after Supabase upload (delete `questions-1..5.json`, remove `local()` path, delete dead `sync.js`) | App/UI + data (serialized) | `section/bank-removal` | partial: `sync.js` deleted, live on main. JSON deletion + `local()` removal MUST wait until the bank is uploaded to Supabase (the upload reads these files from the live site) |
