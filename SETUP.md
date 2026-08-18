@@ -1,12 +1,12 @@
 # Theory Trainer — setup guide (GitHub, no Supabase)
 
-## 1. Publish it on GitHub Pages (free, ~3 minutes)
-Your repo already exists: https://github.com/dstorey87/Catie-Test
-1. Download the project folder from the chat (Download button) and unzip it.
-2. Open the repo → **Add file → Upload files** → drag in EVERYTHING from the unzipped folder (including the `data` and `icons` folders — drag the folders themselves into the upload area) → **Commit changes**.
+## 1. Publish it on GitHub Pages (free, ~2 minutes)
+Your repo already has the files: https://github.com/dstorey87/Catie-Test
+The app now lives FLAT at the repo root (no folders) so the web uploader can never scramble the structure again.
+1. Download the "GitHub upload" zip from the chat and unzip it — it's all loose files, no folders.
+2. Repo → **Add file → Upload files** → drag all the files in → Commit (existing files are overwritten — that's the update path forever).
 3. Repo → **Settings → Pages** → Source: **Deploy from a branch** → Branch: **main**, folder **/ (root)** → Save.
 4. After ~1 minute the app is live at **https://dstorey87.github.io/Catie-Test/**
-Updating later: upload the changed files again (same steps) — Pages redeploys itself.
 
 ## 2. Install it as an app
 - iPhone/iPad: open the URL in Safari → Share → **Add to Home Screen**.
