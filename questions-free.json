@@ -1,0 +1,303 @@
+[
+ {
+  "id": "t01q01",
+  "topic": 1,
+  "question": "You want to change lanes. What should you do first?",
+  "options": [
+   "Check your mirrors",
+   "Sound your horn",
+   "Speed up",
+   "Brake gently"
+  ],
+  "correctIndex": 0,
+  "explanation": "Check your mirrors first so you know what is behind and beside you.",
+  "ruleRef": "HC Rule 161",
+  "pack": "p1"
+ },
+ {
+  "id": "t02q01",
+  "topic": 2,
+  "question": "The car behind is following you very closely. What should you do?",
+  "options": [
+   "Slow gently and increase your gap ahead",
+   "Brake hard to warn them",
+   "Speed up to get away",
+   "Stop and speak to the driver"
+  ],
+  "correctIndex": 0,
+  "explanation": "A bigger gap in front gives you and the tailgater more room to stop.",
+  "ruleRef": "HC Rule 168",
+  "pack": "p1"
+ },
+ {
+  "id": "t03q01",
+  "topic": 3,
+  "question": "What is the legal minimum tread depth for car tyres?",
+  "options": [
+   "1.6 mm",
+   "1 mm",
+   "2.6 mm",
+   "4 mm"
+  ],
+  "correctIndex": 0,
+  "explanation": "Car tyres need at least 1.6 mm of tread across the middle three quarters.",
+  "ruleRef": "HC Annex 6",
+  "pack": "p1"
+ },
+ {
+  "id": "t04q01",
+  "topic": 4,
+  "question": "What is the typical stopping distance at 30 mph?",
+  "options": [
+   "23 metres",
+   "12 metres",
+   "36 metres",
+   "53 metres"
+  ],
+  "correctIndex": 0,
+  "explanation": "At 30 mph you need about 23 metres to think and brake to a stop.",
+  "ruleRef": "HC Rule 126",
+  "pack": "p1"
+ },
+ {
+  "id": "t05q01",
+  "topic": 5,
+  "question": "You see parked cars along a narrow street. What is the main danger?",
+  "options": [
+   "Someone stepping out between the cars",
+   "Running out of fuel",
+   "Losing your way",
+   "Damaging your mirrors"
+  ],
+  "correctIndex": 0,
+  "explanation": "People, especially children, can step out from between parked cars without warning.",
+  "ruleRef": "HC Rule 205",
+  "pack": "p1"
+ },
+ {
+  "id": "t06q01",
+  "topic": 6,
+  "question": "How much space should you leave when passing a cyclist at up to 30 mph?",
+  "options": [
+   "At least 1.5 metres",
+   "Half a metre",
+   "3 car widths",
+   "No set amount"
+  ],
+  "correctIndex": 0,
+  "explanation": "Leave at least 1.5 metres when passing cyclists at up to 30 mph.",
+  "ruleRef": "HC Rule 163",
+  "pack": "p1"
+ },
+ {
+  "id": "t07q01",
+  "topic": 7,
+  "question": "A long lorry ahead signals left but moves out to the right. Why?",
+  "options": [
+   "It needs room to swing round the left turn",
+   "The driver is lost",
+   "It is overtaking",
+   "The signal is broken"
+  ],
+  "correctIndex": 0,
+  "explanation": "Long vehicles swing out before tight turns; never pass on their left.",
+  "ruleRef": "HC Rule 221",
+  "pack": "p1"
+ },
+ {
+  "id": "t08q01",
+  "topic": 8,
+  "question": "When must you use headlights in fog?",
+  "options": [
+   "When you cannot see more than 100 metres",
+   "Only at night",
+   "Never in daytime",
+   "Only in winter"
+  ],
+  "correctIndex": 0,
+  "explanation": "Use dipped headlights when visibility is seriously reduced, around 100 metres or less.",
+  "ruleRef": "HC Rule 226",
+  "pack": "p1"
+ },
+ {
+  "id": "t09q01",
+  "topic": 9,
+  "question": "What is the national speed limit for cars on a motorway?",
+  "options": [
+   "70 mph",
+   "60 mph",
+   "80 mph",
+   "50 mph"
+  ],
+  "correctIndex": 0,
+  "explanation": "Cars may travel at up to 70 mph on motorways unless signs say less.",
+  "ruleRef": "HC Rule 124",
+  "pack": "p1"
+ },
+ {
+  "id": "t10q01",
+  "topic": 10,
+  "question": "You are in a built-up area of Wales with street lights and no signs. What is the speed limit?",
+  "options": [
+   "20 mph",
+   "30 mph",
+   "40 mph",
+   "25 mph"
+  ],
+  "correctIndex": 0,
+  "explanation": "In Wales the default limit on restricted roads is 20 mph.",
+  "ruleRef": "HC Rule 124",
+  "pack": "p1"
+ },
+ {
+  "id": "t11q01",
+  "topic": 11,
+  "question": "Most circular road signs with a red ring tell you what?",
+  "options": [
+   "Things you must not do",
+   "Warnings",
+   "Directions",
+   "Motorway rules"
+  ],
+  "correctIndex": 0,
+  "explanation": "A red ring or circle means a rule that stops you doing something.",
+  "ruleRef": "HC: Traffic signs",
+  "imageHint": "noOvertaking",
+  "pack": "p1"
+ },
+ {
+  "id": "t12q01",
+  "topic": 12,
+  "question": "How many questions are in the car theory test, and how long do you get?",
+  "options": [
+   "50 questions in 57 minutes",
+   "35 questions in 40 minutes",
+   "100 questions in 1 hour",
+   "50 questions in 30 minutes"
+  ],
+  "correctIndex": 0,
+  "explanation": "The multiple-choice part has 50 questions and lasts 57 minutes.",
+  "ruleRef": "DVSA test format",
+  "pack": "p1"
+ },
+ {
+  "id": "t13q01",
+  "topic": 13,
+  "question": "How fast should chest compressions be given in CPR?",
+  "options": [
+   "100 to 120 per minute",
+   "60 per minute",
+   "200 per minute",
+   "As fast as possible"
+  ],
+  "correctIndex": 0,
+  "explanation": "Push at 100 to 120 compressions each minute in the centre of the chest.",
+  "ruleRef": "HC Annex 7",
+  "pack": "p1"
+ },
+ {
+  "id": "t14q01",
+  "topic": 14,
+  "question": "Who is responsible for making sure a car is not overloaded?",
+  "options": [
+   "The driver",
+   "The passengers",
+   "The car maker",
+   "The police"
+  ],
+  "correctIndex": 0,
+  "explanation": "The driver is responsible for the load, even if someone else packed it.",
+  "ruleRef": "HC Rule 98",
+  "pack": "p1"
+ },
+ {
+  "id": "t01q02",
+  "topic": 1,
+  "question": "You feel sleepy on a long drive. What is the best thing to do?",
+  "options": [
+   "Stop somewhere safe and rest",
+   "Open the window and carry on",
+   "Turn the radio up",
+   "Drive faster to finish sooner"
+  ],
+  "correctIndex": 0,
+  "explanation": "Only proper rest fixes tiredness, so stop somewhere safe as soon as you can.",
+  "ruleRef": "HC Rule 91",
+  "pack": "p1"
+ },
+ {
+  "id": "t02q02",
+  "topic": 2,
+  "question": "What does it mean if a driver flashes their headlights at you?",
+  "options": [
+   "They are letting you know they are there",
+   "You must go first",
+   "They are angry",
+   "Your lights are broken"
+  ],
+  "correctIndex": 0,
+  "explanation": "A headlight flash only means the same as a horn: I am here.",
+  "ruleRef": "HC Rule 110",
+  "pack": "p1"
+ },
+ {
+  "id": "t03q02",
+  "topic": 3,
+  "question": "When should you check your tyre pressures?",
+  "options": [
+   "When the tyres are cold",
+   "Right after a long drive",
+   "Only before winter",
+   "Only at the garage"
+  ],
+  "correctIndex": 0,
+  "explanation": "Warm tyres give a false reading, so check them cold.",
+  "ruleRef": "HC Annex 6",
+  "pack": "p1"
+ },
+ {
+  "id": "t04q02",
+  "topic": 4,
+  "question": "What is the typical stopping distance at 70 mph?",
+  "options": [
+   "96 metres",
+   "53 metres",
+   "73 metres",
+   "36 metres"
+  ],
+  "correctIndex": 0,
+  "explanation": "At 70 mph you need about 96 metres, around 24 car lengths.",
+  "ruleRef": "HC Rule 126",
+  "pack": "p1"
+ },
+ {
+  "id": "t05q02",
+  "topic": 5,
+  "question": "Why should you scan far ahead, not just at the car in front?",
+  "options": [
+   "You spot hazards earlier and react in time",
+   "It is more relaxing",
+   "You can drive faster",
+   "It saves fuel"
+  ],
+  "correctIndex": 0,
+  "explanation": "Looking well ahead gives you extra seconds to deal with hazards calmly.",
+  "ruleRef": "HC Rule 146",
+  "pack": "p1"
+ },
+ {
+  "id": "t06q02",
+  "topic": 6,
+  "question": "Who is at the top of the Highway Code's hierarchy of road users?",
+  "options": [
+   "Pedestrians",
+   "Car drivers",
+   "Lorry drivers",
+   "Cyclists"
+  ],
+  "correctIndex": 0,
+  "explanation": "Those most at risk, starting with pedestrians, come first in the hierarchy.",
+  "ruleRef": "HC Rule H1",
+  "pack": "p1"
+ }
+]
