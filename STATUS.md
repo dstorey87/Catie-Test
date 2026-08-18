@@ -13,6 +13,7 @@ States: ✅ done & verified in preview · ⚠️ built, needs your account/keys 
 
 ## Testing
 - ✅ Mock test: 50q, 57:00, flag + review grid, pass 43, per-topic results; survives reload/crash (verified by reload mid-test)
+- ✅ Build-your-own test: pick topics + how many of each (steppers), timer on/off (time scales to length), pass mark scales (86%); results/history show real totals
 - ✅ Random "Surprise mix" test + balanced "like the real test" mode
 - ✅ Wrong answers reviewed after every test: your pick, correct answer, explanation, sign visual, save-for-revision
 - ✅ Flagging ("Tricky?") in practise + test; feeds revision list, Focus Drill, analytics
@@ -22,9 +23,13 @@ States: ✅ done & verified in preview · ⚠️ built, needs your account/keys 
 - ✅ Readiness dial, coach advice, topic traffic-lights with improvement actions, mock trend chart, history with per-topic detail, 20 hardest, external mock logging
 - ✅ Adaptive practice after 2 mocks (weak topics weighted)
 - ✅ Per-learner analytics; admin learner switcher
+- ✅ Duolingo-style loop: daily goal (10/20/30), day streak with flame, XP + levels (10/correct, +50 pass bonus), "Today's lesson" smart mix (reviews due + tricky flags + weak topics)
+- ✅ Theory-test-date countdown on Home (set in Settings)
+- ✅ Notes on any screen: pencil button bottom-right, saves per screen per learner, syncs; jump between screens' notes
 
 ## Users, login, subscription
-- ✅ Login screen listing learners + Admin; add learner; per-learner storage
+- ✅ Login screen listing learners + Admin; add learner; per-learner storage; profile photos (upload in Settings → shown on login)
+- ✅ Subscription manager in Admin: global on/off, price text shown on the lock screen, payment link, and per-learner access — Default / Always free / Free until a date (free months) / Suspended / Blocked. Changing the charged amount = edit price text + update your Stripe link (Stripe hosts checkout; card processing can't run inside a static app)
 - ✅ Real accounts reworked per your request — **no Supabase anywhere**. Sign-in is now GitHub family sync: connect any device with your repo + token (login screen → Set up family sync) and every learner + their progress appears on it. ⚠️ Live push/pull needs your one-time token (SETUP.md §3, ~3 min) — I can't create tokens on your account
 - ⚠️ Subscription gate: admin toggle, paywall screen, payment-link button, per-learner grant/revoke — app side done; needs your free Stripe Payment Link (Stripe hosts checkout; no gateway can be "downloaded" as static files)
 - ❌ Enforcement stronger than app-level lock — client code can't hide secrets; real DRM needs a server
@@ -34,6 +39,7 @@ States: ✅ done & verified in preview · ⚠️ built, needs your account/keys 
 - ⚠️ Cloud sync — now via **GitHub** (no Supabase): snapshot lives in your private repo at sync/data.json; pull on open, debounced push after answers, pull-merge before every push (newest wins per learner), retry on reconnect. Built + wired; end-to-end test needs your token (SETUP.md §3)
 - ✅ Export/Import backup files
 - ✅ Question editor: add/edit/delete, correct-answer marking, sign picker, search across all questions, bank export
+- ✅ Ready for more test types: packs carry a testType field (car, motorcycle, LGV…) so other theory tests load later as packs — no redesign
 - ✅ Full accounting: printable answer book (every question, answer marked ✓, explanation, ref), flashcards, test paper + key
 
 ## Platforms & publishing
