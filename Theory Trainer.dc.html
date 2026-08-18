@@ -130,14 +130,14 @@ input,select{font-family:inherit}
     <div style="font-family:'Nunito',sans-serif;font-weight:900;font-size:24px">Server settings</div>
   </div>
   <div style="background:#fff;border:1px solid #E8E1D2;border-radius:20px;padding:20px;display:flex;flex-direction:column;gap:12px">
-    <div style="font-size:13px;color:#6E6A5E;line-height:1.5">Only needed once, and only by you. Both values come from Supabase → Project Settings → API. Learners never see this screen. Full steps: SETUP.md §2.</div>
+    <div style="font-size:13px;color:#6E6A5E;line-height:1.5">Only needed once, and only by you. Both values come from Supabase → Settings → API Keys. Learners never see this screen. Full steps: SETUP.md §2.</div>
     <label style="font-size:13.5px;color:#6E6A5E">Project URL<input value="{{ cfgUrl }}" name="url" onChange="{{ cfgChange }}" placeholder="https://xxxx.supabase.co" autocapitalize="none" style="display:block;width:100%;box-sizing:border-box;margin-top:4px;padding:12px;border:1px solid #E8E1D2;border-radius:10px;font-size:16px"></label>
-    <label style="font-size:13.5px;color:#6E6A5E">Anon public key<input value="{{ cfgKey }}" name="key" onChange="{{ cfgChange }}" placeholder="eyJhbGciOi…" autocapitalize="none" style="display:block;width:100%;box-sizing:border-box;margin-top:4px;padding:12px;border:1px solid #E8E1D2;border-radius:10px;font-size:16px"></label>
+    <label style="font-size:13.5px;color:#6E6A5E">Publishable key<input value="{{ cfgKey }}" name="key" onChange="{{ cfgChange }}" placeholder="sb_publishable_… or eyJhbGciOi…" autocapitalize="none" style="display:block;width:100%;box-sizing:border-box;margin-top:4px;padding:12px;border:1px solid #E8E1D2;border-radius:10px;font-size:16px"></label>
     <button onClick="{{ cfgSave }}" style="background:#0E7C6B;color:#fff;border:none;border-radius:14px;min-height:52px;font-family:'Nunito',sans-serif;font-weight:900;font-size:17px;cursor:pointer">{{ connectBtnLabel }}</button>
     <sc-if value="{{ authIsErr }}" hint-placeholder-val="{{ false }}">
       <div style="font-size:13.5px;color:#B8433D;line-height:1.45">{{ authMsg }}</div>
     </sc-if>
-    <div style="font-size:13px;color:#6E6A5E;line-height:1.5">The anon key is safe to publish — every table is locked down per account, so it grants nothing on its own.</div>
+    <div style="font-size:13px;color:#6E6A5E;line-height:1.5">This key is safe to publish — every table is locked down per account, so it grants nothing on its own. Older projects call it the anon key; both work.</div>
   </div>
 </div>
 </sc-if>
@@ -1447,7 +1447,7 @@ class Component extends DCLogic {
   }
   saveServerConfig(){
     const u = (this.state.cfgUrl||'').trim(), k = (this.state.cfgKey||'').trim();
-    if(!/^https?:\/\/.+/.test(u) || k.length < 20){ this.setState({authOk:false, authMsg:'Paste the project URL and the anon public key.'}); return; }
+    if(!/^https?:\/\/.+/.test(u) || k.length < 20){ this.setState({authOk:false, authMsg:'Paste the project URL and the publishable key.'}); return; }
     TTBackend.setConfig(u, k);
     this.setState({cloudBusy:true, authMsg:''});
     TTBackend.test()
