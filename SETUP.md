@@ -25,9 +25,12 @@ your GitHub token, press Publish. It replaces every file in one go.
    `supabase/schema.sql` from this project → **Run**. It creates the accounts,
    progress, access and question tables, plus the rules that keep every account's
    data private.
-3. Left sidebar → **Project Settings → API**. Copy:
-   - **Project URL** (`https://xxxx.supabase.co`)
-   - **anon public** key (the long `eyJ…` string)
+3. Left sidebar → **Settings → API Keys**. Copy:
+   - **Project URL** (`https://xxxx.supabase.co`) — Settings → General, or the Connect dialog
+   - **Publishable key** (`sb_publishable_…`). Older projects show an **anon public**
+     key (`eyJ…`) instead — either works; Supabase is retiring the anon one by the
+     end of 2026, so use the publishable key on a new project.
+   Both are safe to publish: row-level security is what protects the data.
 4. Put those two values into the app. Either:
    - open **Publish to GitHub.html**, paste them in the Supabase box, and publish —
      it writes them into `config.js` for every device at once; **or**
@@ -57,14 +60,17 @@ with: two links to create, one function to deploy. **Route B** adds in-app plan
 switching and self-service cancelling.
 
 ### Both routes: make the prices (~5 min)
-1. **stripe.com** → **Products** → **Add product**: "Theory Trainer", then add two
+1. **dashboard.stripe.com** → turn **Test mode** on (top right) while you're trying
+   it out → **Product catalogue** → **+ Add product**: "Theory Trainer". Add two
    prices to it: **£4.99 / month** recurring, and **£50 / year** recurring.
-2. **Developers → API keys** → copy the **Secret key** (`sk_test_…` while testing,
-   `sk_live_…` when you go live).
+2. **Developers → API keys** (or Workbench → API keys) → copy the **Secret key**
+   (`sk_test_…` while testing, `sk_live_…` when you go live).
 
 ### Route A — payment links (~10 min)
-3. Stripe → **Payment links** → **New** → pick the £4.99 monthly price → Create.
-   Copy the link (`https://buy.stripe.com/…`). Repeat for the £50 yearly price.
+3. Go to **dashboard.stripe.com/payment-links** (sidebar: Payment Links, under
+   Payments on some accounts) → **+ New** → select the £4.99 monthly price (or
+   **+ Add a new product** to make it here) → **Create link** → copy the URL
+   (`https://buy.stripe.com/…`). Repeat for the £50 yearly price.
 4. Paste both links into **Publish to GitHub.html** (step 1, Stripe boxes) and
    publish. They go into `config.js`, and the app's Subscribe buttons open them
    with the account id attached, so the payment can be matched to the account.
@@ -74,11 +80,13 @@ switching and self-service cancelling.
    turn **Verify JWT OFF**.
 6. Supabase → **Edge Functions → Secrets**: add `STRIPE_SECRET_KEY` (your `sk_…`)
    and, after step 7, `STRIPE_WEBHOOK_SECRET`.
-7. Stripe → **Developers → Webhooks → Add endpoint**:
-   - URL: `https://YOUR-PROJECT.supabase.co/functions/v1/stripe-webhook`
+7. Stripe → **dashboard.stripe.com/webhooks** (Developers menu → **Workbench** →
+   **Webhooks** on newer accounts) → **Create an event destination** →
+   **Webhook endpoint**:
+   - Endpoint URL: `https://YOUR-PROJECT.supabase.co/functions/v1/stripe-webhook`
    - Events: `checkout.session.completed`, `customer.subscription.updated`,
      `customer.subscription.deleted`, `invoice.payment_failed`
-   - Save → copy the **Signing secret** (`whsec_…`) into `STRIPE_WEBHOOK_SECRET`
+   - Create → copy the **Signing secret** (`whsec_…`) into `STRIPE_WEBHOOK_SECRET`
      → redeploy the function.
 
 That's charging done: people subscribe in the app, access appears within seconds,
@@ -97,8 +105,11 @@ email receipt Stripe sends, or you do it from the Stripe dashboard.
 
 ### Testing either route
 Use Stripe **test mode** and card `4242 4242 4242 4242`, any future expiry, any CVC.
-Subscribe in the app; access should switch on within a couple of seconds. Stripe →
-**Webhooks** shows each delivery and any error.
+Subscribe in the app; access should switch on within a couple of seconds. The
+Webhooks page (or Workbench → Webhooks) shows each delivery and any error.
+
+Test-mode payment links only work in test mode. When you go live, switch Test mode
+off, create the product and links again, and publish the live URLs.
 
 What this buys you: the app never decides who has paid. Stripe tells the server,
 the server writes the access row, and the question bank is only readable by an
@@ -110,14 +121,17 @@ account with access. Editing the app in a browser gets someone nowhere.
 
 Until this is done, a signed-in account sees only the 20-question free sample.
 
-1. Supabase → **Project Settings → API** → reveal the **service_role** key.
-   (This one is powerful — never put it in the app or the repo. It's used once, here.)
-2. Open **Publish to GitHub.html** → **Question bank** section → paste the project
-   URL and the service_role key → **Upload bank to server**. It writes all 378
-   questions into the `questions` table.
+1. Make sure your own account is the admin — §2 step 7 sets `role = 'admin'` on your
+   profile row. Only admins may write to the `questions` table.
+2. Open **Publish to GitHub.html** → **Question bank** section → sign in with your
+   admin email and password → **Upload bank to server**. It writes all 378 questions
+   into the `questions` table.
 3. In the same page, tick **Remove the public question files** so
    `questions-1…5.json` are deleted from the repo. The bank is then only available
    to accounts with access — that's the part that stops copying.
+
+No secret key is involved: Supabase now rejects `sb_secret_…` keys sent from a
+browser, so the upload uses your admin sign-in instead.
 
 The 20-question sample (`questions-free.json`) stays public on purpose: it's the
 free trial on the paywall.
