@@ -8,6 +8,7 @@
   function readJSON(k) { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } }
   function writeJSON(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
   function drop(k) { try { localStorage.removeItem(k); } catch (e) {} }
+  drop('tt.bank.v1'); // pre-v2 bank cache: the paid bank must not outlive its key
 
   var override = readJSON(CFGKEY);
   function cfg() {

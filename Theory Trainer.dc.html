@@ -2101,9 +2101,14 @@ class Component extends DCLogic {
       edCancel: ()=>this.setState({edDraft:null, edId:null}),
       edSave: ()=>{
         const d = s.edDraft; if(!d.question.trim()) return;
-        if(!d.imageHint) delete d.imageHint;
-        if(s.edId && !s.edId.startsWith('c')){ const ov = Object.assign({}, s.overrides); ov[s.edId]=d; this.set({overrides:ov, edDraft:null, edId:null}); }
-        else { const others = s.custom.filter(q=>q.id!==d.id); this.set({custom: others.concat([d]), edDraft:null, edId:null}); }
+        if(s.edId && !s.edId.startsWith('c')){
+          // Overrides keep imageHint even when empty: the merge is base-then-
+          // override, so deleting the key would let the base row's sign show
+          // through again (server rows carry imageHint since the v2 adapter).
+          if(!d.imageHint) d.imageHint = '';
+          const ov = Object.assign({}, s.overrides); ov[s.edId]=d; this.set({overrides:ov, edDraft:null, edId:null});
+        }
+        else { if(!d.imageHint) delete d.imageHint; const others = s.custom.filter(q=>q.id!==d.id); this.set({custom: others.concat([d]), edDraft:null, edId:null}); }
       },
       edDelete: ()=>{ if(!s.edId){ this.setState({edDraft:null}); return; }
         if(s.edId.startsWith('c')) this.set({custom: s.custom.filter(q=>q.id!==s.edId), edDraft:null, edId:null});

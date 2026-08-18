@@ -5,8 +5,8 @@
 const VERSION = 'v6-2026-08-19';
 const C = 'theory-trainer-' + VERSION;
 const CORE = ['./', './index.html', './Theory%20Trainer.dc.html', './support.js', './signs.js',
-  './config.js', './backend.js', './manifest.json', './questions-free.json',
-  './icon-180.png', './icon-192.png', './icon-512.png', './icon.png'];
+  './config.js', './backend.js', './manifest.json', './questions-free.json'];
+const EXTRAS = ['./icon-180.png', './icon-192.png', './icon-512.png', './icon.png'];
 
 // The paid bank must never enter this cache: once the public files are removed
 // from the repo, a cached copy would keep serving it to accountless installs.
@@ -14,11 +14,16 @@ const NEVER_CACHE = /\/questions-\d+\.json$/;
 
 self.addEventListener('install', e => {
   // {cache:'reload'} bypasses the HTTP cache, so the precache can't be filled
-  // with stale bytes the Pages CDN was still serving.
-  e.waitUntil(caches.open(C)
-    .then(c => c.addAll(CORE.map(u => new Request(u, { cache: 'reload' }))))
-    .catch(() => {}));
-  self.skipWaiting();
+  // with stale bytes the Pages CDN was still serving. The shell precaches
+  // atomically or the install FAILS — the old worker and its working cache
+  // then stay in charge until the next attempt, instead of activate purging
+  // a good cache in favour of an empty one. Icons are best-effort.
+  e.waitUntil((async () => {
+    const c = await caches.open(C);
+    await c.addAll(CORE.map(u => new Request(u, { cache: 'reload' })));
+    await Promise.all(EXTRAS.map(u => c.add(new Request(u, { cache: 'reload' })).catch(() => {})));
+    self.skipWaiting();
+  })());
 });
 
 self.addEventListener('activate', e => {
@@ -36,15 +41,24 @@ self.addEventListener('fetch', e => {
 
   if (e.request.mode === 'navigate') {
     // Network-first: a deploy reaches every install on its next open, instead
-    // of always being one full load behind. Cache is the offline fallback.
-    e.respondWith(
-      fetch(e.request.url, { cache: 'no-cache' }).then(res => {
+    // of always being one full load behind. But only with a short patience
+    // window — a connected-but-dead link must not blank an app whose complete
+    // shell sits in the cache (it would hang until the OS socket timeout).
+    e.respondWith((async () => {
+      const net = fetch(e.request.url, { cache: 'no-cache' }).then(res => {
         if (res && res.ok) { const cl = res.clone(); caches.open(C).then(c => c.put(e.request, cl)); }
         return res;
-      }).catch(() =>
-        caches.match(e.request).then(hit => hit || caches.match('./Theory%20Trainer.dc.html'))
-      )
-    );
+      });
+      const winner = await Promise.race([
+        net.catch(() => undefined),
+        new Promise(r => setTimeout(() => r(undefined), 3500))
+      ]);
+      if (winner) return winner;
+      const hit = await caches.match(e.request) || await caches.match('./Theory%20Trainer.dc.html');
+      return hit || net.catch(() =>
+        new Response('You are offline and no saved copy is available yet.',
+          { status: 503, headers: { 'Content-Type': 'text/plain' } }));
+    })());
     return;
   }
 
