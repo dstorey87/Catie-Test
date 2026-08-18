@@ -22,7 +22,8 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Theory Trainer">
 <link rel="apple-touch-icon" href="icon-180.png">
-<script src="sync.js"></script>
+<script src="config.js"></script>
+<script src="backend.js"></script>
 <script>try{ if('serviceWorker' in navigator && window.top===window) navigator.serviceWorker.register('sw.js'); }catch(e){}</script>
 <style>
 body{margin:0;background:#FAF6EF;background-image:radial-gradient(1100px 520px at 50% -180px, #FFFDF8, #FAF6EF)}
@@ -63,35 +64,80 @@ input,select{font-family:inherit}
       <span><span style="display:block;font-family:'Nunito',sans-serif;font-weight:900;font-size:20px;color:#2A2C33">{{ parentName }}</span><span style="display:block;font-size:14px;color:#6E6A5E">Admin · progress &amp; editing</span></span>
     </button>
     <button onClick="{{ addLearner }}" style="background:none;border:none;color:#0E7C6B;font-size:14.5px;font-weight:700;cursor:pointer;padding:10px;min-height:44px">+ Add another learner</button>
-    <sc-if value="{{ cloudNotConfigured }}" hint-placeholder-val="{{ false }}">
-      <button onClick="{{ goCloudLogin }}" style="background:none;border:none;color:#6E6A5E;font-size:13.5px;cursor:pointer;padding:8px;min-height:44px;text-decoration:underline">Set up family sync</button>
+    <sc-if value="{{ signedIn }}" hint-placeholder-val="{{ false }}">
+      <div style="font-size:13px;color:#B5AE9E;padding:6px 6px 0">{{ accountLine }}</div>
+      <button onClick="{{ signOutBtn }}" style="background:none;border:none;color:#6E6A5E;font-size:13px;cursor:pointer;padding:6px;min-height:44px;text-decoration:underline">Sign out</button>
     </sc-if>
-    <sc-if value="{{ cloudConfigured }}" hint-placeholder-val="{{ false }}">
-      <div style="font-size:13px;color:#B5AE9E;padding:6px">Family sync on · {{ syncRepoName }}</div>
+    <sc-if value="{{ signedOut }}" hint-placeholder-val="{{ true }}">
+      <button onClick="{{ goAuthScreen }}" style="background:#fff;border:2px solid #E8E1D2;border-radius:18px;min-height:52px;font-size:15.5px;font-weight:700;color:#0E7C6B;cursor:pointer">Sign in or create an account</button>
+      <div style="font-size:12.5px;color:#B5AE9E;padding:2px 6px">{{ accountLine }}</div>
     </sc-if>
   </div>
 </div>
 </sc-if>
 
-<!-- ============ FAMILY SYNC (GitHub) ============ -->
-<sc-if value="{{ vCloudLogin }}" hint-placeholder-val="{{ false }}">
-<div data-screen-label="Family sync" style="max-width:380px;margin:0 auto;padding-top:30px">
-  <div style="display:flex;align-items:center;gap:10px;margin-bottom:18px">
-    <button onClick="{{ goLogin }}" style="background:#fff;border:1px solid #E8E1D2;border-radius:12px;width:44px;height:44px;cursor:pointer;font-size:18px">←</button>
-    <div style="font-family:'Nunito',sans-serif;font-weight:900;font-size:24px">Family sync</div>
+<!-- ============ ACCOUNT: SIGN IN / CREATE ============ -->
+<sc-if value="{{ vAuth }}" hint-placeholder-val="{{ false }}">
+<div data-screen-label="Sign in" style="max-width:380px;margin:0 auto;padding-top:24px">
+  <div style="display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center;margin-bottom:20px">
+    <div style="width:64px;height:64px;border-radius:20px;background:#0E7C6B;display:flex;align-items:center;justify-content:center">
+      <svg width="36" height="36" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="#fff" stroke-width="2.4"/><circle cx="12" cy="12" r="2.4" fill="#fff"/><path d="M12 14.2 L12 21 M10 12.6 L3.6 10.4 M14 12.6 L20.4 10.4" stroke="#fff" stroke-width="2.2"/></svg>
+    </div>
+    <div style="font-family:'Nunito',sans-serif;font-weight:900;font-size:26px">{{ authTitle }}</div>
+    <div style="font-size:15px;color:#6E6A5E;line-height:1.5">{{ authSub }}</div>
   </div>
   <div style="background:#fff;border:1px solid #E8E1D2;border-radius:20px;padding:20px;display:flex;flex-direction:column;gap:12px">
-    <div style="font-size:13px;color:#6E6A5E;line-height:1.5">Scores back up to your own GitHub repo and follow you to every connected device. Enter the same two values on each device — setup steps are in SETUP.md §3.</div>
-    <label style="font-size:13.5px;color:#6E6A5E">Repository (owner/name)<input value="{{ syncUrl }}" name="url" onChange="{{ syncChange }}" onKeyDown="{{ cloudKey }}" placeholder="dstorey87/Catie-Test-data" autocapitalize="none" style="display:block;width:100%;box-sizing:border-box;margin-top:4px;padding:12px;border:1px solid #E8E1D2;border-radius:10px;font-size:16px"></label>
-    <label style="font-size:13.5px;color:#6E6A5E">Access token
-      <span style="display:flex;gap:8px;margin-top:4px">
-        <input type="{{ passType }}" value="{{ syncKey }}" name="key" onChange="{{ syncChange }}" onKeyDown="{{ cloudKey }}" placeholder="github_pat_…" autocapitalize="none" style="flex:1;box-sizing:border-box;padding:12px;border:1px solid #E8E1D2;border-radius:10px;font-size:16px;min-width:0">
-        <button onClick="{{ togglePass }}" style="flex:none;background:#EFE9DC;border:none;border-radius:10px;padding:0 14px;font-size:13.5px;font-weight:700;color:#6E6A5E;cursor:pointer;min-height:44px">{{ passToggleLabel }}</button>
-      </span>
-    </label>
-    <button onClick="{{ connectSyncBtn }}" style="background:#0E7C6B;color:#fff;border:none;border-radius:14px;min-height:52px;font-family:'Nunito',sans-serif;font-weight:900;font-size:17px;cursor:pointer">{{ connectBtnLabel }}</button>
-    <div style="font-size:13.5px;color:#B8433D;min-height:18px;line-height:1.4">{{ cloudMsg }}</div>
-    <div style="font-size:13px;color:#6E6A5E;line-height:1.5">Once connected, learners and their progress appear here automatically, and answers made offline are sent when the device is back online. The token stays on this device only.</div>
+    <sc-if value="{{ authNeedsName }}" hint-placeholder-val="{{ false }}">
+      <label style="font-size:13.5px;color:#6E6A5E">Your name<input value="{{ authName }}" name="name" onChange="{{ authChange }}" placeholder="Dave" style="display:block;width:100%;box-sizing:border-box;margin-top:4px;padding:12px;border:1px solid #E8E1D2;border-radius:10px;font-size:16px"></label>
+    </sc-if>
+    <label style="font-size:13.5px;color:#6E6A5E">Email<input type="email" value="{{ authEmail }}" name="email" onChange="{{ authChange }}" onKeyDown="{{ authKey }}" placeholder="you@example.com" autocapitalize="none" autocomplete="email" style="display:block;width:100%;box-sizing:border-box;margin-top:4px;padding:12px;border:1px solid #E8E1D2;border-radius:10px;font-size:16px"></label>
+    <sc-if value="{{ authNeedsPw }}" hint-placeholder-val="{{ true }}">
+      <label style="font-size:13.5px;color:#6E6A5E">Password
+        <span style="display:flex;gap:8px;margin-top:4px">
+          <input type="{{ passType }}" value="{{ authPw }}" name="pw" onChange="{{ authChange }}" onKeyDown="{{ authKey }}" placeholder="At least 6 characters" autocapitalize="none" style="flex:1;box-sizing:border-box;padding:12px;border:1px solid #E8E1D2;border-radius:10px;font-size:16px;min-width:0">
+          <button onClick="{{ togglePass }}" style="flex:none;background:#EFE9DC;border:none;border-radius:10px;padding:0 14px;font-size:13.5px;font-weight:700;color:#6E6A5E;cursor:pointer;min-height:44px">{{ passToggleLabel }}</button>
+        </span>
+      </label>
+    </sc-if>
+    <button onClick="{{ authSubmit }}" style="background:#0E7C6B;color:#fff;border:none;border-radius:14px;min-height:52px;font-family:'Nunito',sans-serif;font-weight:900;font-size:17px;cursor:pointer">{{ authBtn }}</button>
+    <sc-if value="{{ authIsErr }}" hint-placeholder-val="{{ false }}">
+      <div style="font-size:13.5px;color:#B8433D;line-height:1.45">{{ authMsg }}</div>
+    </sc-if>
+    <sc-if value="{{ authIsOk }}" hint-placeholder-val="{{ false }}">
+      <div style="font-size:13.5px;color:#0A5D50;line-height:1.45">{{ authMsg }}</div>
+    </sc-if>
+    <div style="display:flex;flex-wrap:wrap;gap:8px;justify-content:space-between;padding-top:2px">
+      <button onClick="{{ authSwap }}" style="background:none;border:none;color:#0E7C6B;font-size:14px;font-weight:700;cursor:pointer;padding:8px 0;min-height:44px">{{ authSwapLabel }}</button>
+      <button onClick="{{ authForgot }}" style="background:none;border:none;color:#6E6A5E;font-size:13.5px;cursor:pointer;padding:8px 0;min-height:44px;text-decoration:underline">{{ authForgotLabel }}</button>
+    </div>
+  </div>
+  <div style="text-align:center;margin-top:16px;font-size:13px;color:#6E6A5E;line-height:1.55">One account covers every device and every learner in your family. {{ authPriceFoot }}</div>
+  <sc-if value="{{ authCanSkip }}" hint-placeholder-val="{{ true }}">
+    <div style="text-align:center;margin-top:12px"><button onClick="{{ goLogin }}" style="background:none;border:none;color:#0E7C6B;font-size:14px;font-weight:700;cursor:pointer;padding:8px;min-height:44px">Carry on without an account</button></div>
+  </sc-if>
+  <div style="text-align:center;margin-top:6px;display:flex;gap:14px;justify-content:center">
+    <button onClick="{{ showPayScreen }}" style="background:none;border:none;color:#B5AE9E;font-size:12.5px;cursor:pointer;padding:8px;min-height:44px;text-decoration:underline">See subscription plans</button>
+    <button onClick="{{ goSetupScreen }}" style="background:none;border:none;color:#B5AE9E;font-size:12.5px;cursor:pointer;padding:8px;min-height:44px;text-decoration:underline">Server settings</button>
+  </div>
+</div>
+</sc-if>
+
+<!-- ============ SERVER SETTINGS (one-time, admin) ============ -->
+<sc-if value="{{ vSetup }}" hint-placeholder-val="{{ false }}">
+<div data-screen-label="Server settings" style="max-width:380px;margin:0 auto;padding-top:30px">
+  <div style="display:flex;align-items:center;gap:10px;margin-bottom:18px">
+    <button onClick="{{ goAuthScreen }}" style="background:#fff;border:1px solid #E8E1D2;border-radius:12px;width:44px;height:44px;cursor:pointer;font-size:18px">←</button>
+    <div style="font-family:'Nunito',sans-serif;font-weight:900;font-size:24px">Server settings</div>
+  </div>
+  <div style="background:#fff;border:1px solid #E8E1D2;border-radius:20px;padding:20px;display:flex;flex-direction:column;gap:12px">
+    <div style="font-size:13px;color:#6E6A5E;line-height:1.5">Only needed once, and only by you. Both values come from Supabase → Project Settings → API. Learners never see this screen. Full steps: SETUP.md §2.</div>
+    <label style="font-size:13.5px;color:#6E6A5E">Project URL<input value="{{ cfgUrl }}" name="url" onChange="{{ cfgChange }}" placeholder="https://xxxx.supabase.co" autocapitalize="none" style="display:block;width:100%;box-sizing:border-box;margin-top:4px;padding:12px;border:1px solid #E8E1D2;border-radius:10px;font-size:16px"></label>
+    <label style="font-size:13.5px;color:#6E6A5E">Anon public key<input value="{{ cfgKey }}" name="key" onChange="{{ cfgChange }}" placeholder="eyJhbGciOi…" autocapitalize="none" style="display:block;width:100%;box-sizing:border-box;margin-top:4px;padding:12px;border:1px solid #E8E1D2;border-radius:10px;font-size:16px"></label>
+    <button onClick="{{ cfgSave }}" style="background:#0E7C6B;color:#fff;border:none;border-radius:14px;min-height:52px;font-family:'Nunito',sans-serif;font-weight:900;font-size:17px;cursor:pointer">{{ connectBtnLabel }}</button>
+    <sc-if value="{{ authIsErr }}" hint-placeholder-val="{{ false }}">
+      <div style="font-size:13.5px;color:#B8433D;line-height:1.45">{{ authMsg }}</div>
+    </sc-if>
+    <div style="font-size:13px;color:#6E6A5E;line-height:1.5">The anon key is safe to publish — every table is locked down per account, so it grants nothing on its own.</div>
   </div>
 </div>
 </sc-if>
@@ -106,10 +152,54 @@ input,select{font-family:inherit}
   <div style="font-size:16px;color:#6E6A5E;margin-top:8px;line-height:1.5">{{ payMsg }}</div>
   <div style="display:flex;flex-direction:column;gap:12px;max-width:320px;margin:26px auto 0">
     <sc-if value="{{ paySubVisible }}" hint-placeholder-val="{{ true }}">
-      <button onClick="{{ openSub }}" style="background:#0E7C6B;color:#fff;border:none;border-radius:18px;min-height:58px;font-family:'Nunito',sans-serif;font-weight:900;font-size:19px;cursor:pointer">{{ paySubLabel }}</button>
+      <button onClick="{{ buyMonthly }}" style="background:#0E7C6B;color:#fff;border:none;border-radius:18px;min-height:58px;font-family:'Nunito',sans-serif;font-weight:900;font-size:19px;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px">
+        <span>{{ payMonthlyLabel }}</span>
+        <span style="font-size:12.5px;font-weight:700;opacity:.85">Cancel any time</span>
+      </button>
+      <button onClick="{{ buyAnnual }}" style="background:#FBF1DC;color:#2A2C33;border:2px solid #F2A93B;border-radius:18px;min-height:58px;font-family:'Nunito',sans-serif;font-weight:900;font-size:18px;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px">
+        <span>{{ payAnnualLabel }}</span>
+        <span style="font-size:12.5px;font-weight:700;color:#8A6A22">Best value until test day</span>
+      </button>
+      <sc-if value="{{ trialAvailable }}" hint-placeholder-val="{{ true }}">
+        <button onClick="{{ startTrial }}" style="background:#fff;border:1px solid #E8E1D2;border-radius:18px;min-height:52px;font-size:16px;cursor:pointer;font-weight:700">{{ trialLabel }}</button>
+      </sc-if>
     </sc-if>
-    <button onClick="{{ goLogin }}" style="background:#fff;border:1px solid #E8E1D2;border-radius:18px;min-height:52px;font-size:16px;cursor:pointer;font-weight:700">Switch user</button>
-    <div style="font-size:13.5px;color:#6E6A5E;line-height:1.5">Already subscribed? The admin can unlock this account from the dashboard.</div>
+    <sc-if value="{{ payHasMsg }}" hint-placeholder-val="{{ false }}">
+      <div style="font-size:13.5px;color:#B8433D;line-height:1.45">{{ payMsgLive }}</div>
+    </sc-if>
+    <div style="display:flex;gap:10px">
+      <button onClick="{{ manageSub }}" style="flex:1;background:#fff;border:1px solid #E8E1D2;border-radius:16px;min-height:48px;font-size:14.5px;cursor:pointer">Manage subscription</button>
+      <button onClick="{{ recheckSub }}" style="flex:1;background:#fff;border:1px solid #E8E1D2;border-radius:16px;min-height:48px;font-size:14.5px;cursor:pointer">{{ recheckLabel }}</button>
+    </div>
+    <button onClick="{{ goLogin }}" style="background:none;border:none;color:#6E6A5E;font-size:14px;cursor:pointer;min-height:44px;text-decoration:underline">Switch learner</button>
+    <div style="font-size:13px;color:#6E6A5E;line-height:1.5">Payment is handled by Stripe. Access switches on by itself the moment it goes through — nothing to wait for.</div>
+  </div>
+</div>
+</sc-if>
+
+<!-- ============ BADGES ============ -->
+<sc-if value="{{ vBadges }}" hint-placeholder-val="{{ false }}">
+<div data-screen-label="Badges">
+  <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
+    <button onClick="{{ goHome }}" style="background:#fff;border:1px solid #E8E1D2;border-radius:12px;width:44px;height:44px;cursor:pointer;font-size:18px">←</button>
+    <div style="font-family:'Nunito',sans-serif;font-weight:900;font-size:24px;flex:1">Badges</div>
+  </div>
+  <div style="background:#fff;border:1px solid #E8E1D2;border-radius:18px;padding:14px 16px;margin:12px 0 16px;display:flex;flex-direction:column;gap:8px">
+    <div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px">
+      <span style="font-family:'Nunito',sans-serif;font-weight:900;font-size:18px">Level {{ levelNum }} · {{ levelName }}</span>
+      <span style="font-size:13px;color:#6E6A5E">{{ xpTotal }} XP</span>
+    </div>
+    <span style="display:block;height:10px;border-radius:99px;background:#F2EDE1;overflow:hidden"><span style="{{ levelBarStyle }}"></span></span>
+    <div style="font-size:13px;color:#6E6A5E">{{ levelNext }} · 10 XP a correct answer, 50 for passing a mock</div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+    <sc-for list="{{ badgeItems }}" as="b" hint-placeholder-count="6">
+      <div style="{{ b.style }}">
+        <div style="{{ b.titleStyle }}">{{ b.label }}</div>
+        <div style="font-size:12.5px;color:#6E6A5E;line-height:1.4">{{ b.note }}</div>
+        <span style="{{ b.pillStyle }}">{{ b.status }}</span>
+      </div>
+    </sc-for>
   </div>
 </div>
 </sc-if>
@@ -148,6 +238,14 @@ input,select{font-family:inherit}
       <span style="font-size:11.5px;color:#6E6A5E">XP · {{ xpLevel }}</span>
     </div>
   </div>
+  <button onClick="{{ goBadges }}" style="width:100%;background:#fff;border:1px solid #E8E1D2;border-radius:16px;padding:13px 14px;margin-bottom:14px;cursor:pointer;display:flex;flex-direction:column;gap:7px;text-align:left">
+    <span style="display:flex;justify-content:space-between;align-items:baseline;gap:10px;width:100%">
+      <span style="font-family:'Nunito',sans-serif;font-weight:900;font-size:15.5px;color:#2A2C33">Level {{ levelNum }} · {{ levelName }}</span>
+      <span style="font-size:12.5px;color:#6E6A5E;white-space:nowrap">{{ levelNext }}</span>
+    </span>
+    <span style="display:block;width:100%;height:9px;border-radius:99px;background:#F2EDE1;overflow:hidden"><span style="{{ levelBarStyle }}"></span></span>
+    <span style="font-size:12px;color:#B5AE9E">{{ badgeCountLine }} · tap to see them</span>
+  </button>
   <sc-if value="{{ hasExamDate }}" hint-placeholder-val="{{ false }}">
     <div style="background:#E4F2EF;border:1px solid #BFE0D8;border-radius:14px;padding:11px 14px;margin-bottom:14px;font-size:14.5px;color:#0A5D50;font-weight:700;text-align:center">{{ examCountdown }}</div>
   </sc-if>
@@ -301,6 +399,12 @@ input,select{font-family:inherit}
   <div style="font-size:56px;font-family:'Nunito',sans-serif;font-weight:900;color:#0E7C6B">{{ doneScore }} / {{ doneTotal }}</div>
   <div style="font-family:'Nunito',sans-serif;font-weight:900;font-size:24px;margin-top:10px">{{ doneTitle }}</div>
   <div style="font-size:17px;color:#6E6A5E;margin-top:8px;max-width:400px;margin-left:auto;margin-right:auto">{{ doneMsg }}</div>
+  <sc-if value="{{ hasLevelUp }}" hint-placeholder-val="{{ false }}">
+    <div style="max-width:420px;margin:18px auto 0;background:#0E7C6B;color:#fff;border-radius:18px;padding:14px 18px;display:flex;align-items:center;gap:12px;text-align:left">
+      <svg width="30" height="30" viewBox="0 0 24 24" style="flex:none"><path d="M12 2.5 L14.6 8.6 L21.2 9.2 L16.2 13.6 L17.7 20.1 L12 16.7 L6.3 20.1 L7.8 13.6 L2.8 9.2 L9.4 8.6 Z" fill="#F2A93B"/></svg>
+      <span><span style="display:block;font-family:'Nunito',sans-serif;font-weight:900;font-size:17px">Levelled up</span><span style="display:block;font-size:14px;opacity:.9">{{ levelUpLine }}</span></span>
+    </div>
+  </sc-if>
   <sc-if value="{{ doneTipShow }}" hint-placeholder-val="{{ false }}">
     <div style="max-width:420px;margin:20px auto 0;background:#FBF1DC;border:1px solid #F0D9A8;border-radius:16px;padding:14px 16px;font-size:15.5px;text-align:left;line-height:1.5"><b>Remember:</b> {{ doneTip }}</div>
   </sc-if>
@@ -721,8 +825,8 @@ input,select{font-family:inherit}
       <span style="font-size:15px">Require a subscription to practise</span>
       <button onClick="{{ subToggle }}" aria-label="Require subscription" style="{{ subTrackStyle }}"><span style="{{ subKnobStyle }}"></span></button>
     </div>
-    <label style="font-size:13.5px;color:#6E6A5E">Price shown on the lock screen<input value="{{ subPrice }}" onChange="{{ subPriceChange }}" placeholder="£4.99 a month" style="display:block;width:100%;box-sizing:border-box;margin-top:4px;padding:11px;border:1px solid #E8E1D2;border-radius:10px;font-size:14px"></label>
-    <label style="font-size:13.5px;color:#6E6A5E;display:block;margin-top:10px">Payment link (e.g. a Stripe Payment Link — change the price there any time; Stripe hosts the checkout)<input value="{{ subLink }}" onChange="{{ subLinkChange }}" placeholder="https://buy.stripe.com/…" style="display:block;width:100%;box-sizing:border-box;margin-top:4px;padding:11px;border:1px solid #E8E1D2;border-radius:10px;font-size:14px"></label>
+    <label style="font-size:13.5px;color:#6E6A5E">Price wording shown on the lock screen<input value="{{ subPrice }}" onChange="{{ subPriceChange }}" placeholder="£4.99 a month" style="display:block;width:100%;box-sizing:border-box;margin-top:4px;padding:11px;border:1px solid #E8E1D2;border-radius:10px;font-size:14px"></label>
+    <div style="font-size:13px;color:#6E6A5E;line-height:1.5;margin-top:10px">Charging is handled by Stripe on the server: subscribers pay in the app, access switches on by itself, and cancelling or a failed payment switches it off again. The amounts come from your Stripe prices (SETUP.md §3) — this field is only the wording.</div>
     <div style="font-family:'Nunito',sans-serif;font-weight:800;font-size:15px;margin:16px 0 8px">Access for {{ learnerName }}</div>
     <div style="display:flex;flex-wrap:wrap;gap:8px">
       <sc-for list="{{ planChoices }}" as="p" hint-placeholder-count="5"><button onClick="{{ p.pick }}" style="{{ p.style }}">{{ p.label }}</button></sc-for>
@@ -730,26 +834,32 @@ input,select{font-family:inherit}
     <sc-if value="{{ planIsComp }}" hint-placeholder-val="{{ false }}">
       <label style="font-size:13.5px;color:#6E6A5E;display:block;margin-top:10px">Free until<input type="date" value="{{ planUntil }}" onChange="{{ planUntilChange }}" style="display:block;margin-top:4px;padding:11px;border:1px solid #E8E1D2;border-radius:10px;font-size:14px;background:#fff"></label>
     </sc-if>
-    <div style="font-size:13px;color:#6E6A5E;line-height:1.5;margin-top:12px">When a payment comes in (Stripe emails you), set that learner to Always free or Free until a date. Suspended and Blocked lock them out until you change it back. Switch learner with the chips at the top of this page. The lock is app-level, not copy-protection.</div>
+    <button onClick="{{ showPayScreen }}" style="background:#EFE9DC;border:none;border-radius:12px;min-height:46px;font-size:14.5px;font-weight:700;color:#6E6A5E;cursor:pointer;width:100%;margin-top:14px">Show me the subscribe screen</button>
+    <div style="font-size:13px;color:#6E6A5E;line-height:1.5;margin-top:12px">Use these for family and testers — Always free or Free until a date give access without paying. Suspended and Blocked lock a learner out until you change it back. Switch learner with the chips at the top of this page. Paying subscribers need nothing here.</div>
   </div>
 
-  <div style="font-family:'Nunito',sans-serif;font-weight:800;font-size:18px;margin:28px 0 10px">Family sync (GitHub)</div>
+  <div style="font-family:'Nunito',sans-serif;font-weight:800;font-size:18px;margin:28px 0 10px">Account</div>
   <div style="background:#fff;border:1px solid #E8E1D2;border-radius:20px;padding:18px">
     <div style="font-size:14px;color:#6E6A5E;line-height:1.55;margin-bottom:12px">{{ cloudStatus }}</div>
     <div style="display:flex;flex-direction:column;gap:10px">
-      <label style="font-size:13.5px;color:#6E6A5E">Repository (owner/name)<input value="{{ syncUrl }}" name="url" onChange="{{ syncChange }}" placeholder="dstorey87/Catie-Test-data" autocapitalize="none" style="display:block;width:100%;box-sizing:border-box;margin-top:4px;padding:11px;border:1px solid #E8E1D2;border-radius:10px;font-size:14px"></label>
-      <label style="font-size:13.5px;color:#6E6A5E">Access token (Contents read &amp; write on that repo)
-        <span style="display:flex;gap:8px;margin-top:4px">
-          <input type="{{ passType }}" value="{{ syncKey }}" name="key" onChange="{{ syncChange }}" placeholder="github_pat_…" autocapitalize="none" style="flex:1;box-sizing:border-box;padding:11px;border:1px solid #E8E1D2;border-radius:10px;font-size:14px;min-width:0">
-          <button onClick="{{ togglePass }}" style="flex:none;background:#EFE9DC;border:none;border-radius:10px;padding:0 14px;font-size:13.5px;font-weight:700;color:#6E6A5E;cursor:pointer;min-height:44px">{{ passToggleLabel }}</button>
-        </span>
-      </label>
-      <button onClick="{{ saveSync }}" style="background:#0E7C6B;color:#fff;border:none;border-radius:12px;min-height:46px;font-size:15px;font-weight:700;cursor:pointer">Save &amp; connect</button>
       <div style="display:flex;gap:10px">
         <button onClick="{{ syncNow }}" style="flex:1;background:#E4F2EF;color:#0A5D50;border:none;border-radius:12px;min-height:46px;font-size:15px;font-weight:700;cursor:pointer">Sync now</button>
-        <button onClick="{{ cloudSignOutBtn }}" style="flex:1;background:#fff;border:1px solid #E8E1D2;border-radius:12px;min-height:46px;font-size:15px;cursor:pointer">Disconnect this device</button>
+        <button onClick="{{ manageSub }}" style="flex:1;background:#fff;border:1px solid #E8E1D2;border-radius:12px;min-height:46px;font-size:15px;cursor:pointer">Manage subscription</button>
       </div>
-      <div style="font-size:13px;color:#6E6A5E;line-height:1.5">Best kept in a separate <b>private</b> repo (e.g. Catie-Test-data) so progress isn’t public — the token only needs access to that one repo. Steps: SETUP.md §3.</div>
+      <div style="display:flex;gap:10px">
+        <button onClick="{{ recheckSub }}" style="flex:1;background:#fff;border:1px solid #E8E1D2;border-radius:12px;min-height:46px;font-size:15px;cursor:pointer">{{ recheckLabel }}</button>
+        <button onClick="{{ cloudSignOutBtn }}" style="flex:1;background:#fff;border:1px solid #E8E1D2;border-radius:12px;min-height:46px;font-size:15px;cursor:pointer">Sign out</button>
+      </div>
+      <sc-if value="{{ bankFromCache }}" hint-placeholder-val="{{ false }}">
+        <div style="font-size:13px;color:#6E6A5E;line-height:1.5">Working from the offline copy of the question bank — it refreshes next time this device is online.</div>
+      </sc-if>
+      <div style="font-size:13px;color:#6E6A5E;line-height:1.5">Progress backs up to your account automatically and follows you to every device you sign in on. Answers made offline are sent when the device is back online.</div>
+      <sc-if value="{{ isAdminAccount }}" hint-placeholder-val="{{ false }}">
+        <button onClick="{{ uploadBank }}" style="background:#EFE9DC;border:none;border-radius:12px;min-height:46px;font-size:14.5px;font-weight:700;color:#6E6A5E;cursor:pointer">{{ uploadBankLabel }}</button>
+      </sc-if>
+      <sc-if value="{{ isAdminAccount }}" hint-placeholder-val="{{ false }}">
+        <button onClick="{{ goSetupScreen }}" style="background:none;border:none;color:#B5AE9E;font-size:12.5px;cursor:pointer;padding:6px;min-height:44px;text-decoration:underline">Server settings</button>
+      </sc-if>
     </div>
   </div>
 
@@ -900,9 +1010,19 @@ input,select{font-family:inherit}
         <sc-for list="{{ goalChoices }}" as="g" hint-placeholder-count="3"><button onClick="{{ g.pick }}" style="{{ g.style }}">{{ g.label }}</button></sc-for>
       </div>
     </div>
-    <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 0">
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 0;border-bottom:1px solid #F2EDE1">
       <span style="font-size:16.5px;flex:1">My theory test date<span style="display:block;font-size:13px;color:#6E6A5E;margin-top:2px">shows a countdown on Home</span></span>
       <input type="date" value="{{ examDate }}" onChange="{{ examDateChange }}" style="padding:10px;border:1px solid #E8E1D2;border-radius:10px;font-size:14px;background:#fff">
+    </div>
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 0;border-bottom:1px solid #F2EDE1">
+      <span style="font-size:16.5px;flex:1">Daily reminder<span style="display:block;font-size:13px;color:#6E6A5E;margin-top:2px">a nudge only on days with no practice</span></span>
+      <button onClick="{{ remindToggle }}" aria-label="Daily reminder" style="{{ remindTrackStyle }}"><span style="{{ remindKnobStyle }}"></span></button>
+    </div>
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 0;flex-wrap:wrap">
+      <span style="font-size:16.5px;flex:1">Reminder time<span style="display:block;font-size:13px;color:#6E6A5E;margin-top:2px">{{ remindStatus }}</span></span>
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
+        <sc-for list="{{ remindHourChoices }}" as="r" hint-placeholder-count="4"><button onClick="{{ r.pick }}" style="{{ r.style }}">{{ r.label }}</button></sc-for>
+      </div>
     </div>
   </div>
   <div style="font-family:'Nunito',sans-serif;font-weight:800;font-size:18px;margin:24px 0 10px">Profiles</div>
@@ -1118,7 +1238,8 @@ class Component extends DCLogic {
       learnTopic: 'weak', learnLen: props.defaultSessionLength || 10, session: null, learnMix: {}, testMode: 'balanced', edSearch: '',
       cloudMsg: '', cloudBusy: false, showPass: false,
       plan: saved.plan || '', sub: content.sub || {required:false, link:''},
-      syncUrl: (syncCfg && syncCfg.repo) || 'dstorey87/Catie-Test-data', syncKey: (syncCfg && syncCfg.token) || '',
+      authView: 'signin', authEmail: '', authPw: '', authName: '', authMsg: '', authOk: false,
+      cfgUrl: '', cfgKey: '', access: null, isAdminAccount: false, bankSource: '', payMsgLive: '', accessBusy: false, uploadBusy: false,
       test: saved.testInProgress || null, testView: 'run', now: Date.now(),
       range: 'all', openTest: -1, showLogForm: false,
       logDate: new Date().toISOString().slice(0,10), logScore: '', logPT: {},
@@ -1141,7 +1262,77 @@ class Component extends DCLogic {
       stk.count = (stk.last===y) ? (stk.count||0)+1 : 1;
       stk.last = today;
     }
-    return {xp: (this.state.xp||0) + correctCount*10 + (bonus||0), streak: stk};
+    const before = this.levelInfo(this.state.xp||0).level;
+    const xp = (this.state.xp||0) + correctCount*10 + (bonus||0);
+    const after = this.levelInfo(xp).level;
+    if(window.TTPush) TTPush.markActive();
+    return {xp: xp, streak: stk, lastLevelUp: after>before? after : 0};
+  }
+  levelInfo(xp){
+    const names = ['Provisional','Cones and Kerbs','Mirror Signal Manoeuvre','Roundabout Ready','Motorway Minded','Hazard Hunter','Sign Sage','Rules Regular','Test Ready','Full Licence'];
+    const per = 500, total = Math.max(0, xp||0);
+    const level = Math.floor(total/per) + 1;
+    const into = total % per;
+    return {level: level, name: level<=names.length? names[level-1] : ('Full Licence +' + (level-names.length)),
+      into: into, per: per, toNext: per-into, pct: Math.round(into/per*100)};
+  }
+  badgeList(){
+    const s = this.state, at = s.attempts||[], tests = s.tests||[], stk = s.streak||{};
+    const answered = at.length, passes = tests.filter(t=>t.pass).length;
+    const perTopic = {};
+    at.forEach(a=>{ const t = perTopic[a.topic] = perTopic[a.topic] || {n:0, ok:0}; t.n++; if(a.ok) t.ok++; });
+    const mastered = Object.keys(perTopic).filter(k=>perTopic[k].n>=10 && perTopic[k].ok/perTopic[k].n>=0.85).length;
+    let run = 0, bestRun = 0;
+    at.forEach(a=>{ run = a.ok? run+1 : 0; if(run>bestRun) bestRun = run; });
+    const defs = [
+      {id:'start', label:'First go', note:'Answer your first question', done: answered>=1, at: answered, need:1},
+      {id:'ten', label:'Ten in a row', note:'Ten correct back to back', done: bestRun>=10, at: bestRun, need:10},
+      {id:'hundred', label:'Century', note:'100 questions answered', done: answered>=100, at: answered, need:100},
+      {id:'fivehundred', label:'Five hundred', note:'500 questions answered', done: answered>=500, at: answered, need:500},
+      {id:'streak7', label:'Week on the trot', note:'7-day streak', done:(stk.count||0)>=7, at: stk.count||0, need:7},
+      {id:'streak30', label:'Month of practice', note:'30-day streak', done:(stk.count||0)>=30, at: stk.count||0, need:30},
+      {id:'mock', label:'Mock passed', note:'43 or more on a mock test', done: passes>=1, at: passes, need:1},
+      {id:'mock3', label:'Three mocks passed', note:'Consistency, not luck', done: passes>=3, at: passes, need:3},
+      {id:'topic', label:'Topic mastered', note:'85% on a topic, 10+ answers', done: mastered>=1, at: mastered, need:1},
+      {id:'alltopics', label:'Every topic tried', note:'All 14 DVSA topics attempted', done: Object.keys(perTopic).length>=14, at: Object.keys(perTopic).length, need:14}
+    ];
+    return defs;
+  }
+  maybeLocalNudge(){
+    const st = this.state.settings||{};
+    if(!st.remindOn || !window.TTPush) return;
+    if(TTPush.canServerPush()) return;                    // the server handles it
+    if(TTPush.permission() !== 'granted') return;
+    const today = new Date().toISOString().slice(0,10);
+    const stk = this.state.streak||{};
+    if(stk.todayDate===today && (stk.todayN||0)>0) return; // already practised
+    if(new Date().getHours() < (st.remindHour||18)) return;
+    let seen = ''; try { seen = localStorage.getItem('tt.nudged')||''; } catch(e) {}
+    if(seen === today) return;
+    try { localStorage.setItem('tt.nudged', today); } catch(e) {}
+    TTPush.showLocal('Ten questions?', 'A short go now keeps your streak alive.');
+  }
+  toggleReminders(){
+    const st = this.state.settings||{}, on = !st.remindOn;
+    if(!on){
+      if(window.TTPush) TTPush.disable();
+      this.set({settings: Object.assign({}, st, {remindOn:false})});
+      this.setState({remindMsg:'Reminders are off.'});
+      return;
+    }
+    if(!(window.TTPush && TTPush.supported())){
+      this.setState({remindMsg:'This browser can\u2019t show reminders. On iPhone: Share \u2192 Add to Home Screen, open the app from the icon, then switch this on.'});
+      return;
+    }
+    TTPush.enable(st.remindHour||18).then(()=>{
+      this.set({settings: Object.assign({}, st, {remindOn:true})});
+      this.setState({remindMsg: TTPush.canServerPush()? 'On \u2014 a nudge arrives at the time below on any day you haven\u2019t practised.' : 'On for this device only. Reminders while the app is closed need the push key (SETUP.md \u00a75).'});
+    }).catch(e=>this.setState({remindMsg:String(e.message||e)}));
+  }
+  setRemindHour(h){
+    const st = this.state.settings||{};
+    this.set({settings: Object.assign({}, st, {remindHour:h})});
+    if(window.TTPush && st.remindOn) TTPush.save({enabled:true, hour:h});
   }
   startDailyLesson(){
     const sh = a=>a.map(x=>[Math.random(),x]).sort((p,q)=>p[0]-q[0]).map(p=>p[1]);
@@ -1156,9 +1347,15 @@ class Component extends DCLogic {
     this.buildSession(ids.slice(0, Math.max(10, Math.min(20, this.state.settings.dailyGoal||20))), "Today's lesson");
   }
   componentDidMount(){
-    Promise.all([1,2,3,4,5].map(n => fetch('./questions-'+n+'.json').then(r=>{ if(!r.ok) throw 0; return r.json(); }).catch(()=>fetch('./data/questions-'+n+'.json').then(r=>r.json()))))
-      .then(parts => this.setState({bank: [].concat.apply([], parts), loaded: true}))
-      .catch(e => console.error('bank load failed', e));
+    this.loadBank();
+    this.refreshAccess();
+    if(/[?&]paid=1/.test(location.search)){
+      this.setState({payMsgLive:'Payment received \u2014 switching your access on\u2026'});
+      setTimeout(()=>this.refreshAccess(), 1200);
+      setTimeout(()=>this.refreshAccess(), 4000);
+      try { history.replaceState(null, '', location.pathname); } catch(e) {}
+    }
+    setTimeout(()=>this.maybeLocalNudge(), 2500);
     this.tick = setInterval(()=>{ if(this.state.test && !this.state.test.ended) this.setState({now: Date.now()}); }, 500);
     if(window.speechSynthesis){ speechSynthesis.getVoices(); speechSynthesis.onvoiceschanged = ()=>this.forceUpdate(); }
     window.addEventListener('online', ()=>this.flushCloud());
@@ -1193,17 +1390,91 @@ class Component extends DCLogic {
     try { localStorage.setItem(this.BASE+'.users', JSON.stringify(this.users)); } catch(e) {}
     this.loadUser(id);
   }
-  connectSync(){
-    if(!window.TTSync){ this.setState({cloudMsg:'Sync helper is still loading \u2014 try again in a second.'}); return; }
-    const repo = (this.state.syncUrl||'').trim().replace(/^https?:\/\/(www\.)?github\.com\//i,'').replace(/\.git$/,'').replace(/\/+$/,''), tok = (this.state.syncKey||'').trim();
-    if(!/^[\w.-]+\/[\w.-]+$/.test(repo) || !tok){ this.setState({cloudMsg:'Enter the repo as owner/name (e.g. dstorey87/Catie-Test-data) and paste the access token.'}); return; }
-    this.setState({cloudBusy:true, cloudMsg:'Connecting\u2026'});
-    TTSync.setConfig(repo, tok);
-    TTSync.test().then(()=>{
+  loadBank(){
+    const sample = ()=>fetch('./questions-free.json').then(r=>r.ok? r.json() : []).catch(()=>[])
+      .then(qs=>({questions: qs, source:'free'}));
+    const local = ()=>Promise.all([1,2,3,4,5].map(n=>fetch('./questions-'+n+'.json').then(r=>{ if(!r.ok) throw 0; return r.json(); }).catch(()=>[])))
+      .then(parts=>{ const all = [].concat.apply([], parts); return all.length? {questions: all, source:'local'} : sample(); });
+    const job = (window.TTBank && window.TTBackend && TTBackend.configured()) ? TTBank.load() : local();
+    return job.then(r=>{
+      const qs = r.questions||[];
+      if(!qs.length && r.source!=='server') return local().then(l=>this.setState({bank:l.questions, bankSource:l.source, loaded:true}));
+      this.setState({bank: qs, bankSource: r.source||'', loaded:true});
+    }).catch(e=>{ console.error('bank load failed', e); this.setState({loaded:true}); });
+  }
+  refreshAccess(){
+    const on = !!(window.TTBackend && TTBackend.configured() && window.TTAuth && TTAuth.signedIn());
+    if(!on){ this.setState({access:null, accessBusy:false}); return; }
+    this.setState({accessBusy:true});
+    TTBill.status().then(a=>{
+      const gained = a.active && !(this.state.access && this.state.access.active);
+      this.setState({access:a, accessBusy:false, payMsgLive: a.active? '' : this.state.payMsgLive});
+      if(gained || (a.active && this.state.bankSource!=='server')) this.loadBank();
+    }).catch(()=>this.setState({accessBusy:false}));
+    TTAuth.isAdmin().then(v=>this.setState({isAdminAccount:v})).catch(()=>{});
+  }
+  authSubmit(){
+    const s = this.state, mode = s.authView||'signin';
+    const email = (s.authEmail||'').trim(), pw = s.authPw||'';
+    if(!(window.TTAuth && window.TTBackend && TTBackend.configured())){ this.setState({authOk:false, authMsg:'No server connected yet \u2014 open Server settings below.'}); return; }
+    if(!/.+@.+\..+/.test(email)){ this.setState({authOk:false, authMsg:'Enter a valid email address.'}); return; }
+    if(mode==='reset'){
+      this.setState({cloudBusy:true, authMsg:''});
+      TTAuth.resetPassword(email)
+        .then(()=>this.setState({cloudBusy:false, authOk:true, authView:'signin', authMsg:'Reset link sent \u2014 check your email.'}))
+        .catch(e=>this.setState({cloudBusy:false, authOk:false, authMsg:String(e.message||e)}));
+      return;
+    }
+    if(pw.length < 6){ this.setState({authOk:false, authMsg:'Password needs to be at least 6 characters.'}); return; }
+    this.setState({cloudBusy:true, authMsg:''});
+    const arrive = ()=>{
       this._dirty = true;
-      this.setState({cloudBusy:false, syncUrl:repo, cloudMsg:'Connected', view: this.state.view==='cloudLogin'? 'login' : this.state.view});
-      this.pullCloud();
-    }).catch(e=>{ TTSync.signOut(); this.setState({cloudBusy:false, cloudMsg:String(e.message||e)}); });
+      this.setState({cloudBusy:false, authMsg:'', authPw:'', view:'login'});
+      this.refreshAccess(); this.loadBank(); this.pullCloud();
+    };
+    if(mode==='signup'){
+      TTAuth.signUp(email, pw, (s.authName||'').trim()).then(r=>{
+        if(r.signedIn) arrive();
+        else this.setState({cloudBusy:false, authOk:true, authView:'signin', authMsg:'Account created \u2014 confirm the email we just sent, then sign in.'});
+      }).catch(e=>this.setState({cloudBusy:false, authOk:false, authMsg:String(e.message||e)}));
+    } else {
+      TTAuth.signIn(email, pw).then(arrive).catch(e=>this.setState({cloudBusy:false, authOk:false, authMsg:String(e.message||e)}));
+    }
+  }
+  doSignOut(){
+    if(!window.TTAuth) return;
+    TTAuth.signOut().then(()=>this.setState({view:'auth', access:null, isAdminAccount:false, authPw:'', authMsg:'', bank:[], bankSource:'', loaded:false}, ()=>this.loadBank()));
+  }
+  saveServerConfig(){
+    const u = (this.state.cfgUrl||'').trim(), k = (this.state.cfgKey||'').trim();
+    if(!/^https?:\/\/.+/.test(u) || k.length < 20){ this.setState({authOk:false, authMsg:'Paste the project URL and the anon public key.'}); return; }
+    TTBackend.setConfig(u, k);
+    this.setState({cloudBusy:true, authMsg:''});
+    TTBackend.test()
+      .then(()=>this.setState({cloudBusy:false, view:'auth', authOk:true, authMsg:'Connected \u2014 create your account or sign in.'}))
+      .catch(e=>this.setState({cloudBusy:false, authOk:false, authMsg:String(e.message||e)}));
+  }
+  buy(plan){
+    if(!(window.TTBill && window.TTAuth && TTAuth.signedIn())){ this.setState({payMsgLive:'Sign in first.'}); return; }
+    this.setState({payMsgLive:'Opening secure checkout\u2026'});
+    TTBill.checkout(plan).then(url=>{ location.href = url; }).catch(e=>this.setState({payMsgLive:String(e.message||e)}));
+  }
+  openPortal(){
+    if(!(window.TTBill && window.TTAuth && TTAuth.signedIn())){ this.setState({payMsgLive:'Sign in first.'}); return; }
+    this.setState({payMsgLive:'Opening Stripe\u2026'});
+    TTBill.portal().then(url=>{ location.href = url; }).catch(e=>this.setState({payMsgLive:String(e.message||e)}));
+  }
+  uploadBankToServer(){
+    if(!window.TTBank){ return; }
+    this.setState({uploadBusy:true, cloudMsg:'Uploading the question bank\u2026'});
+    Promise.all([1,2,3,4,5].map(n=>fetch('./questions-'+n+'.json').then(r=>r.ok? r.json() : []).catch(()=>[])))
+      .then(parts=>{
+        const list = [].concat.apply([], parts).concat(this.state.custom||[]);
+        if(!list.length) throw new Error('No local question files to upload from.');
+        return TTBank.upload(list);
+      })
+      .then(n=>{ this.setState({uploadBusy:false, cloudMsg: n + ' questions are on the server.'}); this.loadBank(); })
+      .catch(e=>this.setState({uploadBusy:false, cloudMsg:'Upload failed: ' + String(e.message||e)}));
   }
   snapshot(){
     const data = {};
@@ -1575,8 +1846,19 @@ class Component extends DCLogic {
     const todayStr = new Date().toISOString().slice(0,10);
     const compOk = myPlan.type==='comp' && (!myPlan.until || myPlan.until >= todayStr);
     const hardLock = myPlan.type==='blocked' || myPlan.type==='suspended';
-    const locked = !isParent && (hardLock || (!!subCfg.required && s.plan!=='granted' && myPlan.type!=='free' && !compOk));
-    const view = s.printPreview ? 'printPreview' : s.view;
+    const backendOn = !!(window.TTBackend && TTBackend.configured());
+    const signedIn = !!(window.TTAuth && TTAuth.signedIn());
+    const prices = (window.TTBackend && TTBackend.prices) ? TTBackend.prices() : {monthly:'\u00a34.99 a month', annual:'\u00a350 a year', trial:20};
+    const acc = s.access || null;
+    const serverOk = backendOn ? (!!(acc && acc.active) || !!s.isAdminAccount) : !subCfg.required;
+    const accessLine = !acc ? 'no subscription yet'
+      : acc.status==='comp' ? 'free access'
+      : acc.status==='past_due' ? 'last payment failed'
+      : acc.active ? ('subscription active' + (acc.endsAt ? (acc.cancelling? ' until ' : ', renews ') + new Date(acc.endsAt).toLocaleDateString('en-GB') : ''))
+      : 'no subscription yet';
+    const locked = !isParent && (hardLock || (!serverOk && s.plan!=='granted' && myPlan.type!=='free' && !compOk));
+    const forceAuth = backendOn && !signedIn;
+    const view = forceAuth ? (s.view==='setup' ? 'setup' : 'auth') : (s.printPreview ? 'printPreview' : s.view);
 
     // ----- home -----
     const stAll = this.topicStats('all');
@@ -1885,13 +2167,13 @@ class Component extends DCLogic {
 
     return Object.assign({
       dynStyle: dyn,
-      vHome: view==='home' && !locked, vPaywall: view==='home' && locked, vLearnSetup: view==='learnSetup', vLearnQ: view==='learnQ', vLearnDone: view==='learnDone',
+      vHome: view==='home' && !locked, vPaywall: (view==='home' && locked) || view==='payPreview', vLearnSetup: view==='learnSetup', vLearnQ: view==='learnQ', vLearnDone: view==='learnDone',
       vTestIntro: view==='test' && (!t || t.ended && s.testView!=='results') ? false : (view==='testIntro'),
       vTestRun: view==='test' && t && !t.ended && s.testView==='run',
       vTestReview: view==='test' && t && !t.ended && s.testView==='review',
       vTestResults: view==='test' && t && t.ended && s.testView==='results',
       vDash: view==='dash', vSettings: view==='settings', vEditor: view==='editor', vPrint: view==='print',
-      vLogin: view==='login', vSigns: view==='signs', vCloudLogin: view==='cloudLogin',
+      vLogin: view==='login', vSigns: view==='signs',
       goLogin: nav('login'),
       vProgress: view==='progress',
       goProgress: nav('progress'),
@@ -1914,17 +2196,56 @@ class Component extends DCLogic {
       progTips: this.weakestTopics(2).reduce((a,t)=>a.concat((this.TIPS[t]||[]).slice(0,2).map(x=>({text:x, topic:T[t-1]}))),[]).slice(0,4),
       loginUsers: this.users.map(u=>({name:u.name, initial:(u.name||'?')[0].toUpperCase(), avatar:u.avatar||'', hasAvatar: !!u.avatar, noAvatar: !u.avatar, pick:()=>{ if(u.id!==s.userId) this.loadUser(u.id); this.setState({profile:'learner', view:'home'}); }})),
       addLearner: ()=>this.addLearner(),
-      cloudConfigured: !!(window.TTSync && window.TTSync.configured()),
-      cloudNotConfigured: !(window.TTSync && window.TTSync.configured()),
-      syncRepoName: (window.TTSync && window.TTSync.configured() && TTSync.config().repo) || '',
-      goCloudLogin: ()=>this.setState({view:'cloudLogin', cloudMsg:''}),
-      connectSyncBtn: ()=>this.connectSync(),
+      vAuth: view==='auth', vSetup: view==='setup',
+      signedIn: signedIn, signedOut: !signedIn,
+      authCanSkip: !forceAuth,
+      showPayScreen: ()=>this.setState({view:'payPreview', payMsgLive:''}),
+      accountLine: signedIn ? ('Signed in as ' + (TTAuth.email() || 'your account')) : 'Progress is kept on this device',
+      signOutBtn: ()=>this.doSignOut(),
+      authTitle: s.authView==='signup'? 'Create your account' : s.authView==='reset'? 'Reset your password' : 'Sign in',
+      authSub: s.authView==='signup'? 'One account covers every learner and every device.' : s.authView==='reset'? 'We\u2019ll email a link to set a new one.' : 'Your progress is waiting.',
+      authNeedsName: s.authView==='signup',
+      authNeedsPw: s.authView!=='reset',
+      authEmail: s.authEmail||'', authPw: s.authPw||'', authName: s.authName||'',
+      authChange: e=>{ const n = e.target.name, v = e.target.value; this.setState(n==='email'? {authEmail:v} : n==='pw'? {authPw:v} : {authName:v}); },
+      authKey: e=>{ if(e.key==='Enter') this.authSubmit(); },
+      authSubmit: ()=>this.authSubmit(),
+      authBtn: s.cloudBusy? 'Please wait\u2026' : s.authView==='signup'? 'Create account' : s.authView==='reset'? 'Send reset link' : 'Sign in',
+      authMsg: s.authMsg||'',
+      authIsErr: !!s.authMsg && !s.authOk,
+      authIsOk: !!s.authMsg && !!s.authOk,
+      authSwap: ()=>this.setState({authView: s.authView==='signup'? 'signin' : 'signup', authMsg:''}),
+      authSwapLabel: s.authView==='signup'? 'I already have an account' : 'Create an account',
+      authForgot: ()=>this.setState({authView: s.authView==='reset'? 'signin' : 'reset', authMsg:''}),
+      authForgotLabel: s.authView==='reset'? 'Back to sign in' : 'Forgot password?',
+      authPriceFoot: prices.monthly + ' or ' + prices.annual + '.',
+      goSetupScreen: ()=>this.setState({view:'setup', authMsg:''}),
+      goAuthScreen: ()=>this.setState({view:'auth', authMsg:''}),
+      cfgUrl: s.cfgUrl || ((window.TTBackend && TTBackend.config() && TTBackend.config().url) || ''),
+      cfgKey: s.cfgKey || '',
+      cfgChange: e=>this.setState(e.target.name==='url'? {cfgUrl:e.target.value} : {cfgKey:e.target.value}),
+      cfgSave: ()=>this.saveServerConfig(),
+      isAdminAccount: !!s.isAdminAccount,
+      bankFromCache: s.bankSource==='cache',
+      uploadBank: ()=>this.uploadBankToServer(),
+      uploadBankLabel: s.uploadBusy? 'Uploading\u2026' : 'Upload question bank to server',
       connectBtnLabel: s.cloudBusy? 'Connecting\u2026' : 'Connect',
       cloudMsg: s.cloudMsg,
       passType: s.showPass? 'text' : 'password', passToggleLabel: s.showPass? 'Hide' : 'Show',
       togglePass: ()=>this.setState({showPass: !s.showPass}),
-      cloudKey: e=>{ if(e.key==='Enter') this.connectSync(); },
-      openSub: ()=>{ const l = subCfg.link||''; if(l) window.open(l, '_blank'); else alert('No payment link has been set yet \u2014 Admin \u2192 Subscription.'); },
+      connectBtnLabel: s.cloudBusy? 'Connecting\u2026' : 'Connect',
+      buyMonthly: ()=>this.buy('monthly'),
+      buyAnnual: ()=>this.buy('annual'),
+      payMonthlyLabel: 'Subscribe \u00b7 ' + prices.monthly,
+      payAnnualLabel: 'Or ' + prices.annual,
+      payMsgLive: s.payMsgLive||'',
+      payHasMsg: !!s.payMsgLive,
+      manageSub: ()=>this.openPortal(),
+      recheckSub: ()=>{ this.setState({payMsgLive:'Checking with Stripe\u2026'}); this.refreshAccess(); setTimeout(()=>{ if(!(this.state.access && this.state.access.active)) this.setState({payMsgLive:'No active subscription on this account yet.'}); }, 1600); },
+      recheckLabel: s.accessBusy? 'Checking\u2026' : 'I\u2019ve paid',
+      trialAvailable: !hardLock && s.bankSource!=='server' && (this.state.bank||[]).length>0,
+      trialLabel: 'Try ' + (s.bankSource==='free'? (this.state.bank||[]).length : prices.trial) + ' free questions',
+      startTrial: ()=>this.setState({view:'learnSetup'}),
       subTrackStyle: miniTrack(!!subCfg.required), subKnobStyle: miniKnob(!!subCfg.required),
       subToggle: ()=>this.set({sub: Object.assign({}, subCfg, {required: !subCfg.required})}),
       subLink: subCfg.link||'',
@@ -1936,16 +2257,12 @@ class Component extends DCLogic {
       planUntil: myPlan.until||'',
       planUntilChange: e=>{ const plans = Object.assign({}, subCfg.plans); plans[s.userId] = Object.assign({}, plans[s.userId], {until: e.target.value}); this.set({sub: Object.assign({}, subCfg, {plans})}); },
       subStatus: st.learnerName + (myPlan.type==='blocked'? ' is blocked \u2014 they cannot use the app.' : myPlan.type==='suspended'? ' is suspended \u2014 practise is paused.' : (myPlan.type==='free' || s.plan==='granted')? ' has full access, free.' : compOk? (' is free until ' + (myPlan.until||'\u2014') + '.') : (subCfg.required? (' is locked until you set access here or they subscribe' + (subCfg.price? (' ('+subCfg.price+')') : '') + '.') : ' has free access \u2014 subscriptions are off.')),
-      payTitle: myPlan.type==='blocked'? 'This account is blocked' : myPlan.type==='suspended'? 'This account is paused' : 'Keep learning with Theory Trainer',
-      payMsg: myPlan.type==='blocked'? 'Ask the admin to unblock it from the dashboard.' : myPlan.type==='suspended'? 'The admin has paused practise for a while \u2014 ask them to switch it back on.' : ('A subscription' + (subCfg.price? (' \u2014 ' + subCfg.price + ' \u2014') : '') + ' unlocks practise on this account. It takes a minute and helps keep the app running.'),
+      payTitle: myPlan.type==='blocked'? 'This account is blocked' : myPlan.type==='suspended'? 'This account is paused' : (acc && acc.status==='past_due')? 'That payment didn\u2019t go through' : 'Unlock the full question bank',
+      payMsg: myPlan.type==='blocked'? 'Ask the admin to unblock it from the dashboard.' : myPlan.type==='suspended'? 'The admin has paused practise for a while \u2014 ask them to switch it back on.' : (acc && acc.status==='past_due')? 'Stripe couldn\u2019t take the last payment. Update the card and everything comes straight back.' : ('All 14 topics, mock tests, progress tracking and read-aloud \u2014 ' + prices.monthly + ' or ' + prices.annual + '.'),
       paySubVisible: !hardLock,
-      paySubLabel: 'Subscribe' + (subCfg.price? (' \u00b7 ' + subCfg.price) : ''),
-      syncUrl: s.syncUrl, syncKey: s.syncKey,
-      syncChange: e=>this.setState(e.target.name==='url'? {syncUrl:e.target.value} : {syncKey:e.target.value}),
-      saveSync: ()=>this.connectSync(),
-      syncNow: ()=>{ if(!(window.TTSync && TTSync.configured())){ this.setState({cloudMsg:'Connect first \u2014 repo + token above.'}); return; } this._dirty = true; this.pullCloud(); },
-      cloudSignOutBtn: ()=>{ if(window.TTSync){ TTSync.signOut(); this.setState({cloudMsg:'Disconnected \u2014 scores stay on this device.'}); } },
-      cloudStatus: !(window.TTSync && TTSync.configured())? 'Not connected \u2014 scores live safely on this device only. Free setup: a private GitHub repo + one token (SETUP.md \u00a73).' : ('Connected to ' + TTSync.config().repo + ' \u2014 backing up automatically. ' + (s.cloudMsg||'')),
+      syncNow: ()=>{ if(!signedIn){ this.setState({cloudMsg:'Sign in to back up progress.'}); return; } this._dirty = true; this.pullCloud(); this.refreshAccess(); },
+      cloudSignOutBtn: ()=>this.doSignOut(),
+      cloudStatus: !backendOn? 'Running on this device only \u2014 no account server connected yet (Server settings).' : !signedIn? 'Signed out \u2014 progress stays on this device until you sign in.' : ('Signed in as ' + (TTAuth.email()||'') + ' \u00b7 ' + accessLine + (s.cloudMsg? (' \u00b7 ' + s.cloudMsg) : '')),
       hasManyUsers: this.users.length>1,
       dashUsers: this.users.map(u=>({name:u.name, style: chip(u.id===s.userId), pick:()=>{ if(u.id!==s.userId) this.loadUser(u.id); }})),
       loginAdmin: ()=>{ this.setState({profile:'parent', view:'dash'}); },
@@ -1985,7 +2302,28 @@ class Component extends DCLogic {
       streakFlame: (s.streak && (s.streak.last===todayStr || (s.streak.todayDate===todayStr && s.streak.todayN>0)))? '#F2A93B' : '#D8D0BF',
       goalToday: String((s.streak && s.streak.todayDate===todayStr ? s.streak.todayN : 0)||0) + ' / ' + (st.dailyGoal||20),
       goalRingColor: (s.streak && s.streak.todayDate===todayStr && s.streak.todayN >= (st.dailyGoal||20))? '#0E7C6B' : '#B5AE9E',
-      xpTotal: String(s.xp||0), xpLevel: 'Lv ' + (Math.floor((s.xp||0)/500)+1),
+      xpTotal: String(s.xp||0), xpLevel: 'Lv ' + this.levelInfo(s.xp||0).level,
+      levelNum: String(this.levelInfo(s.xp||0).level),
+      levelName: this.levelInfo(s.xp||0).name,
+      levelNext: this.levelInfo(s.xp||0).toNext + ' XP to level ' + (this.levelInfo(s.xp||0).level+1),
+      levelBarStyle: 'display:block;height:100%;border-radius:99px;background:#F2A93B;width:' + Math.max(3, this.levelInfo(s.xp||0).pct) + '%',
+      goBadges: nav('badges'),
+      vBadges: view==='badges',
+      badgeCountLine: (function(list){ const n = list.filter(b=>b.done).length; return n + ' of ' + list.length + ' badges'; })(this.badgeList()),
+      badgeItems: this.badgeList().map(b=>({
+        label: b.label, note: b.note,
+        status: b.done? 'Earned' : (b.need>1? (Math.min(b.at, b.need) + ' / ' + b.need) : 'Locked'),
+        style: 'background:' + (b.done? '#E4F2EF' : '#fff') + ';border:1px solid ' + (b.done? '#0E7C6B' : '#E8E1D2') + ';border-radius:18px;padding:14px;display:flex;flex-direction:column;gap:4px;min-height:104px',
+        titleStyle: "font-family:'Nunito',sans-serif;font-weight:900;font-size:15.5px;color:" + (b.done? '#0A5D50' : '#2A2C33'),
+        pillStyle: 'align-self:flex-start;margin-top:auto;font-size:11.5px;font-weight:700;padding:4px 9px;border-radius:99px;background:' + (b.done? '#0E7C6B' : '#F2EDE1') + ';color:' + (b.done? '#fff' : '#6E6A5E')
+      })),
+      remindOn: !!st.remindOn,
+      remindTrackStyle: miniTrack(!!st.remindOn), remindKnobStyle: miniKnob(!!st.remindOn),
+      remindToggle: ()=>this.toggleReminders(),
+      remindHourChoices: [{h:8, label:'8am'}, {h:12, label:'Midday'}, {h:17, label:'5pm'}, {h:20, label:'8pm'}].map(o=>({label:o.label, style: chip((st.remindHour||18)===o.h), pick: ()=>this.setRemindHour(o.h)})),
+      remindStatus: s.remindMsg || (st.remindOn? ((window.TTPush && TTPush.canServerPush())? 'On \u2014 a nudge arrives at the time below on any day you haven\u2019t practised.' : 'On for this device. Reminders while the app is closed need the push key (SETUP.md \u00a75).') : 'Off \u2014 no reminders are sent.'),
+      levelUpLine: s.lastLevelUp? ('Level ' + s.lastLevelUp + ' \u2014 ' + this.levelInfo(s.xp||0).name) : '',
+      hasLevelUp: !!s.lastLevelUp,
       startDailyLesson: ()=>this.startDailyLesson(),
       hasExamDate: !!st.examDate,
       examCountdown: (function(){ if(!st.examDate) return ''; const d = Math.ceil((new Date(st.examDate+'T09:00') - Date.now())/86400000); return d>1? (d + ' days until your theory test') : d===1? 'Your theory test is tomorrow!' : d===0? 'Test day \u2014 good luck!' : 'Your test date has passed \u2014 set the next one in Settings'; })(),
