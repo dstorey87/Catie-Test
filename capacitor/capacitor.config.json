@@ -1,0 +1,27 @@
+{
+  "appId": "com.dstorey.theorytrainer",
+  "appName": "Theory Trainer",
+  "webDir": "www",
+  "bundledWebRuntime": false,
+  "backgroundColor": "#FAF6EFff",
+  "ios": {
+    "contentInset": "always",
+    "backgroundColor": "#FAF6EFff",
+    "limitsNavigationsToAppBoundDomains": false
+  },
+  "android": {
+    "backgroundColor": "#FAF6EFff",
+    "allowMixedContent": false
+  },
+  "server": {
+    "androidScheme": "https",
+    "iosScheme": "https"
+  },
+  "plugins": {
+    "SplashScreen": {
+      "launchAutoHide": true,
+      "backgroundColor": "#0E7C6Bff",
+      "showSpinner": false
+    }
+  }
+}
