@@ -1,7 +1,7 @@
-const C = 'theory-trainer-v2';
+const C = 'theory-trainer-v3';
 const CORE = ['./', './index.html', './Theory%20Trainer.dc.html', './support.js', './signs.js', './sync.js', './manifest.json',
-  './data/questions-1.json', './data/questions-2.json', './data/questions-3.json', './data/questions-4.json', './data/questions-5.json',
-  './icons/icon-180.png', './icons/icon-192.png', './icons/icon-512.png', './icon.png'];
+  './questions-1.json', './questions-2.json', './questions-3.json', './questions-4.json', './questions-5.json',
+  './icon-180.png', './icon-192.png', './icon-512.png', './icon.png'];
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(C).then(c => c.addAll(CORE)).catch(()=>{}));
   self.skipWaiting();
