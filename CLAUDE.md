@@ -37,6 +37,17 @@ These rules keep them from destroying each other's work. Follow them in every se
   backup (`git push -u origin section/<name>`). Pages only deploys `main`, so pushing
   any other branch is always safe.
 
+## Codebase gotchas
+- **Never put inline `<script>` with camelCase identifiers inside `<helmet>`** in
+  `Theory Trainer.dc.html`: the dc compiler's attribute-preservation pass rewrites
+  camelCase tokens in helmet content (`ttHadSW` → `sc-camel-tt-had-s-w`), corrupting
+  the copy it re-mounts into `document.head` (SyntaxError on every load). Inline
+  scripts go in the real `<head>` before `</head>`; helmet is for meta/link/src-scripts.
+- **Bump `VERSION` in `sw.js`** in any deploy that changes a file in its CORE list —
+  the cache name is the only update signal existing installs get.
+- The `?paid=1` Stripe return URL and the `%20` in `Theory%20Trainer.dc.html` are
+  load-bearing: edge functions allowlist `origin + pathname` and must keep the `%20`.
+
 ## Merging (from your worktree)
 1. `git fetch origin` then rebase your section branch on `develop`.
 2. Re-verify your change still works after the rebase.
