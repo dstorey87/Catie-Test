@@ -1,194 +1,149 @@
-# Theory Trainer — setup
+# Theory Trainer — launch runbook
 
-Five parts. §1 is done. §2 and §3 are what make accounts and paid access real.
-§4 fills the server with the question bank. §5 is only if you want store apps.
+Every step to go from today's state to taking real money, in order. Steps marked
+**[YOU]** need your accounts/dashboards; steps marked **[CLAUDE]** happen in a
+Claude Code session. Code-side fixes are already live on `main` (2026-08-19).
 
-Everything runs on free tiers except Stripe's cut of a payment and the store fees.
-
----
-
-## §1 Publish the web app — done
-Repo: **github.com/dstorey87/Catie-Test** (public) → Settings → Pages →
-Deploy from a branch → `main` → `/ (root)`.
-Live at **https://dstorey87.github.io/Catie-Test/**
-
-To update the app later, open **Publish to GitHub.html** (in the project), paste
-your GitHub token, press Publish. It replaces every file in one go.
+App: **https://dstorey87.github.io/Catie-Test/** · Supabase project:
+`njajxuzhgxqcjfhjpkyp` · publishing = merging to `main` (GitHub Pages serves it).
 
 ---
 
-## §2 Supabase — accounts and the server side (~10 minutes)
+## Step 0 — [YOU] Start Stripe verification FIRST (~30 min + a multi-day wait)
 
-1. **supabase.com** → sign up (free) → **New project**. Any name. Pick the region
-   closest to you (London/eu-west-2). Save the database password somewhere.
-2. Left sidebar → **SQL Editor** → **New query** → paste the whole of
-   `supabase/schema.sql` from this project → **Run**. It creates the accounts,
-   progress, access and question tables, plus the rules that keep every account's
-   data private.
-3. Left sidebar → **Settings → API Keys**. Copy:
-   - **Project URL** (`https://xxxx.supabase.co`) — Settings → General, or the Connect dialog
-   - **Publishable key** (`sb_publishable_…`). Older projects show an **anon public**
-     key (`eyJ…`) instead — either works; Supabase is retiring the anon one by the
-     end of 2026, so use the publishable key on a new project.
-   Both are safe to publish: row-level security is what protects the data.
-4. Put those two values into the app. Either:
-   - open **Publish to GitHub.html**, paste them in the Supabase box, and publish —
-     it writes them into `config.js` for every device at once; **or**
-   - open the live app → **Server settings** (small link under the sign-in box) →
-     paste → Connect. That only affects the device you're on.
-5. **Authentication → URL Configuration → Site URL**:
-   `https://dstorey87.github.io/Catie-Test/`
-   (this is where password-reset and confirmation links come back to)
-6. **Authentication → Providers → Email** is on by default and requires people to
-   confirm their address. Leave it on for paying customers. If you want instant
-   sign-up while testing, switch **Confirm email** off, then back on.
-7. Open the app, **Create an account** with your own email. Then back in Supabase →
-   **SQL Editor**, run this so you're the admin (never locked out, and you can edit
-   questions):
-   ```sql
-   update public.profiles set role = 'admin' where email = 'YOUR@EMAIL';
-   ```
-
-At this point sign-in works on every device and progress syncs by itself. No tokens.
+dashboard.stripe.com → complete business/identity verification and add the bank
+account for payouts. Stripe's review takes a day or two, so start it before
+anything else. Everything below except "Go live" works in test mode meanwhile.
 
 ---
 
-## §3 Stripe — charging, enforced on the server
+## Step 1 — [YOU] Supabase database (~10 min)
 
-Two routes. **Route A (payment links)** is far less work and is the one to start
-with: two links to create, one function to deploy. **Route B** adds in-app plan
-switching and self-service cancelling.
+1. supabase.com/dashboard/project/njajxuzhgxqcjfhjpkyp → **SQL Editor** → New query
+   → paste **all of `supabase/schema.sql`** (copy it fresh from the repo — it was
+   updated 2026-08-19) → **Run**.
+   A NOTICE about the auth trigger is fine; the backfill at the bottom covers it.
+   Safe to re-run any time.
+2. New query → paste `supabase/schema-notifications.sql` → **Run**.
+3. **Authentication → URL Configuration**:
+   - Site URL: `https://dstorey87.github.io/Catie-Test/`
+   - Additional Redirect URLs: `https://dstorey87.github.io/Catie-Test/*`
 
-### Both routes: make the prices (~5 min)
-1. **dashboard.stripe.com** → turn **Test mode** on (top right) while you're trying
-   it out → **Product catalogue** → **+ Add product**: "Theory Trainer". Add two
-   prices to it: **£4.99 / month** recurring, and **£50 / year** recurring.
-2. **Developers → API keys** (or Workbench → API keys) → copy the **Secret key**
-   (`sk_test_…` while testing, `sk_live_…` when you go live).
+## Step 2 — [YOU] Email that actually sends (~15 min)
 
-### Route A — payment links (~10 min)
-3. Go to **dashboard.stripe.com/payment-links** (sidebar: Payment Links, under
-   Payments on some accounts) → **+ New** → select the £4.99 monthly price (or
-   **+ Add a new product** to make it here) → **Create link** → copy the URL
-   (`https://buy.stripe.com/…`). Repeat for the £50 yearly price.
-4. Paste both links into **Publish to GitHub.html** (step 1, Stripe boxes) and
-   publish. They go into `config.js`, and the app's Subscribe buttons open them
-   with the account id attached, so the payment can be matched to the account.
-5. Deploy **one** function so access switches on by itself: Supabase → **Edge
-   Functions** → **Deploy a new function** → name it `stripe-webhook` → paste
-   `supabase/functions/stripe-webhook/index.ts` → deploy → open its settings and
-   turn **Verify JWT OFF**.
-6. Supabase → **Edge Functions → Secrets**: add `STRIPE_SECRET_KEY` (your `sk_…`)
-   and, after step 7, `STRIPE_WEBHOOK_SECRET`.
-7. Stripe → **dashboard.stripe.com/webhooks** (Developers menu → **Workbench** →
-   **Webhooks** on newer accounts) → **Create an event destination** →
-   **Webhook endpoint**:
-   - Endpoint URL: `https://YOUR-PROJECT.supabase.co/functions/v1/stripe-webhook`
-   - Events: `checkout.session.completed`, `customer.subscription.updated`,
-     `customer.subscription.deleted`, `invoice.payment_failed`
-   - Create → copy the **Signing secret** (`whsec_…`) into `STRIPE_WEBHOOK_SECRET`
-     → redeploy the function.
+Supabase's built-in mailer sends only a handful per hour — real sign-ups would
+silently fail. Brevo's free tier needs no domain:
 
-That's charging done: people subscribe in the app, access appears within seconds,
-and a cancellation or failed payment removes it. Cancelling happens through the
-email receipt Stripe sends, or you do it from the Stripe dashboard.
+1. brevo.com → sign up (free) → verify your own sender address →
+   **SMTP & API** → copy the SMTP login + SMTP key.
+2. Supabase → **Authentication → Emails → SMTP Settings** → enable custom SMTP:
+   host `smtp-relay.brevo.com`, port `587`, your Brevo login/key,
+   sender = your verified address, sender name `Theory Trainer`.
+3. **Authentication → Rate Limits** → raise the email rate (default is ~2/hour).
 
-### Route B — add plan switching and self-service cancelling (~10 min more)
-8. Also deploy `create-checkout` and `billing-portal` the same way (leave Verify
-   JWT ON for these two).
-9. Add two more secrets: `STRIPE_PRICE_MONTHLY` and `STRIPE_PRICE_ANNUAL` — the
-   `price_…` ids from step 1.
-10. Clear the two payment-link fields in `config.js` (or leave them; links win when
-    present). The app then builds checkout sessions itself, and **Manage
-    subscription** opens Stripe's own portal where subscribers change card, switch
-    plan or cancel.
+When you buy the product domain later, swap the sender address.
 
-### Testing either route
-Use Stripe **test mode** and card `4242 4242 4242 4242`, any future expiry, any CVC.
-Subscribe in the app; access should switch on within a couple of seconds. The
-Webhooks page (or Workbench → Webhooks) shows each delivery and any error.
+## Step 3 — [YOU] Stripe test mode: product + prices (~5 min)
 
-Test-mode payment links only work in test mode. When you go live, switch Test mode
-off, create the product and links again, and publish the live URLs.
+1. dashboard.stripe.com → **Test mode ON** → Product catalogue → **+ Add product**
+   "Theory Trainer" with two recurring prices: **£4.99/month** and **£50/year**.
+2. Copy both `price_…` ids and the test **Secret key** (`sk_test_…`).
 
-What this buys you: the app never decides who has paid. Stripe tells the server,
-the server writes the access row, and the question bank is only readable by an
-account with access. Editing the app in a browser gets someone nowhere.
+## Step 4 — [YOU] Secrets BEFORE functions (~10 min) — order matters
 
----
+1. Supabase → **Edge Functions → Secrets** → add:
 
-## §4 Put the question bank on the server (~2 minutes)
-
-Until this is done, a signed-in account sees only the 20-question free sample.
-
-1. Make sure your own account is the admin — §2 step 7 sets `role = 'admin'` on your
-   profile row. Only admins may write to the `questions` table.
-2. Open **Publish to GitHub.html** → **Question bank** section → sign in with your
-   admin email and password → **Upload bank to server**. It writes all 378 questions
-   into the `questions` table.
-3. In the same page, tick **Remove the public question files** so
-   `questions-1…5.json` are deleted from the repo. The bank is then only available
-   to accounts with access — that's the part that stops copying.
-
-No secret key is involved: Supabase now rejects `sb_secret_…` keys sent from a
-browser, so the upload uses your admin sign-in instead.
-
-The 20-question sample (`questions-free.json`) stays public on purpose: it's the
-free trial on the paywall.
-
----
-
-## §5 Reminders and notifications (~10 minutes)
-
-The app asks for permission the first time a learner turns **Reminders** on in
-Settings, and only nudges on days with no practice. For nudges to arrive while the
-app is closed you need one keypair and one function.
-
-1. Open **Publish to GitHub.html** → **Notifications** → **Generate keys**. You get
-   a public key (written into `config.js` when you publish) and a private key
-   (shown once — copy it now).
-2. Supabase → **SQL Editor** → paste `supabase/schema-notifications.sql` → **Run**.
-3. Supabase → **Edge Functions** → deploy `send-reminders` from
-   `supabase/functions/send-reminders/index.ts`. Leave Verify JWT ON.
-4. Supabase → **Edge Functions → Secrets** → add:
    | Name | Value |
    | --- | --- |
-   | `VAPID_PUBLIC_KEY` | the public key from step 1 |
-   | `VAPID_PRIVATE_KEY` | the private key from step 1 |
-   | `VAPID_SUBJECT` | `mailto:your@email` |
-5. Run it hourly: Supabase Dashboard → **Integrations → Cron** → new job → hourly →
-   POST to `https://YOUR-PROJECT.supabase.co/functions/v1/send-reminders` with your
-   service-role key as the bearer token. (The SQL alternative is commented at the
-   bottom of `schema-notifications.sql`.)
+   | `STRIPE_SECRET_KEY` | `sk_test_…` |
+   | `STRIPE_PRICE_MONTHLY` | `price_…` (monthly) |
+   | `STRIPE_PRICE_ANNUAL` | `price_…` (annual) |
 
-Each learner picks their own time (8am / midday / 5pm / 8pm) in Settings, and the
-sweep uses their own timezone. Nobody gets two nudges in a day, and nobody gets one
-after they've practised.
+   (Do **not** add SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY — auto-injected.)
+2. Stripe → **Workbench → Webhooks** → Create event destination → Webhook endpoint:
+   - URL: `https://njajxuzhgxqcjfhjpkyp.supabase.co/functions/v1/stripe-webhook`
+   - Events (5): `checkout.session.completed`, `customer.subscription.created`,
+     `customer.subscription.updated`, `customer.subscription.deleted`,
+     `invoice.payment_failed`
+   - Create → copy the Signing secret `whsec_…` → add it as Supabase secret
+     `STRIPE_WEBHOOK_SECRET`. (Deliveries 404 until step 5 — Stripe retries.)
+3. Supabase → **Edge Functions** → Deploy a new function → paste from the repo:
 
-**iPhone and iPad:** Apple only allows notifications for apps added to the home
-screen. The app says so on the Reminders card. Until then it shows an in-app nudge
-instead.
+   | Function | Paste from | Verify JWT |
+   | --- | --- | --- |
+   | `stripe-webhook` | `supabase/functions/stripe-webhook/index.ts` | **OFF** |
+   | `create-checkout` | `supabase/functions/create-checkout/index.ts` | ON |
+   | `billing-portal` | `supabase/functions/billing-portal/index.ts` | ON |
+
+   (`send-reminders` comes later — see "After launch".)
+4. Stripe (test mode) → **Settings → Billing → Customer portal** → activate,
+   with "cancel at end of billing period". The portal is per-mode — you'll
+   repeat this once more in live mode.
+
+## Step 5 — [YOU] Your account + the question bank (~10 min)
+
+1. Open the live app → **Create an account** with your real email → click the
+   confirmation email (this also proves Brevo works) → sign in.
+2. Supabase → SQL Editor:
+   ```sql
+   insert into public.profiles (id,email,name) select id,email,'' from auth.users on conflict (id) do nothing;
+   insert into public.entitlements (user_id) select id from auth.users on conflict (user_id) do nothing;
+   update public.profiles set role='admin' where email = 'YOUR@EMAIL';
+   ```
+3. In the app (signed in as admin) → Settings → account/cloud card →
+   **Upload question bank to server** → wait for "378 questions are on the server."
+4. For the automated test run only: **Authentication → Sign In / Providers →
+   Email → Confirm email OFF** — tell Claude when done. (Back ON in step 7.)
+
+## Step 6 — [CLAUDE] Verify and close the paywall
+
+Claude then: smoke-tests the live site with Playwright; confirms the server bank
+is gated (anonymous and unpaid accounts get nothing); deletes the public
+`questions-1..5.json` + the local fallback (Deploy 2 — after this, the full bank
+exists only behind the paywall); then drives the full end-to-end in test mode:
+sign-up → free sample → paywall → **4242 4242 4242 4242** → access appears →
+portal cancel → access goes. You watch the `entitlements` table and the Stripe
+webhook log go green.
+
+## Step 7 — [YOU] Tidy up test mode
+
+Confirm-email back **ON**; delete the throwaway test users (Authentication →
+Users); one fresh sign-up with a second real address to prove the confirm leg.
+
+## Step 8 — [YOU] Go live (~20 min, after Stripe verification clears)
+
+1. Stripe → **Test mode OFF** → recreate the product + both prices (live mode).
+2. Replace the Supabase secrets with live values: `STRIPE_SECRET_KEY` =
+   `sk_live_…`, both `STRIPE_PRICE_…` = the live `price_…` ids.
+3. New **live** webhook endpoint (same URL, same 5 events) → live `whsec_…`
+   into `STRIPE_WEBHOOK_SECRET`.
+4. Settings → Billing → **Customer portal** → activate (live mode).
+5. The proof: pay a real £4.99 on your own card → access appears → refund it
+   from the Stripe dashboard and cancel → access goes.
+
+**After step 8 you can take money.** Before telling strangers: legal pages and
+a domain (roadmap Phase 1, items 6–7).
 
 ---
 
-## §6 Store apps — optional
-See `capacitor/README.md`. Read the note about Apple requiring in-app purchase for
-subscriptions before you pay the developer fee.
+## After launch (not needed for Phase 0)
 
----
-
-## Voice
-For a genuinely good read-aloud voice on iPhone/iPad, once per device:
-Settings → Accessibility → Spoken Content → Voices → English (UK) → download an
-Enhanced or Premium voice (Kate, Serena). The app picks the best one it finds.
-
----
+- **Reminders/push**: run `supabase/schema-notifications.sql` (done in step 1),
+  generate a VAPID keypair, add `VAPID_PUBLIC_KEY` / `VAPID_PRIVATE_KEY` /
+  `VAPID_SUBJECT` secrets, deploy `send-reminders` (Verify JWT ON), schedule it
+  hourly (Integrations → Cron) with the service-role key as bearer. The public
+  key goes into `config.js` → `pushPublicKey`.
+- **Voice on iPhone/iPad** (once per device): Settings → Accessibility → Spoken
+  Content → Voices → English (UK) → download an Enhanced voice (Kate, Serena).
+- **Supabase free tier** pauses inactive projects — move to the paid plan before
+  real customers depend on it.
 
 ## Where things live
+
 | Thing | Where |
 | --- | --- |
-| App files | github.com/dstorey87/Catie-Test (public) |
-| Accounts, progress, question bank, access | your Supabase project (private) |
+| App files | github.com/dstorey87/Catie-Test (`main` = live; work on branches, integrate via `develop` — see CLAUDE.md) |
+| Accounts, progress, question bank, access | Supabase project (private, RLS-enforced) |
 | Card details, invoices, cancellations | Stripe (you never see card numbers) |
 | Stripe secret key, webhook secret | Supabase Edge Function secrets, server-side only |
 | Anon key in `config.js` | public on purpose — grants nothing without an account |
