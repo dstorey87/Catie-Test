@@ -455,7 +455,7 @@ input,select{font-family:inherit}
   </sc-if>
   <div style="display:flex;flex-direction:column;gap:12px;margin-top:16px">
     <sc-for list="{{ opts }}" as="o" hint-placeholder-count="4">
-      <div onClick="{{ o.pick }}" style="{{ o.style }}">
+      <div onClick="{{ o.pick }}" onKeyDown="{{ o.key }}" role="button" tabindex="0" aria-label="{{ o.label }}" style="{{ o.style }}">
         <span style="{{ o.letterStyle }}">{{ o.letter }}</span>
         <span style="flex:1;font-size:19px;line-height:1.4">{{ o.text }}</span>
         <button onClick="{{ o.speak }}" aria-label="Read this answer aloud" style="flex:none;width:44px;height:44px;border-radius:50%;background:rgba(0,0,0,.05);border:none;cursor:pointer;color:var(--tt-fg-6e6a5e);display:flex;align-items:center;justify-content:center">
@@ -690,7 +690,7 @@ input,select{font-family:inherit}
   </div>
   <div style="display:flex;flex-direction:column;gap:11px;margin-top:14px">
     <sc-for list="{{ tOpts }}" as="o" hint-placeholder-count="4">
-      <div onClick="{{ o.pick }}" style="{{ o.style }}">
+      <div onClick="{{ o.pick }}" onKeyDown="{{ o.key }}" role="button" tabindex="0" aria-label="{{ o.label }}" style="{{ o.style }}">
         <span style="{{ o.letterStyle }}">{{ o.letter }}</span>
         <span style="flex:1;font-size:18px;line-height:1.4">{{ o.text }}</span>
         <button onClick="{{ o.speak }}" aria-label="Read this answer aloud" style="flex:none;width:42px;height:42px;border-radius:50%;background:rgba(0,0,0,.05);border:none;cursor:pointer;color:var(--tt-fg-6e6a5e);display:flex;align-items:center;justify-content:center">
@@ -777,6 +777,63 @@ input,select{font-family:inherit}
     <button onClick="{{ goProgress }}" style="flex:1;background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);border-radius:16px;min-height:56px;font-family:'Nunito',sans-serif;font-weight:800;font-size:17px;cursor:pointer">My Progress</button>
     <button onClick="{{ goHome }}" style="flex:1;background:#0E7C6B;color:#fff;border:none;border-radius:16px;min-height:56px;font-family:'Nunito',sans-serif;font-weight:800;font-size:17px;cursor:pointer">Home</button>
   </div>
+</div>
+</sc-if>
+
+<!-- ============ ACTIVITY ============ -->
+<!-- Admin: what a learner actually did, from the events table (backend.js TTTrack). -->
+<sc-if value="{{ vActivity }}" hint-placeholder-val="{{ false }}">
+<div data-screen-label="Activity">
+  <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+    <button onClick="{{ goDash }}" aria-label="Back to the dashboard" style="background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);border-radius:12px;width:44px;height:44px;cursor:pointer;font-size:18px">←</button>
+    <div style="font-family:'Nunito',sans-serif;font-weight:900;font-size:24px;flex:1">Activity</div>
+    <button onClick="{{ reloadActivity }}" style="background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);border-radius:12px;min-height:44px;padding:0 14px;cursor:pointer;font-size:14px;font-weight:700;color:var(--tt-fg-0e7c6b)">Refresh</button>
+  </div>
+  <div style="font-size:13px;color:var(--tt-fg-6e6a5e);line-height:1.5;margin-bottom:12px">{{ actNote }}</div>
+  <sc-if value="{{ actManyAccounts }}" hint-placeholder-val="{{ false }}">
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
+      <sc-for list="{{ actAccounts }}" as="a" hint-placeholder-count="2"><button onClick="{{ a.pick }}" style="{{ a.style }}">{{ a.label }}</button></sc-for>
+    </div>
+  </sc-if>
+  <sc-if value="{{ actHas }}" hint-placeholder-val="{{ false }}">
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(100px,1fr));gap:10px">
+      <sc-for list="{{ actTiles }}" as="t" hint-placeholder-count="6">
+        <div style="background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);border-radius:20px;padding:12px;text-align:center"><div style="font-family:'Nunito',sans-serif;font-weight:900;font-size:22px">{{ t.value }}</div><div style="font-size:13px;color:var(--tt-fg-6e6a5e)">{{ t.label }}</div></div>
+      </sc-for>
+    </div>
+
+    <div style="font-family:'Nunito',sans-serif;font-weight:800;font-size:18px;margin:24px 0 10px">Day by day</div>
+    <div style="background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);border-radius:20px;padding:4px 18px">
+      <sc-for list="{{ actDays }}" as="d" hint-placeholder-count="4">
+        <div style="padding:11px 0;border-bottom:1px solid var(--tt-bd-f2ede1)"><div style="font-weight:700;font-size:15px">{{ d.label }}</div><div style="font-size:13px;color:var(--tt-fg-6e6a5e);margin-top:2px">{{ d.detail }}</div></div>
+      </sc-for>
+    </div>
+
+    <div style="font-family:'Nunito',sans-serif;font-weight:800;font-size:18px;margin:24px 0 10px">Missed most</div>
+    <div style="background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);border-radius:20px;padding:4px 18px">
+      <sc-for list="{{ actMissed }}" as="m" hint-placeholder-count="4">
+        <div style="padding:11px 0;border-bottom:1px solid var(--tt-bd-f2ede1)">
+          <div style="font-size:15px;line-height:1.35">{{ m.text }}</div>
+          <div style="font-size:13.5px;margin-top:4px;color:var(--tt-fg-b8433d)">Wrong {{ m.wrong }} of {{ m.seen }} · usually picks: {{ m.usual }}</div>
+          <div style="font-size:13.5px;margin-top:2px;color:var(--tt-fg-1c6b3c)">Answer: {{ m.answer }}</div>
+        </div>
+      </sc-for>
+    </div>
+
+    <div style="font-family:'Nunito',sans-serif;font-weight:800;font-size:18px;margin:24px 0 10px">Time to answer, by topic</div>
+    <div style="background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);border-radius:20px;padding:4px 18px">
+      <sc-for list="{{ actTopicTime }}" as="t" hint-placeholder-count="4">
+        <div style="padding:11px 0;border-bottom:1px solid var(--tt-bd-f2ede1);display:flex;justify-content:space-between;gap:10px"><span style="font-size:15px">{{ t.name }}</span><span style="font-size:13px;color:var(--tt-fg-6e6a5e);white-space:nowrap">{{ t.detail }}</span></div>
+      </sc-for>
+    </div>
+
+    <div style="font-family:'Nunito',sans-serif;font-weight:800;font-size:18px;margin:24px 0 10px">Latest</div>
+    <div style="background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);border-radius:20px;padding:4px 18px">
+      <sc-for list="{{ actRecent }}" as="r" hint-placeholder-count="6">
+        <div style="padding:11px 0;border-bottom:1px solid var(--tt-bd-f2ede1);display:flex;gap:12px"><span style="font-size:13px;color:var(--tt-fg-6e6a5e);flex:none;width:92px">{{ r.when }}</span><span style="font-size:14.5px;line-height:1.35">{{ r.text }}</span></div>
+      </sc-for>
+    </div>
+  </sc-if>
 </div>
 </sc-if>
 
@@ -973,6 +1030,9 @@ input,select{font-family:inherit}
       <button onClick="{{ saveLog }}" style="width:100%;margin-top:14px;background:#0E7C6B;color:#fff;border:none;border-radius:14px;min-height:50px;font-family:'Nunito',sans-serif;font-weight:800;font-size:16px;cursor:pointer">Save result</button>
     </div>
   </sc-if>
+
+  <div style="font-family:'Nunito',sans-serif;font-weight:800;font-size:18px;margin:28px 0 10px">Everything she does</div>
+  <button onClick="{{ goActivity }}" style="width:100%;background:var(--tt-bg-e4f2ef);border:1px solid var(--tt-bd-bfe0d8);border-radius:16px;min-height:52px;padding:12px 16px;font-size:15.5px;font-weight:700;color:var(--tt-fg-0a5d50);cursor:pointer;text-align:left">Activity: every answer, session and mock, day by day →</button>
 
   <div style="font-family:'Nunito',sans-serif;font-weight:800;font-size:18px;margin:28px 0 10px">Flagged for extra revision</div>
   <button onClick="{{ goFlagged }}" style="width:100%;background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);border-radius:16px;min-height:52px;padding:12px 16px;font-size:15.5px;font-weight:700;color:var(--tt-fg-2a2c33);cursor:pointer;text-align:left">{{ flaggedLine }} →</button>
@@ -1561,6 +1621,73 @@ class Component extends DCLogic {
     setTimeout(()=>this.pullCloud(), 800);
   }
   componentWillUnmount(){ clearInterval(this.tick); }
+  // Admin → Activity: send anything queued on this device, then read the last 60 days.
+  openActivity(){
+    this.setState({view:'activity', actBusy:true, actErr:''});
+    if(!(window.TTTrack && window.TTAuth && TTAuth.signedIn())){ this.setState({actBusy:false, actErr:'Sign in as the admin to see activity.'}); return; }
+    const since = new Date(Date.now() - 60*86400000).toISOString();
+    TTTrack.flush().then(()=>Promise.all([TTTrack.read(since), TTTrack.accounts()]))
+      .then(([events, accounts])=>this.setState({actBusy:false, actEvents:events, actAccountsList:accounts}))
+      .catch(e=>this.setState({actBusy:false, actErr:'Could not load activity: '+String(e.message||e)+'. Check the connection and press Refresh.'}));
+  }
+  // ---------- activity log ----------
+  // Everything she does becomes a small event (backend.js TTTrack queues and sends them).
+  // Almost all of it is worked out HERE by comparing each state change with the one
+  // before, so the rest of the app doesn't need tracking calls sprinkled through it.
+  track(kind, qid, data){
+    try {
+      const u = this.users.find(x=>x.id===this.state.userId) || {};
+      if(window.TTTrack) TTTrack.track(kind, qid||null, data||{}, {id: this.state.userId, name: u.name || (this.state.settings||{}).learnerName});
+    } catch(e) { /* tracking must never break the app */ }
+  }
+  currentQid(){
+    const s = this.state;
+    if(s.view==='learnQ' && s.session) return s.session.ids[s.session.i] || null;
+    if(s.view==='test' && s.test && !s.test.ended) return s.test.ids[s.test.i] || null;
+    return null;
+  }
+  // This app's framework (support.js) passes only the previous PROPS here, never the
+  // previous state, so the last state seen is kept in this._seen and compared by hand.
+  componentDidUpdate(){
+    const prev = this._seen, s = this.state, now = Date.now();
+    this._seen = s;
+    if(!prev || prev === s) return;
+    const secs = t=>Math.round((now - (t||now))/1000);
+    if(s.view !== prev.view) this.track('screen', null, {view: s.view, from: prev.view});
+    // A different learner (or a sync reloading this one) isn't something she did:
+    // compare sessions and tests only within the same learner.
+    if(s.userId !== prev.userId){ this.track('learner_opened', null, {}); return; }
+    // practice sessions
+    const ps = prev.session, cs = s.session;
+    if(cs && (!ps || ps.startedAt !== cs.startedAt)) this.track('session_start', null, {label: cs.label||'', n: cs.ids.length});
+    if(cs && cs.ids[cs.i] && (!ps || ps.startedAt !== cs.startedAt || ps.i !== cs.i)){ this._shownAt = now; this.track('question_shown', cs.ids[cs.i], {i: cs.i, label: cs.label||''}); }
+    if(cs && ps && ps.startedAt === cs.startedAt){
+      if(ps.picked < 0 && cs.picked >= 0){
+        const qid = cs.ids[cs.i], q = this.qById(qid), ok = !!q && cs.picked === this.viewQ(q).correctIndex;
+        this.track('answer', qid, {ok, p: q ? this.seedPerm(qid)[cs.picked] : null, ms: now - (this._shownAt||now), src:'learn', label: cs.label||'', hint: !!(cs.hint && cs.hint.length)});
+      }
+      if(!(ps.hint && ps.hint.length) && cs.hint && cs.hint.length) this.track('hint_used', cs.ids[cs.i]);
+      if(cs.ids.length > ps.ids.length && cs.moreN) this.track('more_like_this_added', cs.ids[cs.i], {n: cs.moreN});
+    }
+    if(s.view==='learnDone' && prev.view!=='learnDone' && cs) this.track('session_end', null, {label: cs.label||'', n: cs.ids.length, answered: (cs.log||[]).length, correct: cs.correct, secs: secs(cs.startedAt)});
+    if(ps && ps.startedAt && (!cs || cs.startedAt !== ps.startedAt) && prev.view==='learnQ') this.track('session_left', null, {label: ps.label||'', at: ps.i, of: ps.ids.length, secs: secs(ps.startedAt)});
+    // mock and custom tests
+    const pt = prev.test, ct = s.test;
+    if(ct && (!pt || pt.startedAt !== ct.startedAt)){
+      if(pt && !pt.ended) this.track('test_abandoned', null, {kind: pt.kind||'mock', answered: Object.keys(pt.answers||{}).length, of: pt.ids.length, secs: secs(pt.startedAt)});
+      this.track('test_start', null, {kind: ct.kind||'mock', n: ct.ids.length, timed: !ct.noTimer});
+    }
+    if(ct && !ct.ended && ct.ids[ct.i] && (!pt || pt.startedAt !== ct.startedAt || pt.i !== ct.i || s.view!==prev.view) && s.view==='test'){ this._shownAt = now; this.track('question_shown', ct.ids[ct.i], {i: ct.i, test: ct.kind||'mock'}); }
+    if(ct && pt && pt.startedAt === ct.startedAt){
+      Object.keys(ct.answers||{}).forEach(k=>{
+        const a = ct.answers[k], was = (pt.answers||{})[k];
+        if(a === was) return;
+        const qid = ct.ids[k], q = this.qById(qid);
+        this.track(was===undefined ? 'answer' : 'answer_changed', qid, {ok: !!q && a === this.viewQ(q).correctIndex, p: q ? this.seedPerm(qid)[a] : null, ms: now - (this._shownAt||now), src:'test', from: was===undefined ? null : (q ? this.seedPerm(qid)[was] : null)});
+      });
+      if(!pt.ended && ct.ended) this.track('test_end', null, {kind: ct.kind||'mock', score: ct.score, total: ct.ids.length, answered: Object.keys(ct.answers||{}).length, secs: secs(ct.startedAt)});
+    }
+  }
   // Confirmation and password-reset emails link back to this page with a session in the
   // URL. A reset link opens "Set a new password"; a confirmation link just signs you in.
   arriveFromEmailLink(){
@@ -1770,6 +1897,7 @@ class Component extends DCLogic {
   speak(text){
     if(!window.speechSynthesis || !text) return;
     speechSynthesis.cancel();
+    this.track('read_aloud', this.currentQid(), {chars: text.length});
     const u = new SpeechSynthesisUtterance(text);
     u.voice = this.bestVoice();
     u.rate = this.state.settings.voiceRate || this.props.speechRate || 0.95;
@@ -1779,7 +1907,7 @@ class Component extends DCLogic {
   // ---------- learn ----------
   buildSession(ids, label){
     if(!ids.length) return;
-    this.setState({session:{ids, i:0, correct:0, picked:-1, hint:null, wrongTopics:[], log:[], label}, view:'learnQ'}, ()=>{
+    this.setState({session:{ids, i:0, correct:0, picked:-1, hint:null, wrongTopics:[], log:[], label, startedAt: Date.now()}, view:'learnQ'}, ()=>{
       const q = this.qById(ids[0]);
       if(this.state.settings.autoRead && q) this.speakQFull(q);
     });
@@ -1804,6 +1932,7 @@ class Component extends DCLogic {
     const rf = Object.assign({}, this.state.revisionFlags), fc = Object.assign({}, this.state.flagCleared);
     if(on){ rf[id] = {t: Date.now(), src: src||'learn'}; delete fc[id]; }
     else { delete rf[id]; fc[id] = Date.now(); }
+    this.track(on ? 'flag' : 'unflag', id, {src: src||'learn'});
     return {revisionFlags: rf, flagCleared: fc};
   }
   toggleRevFlag(id){ this.set(this.setRevFlag(id, !this.state.revisionFlags[id])); }
@@ -2004,6 +2133,7 @@ class Component extends DCLogic {
     const pool = this.questionsFor('learn').filter(q=>!already.has(q.id));
     const opts = Object.assign({}, (window.TT_CONFIG||{}).moreLike, {boxOf: id=>this.rec(id).box});
     const found = window.TTPicker ? TTPicker.similar(targets, pool, opts).map(q=>q.id) : [];
+    this.track('more_like_this', null, {from: ids.slice(0, 20), found: found.length});
     if(!inSession){
       if(found.length) this.buildSession(found, targets.length>1 ? 'More like these' : 'More like this');
       else alert('No more questions like that in the question sets that are switched on. Turn more sets on in the Admin dashboard, or try Practise → A bit of everything.');
@@ -2019,7 +2149,7 @@ class Component extends DCLogic {
   launchTest(ids, timed){
     const sh = a => a.map(x=>[Math.random(),x]).sort((p,q)=>p[0]-q[0]).map(p=>p[1]);
     const mins = Math.max(3, Math.round(ids.length*1.14));
-    const test = {ids: sh(ids), answers:{}, flags:{}, i:0, endAt: Date.now() + (timed ? mins*60000 : 12*3600000), noTimer: !timed, ended:false};
+    const test = {ids: sh(ids), answers:{}, flags:{}, i:0, endAt: Date.now() + (timed ? mins*60000 : 12*3600000), noTimer: !timed, ended:false, startedAt: Date.now(), kind:'custom'};
     this.setState({test, view:'test', testView:'run'}, ()=>this.persist());
   }
   startTest(){
@@ -2041,7 +2171,7 @@ class Component extends DCLogic {
       ids = []; let round = 0;
       while(ids.length<50 && round<25){ for(let t=0;t<14 && ids.length<50;t++){ const q = byTopic[t][round]; if(q) ids.push(q.id); } round++; }
     }
-    const test = {ids: sh(ids).slice(0,50), answers:{}, flags:{}, i:0, endAt: Date.now() + 57*60000, ended:false};
+    const test = {ids: sh(ids).slice(0,50), answers:{}, flags:{}, i:0, endAt: Date.now() + 57*60000, ended:false, startedAt: Date.now(), kind:'mock'};
     this.setState({test, view:'test', testView:'run'}, ()=>this.persist());
   }
   answerTest(i){
@@ -2106,6 +2236,65 @@ class Component extends DCLogic {
   adaptive(){ return this.state.tests.length >= 2; }
   fmtDate(d){ try { return new Date(d+'T12:00').toLocaleDateString('en-GB', {day:'numeric', month:'short', year:'2-digit'}); } catch(e){ return d; } }
 
+  activityVals(chip){
+    const s = this.state, T = this.TOPICS, evs = s.actEvents || [];
+    const accts = s.actAccountsList || [];
+    const count = {}; evs.forEach(e=>{ if(e.kind==='answer') count[e.user_id] = (count[e.user_id]||0)+1; });
+    const ids = Object.keys(count).sort((a,b)=>count[b]-count[a]);
+    const pick = s.actUser && count[s.actUser] ? s.actUser : ids[0];
+    const mine = evs.filter(e=>e.user_id===pick);
+    const bank = {}; this.questions().forEach(q=>{ bank[q.id] = q; });
+    const A = window.TTCoach ? TTCoach.activity(mine, bank) : {totals:{}, days:[], missed:[], topicTime:[]};
+    const tt = A.totals, mins = x=>Math.round((x||0)/60);
+    const name = id=>{ const a = accts.find(x=>x.id===id); const l = mine.find(e=>e.learner); return (a && (a.name || a.email)) || (l && l.learner) || 'Account'; };
+    const opt = (q, i)=> (q && q.options && q.options[i]!=null) ? q.options[i] : '\u2014';
+    const say = e=>{
+      const q = e.qid && bank[e.qid], d = e.data||{}, qt = q ? ' \u201c'+q.question.slice(0,70)+(q.question.length>70?'\u2026':'')+'\u201d' : '';
+      switch(e.kind){
+        case 'answer': return (d.ok? 'Right' : 'Wrong') + (d.src==='test'?' (mock)':'') + (d.ms? ' in '+Math.round(d.ms/1000)+'s' : '') + ':' + qt + (d.ok||!q? '' : ' \u2014 picked \u201c'+opt(q,d.p)+'\u201d');
+        case 'answer_changed': return 'Changed a mock answer:' + qt;
+        case 'session_start': return 'Started ' + (d.label||'practice') + ' (' + d.n + ' questions)';
+        case 'session_end': return 'Finished ' + (d.label||'practice') + ': ' + d.correct + '/' + d.answered + ' right, ' + mins(d.secs) + ' min';
+        case 'session_left': return 'Left ' + (d.label||'practice') + ' at question ' + ((d.at||0)+1) + ' of ' + d.of;
+        case 'test_start': return 'Started a ' + (d.kind==='custom'?'custom test':'mock test') + ' (' + d.n + ' questions)';
+        case 'test_end': return 'Finished a ' + (d.kind==='custom'?'custom test':'mock') + ': ' + d.score + '/' + d.total + ', ' + mins(d.secs) + ' min';
+        case 'test_abandoned': return 'Left a ' + (d.kind==='custom'?'custom test':'mock') + ' after ' + d.answered + ' of ' + d.of;
+        case 'hint_used': return 'Used the 50:50 hint:' + qt;
+        case 'read_aloud': return 'Read aloud' + (qt||'');
+        case 'flag': return 'Flagged:' + qt;
+        case 'unflag': return 'Un-flagged:' + qt;
+        case 'more_like_this': return 'Asked for more like this (' + d.found + ' found)';
+        case 'screen': return 'Opened ' + (SCREEN[d.view] || d.view);
+        default: return e.kind.replace(/_/g,' ') + qt;
+      }
+    };
+    // Screen ids as a person would say them, for the "Latest" list.
+    const SCREEN = {home:'Home', login:'who\u2019s-here', auth:'sign in', learnSetup:'Practise', learnQ:'a practice question', learnDone:'session results',
+      testIntro:'Mock test', test:'the mock test', dash:'the Admin dashboard', settings:'Settings', answers:'My answers', flagged:'Flagged',
+      activity:'Activity', progress:'My Progress', signs:'Road signs', print:'Print', editor:'the question editor', payPreview:'plans', setup:'server settings'};
+    const dayLabel = k=>{ try { return new Date(k+'T12:00').toLocaleDateString('en-GB', {weekday:'short', day:'numeric', month:'short'}); } catch(e){ return k; } };
+    return {
+      vActivity: s.view==='activity',
+      goActivity: ()=>this.openActivity(), reloadActivity: ()=>this.openActivity(),
+      actNote: s.actBusy ? 'Loading\u2026' : s.actErr ? s.actErr : !mine.length ? 'Nothing recorded yet. Activity is saved from this version on, whenever she uses the app signed in.' : 'Last 60 days for ' + name(pick) + '. Everything she does is kept, newest first.',
+      actHas: !s.actBusy && !s.actErr && mine.length>0,
+      actManyAccounts: ids.length>1,
+      actAccounts: ids.map(id=>({label: name(id) + ' (' + count[id] + ')', pick: ()=>this.setState({actUser:id}), style: chip(id===pick)})),
+      actTiles: [
+        {label:'answered', value: String(tt.answered||0)},
+        {label:'right', value: tt.answered ? Math.round(100*tt.right/tt.answered)+'%' : '\u2014'},
+        {label:'minutes', value: String(mins(tt.secs))},
+        {label:'days used', value: String(A.days.filter(d=>d.answered>0||d.secs>0).length)},
+        {label:'hints used', value: String(tt.hints||0)},
+        {label:'read aloud', value: String(tt.readAloud||0)}
+      ],
+      actDays: A.days.filter(d=>d.answered||d.secs||d.mocks).slice(0,30).map(d=>({label: dayLabel(d.day),
+        detail: d.answered + ' answered' + (d.answered? ' \u00b7 ' + Math.round(100*d.right/d.answered) + '% right' : '') + ' \u00b7 ' + mins(d.secs) + ' min' + (d.sessions? ' \u00b7 ' + d.sessions + ' session' + (d.sessions>1?'s':'') : '') + (d.mocks? ' \u00b7 ' + d.mocks + ' mock' + (d.mocks>1?'s':'') : '') + (d.hints? ' \u00b7 ' + d.hints + ' hint' + (d.hints>1?'s':'') : '')})),
+      actMissed: A.missed.slice(0,20).map(m=>{ const q = bank[m.qid]; return {text: q.question, wrong: m.wrong, seen: m.seen, usual: m.usualPick===null ? '\u2014' : opt(q, m.usualPick), answer: opt(q, q.correctIndex)}; }),
+      actTopicTime: A.topicTime.map(t=>({name: T[t.topic-1] || ('Topic '+t.topic), detail: t.avgSecs + 's on average \u00b7 ' + t.n + (t.n===1?' answer':' answers')})),
+      actRecent: mine.filter(e=>e.kind!=='question_shown').slice(0,60).map(e=>({when: (()=>{ try { const d = new Date(e.at); return d.toLocaleDateString('en-GB',{day:'numeric',month:'short'}) + ' ' + d.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}); } catch(x){ return ''; } })(), text: say(e)}))
+    };
+  }
   renderVals(){
     const s = this.state, st = s.settings, T = this.TOPICS;
     const nav = v => () => this.setState({view:v, printPreview:false});
@@ -2191,6 +2380,8 @@ class Component extends DCLogic {
           const hidden = (sess.hint||[]).indexOf(i)>=0 && !answered;
           return {letter:'ABCD'[i], text, style: optStyle(i) + (hidden?';opacity:.22;pointer-events:none':''), letterStyle: letterStyle(i),
             pick: ()=>{ if(!hidden) this.answerLearn(i); },
+            key: e=>{ if((e.key==='Enter'||e.key===' ') && e.target===e.currentTarget){ e.preventDefault(); if(!hidden) this.answerLearn(i); } },
+            label: 'Answer ' + 'ABCD'[i] + ': ' + text,
             speak: e=>{ e.stopPropagation(); this.speak(text); }};
         }),
         hintReady: st.fiftyFifty!==false && !answered && !(sess.hint && sess.hint.length),
@@ -2257,6 +2448,8 @@ class Component extends DCLogic {
           style: 'display:flex;align-items:center;gap:12px;padding:13px 15px;border-radius:16px;cursor:pointer;min-height:52px;'+(sel===i?'background:var(--tt-bg-e4f2ef);border:2px solid var(--tt-bd-0e7c6b)':'background:var(--tt-bg-fff);border:2px solid var(--tt-bd-e8e1d2)'),
           letterStyle: 'flex:none;width:36px;height:36px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-family:Nunito,sans-serif;font-weight:900;font-size:16px;'+(sel===i?'background:#0E7C6B;color:#fff':'background:var(--tt-bg-efe9dc);color:var(--tt-fg-6e6a5e)'),
           pick: ()=>this.answerTest(i),
+          key: e=>{ if((e.key==='Enter'||e.key===' ') && e.target===e.currentTarget){ e.preventDefault(); this.answerTest(i); } },
+          label: 'Answer ' + 'ABCD'[i] + ': ' + text,
           speak: e=>{ e.stopPropagation(); this.speak(text); }
         })),
         prevTQ: ()=>this.set({test: Object.assign({}, t, {i: Math.max(0, t.i-1)})}),
@@ -2533,6 +2726,7 @@ class Component extends DCLogic {
       vTestResults: view==='test' && t && t.ended && s.testView==='results',
       vDash: view==='dash', vSettings: view==='settings', vEditor: view==='editor', vPrint: view==='print',
       vLogin: view==='login', vSigns: view==='signs',
+      ...this.activityVals(chip),
       vFlagged: view==='flagged', goFlagged: ()=>this.setState({view:'flagged', printPreview:false}),
       flaggedLine: revRows.length ? revRows.length + ' flagged \u2014 kept until you un-flag them' : 'Nothing flagged yet',
       vAnswers: view==='answers', ansNone: hist.length===0, ansSome: hist.length>0, answersDesc,

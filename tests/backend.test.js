@@ -113,3 +113,55 @@ test('setting a new password sends it to the signed-in user endpoint', async () 
   assert.strictEqual(new URL(put.url).pathname, '/auth/v1/user');
   assert.deepStrictEqual(JSON.parse(put.opts.body), { password: 'new-secret' });
 });
+
+// ---------- TTTrack: every event queued on the device, sent in batches ----------
+const SIGNED_IN = { 'tt.sb.session': JSON.stringify({ access_token: 'AT', refresh_token: 'RT', expires_at: 4102444800, user: { id: 'u1' } }) };
+function tracker(answer, seed) {
+  const b = browser(PAGE, answer);
+  Object.entries(seed || {}).forEach(([k, v]) => b.win.localStorage.setItem(k, v));
+  vm.runInNewContext(SOURCE, b.win);            // reload so it picks up the seeded session
+  b.win.navigator = { onLine: true };
+  return b;
+}
+
+test('events queue on the device and keep their order while signed out', async () => {
+  const { win, calls } = tracker(() => ({ status: 201, body: null }));
+  win.TTTrack.track('answer', 'q1', { ok: false }, { id: 'l1', name: 'Catie' });
+  win.TTTrack.track('screen', null, { view: 'home' }, { id: 'l1', name: 'Catie' });
+  assert.equal(await win.TTTrack.flush(), 0, 'nothing is sent without a signed-in account');
+  assert.equal(calls.length, 0);
+  const q = win.TTTrack.pending();
+  assert.deepEqual(q.map(e => e.kind), ['answer', 'screen']);
+  assert.equal(q[0].qid, 'q1'); assert.equal(q[0].learner, 'Catie');
+  assert.ok(q[0].client_id && q[0].client_id !== q[1].client_id);
+});
+
+test('a flush sends the queue as one batch, idempotently, and empties it', async () => {
+  const { win, calls } = tracker(() => ({ status: 201, body: null }), SIGNED_IN);
+  for (let i = 0; i < 3; i++) win.TTTrack.track('answer', 'q' + i, {}, { id: 'l1', name: 'Catie' });
+  assert.equal(await win.TTTrack.flush(), 3);
+  assert.equal(calls.length, 1);
+  const sent = new URL(calls[0].url);
+  assert.equal(sent.pathname, '/rest/v1/events');
+  assert.equal(sent.searchParams.get('on_conflict'), 'user_id,client_id');
+  assert.match(calls[0].opts.headers.Prefer, /ignore-duplicates/);
+  const rows = JSON.parse(calls[0].opts.body);
+  assert.equal(rows.length, 3); assert.equal(rows[0].user_id, 'u1');
+  assert.equal(win.TTTrack.pending().length, 0);
+});
+
+test('a failed send keeps every event for the next try', async () => {
+  const { win } = tracker(() => ({ status: 503, body: { message: 'down' } }), SIGNED_IN);
+  win.TTTrack.track('answer', 'q1', {}, { id: 'l1' });
+  assert.equal(await win.TTTrack.flush(), 0);
+  assert.equal(win.TTTrack.pending().length, 1);
+});
+
+test('the queue is capped so a long offline spell cannot fill the phone', async () => {
+  const { win } = tracker(() => null);
+  const cap = win.TTTrack.limits.queueMax;
+  for (let i = 0; i < cap + 5; i++) win.TTTrack.track('screen', null, { i }, { id: 'l1' });
+  const q = win.TTTrack.pending();
+  assert.equal(q.length, cap);
+  assert.equal(q[q.length - 1].data.i, cap + 4, 'the newest are kept');
+});

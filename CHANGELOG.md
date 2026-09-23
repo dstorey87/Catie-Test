@@ -12,6 +12,15 @@ deploy that touches the app's cached files. Earlier history: `git log`.
   could vanish. Flags now merge question by question (`coach.js` `mergeFlags`, tested).
 - Fixed: a background sync ended the practice session she was in the middle of.
 - The flag button says whether it's on (`aria-pressed`) for screen readers.
+- **Everything she does is recorded** in a new `events` table (Supabase): every answer with the
+  option picked and the seconds taken, each question shown, sessions started, finished or left,
+  mocks started, finished or abandoned, changed mock answers, hints, read-aloud, flags,
+  "More like this", and screens opened. Events queue on the phone and send in batches, so
+  nothing is lost offline (`backend.js` `TTTrack`, tested).
+- **Admin → Activity:** totals, day by day, the questions she misses most (with the wrong
+  answer she usually picks), time to answer by topic, and a plain-English log of the latest.
+- Fixed: the answer options couldn't be chosen with a keyboard or a screen reader. They now
+  take focus and answer on Enter or Space.
 
 ## v9-2026-09-23
 - **Dark mode.** Settings → Appearance: Match device (the default), Light or Dark. It's per
