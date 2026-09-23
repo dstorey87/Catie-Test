@@ -13,9 +13,11 @@ native sources live in folders and are not served.
 - `index.html` → loads `Theory Trainer.dc.html` (the whole app)
 - `support.js` — runtime · `signs.js` — road signs · `sw.js` — offline cache ·
   `manifest.json` — install metadata
+- `picker.js` — picks questions for **My answers** and **More like this** (pure logic;
+  tests in `tests/`, run with `node --test "tests/*.test.js"` — Node 22, nothing to install)
 - `backend.js` — accounts, progress sync, billing checks, reminders (talks to Supabase)
 - `config.js` — your Supabase URL and publishable key, Stripe payment links, push key.
-  Written by the publisher; safe to be public
+  Safe to be public
 - `questions-free.json` — the 20-question free sample
 - `questions-1..5.json` — the full 378-question bank. Once it's uploaded to Supabase
   these come out of the repo, so only paying accounts can read it

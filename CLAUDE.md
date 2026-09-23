@@ -29,7 +29,7 @@ These rules keep them from destroying each other's work. Follow them in every se
 |---|---|---|
 | Platform/PWA | `sw.js`, `manifest.json`, `index.html`, `icon*.png`, `capacitor/` | yes |
 | Backend | `supabase/`, `backend.js`, `config.js` | yes |
-| App/UI | `Theory Trainer.dc.html`, `support.js`, `signs.js` | **serialized — only ever ONE agent** |
+| App/UI | `Theory Trainer.dc.html`, `support.js`, `signs.js`, `picker.js`, `tests/` | **serialized — only ever ONE agent** |
 | Docs/data | `*.md`, `questions-*.json` | yes |
 
 ## While working
