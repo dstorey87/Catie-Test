@@ -30,6 +30,25 @@ create table if not exists public.snapshots (
   updated_at timestamptz not null default now()
 );
 
+-- ---------- activity: everything a learner does, one row per event ----------
+-- Append-only. The app queues events on the device and sends them in batches, so
+-- it works offline; client_id makes a resend harmless (the unique index drops repeats).
+-- To delete one account's history:  delete from public.events where user_id = '<uuid>';
+create table if not exists public.events (
+  id          bigint generated always as identity primary key,
+  user_id     uuid not null default auth.uid() references auth.users on delete cascade,
+  client_id   text not null,               -- made on the device; retries reuse it
+  learner_id  text,                        -- the learner profile on that device
+  learner     text,                        -- her name at the time, for reading the log
+  at          timestamptz not null,        -- when it happened on the device
+  kind        text not null,               -- answer, question_shown, session_start, ...
+  qid         text,                        -- the question, when there is one
+  data        jsonb not null default '{}'::jsonb
+);
+create unique index if not exists events_client_idx on public.events (user_id, client_id);
+create index if not exists events_user_at_idx on public.events (user_id, at desc);
+create index if not exists events_user_qid_idx on public.events (user_id, qid);
+
 -- ---------- question bank (the paid content) ----------
 create table if not exists public.questions (
   qid           text primary key,
@@ -116,6 +135,7 @@ alter table public.profiles     enable row level security;
 alter table public.entitlements enable row level security;
 alter table public.snapshots    enable row level security;
 alter table public.questions    enable row level security;
+alter table public.events       enable row level security;
 
 drop policy if exists "read own profile"    on public.profiles;
 drop policy if exists "update own profile"  on public.profiles;
@@ -123,6 +143,9 @@ drop policy if exists "read own access"     on public.entitlements;
 drop policy if exists "own snapshot"        on public.snapshots;
 drop policy if exists "read paid questions" on public.questions;
 drop policy if exists "admin writes questions" on public.questions;
+drop policy if exists "add own events"      on public.events;
+drop policy if exists "read own events"     on public.events;
+drop policy if exists "admin reads profiles" on public.profiles;
 
 create policy "read own profile"   on public.profiles     for select using (auth.uid() = id);
 create policy "update own profile" on public.profiles     for update using (auth.uid() = id)
@@ -136,6 +159,14 @@ create policy "read paid questions" on public.questions for select
   using (free_sample or public.has_access(auth.uid()));
 create policy "admin writes questions" on public.questions for all
   using (public.is_admin(auth.uid())) with check (public.is_admin(auth.uid()));
+
+-- Activity: an account adds and reads its own events; the admin reads everyone's
+-- (that is how Darren's Activity screen sees Catie's). Nobody edits or deletes from the app.
+create policy "add own events"  on public.events for insert with check (auth.uid() = user_id);
+create policy "read own events" on public.events for select
+  using (auth.uid() = user_id or public.is_admin(auth.uid()));
+-- The Activity screen names each account, so the admin may read every profile.
+create policy "admin reads profiles" on public.profiles for select using (public.is_admin(auth.uid()));
 
 -- Entitlements are never written from the app — only by the Stripe webhook,
 -- which uses the service-role key and bypasses these policies.

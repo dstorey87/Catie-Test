@@ -200,6 +200,70 @@
     }
   };
 
+  // Activity: everything a learner does, as small events. They queue on the device
+  // (so nothing is lost offline or signed out) and go to the events table in batches.
+  // Tracking must never get in the way of learning: every failure is swallowed here
+  // and the events simply wait for the next try.
+  var EVKEY = 'tt.events.q';
+  var LIMITS = { queueMax: 5000, batch: 200, delayMs: 5000 };
+  var evTimer = null, evSending = null;
+  function evQueue() { var q = readJSON(EVKEY); return Array.isArray(q) ? q : []; }
+  function newId() { return Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 10); }
+  function soon() {
+    if (evTimer || !window.setTimeout) return;
+    evTimer = window.setTimeout(function () { evTimer = null; window.TTTrack.flush(); }, LIMITS.delayMs);
+  }
+
+  window.TTTrack = {
+    limits: LIMITS,
+    pending: evQueue,
+    // kind: 'answer', 'screen', ...   who: {id, name} of the learner on this device
+    track: function (kind, qid, data, who) {
+      var q = evQueue();
+      q.push({ client_id: newId(), at: new Date().toISOString(), kind: String(kind), qid: qid || null,
+        learner_id: (who && who.id) || null, learner: (who && who.name) || null, data: data || {} });
+      if (q.length > LIMITS.queueMax) q = q.slice(q.length - LIMITS.queueMax);
+      writeJSON(EVKEY, q);
+      soon();
+    },
+    // Sends what's queued. Returns how many were sent (0 when signed out, offline or refused).
+    flush: async function () {
+      if (evSending) return evSending;
+      var uid = sess && sess.user && sess.user.id;
+      var online = !window.navigator || window.navigator.onLine !== false;
+      if (!cfg() || !uid || !online) return 0;
+      evSending = (async function () {
+        var sent = 0;
+        try {
+          while (true) {
+            var q = evQueue(); if (!q.length) break;
+            var batch = q.slice(0, LIMITS.batch);
+            await rest('/events?on_conflict=user_id,client_id', { method: 'POST',
+              headers: { Prefer: 'resolution=ignore-duplicates,return=minimal' },
+              body: JSON.stringify(batch.map(function (e) { return Object.assign({ user_id: uid }, e); })) });
+            // Drop exactly what was sent — events added meanwhile stay queued.
+            var ids = {}; batch.forEach(function (e) { ids[e.client_id] = true; });
+            writeJSON(EVKEY, evQueue().filter(function (e) { return !ids[e.client_id]; }));
+            sent += batch.length;
+          }
+        } catch (e) { /* keep the rest queued; the next flush retries */ }
+        return sent;
+      })();
+      try { return await evSending; } finally { evSending = null; }
+    },
+    // Admin Activity screen and the coach: newest first. Admin sees every account.
+    read: async function (sinceIso, limit) {
+      var q = '/events?select=user_id,learner,at,kind,qid,data&order=at.desc&limit=' + (limit || 5000);
+      if (sinceIso) q += '&at=gte.' + encodeURIComponent(sinceIso);
+      return (await rest(q)) || [];
+    },
+    accounts: async function () { return (await rest('/profiles?select=id,email,name,role')) || []; }
+  };
+  try {
+    window.addEventListener('online', function () { window.TTTrack.flush(); });
+    document.addEventListener('visibilitychange', function () { if (document.hidden) window.TTTrack.flush(); });
+  } catch (e) {}
+
   window.TTBill = {
     status: async function () {
       var rows = await rest('/entitlements?select=status,plan,current_period_end,cancel_at_period_end&limit=1');
