@@ -68,3 +68,4 @@ Seeded from the Phase-0 plan; add rows as later roadmap phases are broken into s
 | Vendor React/Babel same-origin + precache (true offline) | App/UI (serialized) | `section/vendor-react` | unclaimed |
 | Manifest/PWA polish: maskable icon, id/scope, viewport tags, offline fallback page | Platform/PWA | `section/manifest-polish` | unclaimed |
 | Remove public question bank after Supabase upload (delete `questions-1..5.json`, remove `local()` path, delete dead `sync.js`) | App/UI + data (serialized) | `section/bank-removal` | partial: `sync.js` deleted, live on main. JSON deletion + `local()` removal MUST wait until the bank is uploaded to Supabase (the upload reads these files from the live site) |
+| My answers (tick past questions → make a test / practise them) + "More like this" | App/UI (serialized) + Platform (`sw.js` bump) | `section/answer-picker` | in progress @ wt-a |
