@@ -2,10 +2,10 @@
 // BUMP VERSION in every deploy that changes any file in CORE — the cache name is
 // the only update signal existing installs get. Merging without a bump ships a
 // stale shell to every install that is currently offline.
-const VERSION = 'v7-2026-08-19';
+const VERSION = 'v8-2026-09-23';
 const C = 'theory-trainer-' + VERSION;
 const CORE = ['./', './index.html', './Theory%20Trainer.dc.html', './support.js', './signs.js',
-  './config.js', './backend.js', './manifest.json', './questions-free.json'];
+  './config.js', './backend.js', './picker.js', './manifest.json', './questions-free.json'];
 const EXTRAS = ['./icon-180.png', './icon-192.png', './icon-512.png', './icon.png'];
 
 // The paid bank must never enter this cache: once the public files are removed

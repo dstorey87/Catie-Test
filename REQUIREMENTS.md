@@ -1,7 +1,7 @@
 # Theory Trainer — full requirements
 
 Master list. Everything asked for, plus the gaps a paid consumer app needs.
-States: ✅ built · 🟡 built but only tested against a simulated server · ⛔ not built · 📋 your account/keys needed
+States: ✅ built · 🟡 partly built, or built but only tested against a simulated server · ⛔ not built · 📋 your account/keys needed
 
 ---
 
@@ -11,6 +11,8 @@ States: ✅ built · 🟡 built but only tested against a simulated server · �
 - ✅ Practise mode: read-aloud, Leitner boxes, 50:50, auto-advance
 - ✅ Mock test: 50 questions, 57 minutes, flag/review grid, pass mark 43
 - ✅ Build-your-own test, surprise mix, focus drill
+- ✅ My answers: tick past questions (practice and mock) → practise them or make a test from exactly those
+- ✅ More like this: similar questions on demand (shared wording weighted by rarity, same topic, same sign)
 - ✅ Notes on any screen, question flagging, revision list
 - ✅ Printable answer book, flashcards, test paper
 - ✅ Test-date countdown
@@ -23,8 +25,8 @@ States: ✅ built · 🟡 built but only tested against a simulated server · �
 - ✅ "Today's lesson" remix weighted to weak topics
 - ⛔ **Stuck detection**: spot a question or topic a learner keeps failing (3+ misses, or repeated misses across sessions) and change tactics instead of repeating the same card
 - ⛔ **Tailored micro-lessons**: when stuck, generate a short explainer for that exact concept, then easier scaffolding questions building up to the original, then re-test it
-- ⛔ **Tailored test generator**: build a test on demand from the learner's own error pattern (topic mix, difficulty, distractor types they fall for), not a fixed template
-- ⛔ **Distractor analysis**: record which wrong option was chosen, cluster the misconception, address that specifically
+- 🟡 **Tailored test generator**: build a test on demand from the learner's own error pattern (topic mix, difficulty, distractor types they fall for), not a fixed template. *Hand-picked version done (My answers); automatic version not built*
+- 🟡 **Distractor analysis**: record which wrong option was chosen, cluster the misconception, address that specifically. *The chosen option is now recorded on every answer; the analysis is not built*
 - ⛔ **Improvement suggestions on Home**: "You lose most marks on stopping distances — 10 minutes here would move your readiness 6%", ranked by predicted gain
 - ⛔ **Pass prediction**: estimate mock score and probability of passing, with what would raise it
 - ⛔ **Study plan to test date**: given the test date, a day-by-day plan that adapts when a day is missed
@@ -114,9 +116,9 @@ Today's "admin" is device-local: it edits the local snapshot on that one phone. 
 - ⛔ Database backups and a restore you've actually tested
 - ⛔ Rate limits on Edge Functions; abuse protection on the bank endpoint
 - ⛔ Accessibility audit against WCAG 2.2 AA (the controls exist; the audit doesn't)
-- ⛔ Automated tests (the scoring, Leitner, entitlement and sync logic at minimum) and CI
+- 🟡 Automated tests (the scoring, Leitner, entitlement and sync logic at minimum) and CI. *`tests/` covers question picking and two page checks; scoring, Leitner, entitlements, sync and CI are not done*
 - ⛔ Staging environment separate from live, and a rollback path
-- ⛔ Versioning + changelog; a "what's new" card in the app
+- 🟡 Versioning + changelog; a "what's new" card in the app. *`CHANGELOG.md` + the `sw.js` VERSION exist; no in-app card*
 - ⛔ Onboarding: first-run flow that sets test date, goal and reminder in under a minute
 - ⛔ Marketing page with pricing, screenshots and SEO (the app is not a landing page)
 

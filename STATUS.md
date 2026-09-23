@@ -6,6 +6,8 @@ States: ✅ done & verified · ⚠️ built, needs your account/keys to go live 
 - ✅ 378 original questions, 14 DVSA topics, 4 options, explanation + Highway Code ref; 20 signs with spoken meanings
 - ❌ The actual DVSA question bank — licensed and not published; ✅ same format and facts, and licensed sets you buy load in as packs
 - ✅ Practise (read-aloud, Leitner boxes, 50:50, auto-advance), mock test (50q/57min, flags, review grid, pass 43), build-your-own test, surprise mix, focus drill, signs quiz
+- ✅ **My answers**: every question she has answered (practice and mock), newest first, with what she said and the right answer; filter wrong/right; tick any → practise them, make a timed or untimed test from them, or get more like them
+- ✅ **More like this**: after any practice answer (slots similar questions in next), on each wrong mock answer, on every My answers row, and "More like the ones I missed" at the end of a session
 - ✅ Duolingo-style loop: daily goal, day streak, XP + levels, "Today's lesson" remix
 - ✅ Insights after every session, readiness dial, topic traffic-lights, mock trend, 20 hardest, external mock logging
 - ✅ Notes on any screen, question flagging, revision list, printable answer book / flashcards / test paper

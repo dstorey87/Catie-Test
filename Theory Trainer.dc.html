@@ -4,6 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <script src="./support.js"></script>
+<!-- Question picking for "My answers" and "More like this" (window.TTPicker). -->
+<script src="./picker.js"></script>
 <script>
 // Lives in the real head, NOT in <helmet>: the dc compiler rewrites camelCase
 // tokens inside helmet content (its attribute-preservation pass), which
@@ -292,6 +294,11 @@ input,select{font-family:inherit}
       <svg width="34" height="34" viewBox="0 0 24 24" style="flex:none"><circle cx="12" cy="12" r="9" fill="none" stroke="#C77E14" stroke-width="2"/><circle cx="12" cy="12" r="5" fill="none" stroke="#C77E14" stroke-width="2"/><circle cx="12" cy="12" r="1.8" fill="#C77E14"/></svg>
       <span><span style="display:block;font-family:'Nunito',sans-serif;font-weight:900;font-size:19px">Focus Drill</span><span style="display:block;font-size:14.5px;color:#6E6A5E;margin-top:2px">{{ focusDesc }}</span></span>
     </button>
+    <!-- My answers: every question she has answered, tick some, make a test from them -->
+    <button onClick="{{ goAnswers }}" style="grid-column:1/-1;display:flex;align-items:center;gap:16px;background:#fff;color:#2A2C33;border:2px solid #0E7C6B;border-radius:22px;padding:18px 22px;cursor:pointer;text-align:left">
+      <svg width="34" height="34" viewBox="0 0 24 24" style="flex:none"><rect x="3.5" y="3.5" width="7" height="7" rx="2" fill="#0E7C6B"/><path d="M5.3 7 L6.7 8.4 L9 5.8" stroke="#fff" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/><rect x="3.5" y="13.5" width="7" height="7" rx="2" fill="none" stroke="#0E7C6B" stroke-width="1.6"/><path d="M13.5 7 L20.5 7 M13.5 17 L20.5 17" stroke="#0E7C6B" stroke-width="2" stroke-linecap="round"/></svg>
+      <span><span style="display:block;font-family:'Nunito',sans-serif;font-weight:900;font-size:19px">My answers</span><span style="display:block;font-size:14.5px;color:#6E6A5E;margin-top:2px">{{ answersDesc }}</span></span>
+    </button>
     <button onClick="{{ goTest }}" style="display:flex;flex-direction:column;align-items:flex-start;gap:8px;background:#fff;border:1px solid #E8E1D2;border-radius:22px;padding:18px;cursor:pointer;text-align:left">
       <svg width="30" height="30" viewBox="0 0 24 24"><circle cx="12" cy="13" r="8" fill="none" stroke="#0E7C6B" stroke-width="2"/><path d="M12 13 L12 8.5 M9.5 3 L14.5 3" stroke="#0E7C6B" stroke-width="2" stroke-linecap="round"/></svg>
       <span style="font-family:'Nunito',sans-serif;font-weight:900;font-size:18px">Mock Test</span>
@@ -406,9 +413,6 @@ input,select{font-family:inherit}
           <div style="font-family:'Nunito',sans-serif;font-weight:900;font-size:19px">{{ microTitle }}</div>
           <div style="font-size:17px;line-height:1.5;margin-top:6px">{{ explanation }}</div>
           <div style="font-size:14px;color:#6E6A5E;margin-top:8px">{{ ruleRef }}</div>
-          <sc-if value="{{ wrongTipShow }}" hint-placeholder-val="{{ false }}">
-            <div style="margin-top:10px;padding-top:10px;border-top:1px dashed rgba(0,0,0,.18);font-size:15px;line-height:1.5"><b>Remember:</b> {{ wrongTip }}</div>
-          </sc-if>
           <sc-if value="{{ hasTip }}" hint-placeholder-val="{{ false }}">
             <div style="margin-top:10px;padding:10px 12px;background:rgba(255,255,255,.7);border-radius:12px;font-size:15px;line-height:1.5"><b>Remember:</b> {{ tipText }}</div>
           </sc-if>
@@ -418,6 +422,13 @@ input,select{font-family:inherit}
         </button>
       </div>
     </div>
+    <!-- "More like this": slots similar questions in straight after this one -->
+    <sc-if value="{{ moreShow }}" hint-placeholder-val="{{ true }}">
+      <button onClick="{{ moreLike }}" style="width:100%;margin-top:12px;background:#fff;border:2px solid #0E7C6B;color:#0A5D50;border-radius:16px;min-height:52px;font-family:'Nunito',sans-serif;font-weight:800;font-size:17px;cursor:pointer">More questions like this</button>
+    </sc-if>
+    <sc-if value="{{ moreDone }}" hint-placeholder-val="{{ false }}">
+      <div role="status" style="margin-top:12px;background:#E4F2EF;border:1px solid #BFE0D8;border-radius:14px;padding:12px 14px;font-size:15px;color:#0A5D50;font-weight:700;text-align:center">{{ moreMsg }}</div>
+    </sc-if>
     <button onClick="{{ nextQ }}" style="width:100%;margin-top:14px;background:#0E7C6B;color:#fff;border:none;border-radius:18px;min-height:60px;font-family:'Nunito',sans-serif;font-weight:900;font-size:20px;cursor:pointer">{{ nextLabel }}</button>
   </sc-if>
 </div>
@@ -451,6 +462,9 @@ input,select{font-family:inherit}
     </div>
   </sc-if>
   <div style="display:flex;flex-direction:column;gap:12px;max-width:360px;margin:30px auto 0">
+    <sc-if value="{{ doneHasMissed }}" hint-placeholder-val="{{ false }}">
+      <button onClick="{{ doneMoreLike }}" style="background:#fff;border:2px solid #0E7C6B;color:#0A5D50;border-radius:18px;min-height:58px;font-family:'Nunito',sans-serif;font-weight:900;font-size:18px;cursor:pointer">More like the ones I missed ({{ doneMissedN }})</button>
+    </sc-if>
     <sc-if value="{{ hasFlagged }}" hint-placeholder-val="{{ false }}">
       <button onClick="{{ practiseFlagged }}" style="background:#FBF1DC;border:2px solid #F2A93B;color:#2A2C33;border-radius:18px;min-height:58px;font-family:'Nunito',sans-serif;font-weight:900;font-size:18px;cursor:pointer">Practise your saved ones ({{ flaggedCount }})</button>
     </sc-if>
@@ -488,6 +502,7 @@ input,select{font-family:inherit}
     </div>
   </div>
   <button onClick="{{ startFocusDrill }}" style="width:100%;margin-top:14px;background:#FBF1DC;border:2px solid #F2A93B;border-radius:16px;min-height:56px;font-family:'Nunito',sans-serif;font-weight:900;font-size:18px;cursor:pointer;color:#2A2C33">Focus Drill: {{ focusDesc }}</button>
+  <button onClick="{{ goAnswers }}" style="width:100%;margin-top:10px;background:#fff;border:2px solid #0E7C6B;border-radius:16px;min-height:56px;font-family:'Nunito',sans-serif;font-weight:900;font-size:18px;cursor:pointer;color:#0A5D50">My answers: tick some, make a test</button>
   <div style="font-family:'Nunito',sans-serif;font-weight:800;font-size:18px;margin:26px 0 10px">Your topics</div>
   <div style="background:#fff;border:1px solid #E8E1D2;border-radius:20px;padding:8px 18px">
     <sc-for list="{{ progTopics }}" as="t" hint-placeholder-count="6">
@@ -572,6 +587,7 @@ input,select{font-family:inherit}
     </sc-for>
   </div>
   <sc-if value="{{ showTestMix }}" hint-placeholder-val="{{ false }}">
+    <button onClick="{{ goAnswers }}" style="width:100%;margin-top:14px;background:#E4F2EF;border:1px solid #BFE0D8;border-radius:14px;min-height:48px;padding:10px 14px;font-size:15px;font-weight:700;color:#0A5D50;cursor:pointer;text-align:left">Want exact questions? Tick them in My answers →</button>
     <div style="font-family:'Nunito',sans-serif;font-weight:800;font-size:16px;margin:18px 0 8px">Your test: {{ testMixTotal }} questions <span style="color:#6E6A5E;font-weight:400;font-size:13.5px">· {{ testMixPass }} to pass</span></div>
     <div style="background:#fff;border:1px solid #E8E1D2;border-radius:18px;padding:4px 16px">
       <sc-for list="{{ testMixRows }}" as="m" hint-placeholder-count="5">
@@ -679,11 +695,15 @@ input,select{font-family:inherit}
             <div style="font-size:14px;color:#B8433D;margin-top:6px">{{ w.yours }}</div>
             <div style="font-size:14.5px;color:#1C6B3C;font-weight:700;margin-top:3px">Correct — {{ w.right }}</div>
             <div style="font-size:14px;color:#6E6A5E;line-height:1.5;margin-top:6px">{{ w.explanation }} · {{ w.ruleRef }}</div>
-            <button onClick="{{ w.flag }}" style="{{ w.flagStyle }}">{{ w.flagLabel }}</button>
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+              <button onClick="{{ w.flag }}" style="{{ w.flagStyle }}">{{ w.flagLabel }}</button>
+              <button onClick="{{ w.more }}" style="margin-top:10px;padding:9px 14px;border-radius:10px;font-size:13.5px;font-weight:700;cursor:pointer;background:#fff;border:1px solid #0E7C6B;color:#0A5D50">More like this</button>
+            </div>
           </div>
         </div>
       </sc-for>
     </div>
+    <button onClick="{{ goAnswersWrong }}" style="width:100%;margin-top:12px;background:#fff;border:2px solid #0E7C6B;border-radius:16px;min-height:54px;font-family:'Nunito',sans-serif;font-weight:900;font-size:17px;cursor:pointer;color:#0A5D50">Pick ones to try again (My answers)</button>
   </sc-if>
   <div style="font-family:'Nunito',sans-serif;font-weight:800;font-size:18px;margin:24px 0 10px">By topic</div>
   <div style="background:#fff;border:1px solid #E8E1D2;border-radius:20px;padding:6px 18px">
@@ -699,6 +719,72 @@ input,select{font-family:inherit}
     <button onClick="{{ goProgress }}" style="flex:1;background:#fff;border:1px solid #E8E1D2;border-radius:16px;min-height:56px;font-family:'Nunito',sans-serif;font-weight:800;font-size:17px;cursor:pointer">My Progress</button>
     <button onClick="{{ goHome }}" style="flex:1;background:#0E7C6B;color:#fff;border:none;border-radius:16px;min-height:56px;font-family:'Nunito',sans-serif;font-weight:800;font-size:17px;cursor:pointer">Home</button>
   </div>
+</div>
+</sc-if>
+
+<!-- ============ MY ANSWERS ============ -->
+<!-- Every question she has answered (practice and mock), newest first. Tick any,
+     then practise them, turn them into a test, or get more like them. -->
+<sc-if value="{{ vAnswers }}" hint-placeholder-val="{{ false }}">
+<div data-screen-label="My answers">
+  <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+    <button onClick="{{ goHome }}" aria-label="Back to home" style="background:#fff;border:1px solid #E8E1D2;border-radius:12px;width:44px;height:44px;cursor:pointer;font-size:18px">←</button>
+    <div style="font-family:'Nunito',sans-serif;font-weight:900;font-size:24px;flex:1">My answers</div>
+  </div>
+  <div style="font-size:15.5px;color:#6E6A5E;line-height:1.5;margin-bottom:14px">Tick the questions you want, then practise them or make them into a test.</div>
+  <sc-if value="{{ ansNone }}" hint-placeholder-val="{{ false }}">
+    <div style="background:#fff;border:1px dashed #D8D0BF;border-radius:20px;padding:22px;text-align:center;color:#6E6A5E;font-size:15.5px">No answers yet. Practise a few questions or do a mock test and they will show up here.</div>
+    <button onClick="{{ goLearn }}" style="width:100%;margin-top:14px;background:#0E7C6B;color:#fff;border:none;border-radius:18px;min-height:58px;font-family:'Nunito',sans-serif;font-weight:900;font-size:19px;cursor:pointer">Practise now</button>
+  </sc-if>
+  <sc-if value="{{ ansSome }}" hint-placeholder-val="{{ true }}">
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">
+      <sc-for list="{{ ansFilters }}" as="f" hint-placeholder-count="3">
+        <button onClick="{{ f.pick }}" style="{{ f.style }}">{{ f.label }}</button>
+      </sc-for>
+    </div>
+    <div style="display:flex;gap:10px;margin-bottom:12px">
+      <button onClick="{{ ansTickAll }}" style="flex:1;background:#fff;border:1px solid #E8E1D2;border-radius:12px;min-height:44px;font-size:14.5px;font-weight:700;color:#0E7C6B;cursor:pointer">{{ ansTickAllLabel }}</button>
+      <button onClick="{{ ansClear }}" style="flex:1;background:#fff;border:1px solid #E8E1D2;border-radius:12px;min-height:44px;font-size:14.5px;font-weight:700;color:#6E6A5E;cursor:pointer">Clear ticks</button>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <sc-for list="{{ ansRows }}" as="r" hint-placeholder-count="4">
+        <div style="{{ r.cardStyle }}">
+          <button onClick="{{ r.toggle }}" role="checkbox" aria-checked="{{ r.aria }}" style="display:flex;gap:12px;align-items:flex-start;width:100%;background:none;border:none;padding:0;text-align:left;cursor:pointer;color:#2A2C33">
+            <span style="{{ r.boxStyle }}"><svg width="18" height="18" viewBox="0 0 24 24"><path d="M5 12.5 L10 17.5 L19 7" stroke="{{ r.tickColor }}" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+            <span style="flex:1;min-width:0">
+              <span style="display:block;font-size:15.5px;font-weight:700;line-height:1.4">{{ r.text }}</span>
+              <span style="{{ r.resultStyle }}">{{ r.result }}</span>
+              <span style="{{ r.answerStyle }}">{{ r.answer }}</span>
+              <span style="display:block;font-size:13px;color:#6E6A5E;margin-top:3px;line-height:1.4">{{ r.meta }}</span>
+            </span>
+          </button>
+          <sc-if value="{{ r.hasSign }}" hint-placeholder-val="{{ false }}">
+            <div style="margin:8px 0 0 42px"><x-import component-from-global-scope="SignImage" from="./signs.js" hint="{{ r.sign }}" size="{{ ansSignSize }}" hint-size="56px,56px"></x-import></div>
+          </sc-if>
+          <div style="display:flex;justify-content:flex-end;margin-top:8px">
+            <button onClick="{{ r.more }}" style="padding:8px 12px;min-height:40px;border-radius:10px;font-size:13.5px;font-weight:700;cursor:pointer;background:#fff;border:1px solid #0E7C6B;color:#0A5D50">More like this</button>
+          </div>
+        </div>
+      </sc-for>
+    </div>
+    <sc-if value="{{ ansHasMore }}" hint-placeholder-val="{{ false }}">
+      <button onClick="{{ ansShowMore }}" style="width:100%;margin-top:12px;background:#fff;border:1px solid #E8E1D2;border-radius:14px;min-height:50px;font-size:15px;font-weight:700;color:#0E7C6B;cursor:pointer">{{ ansMoreLabel }}</button>
+    </sc-if>
+    <sc-if value="{{ ansAnyTicked }}" hint-placeholder-val="{{ false }}">
+      <!-- Action bar: stays on screen while scrolling so she can tick and go -->
+      <div style="position:sticky;bottom:calc(10px + env(safe-area-inset-bottom));margin-top:16px;background:#2A2C33;color:#fff;border-radius:20px;padding:12px;box-shadow:0 8px 24px rgba(0,0,0,.22);z-index:5">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:0 4px 10px">
+          <span style="font-family:'Nunito',sans-serif;font-weight:900;font-size:16px">{{ ansTickedLabel }}</span>
+          <span style="display:flex;align-items:center;gap:8px;font-size:13.5px">Timer for tests <button onClick="{{ flipCustomTimer }}" aria-label="Timer on or off" style="{{ ctTrack }}"><span style="{{ ctKnob }}"></span></button></span>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
+          <button onClick="{{ ansPractise }}" style="background:#fff;color:#2A2C33;border:none;border-radius:14px;min-height:52px;font-family:'Nunito',sans-serif;font-weight:900;font-size:15px;cursor:pointer;line-height:1.15">Practise them</button>
+          <button onClick="{{ ansTest }}" style="background:#0E7C6B;color:#fff;border:none;border-radius:14px;min-height:52px;font-family:'Nunito',sans-serif;font-weight:900;font-size:15px;cursor:pointer;line-height:1.15">Make a test</button>
+          <button onClick="{{ ansMoreLike }}" style="background:#F2A93B;color:#2A2C33;border:none;border-radius:14px;min-height:52px;font-family:'Nunito',sans-serif;font-weight:900;font-size:15px;cursor:pointer;line-height:1.15">More like these</button>
+        </div>
+      </div>
+    </sc-if>
+  </sc-if>
 </div>
 </sc-if>
 
@@ -1264,6 +1350,7 @@ class Component extends DCLogic {
       revisionFlags: saved.revisionFlags || {},
       xp: saved.xp || 0, streak: saved.streak || {count:0, last:'', todayDate:'', todayN:0}, notes: saved.notes || {}, avatar: saved.avatar || '',
       notesOpen: false, notesKey: '', testMix: {}, customTimer: true,
+      ansSel: {}, ansFilter: 'all', ansShow: 40,   // My answers: ticked ids, which filter, how many rows shown
       packLearn: content.packLearn || {}, packTest: content.packTest || {}, packNames: content.packNames || {},
       learnTopic: 'weak', learnLen: props.defaultSessionLength || 10, session: null, learnMix: {}, testMode: 'balanced', edSearch: '',
       cloudMsg: '', cloudBusy: false, showPass: false,
@@ -1280,7 +1367,7 @@ class Component extends DCLogic {
     if(!saved.settings || !saved.settings.learnerName || saved.settings.learnerName==='Learner') this.state.settings.learnerName = au.name;
     if(this.state.settings.parentName==='Parent') this.state.settings.parentName = 'Admin';
   }
-  NOTESN = {home:'Home', learnSetup:'Practise setup', learnQ:'Practising', learnDone:'Session results', testIntro:'Test setup', test:'Mock test', dash:'Admin', settings:'Settings', progress:'My progress', signs:'Road signs', editor:'Questions', print:'Print'};
+  NOTESN = {home:'Home', learnSetup:'Practise setup', learnQ:'Practising', learnDone:'Session results', testIntro:'Test setup', test:'Mock test', dash:'Admin', settings:'Settings', progress:'My progress', signs:'Road signs', editor:'Questions', print:'Print', answers:'My answers'};
   award(qCount, correctCount, bonus){
     const today = new Date().toISOString().slice(0,10);
     const stk = Object.assign({count:0, last:'', todayDate:'', todayN:0}, this.state.streak);
@@ -1671,8 +1758,10 @@ class Component extends DCLogic {
     const r = Object.assign({}, this.rec(q.id));
     r.seen++; if(ok){ r.correct++; r.box = Math.min(3, r.box+1); } else { r.wrong=(r.wrong||0)+1; r.box = 1; }
     const leitner = Object.assign({}, this.state.leitner); leitner[q.id]=r;
-    const attempts = this.state.attempts.concat([{q:q.id, t:Date.now(), ok, topic:q.topic}]).slice(-3000);
-    this.setState(Object.assign({session: Object.assign({}, s, {picked:i, correct: s.correct + (ok?1:0), wrongTopics: ok ? (s.wrongTopics||[]) : (s.wrongTopics||[]).concat([q.topic]), log:(s.log||[]).concat([{t:q.topic, ok}])}), leitner, attempts}, this.award(1, ok?1:0)), ()=>{
+    // p = the option she picked, as its index in the question's own order (the
+    // screen shuffles options), so "My answers" can show what she said.
+    const attempts = this.state.attempts.concat([{q:q.id, t:Date.now(), ok, topic:q.topic, p:this.seedPerm(q.id)[i]}]).slice(-3000);
+    this.setState(Object.assign({session: Object.assign({}, s, {picked:i, correct: s.correct + (ok?1:0), wrongTopics: ok ? (s.wrongTopics||[]) : (s.wrongTopics||[]).concat([q.topic]), log:(s.log||[]).concat([{t:q.topic, ok, q:q.id}])}), leitner, attempts}, this.award(1, ok?1:0)), ()=>{
       this.persist();
       if(this.state.settings.autoRead) this.speak((ok?'Correct. ':'The answer is ' + 'ABCD'[vq.correctIndex] + ', ' + vq.options[vq.correctIndex] + '. ') + q.explanation);
       if(ok && this.state.settings.autoAdvance){
@@ -1716,7 +1805,9 @@ class Component extends DCLogic {
     const seen = recs.filter(r=>r.seen>0);
     const coverage = qs.length ? seen.length/qs.length : 0;
     const box3 = seen.length ? seen.filter(r=>r.box===3).length/seen.length : 0;
-    const at = this.state.attempts.slice(-120);
+    // Practice answers only: mock answers are logged too (for My answers), but the
+    // mock score already counts below — including them here would count it twice.
+    const at = this.state.attempts.filter(a=>a.src!=='test').slice(-120);
     const totSeen = seen.reduce((a,r)=>a+r.seen,0);
     const recentAcc = at.length>=10 ? at.filter(a=>a.ok).length/at.length : (totSeen ? seen.reduce((a,r)=>a+r.correct,0)/totSeen : 0);
     const mocks = this.state.tests.slice(-3).map(t=>t.score/(t.total||50));
@@ -1759,7 +1850,8 @@ class Component extends DCLogic {
     const cutoff = range==='7d' ? Date.now() - 7*864e5 : 0;
     const st = this.TOPICS.map(()=>({c:0,n:0}));
     if(range==='7d'){
-      this.state.attempts.forEach(a=>{ if(a.t>=cutoff && a.topic>=1){ st[a.topic-1].n++; if(a.ok) st[a.topic-1].c++; } });
+      // Practice only, matching the all-time figures (which come from the Leitner boxes).
+      this.state.attempts.forEach(a=>{ if(a.t>=cutoff && a.topic>=1 && a.src!=='test'){ st[a.topic-1].n++; if(a.ok) st[a.topic-1].c++; } });
     } else {
       this.questions().forEach(q=>{ const r=this.rec(q.id); st[q.topic-1].n += r.seen; st[q.topic-1].c += r.correct; });
     }
@@ -1781,7 +1873,35 @@ class Component extends DCLogic {
     sh(flagged).concat(sh(box1), sh(weakQ)).forEach(q=>{ if(!seen.has(q.id)){ seen.add(q.id); ids.push(q.id); } });
     this.buildSession(ids.slice(0,20), 'Focus Drill');
   }
+  // "More like this": questions most like the given ones (TTPicker.similar).
+  // Mid-practice they slot in straight after the current question; anywhere
+  // else they start a new practice session. Returns how many were found.
+  moreLikeThis(ids){
+    const targets = ids.map(id=>this.qById(id)).filter(Boolean);
+    const s = this.state.session;
+    const inSession = this.state.view==='learnQ' && s;
+    const already = new Set(inSession ? s.ids : []);           // don't repeat this session's questions
+    const pool = this.questionsFor('learn').filter(q=>!already.has(q.id));
+    const opts = Object.assign({}, (window.TT_CONFIG||{}).moreLike, {boxOf: id=>this.rec(id).box});
+    const found = window.TTPicker ? TTPicker.similar(targets, pool, opts).map(q=>q.id) : [];
+    if(!inSession){
+      if(found.length) this.buildSession(found, targets.length>1 ? 'More like these' : 'More like this');
+      else alert('No more questions like that in the question sets that are switched on. Turn more sets on in the Admin dashboard, or try Practise → A bit of everything.');
+      return found.length;
+    }
+    const next = s.ids.slice(0, s.i+1).concat(found, s.ids.slice(s.i+1));
+    this.setState({session: Object.assign({}, s, {ids: next, moreFor: s.ids[s.i], moreN: found.length})});
+    return found.length;
+  }
   // ---------- test ----------
+  // Start a test on exactly these questions (Build your own, and My answers).
+  // About 1.14 minutes a question, like the real 57 minutes for 50.
+  launchTest(ids, timed){
+    const sh = a => a.map(x=>[Math.random(),x]).sort((p,q)=>p[0]-q[0]).map(p=>p[1]);
+    const mins = Math.max(3, Math.round(ids.length*1.14));
+    const test = {ids: sh(ids), answers:{}, flags:{}, i:0, endAt: Date.now() + (timed ? mins*60000 : 12*3600000), noTimer: !timed, ended:false};
+    this.setState({test, view:'test', testView:'run'}, ()=>this.persist());
+  }
   startTest(){
     const sh = a => a.map(x=>[Math.random(),x]).sort((p,q)=>p[0]-q[0]).map(p=>p[1]);
     const tq = this.questionsFor('test');
@@ -1789,9 +1909,7 @@ class Component extends DCLogic {
       const picked = [];
       this.TOPICS.forEach((_,i)=>{ const n = this.state.testMix[i+1]||0; if(n>0) sh(tq.filter(q=>q.topic===i+1)).slice(0,n).forEach(q=>picked.push(q.id)); });
       if(picked.length===0){ alert('Use the + buttons to pick at least one question.'); return; }
-      const mins = Math.max(3, Math.round(picked.length*1.14));
-      const test = {ids: sh(picked), answers:{}, flags:{}, i:0, endAt: Date.now() + (this.state.customTimer ? mins*60000 : 12*3600000), noTimer: !this.state.customTimer, ended:false};
-      this.setState({test, view:'test', testView:'run'}, ()=>this.persist());
+      this.launchTest(picked, this.state.customTimer);
       return;
     }
     if(tq.length < 50){ alert('Not enough questions are switched on for a full 50-question test. Turn more packs on in the Admin dashboard.'); return; }
@@ -1824,7 +1942,15 @@ class Component extends DCLogic {
     const rec = {date: new Date().toISOString().slice(0,10), score, total, pass: score>=passMark, perTopic: pt, source:'app'};
     const rf = Object.assign({}, this.state.revisionFlags);
     Object.keys(t.flags).forEach(k=>{ if(t.flags[k] && t.ids[k] && !rf[t.ids[k]]) rf[t.ids[k]] = {t: Date.now(), src:'test'}; });
-    this.setState(Object.assign({test: Object.assign({}, t, {ended:true, score, perTopic:pt}), tests: this.state.tests.concat([rec]), revisionFlags: rf, testView:'results'}, this.award(Object.keys(t.answers).length, score, rec.pass?50:0)), ()=>this.persist());
+    // Log every answered mock question (src:'test') so it shows in My answers.
+    // Readiness and topic bars skip these — the mock score already counts there.
+    const now = Date.now(), logged = [];
+    t.ids.forEach((id, idx)=>{
+      const q = this.qById(id), a = t.answers[idx]; if(!q || a===undefined) return;
+      logged.push({q:id, t:now, ok: a===this.viewQ(q).correctIndex, topic:q.topic, p:this.seedPerm(id)[a], src:'test'});
+    });
+    const attempts = this.state.attempts.concat(logged).slice(-3000);
+    this.setState(Object.assign({test: Object.assign({}, t, {ended:true, score, perTopic:pt}), tests: this.state.tests.concat([rec]), revisionFlags: rf, attempts, testView:'results'}, this.award(Object.keys(t.answers).length, score, rec.pass?50:0)), ()=>this.persist());
   }
   // ---------- export / import ----------
   download(name, obj){
@@ -1953,7 +2079,6 @@ class Component extends DCLogic {
         feedbackStyle: 'margin-top:16px;border-radius:20px;padding:18px;'+anim+(ok?'background:#E7F6EC;border:1px solid #BCE3C8':'background:#FBF1DC;border:1px solid #F0D9A8'),
         microTitle: ok ? goodWords[(sess.i)%goodWords.length] : tryWords[(sess.i)%tryWords.length],
         explanation: q.explanation, ruleRef: q.ruleRef,
-        wrongTipShow: !ok && !!this.tipAt(q.topic, sess.i), wrongTip: this.tipAt(q.topic, sess.i),
         speakQ: ()=>this.speakQFull(q),
         speakExp: ()=>this.speak(q.explanation + '. ' + q.ruleRef),
         hasTip: answered && picked!==vq.correctIndex && !!this.tipAt(q.topic, sess.i),
@@ -1963,6 +2088,11 @@ class Component extends DCLogic {
         qFlagLabel: s.revisionFlags[q.id] ? 'Saved' : 'Tricky?',
         qFlagStyle: 'flex:none;display:flex;align-items:center;gap:6px;height:44px;padding:0 12px;border-radius:12px;cursor:pointer;font-size:13.5px;font-weight:700;'+(s.revisionFlags[q.id]?'background:#F2A93B;color:#fff;border:none':'background:#fff;border:1px solid #E8E1D2;color:#6E6A5E'),
         toggleQFlag: ()=>this.toggleRevFlag(q.id),
+        // "More like this" shows once answered; after a tap it says what it added.
+        moreShow: answered && sess.moreFor!==q.id,
+        moreDone: answered && sess.moreFor===q.id,
+        moreMsg: sess.moreN ? (sess.moreN + ' more like this added — they’re up next.') : 'No more like this in the question sets that are switched on.',
+        moreLike: ()=>this.moreLikeThis([q.id]),
         quitLearn: ()=>this.setState({view: (sess.i>0 || sess.picked>=0)? 'learnDone':'home'})
       };
     }
@@ -1975,6 +2105,7 @@ class Component extends DCLogic {
     const sessRows = Object.keys(sessAgg).map(k=>{ const p = sessAgg[k], pct = Math.round(100*p.c/p.n);
       return {name:T[k-1], label:p.c+'/'+p.n, barStyle:'display:block;height:100%;border-radius:5px;width:'+pct+'%;background:'+(pct>=80?'#2E9E5B':pct>=50?'#F2A93B':'#D14B45')}; }).sort((a,b)=>a.name.localeCompare(b.name));
     const doneMsg = frac>=0.7? 'Keep this up and the real test will feel easy.' : 'The ones you missed will come round again soon \u2014 that\u2019s how the boxes work.';
+    const doneMissed = Array.from(new Set(slog.filter(e=>!e.ok && e.q).map(e=>e.q)));
 
     // ----- test -----
     let testVals = {};
@@ -2035,7 +2166,8 @@ class Component extends DCLogic {
           explanation:q.explanation, ruleRef:q.ruleRef, hasSign: !!q.imageHint, sign: q.imageHint||'',
           flagLabel: fl? 'Saved for revision' : 'Save for revision',
           flagStyle: 'margin-top:10px;padding:9px 14px;border-radius:10px;font-size:13.5px;font-weight:700;cursor:pointer;'+(fl?'background:#F2A93B;color:#fff;border:none':'background:#FBF1DC;border:1px solid #F0D9A8;color:#8A5A0B'),
-          flag: ()=>this.toggleRevFlag(id)};
+          flag: ()=>this.toggleRevFlag(id),
+          more: ()=>this.moreLikeThis([id])};
       }).filter(Boolean);
       resultVals = {
         hasWrong: wrongRows.length>0, wrongN: wrongRows.length, wrongRows, wrongSignSize: 72,
@@ -2080,6 +2212,63 @@ class Component extends DCLogic {
       const f = s.revisionFlags[id], r = this.rec(id);
       return {text: q.question, meta: T[q.topic-1] + (f.src==='test'?' · from a test':'') + (r.seen? ' · '+r.correct+'/'+r.seen:''), unflag: ()=>this.toggleRevFlag(id)};
     }).filter(Boolean);
+
+    // ----- my answers -----
+    // One row per question she has answered (TTPicker.history), newest first.
+    // ansSel holds the ticked ids; ticks survive changing the filter.
+    const qMap = new Map(this.questions().concat(this.signBank()).map(q=>[q.id, q]));
+    const hist = window.TTPicker ? TTPicker.history(s.attempts, id=>qMap.get(id)||null) : [];
+    const answersDesc = hist.length ? (hist.length + ' questions answered — tick some to make your own test') : 'Tick past questions to make your own test';
+    let ansVals = {};
+    if(view==='answers'){
+      const sel = s.ansSel || {};
+      const sh = a => a.map(x=>[Math.random(),x]).sort((p,q)=>p[0]-q[0]).map(p=>p[1]);
+      const shownAll = hist.filter(r=> s.ansFilter==='wrong' ? !r.lastOk : s.ansFilter==='right' ? r.lastOk : true);
+      const shown = shownAll.slice(0, s.ansShow);
+      const ticked = hist.filter(r=>sel[r.id]).map(r=>r.id);
+      const nWrong = hist.filter(r=>!r.lastOk).length;
+      const optText = (q, i) => (q.options && q.options[i]) || '';
+      const ago = ms => { const d = Math.floor((Date.now()-ms)/864e5); return d<=0 ? 'today' : d===1 ? 'yesterday' : d + ' days ago'; };
+      const setSel = patch => this.setState({ansSel: Object.assign({}, sel, patch)});
+      ansVals = {
+        ansFilters: [{v:'all', label:'All (' + hist.length + ')'}, {v:'wrong', label:'Wrong last time (' + nWrong + ')'}, {v:'right', label:'Right last time (' + (hist.length-nWrong) + ')'}]
+          .map(f=>({label:f.label, style: chip(s.ansFilter===f.v), pick: ()=>this.setState({ansFilter:f.v, ansShow:40})})),
+        ansRows: shown.map(r=>{
+          const q = r.q, on = !!sel[r.id], right = optText(q, q.correctIndex);
+          return {
+            text: q.question,
+            // Right last time: one green line. Wrong: what she said in red, the answer in green.
+            result: r.lastOk ? ('✓ Right: ' + right) : (r.lastPick>=0 ? '✗ You said: ' + optText(q, r.lastPick) : '✗ Wrong last time'),
+            resultStyle: 'display:block;font-size:14px;margin-top:5px;line-height:1.4;font-weight:700;color:' + (r.lastOk ? '#1C6B3C' : '#B8433D'),
+            answer: r.lastOk ? '' : ('✓ Answer: ' + right),
+            answerStyle: r.lastOk ? 'display:none' : 'display:block;font-size:14px;margin-top:2px;line-height:1.4;font-weight:700;color:#1C6B3C',
+            meta: T[q.topic-1] + ' · ' + r.right + ' right, ' + r.wrong + ' wrong' + (r.src==='test' ? ' · last in a mock' : '') + (r.t ? ' · ' + ago(r.t) : ''),
+            hasSign: !!q.imageHint && (this.props.showSignImages !== false), sign: q.imageHint || '',
+            aria: on ? 'true' : 'false',
+            cardStyle: 'background:' + (on ? '#F3FAF8' : '#fff') + ';border:2px solid ' + (on ? '#0E7C6B' : '#EFE9DC') + ';border-radius:18px;padding:14px',
+            boxStyle: 'flex:none;width:30px;height:30px;box-sizing:border-box;border-radius:9px;display:flex;align-items:center;justify-content:center;' + (on ? 'background:#0E7C6B;border:2px solid #0E7C6B' : 'background:#fff;border:2px solid #C9C2B2'),
+            tickColor: on ? '#fff' : 'transparent',
+            toggle: ()=>setSel({[r.id]: !on}),
+            more: ()=>this.moreLikeThis([r.id])
+          };
+        }),
+        ansSignSize: 56,
+        ansHasMore: shownAll.length > shown.length,
+        ansMoreLabel: 'Show more (' + (shownAll.length - shown.length) + ' left)',
+        ansShowMore: ()=>this.setState({ansShow: s.ansShow + 40}),
+        ansTickAllLabel: 'Tick all ' + shownAll.length,
+        ansTickAll: ()=>{ const p = {}; shownAll.forEach(r=>{ p[r.id] = true; }); setSel(p); },
+        ansClear: ()=>this.setState({ansSel:{}}),
+        ansAnyTicked: ticked.length>0,
+        ansTickedLabel: ticked.length + ' ticked',
+        ansPractise: ()=>{ this.setState({ansSel:{}}); this.buildSession(sh(ticked), 'Your picks'); },
+        ansTest: ()=>{
+          if(t && !t.ended && !confirm('You have a mock test in progress. Start this one instead?')) return;
+          this.setState({ansSel:{}}); this.launchTest(ticked, s.customTimer);
+        },
+        ansMoreLike: ()=>{ if(this.moreLikeThis(ticked)) this.setState({ansSel:{}}); }
+      };
+    }
 
     // ----- editor -----
     const edQs = this.questions().filter(q=>q.topic===s.edTopic);
@@ -2211,6 +2400,10 @@ class Component extends DCLogic {
       vTestResults: view==='test' && t && t.ended && s.testView==='results',
       vDash: view==='dash', vSettings: view==='settings', vEditor: view==='editor', vPrint: view==='print',
       vLogin: view==='login', vSigns: view==='signs',
+      vAnswers: view==='answers', ansNone: hist.length===0, ansSome: hist.length>0, answersDesc,
+      goAnswers: ()=>this.setState({view:'answers', ansFilter:'all', ansShow:40, printPreview:false}),
+      goAnswersWrong: ()=>this.setState({view:'answers', ansFilter:'wrong', ansShow:40}),
+      doneHasMissed: doneMissed.length>0, doneMissedN: doneMissed.length, doneMoreLike: ()=>this.moreLikeThis(doneMissed),
       goLogin: nav('login'),
       vProgress: view==='progress',
       goProgress: nav('progress'),
@@ -2370,7 +2563,8 @@ class Component extends DCLogic {
       hasAvatar: !!s.avatar, noAvatar: !s.avatar, avatarSrc: s.avatar||'', learnerInitial: (st.learnerName||'?')[0].toUpperCase(),
       avatarUpload: e=>{ const f = e.target.files && e.target.files[0]; if(!f) return; const rd = new FileReader(); rd.onload = ()=>{ const img = new Image(); img.onload = ()=>{ const c = document.createElement('canvas'); const S = 128; c.width = S; c.height = S; const x = c.getContext('2d'); const m = Math.min(img.width, img.height); x.drawImage(img, (img.width-m)/2, (img.height-m)/2, m, m, 0, 0, S, S); this.set({avatar: c.toDataURL('image/jpeg', .82)}); }; img.src = rd.result; }; rd.readAsDataURL(f); e.target.value = ''; },
       avatarRemove: ()=>this.set({avatar:''}),
-      notesAvail: view!=='login' && view!=='cloudLogin' && !s.printPreview && !s.notesOpen,
+      // Hidden while the My answers action bar is up — it sits where the bar's buttons are.
+      notesAvail: view!=='login' && view!=='cloudLogin' && !s.printPreview && !s.notesOpen && !ansVals.ansAnyTicked,
       notesOpen: !!s.notesOpen,
       toggleNotes: ()=>this.setState({notesOpen: !s.notesOpen, notesKey: s.view}),
       notesFabStyle: 'position:fixed;right:18px;bottom:calc(18px + env(safe-area-inset-bottom));width:56px;height:56px;border-radius:50%;background:#2A2C33;color:#fff;border:none;cursor:pointer;box-shadow:0 6px 18px rgba(0,0,0,.22);z-index:60;display:flex;align-items:center;justify-content:center',
@@ -2431,7 +2625,7 @@ class Component extends DCLogic {
         rd.readAsText(f);
         e.target.value = '';
       }
-    }, learnVals, testVals, resultVals, edVals, printVals, settingsVals, logVals);
+    }, learnVals, testVals, resultVals, ansVals, edVals, printVals, settingsVals, logVals);
   }
 }
 </script>
