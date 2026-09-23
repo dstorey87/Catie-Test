@@ -13,6 +13,7 @@ States: ✅ done & verified · ⚠️ built, needs your account/keys to go live 
 - ✅ Notes on any screen, question flagging, revision list, printable answer book / flashcards / test paper
 - ✅ Question editor with search, sign picker, pack import, bank export
 - ✅ Test-date countdown; accessibility (text size, dyslexia font, high contrast, reduced motion)
+- ✅ Dark mode: Settings → Appearance (match device / light / dark), per device; printing stays light
 - ✅ Works offline; a test in progress survives a reload or a flat battery
 
 ## Duolingo-style habit loop
@@ -25,12 +26,13 @@ States: ✅ done & verified · ⚠️ built, needs your account/keys to go live 
 
 ## Accounts — no tokens anywhere
 - ✅ Email + password sign-up and sign-in, on the app's own screens
-- ✅ Password reset by email; email confirmation on new accounts
+- ✅ Password reset by email (the link opens "Set a new password"); email confirmation on new accounts, with a resend button when an account isn't confirmed yet
 - ✅ One account covers every learner in a family and every device; progress merges (newest wins per learner)
 - ✅ Sign out / switch learner; profile photos; admin role
 - ✅ Progress syncs by itself: pulls on open, pushes a few seconds after answers, retries when signal returns. Learners never see a sync control
 - ✅ Supabase project `catiedriving` set up 2026-09-23: both schema files applied, 378 questions loaded into the server bank, security advisor clean apart from the two access-check functions the rules need
-- ⚠️ No accounts exist yet — create yours in the app, then an admin role / free access is one SQL line (`supabase/schema.sql`, bottom)
+- ✅ Two accounts, 2026-09-23: the admin (Darren's Gmail) and Catie's (`darrenstorey87+catie@gmail.com` — a Gmail "+" address, so her emails reach Darren's inbox), both confirmed, Catie on free family access. Both proven to sign in and read the paid bank. Their passwords were generated straight into Vault and never shown: Vault UI → sign in as `darren` → secret → logins → `theory-trainer-admin` / `theory-trainer-catie`
+- ⚠️ In the Supabase dashboard, Authentication → URL Configuration still has the default Site URL (`http://localhost:3000`). Set **Site URL** to `https://dstorey87.github.io/Catie-Test/Theory%20Trainer.dc.html` and add `https://dstorey87.github.io/Catie-Test/**` to **Redirect URLs**. Until then, links in emails land on a dead localhost page (a confirmation still counts: the click confirms the account before the redirect). Not settable from here: it needs the Supabase dashboard or a management token
 - ⚠️ Free tier: the project pauses after about a week with no use, and sign-in then hangs. Found paused 2026-09-23 and restored. Daily use keeps it awake
 - ⚠️ Confirmation and password-reset emails go through Supabase's built-in mailer, which is rate-limited and for testing only — add an SMTP provider before strangers sign up (ROADMAP item 3)
 - ✅ Every account's data is private at the database level, not by app-side checking
@@ -71,5 +73,6 @@ Seeded from the Phase-0 plan; add rows as later roadmap phases are broken into s
 | App bug batch B1–B6: topic type, sign field, `pack`, mock length, endTest double-fire, forceAuth trap | App/UI (serialized) | `phase0-app-fixes` | **live on main** (2026-08-19; plus editor sign-clear fix) |
 | Vendor React/Babel same-origin + precache (true offline) | App/UI (serialized) | `section/vendor-react` | unclaimed |
 | Manifest/PWA polish: maskable icon, id/scope, viewport tags, offline fallback page | Platform/PWA | `section/manifest-polish` | unclaimed |
+| Sign-in fixes (unconfirmed email, email links, reset landing) + dark mode | App/UI + Backend | `section/signin-darkmode` | **live on main** (2026-09-23) |
 | Remove public question bank after Supabase upload (delete `questions-1..5.json`, remove `local()` path, delete dead `sync.js`) | App/UI + data (serialized) | `section/bank-removal` | partial: `sync.js` deleted, live on main. JSON deletion + `local()` removal MUST wait until the bank is uploaded to Supabase (the upload reads these files from the live site) |
 | My answers (tick past questions → make a test / practise them) + "More like this" | App/UI (serialized) + Platform (`sw.js` bump) | `section/answer-picker` | merged to develop (2026-09-23; 16 tests pass; browser-checked on a local server) |

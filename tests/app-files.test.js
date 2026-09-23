@@ -29,3 +29,13 @@ test('every script the page loads is precached by the service worker', () => {
   assert.ok(srcs.includes('picker.js'));
   for (const s of srcs) assert.ok(core.includes("'./" + s + "'"), s + ' is not in sw.js CORE');
 });
+
+test('every theme colour the page uses has a dark version, and every dark version is used', () => {
+  // A var(--tt-…) with no TT_DARK entry renders as no colour at all (transparent text or
+  // background) — in BOTH themes. An unused entry is dead weight in the one colour map.
+  const map = app.slice(app.indexOf('var TT_DARK = {'), app.indexOf('};', app.indexOf('var TT_DARK = {')));
+  const keys = new Set([...map.matchAll(/'((?:bg|fg|bd)-[0-9a-f]+)'/g)].map(m => m[1]));
+  const used = new Set([...app.matchAll(/var\(--tt-((?:bg|fg|bd)-[0-9a-f]+)\)/g)].map(m => m[1]));
+  for (const u of used) assert.ok(keys.has(u), '--tt-' + u + ' is used but has no TT_DARK entry');
+  for (const k of keys) assert.ok(used.has(k), 'TT_DARK has ' + k + ' but the page never uses it');
+});
