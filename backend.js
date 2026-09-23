@@ -30,6 +30,13 @@
 
   function why(status, body) {
     var m = body && (body.msg || body.message || body.error_description || body.error);
+    var code = (body && body.error_code) || '';
+    // The account exists but its confirmation link was never opened. Say what to do,
+    // and the sign-in screen offers a "resend" button off the same code.
+    if (code === 'email_not_confirmed' || /email not confirmed/i.test(m || ''))
+      return 'This email is not confirmed yet. Open the link in the email we sent (check spam too), or send a new one below.';
+    if (status === 429 || code === 'over_email_send_rate_limit')
+      return 'Too many emails sent just now. Wait a few minutes and try again.';
     if (status === 400 && /invalid login/i.test(m || '')) return 'That email and password do not match an account.';
     if (status === 400 && /already registered/i.test(m || '')) return 'That email already has an account — sign in instead.';
     if (status === 422 && /password/i.test(m || '')) return 'Password needs to be at least 6 characters.';
@@ -50,8 +57,36 @@
     var r = await fetch(c.url.replace(/\/+$/, '') + path, Object.assign({}, opts, { headers: h, cache: 'no-store' }));
     var text = await r.text();
     var body = null; try { body = text ? JSON.parse(text) : null; } catch (e) {}
-    if (!r.ok) { var err = new Error(why(r.status, body)); err.status = r.status; throw err; }
+    if (!r.ok) {
+      var err = new Error(why(r.status, body)); err.status = r.status;
+      err.code = (body && body.error_code) || ''; // e.g. email_not_confirmed — the UI branches on it
+      throw err;
+    }
     return body;
+  }
+
+  // Where links in our emails (confirm, password reset) should land: this page.
+  // Supabase only honours it if the address is in the project's redirect allow list;
+  // otherwise it falls back to the project's Site URL. Only http(s) pages qualify —
+  // a Capacitor WebView's capacitor:// address can't be opened from an email.
+  function linkBack() {
+    try {
+      if (!/^https?:$/.test(location.protocol)) return '';
+      return '?redirect_to=' + encodeURIComponent(location.origin + location.pathname);
+    } catch (e) { return ''; }
+  }
+
+  // An email link lands here with the session in the URL fragment:
+  //   #access_token=…&refresh_token=…&expires_in=3600&type=signup|recovery
+  // or, when the link was stale:  #error=access_denied&error_code=otp_expired&error_description=…
+  function readLink(hash) {
+    var p = {};
+    String(hash || '').replace(/^#/, '').split('&').forEach(function (kv) {
+      var i = kv.indexOf('='); if (i > 0) p[decodeURIComponent(kv.slice(0, i))] = decodeURIComponent(kv.slice(i + 1).replace(/\+/g, ' '));
+    });
+    if (p.error || p.error_description) return { error: p.error_description || p.error, code: p.error_code || '' };
+    if (p.access_token) return { access_token: p.access_token, refresh_token: p.refresh_token || '', expires_in: Number(p.expires_in) || 3600, type: p.type || '' };
+    return null;
   }
 
   function keepSession(d) {
@@ -95,9 +130,32 @@
     email: function () { return (sess && sess.user && sess.user.email) || ''; },
     token: function () { return (sess && sess.access_token) || ''; },
     signUp: async function (email, password, name) {
-      var d = await call('/auth/v1/signup', { method: 'POST', body: JSON.stringify({ email: email, password: password, data: { name: name || '' } }) }, false);
+      var d = await call('/auth/v1/signup' + linkBack(), { method: 'POST', body: JSON.stringify({ email: email, password: password, data: { name: name || '' } }) }, false);
       if (d && d.access_token) { keepSession(d); return { signedIn: true }; }
       return { signedIn: false, confirm: true, email: email };
+    },
+    resendConfirmation: async function (email) {
+      await call('/auth/v1/resend' + linkBack(), { method: 'POST', body: JSON.stringify({ type: 'signup', email: email }) }, false);
+      return true;
+    },
+    // Call once on page load. Signs in from an email link if the URL carries one, then
+    // strips the tokens from the address bar so they aren't bookmarked or shared.
+    // Returns null (no link), {type:'signup'|'recovery'|…} (signed in), or {error}.
+    fromEmailLink: async function () {
+      var got = readLink(location.hash);
+      if (!got) return null;
+      try { history.replaceState(null, '', location.pathname + location.search); } catch (e) {}
+      if (got.error) return { error: got.error + ' — ask for a new email below.', code: got.code };
+      keepSession(got);
+      try { sess.user = await call('/auth/v1/user', {}); writeJSON(SESSKEY, sess); }
+      catch (e) { return { error: 'That link could not sign you in (' + e.message + '). Sign in with your password, or ask for a new link.' }; }
+      return { type: got.type };
+    },
+    // Signed-in only: after a password-reset link, or from settings.
+    setPassword: async function (password) {
+      await fresh();
+      await call('/auth/v1/user', { method: 'PUT', body: JSON.stringify({ password: password }) });
+      return true;
     },
     signIn: async function (email, password) {
       var d = await call('/auth/v1/token?grant_type=password', { method: 'POST', body: JSON.stringify({ email: email, password: password }) }, false);
@@ -105,7 +163,7 @@
       return true;
     },
     resetPassword: async function (email) {
-      await call('/auth/v1/recover', { method: 'POST', body: JSON.stringify({ email: email }) }, false);
+      await call('/auth/v1/recover' + linkBack(), { method: 'POST', body: JSON.stringify({ email: email }) }, false);
       return true;
     },
     signOut: async function () {
