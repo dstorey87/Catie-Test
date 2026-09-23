@@ -94,6 +94,10 @@ begin
   return new;
 end; $$;
 
+-- Only the trigger calls this; keep it off /rest/v1/rpc (Supabase security advisor).
+-- A trigger still fires without EXECUTE — checked on the live project, 2026-09-23.
+revoke execute on function public.on_auth_user_created() from public, anon, authenticated;
+
 -- Attaching a trigger to auth.users needs ownership of that table, which some
 -- projects don't give the SQL editor. If that's refused, everything else still
 -- works — the backfill at the bottom of this file repairs any missing rows.

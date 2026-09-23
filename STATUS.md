@@ -29,7 +29,10 @@ States: ✅ done & verified · ⚠️ built, needs your account/keys to go live 
 - ✅ One account covers every learner in a family and every device; progress merges (newest wins per learner)
 - ✅ Sign out / switch learner; profile photos; admin role
 - ✅ Progress syncs by itself: pulls on open, pushes a few seconds after answers, retries when signal returns. Learners never see a sync control
-- ⚠️ Needs your free Supabase project + the two public values pasted once (SETUP.md §2, ~10 min)
+- ✅ Supabase project `catiedriving` set up 2026-09-23: both schema files applied, 378 questions loaded into the server bank, security advisor clean apart from the two access-check functions the rules need
+- ⚠️ No accounts exist yet — create yours in the app, then an admin role / free access is one SQL line (`supabase/schema.sql`, bottom)
+- ⚠️ Free tier: the project pauses after about a week with no use, and sign-in then hangs. Found paused 2026-09-23 and restored. Daily use keeps it awake
+- ⚠️ Confirmation and password-reset emails go through Supabase's built-in mailer, which is rate-limited and for testing only — add an SMTP provider before strangers sign up (ROADMAP item 3)
 - ✅ Every account's data is private at the database level, not by app-side checking
 
 ## Paying, enforced on the server
@@ -50,8 +53,7 @@ States: ✅ done & verified · ⚠️ built, needs your account/keys to go live 
 
 ## Publishing
 - ✅ Live at https://dstorey87.github.io/Catie-Test/ (public repo, GitHub Pages)
-- ✅ One-click updates: **Publish to GitHub.html** — writes every file into the repo, fills in `config.js`, uploads the question bank to Supabase, and takes the public question files down
-- ❌ Me pushing to GitHub directly — my access to your repo is read-only, which is why that page exists
+- ✅ Updates ship by git: section branches → `develop` → `main` (main is the live site; promoted only on your go-ahead). The old "Publish to GitHub.html" page is not in this repo
 
 ## Voice
 - ✅ Best-voice auto-pick (Enhanced/Premium en-GB preferred), voice picker, speed control, sample
