@@ -3,6 +3,16 @@
 Newest first. The version is the service-worker `VERSION` in `sw.js` — it changes on every
 deploy that touches the app's cached files. Earlier history: `git log`.
 
+## v10-2026-09-24
+- **Flags stay until she un-flags them.** New **Flagged** screen (Home card, and from the Admin
+  dashboard): each flagged question with its answer and an **Un-flag** button. Getting it right
+  doesn't remove a flag.
+- A flag tapped in a mock is saved straight away, so leaving a mock unfinished no longer loses it.
+- Fixed: syncing kept whichever device's whole copy was newer, so a flag made on the other device
+  could vanish. Flags now merge question by question (`coach.js` `mergeFlags`, tested).
+- Fixed: a background sync ended the practice session she was in the middle of.
+- The flag button says whether it's on (`aria-pressed`) for screen readers.
+
 ## v9-2026-09-23
 - **Dark mode.** Settings → Appearance: Match device (the default), Light or Dark. It's per
   device and applies before the page draws, so there's no white flash. Printing is always
