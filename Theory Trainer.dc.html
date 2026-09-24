@@ -1832,7 +1832,7 @@ class Component extends DCLogic {
     }).catch(e=>this.setState({remindMsg:String(e.message||e)}));
   }
   // End the quick setup (Done or Skip). Either way it counts as done, so it never opens by
-  // itself again; Settings \u2192 Quick setup runs it on purpose. A brand-new learner starts on
+  // itself again; Settings → Quick setup runs it on purpose. A brand-new learner starts on
   // this app version, so it's marked seen: What's new is for learners who were here before.
   finishOnboarding(skipped, step){
     const s = this.state, st = s.settings||{};
