@@ -187,3 +187,29 @@ test('saving a tip sends the text and status for that one question', async () =>
   assert.equal(u.searchParams.get('qid'), 'eq.t01q02');
   assert.deepEqual(JSON.parse(calls[0].opts.body), { memory_tip: 'Stop and rest.', tip_status: 'approved' });
 });
+
+// ---------- the signed-in account's own profile ----------
+// The admin may read EVERY profile (the Activity screen names each account), so a
+// "give me one profile" request must ask for this account's row by id. Without the
+// filter the server hands back whichever row it stores first — on the live database
+// that became Catie's row as soon as Darren's own row was written, and isAdmin() said no.
+test('profile() asks for this account\'s own row, so the admin is still the admin', async () => {
+  const everyone = [{ id: 'u2', email: 'catie@example.com', role: 'user' }, { id: 'u1', email: 'admin@example.com', role: 'admin' }];
+  // A fake server that honours ?id=eq.<uid> the way PostgREST does, and otherwise
+  // returns every row the admin is allowed to read, someone else's first.
+  const { win, calls } = tracker((u) => {
+    const want = new URL(u).searchParams.get('id');
+    const rows = want ? everyone.filter(r => 'eq.' + r.id === want) : everyone;
+    return { status: 200, body: rows.slice(0, 1) };
+  }, SIGNED_IN);
+  const p = await win.TTAuth.profile();
+  assert.equal(p.id, 'u1');
+  assert.equal(new URL(calls[0].url).searchParams.get('id'), 'eq.u1');
+  assert.equal(await win.TTAuth.isAdmin(), true);
+});
+
+test('profile() is null when signed out — it never asks the server for "any" row', async () => {
+  const { win, calls } = tracker(() => ({ status: 200, body: [{ id: 'u2', role: 'user' }] }));
+  assert.equal(await win.TTAuth.profile(), null);
+  assert.equal(calls.length, 0);
+});
