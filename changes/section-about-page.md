@@ -2,7 +2,7 @@
 - New public page `about.html`: explains Theory Trainer to a parent or learner who has never seen it: what it does, who it is for, how the coaching works, screenshots, prices, the free sample, installing to the home screen, and "Not affiliated with the DVSA".
 - Prices and the free-sample size on the page are read from `config.js` (`priceMonthly`, `priceAnnual`, `trialCount`) by `about/about.js`; nothing is typed into the page. If they can't be read (or JavaScript is off) the page says "see the prices in the app" instead of showing blanks.
 - The page uses the app's colours and fonts, in light and dark: it follows the device, or the Appearance choice saved in the app (`tt.theme`) when there is one.
-- Ten screenshots in `about/` (five screens, light and dark), taken from the real app by `about/capture.js` with a demo learner ("Sam") and only the public 20-question free sample, so no paid question and no real person's name appears on a public page.
+- Twelve pictures in `about/` (six screens, each in light and dark), taken from the real app by `about/capture.js` with a demo learner ("Sam") and only the public 20-question free sample, so no paid question and no real person's name appears on a public page.
 - Search and sharing basics: title, description, canonical URL `https://dstorey87.github.io/Catie-Test/about.html`, Open Graph tags, one H1, alt text on every picture.
 - Install steps checked against Apple's and Google's live help pages on 2026-09-24.
 - 23 new tests in `tests/about-page.test.js`, including two for bugs found in the browser while building it (light mode showed both the light and dark pictures; the page's side gutter was wiped out at 390px).
