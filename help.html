@@ -1,0 +1,802 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>How to use Theory Trainer</title>
+<meta name="description" content="A step-by-step guide to every part of Theory Trainer, the UK driving theory practice app: lessons, practice, mock tests, progress, settings, reminders and the admin tools.">
+<meta name="theme-color" content="#0E7C6B">
+<link rel="icon" href="icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@700;800;900&family=Atkinson+Hyperlegible:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="help/site.css">
+<!-- config.js holds the prices; site.js sets the theme before the page draws, then fills
+     every data-config="…" span from config.js. -->
+<script src="config.js"></script>
+<script src="help/site.js"></script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to the guide</a>
+
+<div class="wrap">
+  <!-- ============ header: name, and the way back to the app ============ -->
+  <header class="top">
+    <a class="brand" href="Theory%20Trainer.dc.html" aria-label="Theory Trainer — open the app">
+      <span class="brand-mark" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="#fff" stroke-width="2.4"/><circle cx="12" cy="12" r="2.4" fill="#fff"/><path d="M12 14.2 L12 21 M10 12.6 L3.6 10.4 M14 12.6 L20.4 10.4" stroke="#fff" stroke-width="2.2"/></svg></span>
+      <span class="brand-name">Theory Trainer</span>
+    </a>
+    <a class="btn" href="Theory%20Trainer.dc.html">Open the app</a>
+  </header>
+
+  <div class="hero">
+    <h1>How to use Theory Trainer</h1>
+    <p class="lede">Everything the app does, screen by screen: how to sign in, what Today's lesson is, how mock tests work, what your progress numbers mean, and every setting. There's a short part at the end for the parent or admin.</p>
+    <p class="meta">The screenshots are from the app itself, on a phone-sized screen, with a made-up example learner called Catie. Your screens show your own answers.</p>
+  </div>
+
+  <div class="layout">
+    <!-- ============ contents (sticky on wide screens) ============ -->
+    <nav class="toc" aria-label="Contents">
+      <details data-open-wide id="toc-details">
+        <summary>Contents</summary>
+        <ol>
+          <li class="toc-group">Getting started</li>
+          <li><a href="#start">Sign in or create an account</a></li>
+          <li><a href="#learners">Learners on one account</a></li>
+          <li><a href="#setup">Quick setup</a></li>
+          <li><a href="#home">Home</a></li>
+          <li class="toc-group">Learning</li>
+          <li><a href="#lesson">Today's lesson</a></li>
+          <li><a href="#tripping">Keeps tripping you up</a></li>
+          <li><a href="#practise">Practise</a></li>
+          <li><a href="#mock">Mock test</a></li>
+          <li><a href="#flagged">Flagged</a></li>
+          <li><a href="#answers">My answers and More like this</a></li>
+          <li><a href="#signs">Road signs</a></li>
+          <li><a href="#progress">My Progress, levels and badges</a></li>
+          <li><a href="#print">Print</a></li>
+          <li class="toc-group">Your app</li>
+          <li><a href="#settings">Settings</a></li>
+          <li><a href="#reminders">Daily reminders</a></li>
+          <li><a href="#notes">Notes</a></li>
+          <li><a href="#offline">Offline and syncing</a></li>
+          <li><a href="#install">Install on your home screen</a></li>
+          <li><a href="#paying">Subscription</a></li>
+          <li class="toc-group">For the parent or admin</li>
+          <li><a href="#admin">The admin dashboard</a></li>
+          <li><a href="#activity">Activity</a></li>
+          <li><a href="#tips">Memory tips</a></li>
+          <li><a href="#editor">Questions and packs</a></li>
+          <li><a href="#access">Access and account tools</a></li>
+          <li class="toc-group">Help</li>
+          <li><a href="#faq">Questions people ask</a></li>
+          <li><a href="#about">Accuracy and the DVSA</a></li>
+        </ol>
+      </details>
+    </nav>
+
+    <main id="main" class="doc">
+
+      <!-- ============ 1. sign in ============ -->
+      <section id="start" aria-labelledby="h-start">
+        <h2 id="h-start"><span class="num"></span>Sign in or create an account</h2>
+        <p>One account covers every learner in your family and every device you use. Your progress is saved to the account, so it follows you from phone to tablet to computer.</p>
+        <div class="step two">
+          <div>
+            <h3>Create an account</h3>
+            <ol>
+              <li>Open the app and tap <strong>Sign in or create an account</strong>.</li>
+              <li>Tap <strong>Create an account</strong>.</li>
+              <li>Type your name, your email and a password (at least 6 characters). <strong>Show</strong> lets you check what you typed.</li>
+              <li>Tap <strong>Create account</strong>. New accounts get an email to confirm the address: open it and tap the link, and you're signed in.</li>
+            </ol>
+            <h3>Sign in</h3>
+            <p>Type your email and password and tap <strong>Sign in</strong>.</p>
+            <h3>Didn't get the confirmation email?</h3>
+            <p>Check your spam folder first. If you try to sign in before confirming, the app says so and shows <strong>Send the confirmation email again</strong>. The same button appears if an old link has expired.</p>
+            <h3>Forgot your password?</h3>
+            <ol>
+              <li>On the sign-in screen tap <strong>Forgot password?</strong></li>
+              <li>Type your email and tap <strong>Send reset link</strong>.</li>
+              <li>Open the email and tap the link. The app opens on <strong>Set a new password</strong>: type a new one and tap <strong>Save new password</strong>.</li>
+            </ol>
+            <p class="note"><strong>Tip:</strong> the emails can take a few minutes. If you ask for several in a row, wait a little before trying again.</p>
+            <p>At the bottom of the sign-in screens are links to <strong>Help</strong> (this guide), <strong>About</strong>, <strong>Privacy</strong> and <strong>Terms</strong> — each opens in its own tab, so the app keeps its place.</p>
+          </div>
+          <figure class="shot">
+            <a href="help/img/sign-in.png"><img src="help/img/sign-in.png" width="390" height="844" alt="The Sign in screen: email and password boxes, a Sign in button, links to Create an account and Forgot password, and Help, About, Privacy and Terms links above a line saying the app is not affiliated with the DVSA." loading="lazy"></a>
+            <figcaption>Sign in</figcaption>
+          </figure>
+          <figure class="shot">
+            <a href="help/img/create-account.png"><img src="help/img/create-account.png" width="390" height="844" alt="The Create your account screen: boxes for your name, email and password, and a Create account button." loading="lazy"></a>
+            <figcaption>Create your account</figcaption>
+          </figure>
+        </div>
+      </section>
+
+      <!-- ============ 2. learners ============ -->
+      <section id="learners" aria-labelledby="h-learners">
+        <h2 id="h-learners"><span class="num"></span>Learners on one account</h2>
+        <div class="step">
+          <div>
+            <p>Each time the app opens it asks <strong>Who's here today?</strong> Tap your name to start. Every learner has their own answers, streak, flags, notes and settings.</p>
+            <ul>
+              <li><strong>Add a learner:</strong> tap <strong>+ Add another learner</strong> and type their name. You can also do this at the bottom of <span class="path">Settings</span>.</li>
+              <li><strong>Switch learner:</strong> come back to this screen (reopen the app, or tap <strong>Switch learner</strong> where it's shown) and tap another name.</li>
+              <li><strong>Admin:</strong> the second button opens the parent's dashboard (see <a href="#admin">the admin dashboard</a>).</li>
+              <li><strong>Sign out:</strong> near the bottom of this screen, under the line that says which email you're signed in with.</li>
+              <li><strong>Help, About, Privacy, Terms:</strong> links at the very bottom, each opening in its own tab.</li>
+            </ul>
+            <p>Names can be changed any time in <span class="path">Settings → Profiles</span>, and a profile photo added in <span class="path">Settings → My profile</span>.</p>
+          </div>
+          <figure class="shot">
+            <a href="help/img/whos-here.png"><img src="help/img/whos-here.png" width="390" height="844" alt="The Who's here today screen with a button for the learner Catie, a button for Admin, Add another learner, Sign out, and Help, About, Privacy and Terms links." loading="lazy"></a>
+            <figcaption>Who's here today?</figcaption>
+          </figure>
+        </div>
+      </section>
+
+      <!-- ============ quick setup (first open) ============ -->
+      <section id="setup" aria-labelledby="h-setup">
+        <h2 id="h-setup"><span class="num"></span>Quick setup</h2>
+        <div class="step two">
+          <div>
+            <p>The first time a new learner opens the app, it asks three quick questions, one per screen:</p>
+            <ol>
+              <li><strong>When is your theory test?</strong> Home counts down the days. Not booked yet? Leave it blank and add it later in Settings.</li>
+              <li><strong>How many questions a day?</strong> 10, 20 or 30. Reach it and your streak grows by a day.</li>
+              <li><strong>When should we remind you?</strong> 8am, Midday, 5pm or 8pm — or <strong>No reminders</strong>. Picking a time switches the daily reminder on, and your phone may ask to allow notifications.</li>
+            </ol>
+            <p><strong>Next</strong> and <strong>Back</strong> move between the questions; <strong>Done — let's go</strong> finishes. <strong>Skip</strong> stops at any point and keeps whatever you'd already picked. Either way it won't open by itself again.</p>
+            <p>Every answer is an ordinary setting, so you can change it any time in <a href="#settings">Settings</a>, or go through all three again with <span class="path">Settings → Quick setup → Run it again</span>.</p>
+            <p class="note"><strong>On a new phone?</strong> The quick setup waits until your progress has come down from your account, so someone who has used the app before isn't asked again.</p>
+          </div>
+          <figure class="shot">
+            <a href="help/img/setup-date.png"><img src="help/img/setup-date.png" width="390" height="844" alt="Quick setup, 1 of 3: Hi Catie! When is your theory test? with a date box, a Next button and Skip at the top." loading="lazy"></a>
+            <figcaption>1 of 3: your test date</figcaption>
+          </figure>
+          <figure class="shot">
+            <a href="help/img/setup-remind.png"><img src="help/img/setup-remind.png" width="390" height="844" alt="Quick setup, 3 of 3: When should we remind you? with buttons for 8am, Midday, 5pm, 8pm and No reminders, and Back and Done — let's go." loading="lazy"></a>
+            <figcaption>3 of 3: your reminder time</figcaption>
+          </figure>
+        </div>
+      </section>
+
+      <!-- ============ 3. home ============ -->
+      <section id="home" aria-labelledby="h-home">
+        <h2 id="h-home"><span class="num"></span>Home</h2>
+        <div class="step two">
+          <div>
+            <p>Home is where every part of the app starts. From the top:</p>
+            <ul>
+              <li><strong>Day streak</strong> — how many days in a row you've reached your daily goal. Miss a day and it starts again from 1.</li>
+              <li><strong>Today's goal</strong> — questions answered today out of your goal (10, 20 or 30; change it in <span class="path">Settings</span>).</li>
+              <li><strong>XP and level</strong> — you earn 10 XP for every right answer and 50 more for passing a mock test. Every 500 XP is a new level, from <em>Provisional</em> up to <em>Full Licence</em>. Tap the level bar to see your <a href="#progress">badges</a>.</li>
+              <li><strong>Countdown</strong> — if you've set your theory test date in <span class="path">Settings</span>, Home shows the days left.</li>
+              <li><strong>Today's lesson</strong> — the best thing to do next, built from your answers. <a href="#lesson">More below.</a></li>
+              <li><strong>Keeps tripping you up</strong> — appears once there are questions you keep getting wrong. <a href="#tripping">More below.</a></li>
+            </ul>
+            <p>Then the buttons for everything else: <a href="#practise">Practise</a>, <a href="#practise">Focus Drill</a>, <a href="#answers">My answers</a>, <a href="#flagged">Flagged</a>, <a href="#mock">Mock Test</a>, <a href="#signs">Road Signs</a>, <a href="#progress">My Progress</a> and <a href="#print">Print</a>. At the very bottom, <a href="#settings">Settings</a> and <strong>Help</strong>, which opens this guide in its own tab.</p>
+          </div>
+          <figure class="shot">
+            <a href="help/img/home.png"><img src="help/img/home.png" width="390" height="844" alt="Home: Hi Catie, a 6 day streak, 22 of 20 of today's goal, 1240 XP at level 3, the level bar, a countdown of 24 days to the theory test, and the Today's lesson button." loading="lazy"></a>
+            <figcaption>The top of Home</figcaption>
+          </figure>
+          <figure class="shot">
+            <a href="help/img/home-tiles.png"><img src="help/img/home-tiles.png" width="390" height="998" alt="Further down Home: the Practise, Focus Drill, My answers, Flagged, Mock Test, Road Signs, My Progress and Print buttons, and Settings and Help at the bottom." loading="lazy"></a>
+            <figcaption>Further down: everything else</figcaption>
+          </figure>
+        </div>
+        <div class="step">
+          <div>
+            <h3>What's new</h3>
+            <p>After the app has been updated, a <strong>What's new</strong> card appears at the top of Home with a few lines about what changed. Tap <strong>Got it</strong> and it goes away until the next update.</p>
+            <p>It's only shown to learners who used the app before that update — not on your very first day, and not on the admin's dashboard.</p>
+          </div>
+          <figure class="shot">
+            <a href="help/img/whats-new.png"><img src="help/img/whats-new.png" width="390" height="844" alt="Home with a What's new card at the top listing five changes, such as Tricky? keeping a question in Flagged, and a Got it button." loading="lazy"></a>
+            <figcaption>What's new, after an update</figcaption>
+          </figure>
+        </div>
+      </section>
+
+      <!-- ============ 4. today's lesson ============ -->
+      <section id="lesson" aria-labelledby="h-lesson">
+        <h2 id="h-lesson"><span class="num"></span>Today's lesson</h2>
+        <div class="step">
+          <div>
+            <p>If you only do one thing today, tap <strong>Today's lesson</strong>. The app looks at every answer you've given and builds a short drill (between 10 and 20 questions, depending on your daily goal) in this order:</p>
+            <ol>
+              <li><strong>Questions you keep missing</strong> — ones you've got wrong 3 or more times, or on 2 different days. They stay in this group until you get them right twice running.</li>
+              <li><strong>Questions you flagged.</strong></li>
+              <li><strong>Questions due again</strong> — spaced out so they come back just as you might forget: after 1 right answer in a row, 1 day later; then 3 days, 7 days, 14 days and 30 days.</li>
+              <li><strong>A few new ones</strong> — at most 4 questions you haven't seen before.</li>
+            </ol>
+            <p>Topics are mixed up rather than done in blocks, and if you get a question wrong in the lesson it comes back 3 questions later (at most twice), so you leave having got it right.</p>
+            <p>The line under the button says what's in today's lesson, for example "3 you keep missing · 4 flagged · 13 due again".</p>
+            <p class="note"><strong>Only real questions.</strong> The lesson only ever picks and orders questions from the app's question bank. It never writes a question or an answer of its own.</p>
+          </div>
+          <figure class="shot">
+            <a href="help/img/lesson-question.png"><img src="help/img/lesson-question.png" width="390" height="844" alt="A lesson question: What is the typical stopping distance at 30 mph? Four answers, each with a speaker button, a Hint button and a Tricky? flag button at the top." loading="lazy"></a>
+            <figcaption>A lesson question</figcaption>
+          </figure>
+        </div>
+      </section>
+
+      <!-- ============ 5. keeps tripping you up ============ -->
+      <section id="tripping" aria-labelledby="h-tripping">
+        <h2 id="h-tripping"><span class="num"></span>Keeps tripping you up</h2>
+        <div class="step">
+          <div>
+            <p>When there are questions you keep getting wrong, this card appears on Home (and at the end of a practice session). For your top 3 it shows:</p>
+            <ul>
+              <li>the question,</li>
+              <li><strong>You tend to pick</strong> — the wrong answer you usually choose, which is often the real reason it keeps going wrong,</li>
+              <li><strong>Right answer</strong>,</li>
+              <li>a <strong>Memory tip</strong> if one has been approved for that question, or otherwise <strong>Why</strong> — the question's own explanation.</li>
+            </ul>
+            <p>Tap <strong>Drill these</strong> to practise exactly those questions now. They also go first in Today's lesson.</p>
+            <h3>Memory tips</h3>
+            <p>A memory tip is a short way to remember one answer. Tips are drafted from the question's own wording by an AI program run by the admin, checked by a program for numbers that aren't in the question, and only shown to you once the admin has read and approved each one (<a href="#tips">see Memory tips</a>).</p>
+          </div>
+          <figure class="shot">
+            <a href="help/img/tripping.png"><img src="help/img/tripping.png" width="390" height="844" alt="The Keeps tripping you up card: three stopping-distance questions, each with You tend to pick in red, Right answer in green and Why, and a Drill these (3) button." loading="lazy"></a>
+            <figcaption>Keeps tripping you up</figcaption>
+          </figure>
+        </div>
+      </section>
+
+      <!-- ============ 6. practise ============ -->
+      <section id="practise" aria-labelledby="h-practise">
+        <h2 id="h-practise"><span class="num"></span>Practise</h2>
+        <div class="step">
+          <div>
+            <h3>Answering a question</h3>
+            <ul>
+              <li>Tap an answer. You find out straight away: your pick turns red if it's wrong and the right one turns green. On a computer you can use the keyboard: <strong>Tab</strong> to an answer, then press <strong>Enter</strong> or <strong>Space</strong>.</li>
+              <li>Underneath is the explanation and its <strong>Highway Code</strong> rule, often with a tip to remember it. The speaker button reads the explanation out.</li>
+              <li><strong>Speaker buttons</strong> read the question, or any one answer, aloud.</li>
+              <li><strong>Hint: take two away</strong> removes two wrong answers (you can turn this button off in Settings).</li>
+              <li><strong>Tricky?</strong> at the top flags the question so you can revise it later. It changes to <strong>Flagged</strong>; tap again to un-flag.</li>
+              <li><strong>More questions like this</strong> puts similar questions straight after this one.</li>
+              <li><strong>Next question</strong> moves on (the last one says <strong>Finish</strong>). <strong>✕</strong> at the top left stops the session.</li>
+            </ul>
+            <p>Every answer also moves the question between three <strong>memory boxes</strong>: a right answer moves it up a box, a wrong one sends it back to box 1. Questions in the top box count towards your readiness score.</p>
+          </div>
+          <figure class="shot">
+            <a href="help/img/lesson-answered.png"><img src="help/img/lesson-answered.png" width="390" height="990" alt="After answering: the wrong pick A, 36 metres, in red, the right answer B, 23 metres, in green, the explanation with Highway Code rule 126 and a tip, and the More questions like this and Next question buttons." loading="lazy"></a>
+            <figcaption>After you answer</figcaption>
+          </figure>
+        </div>
+        <div class="step">
+          <div>
+            <h3>Choosing what to practise</h3>
+            <p>Tap <strong>Practise</strong> on Home, choose what you want, choose <strong>10, 20 or 30</strong> questions and tap <strong>Start</strong>.</p>
+            <ul>
+              <li><strong>My weakest topics</strong> — your two weakest topics. After you've done 2 mock tests this becomes <strong>Coach's smart mix</strong>: all topics, with the ones your mocks show you're weak on coming up more often.</li>
+              <li><strong>A bit of everything</strong> — all 14 topics mixed.</li>
+              <li><strong>Build my own mix</strong> — use <strong>+</strong> and <strong>−</strong> to choose how many from each topic (up to 20 each).</li>
+              <li><strong>Any single topic</strong> — each shows how much of it you've got right so far.</li>
+            </ul>
+            <h3>Focus Drill</h3>
+            <p><strong>Focus Drill</strong> on Home is a quick 20: your flagged questions first, then ones you last got wrong, then your two weakest topics.</p>
+            <h3>At the end</h3>
+            <p>You see your score, any level you've gone up, how you did in each topic, and buttons for <strong>More like the ones I missed</strong>, <strong>Practise your saved ones</strong> (your flagged questions), <strong>Practise again</strong> and <strong>Home</strong>.</p>
+          </div>
+          <figure class="shot">
+            <a href="help/img/practise-setup.png"><img src="help/img/practise-setup.png" width="390" height="844" alt="The Practise screen: What shall we practise? with Coach's smart mix, A bit of everything, Build my own mix and a button for each topic showing percent right so far." loading="lazy"></a>
+            <figcaption>What shall we practise?</figcaption>
+          </figure>
+        </div>
+      </section>
+
+      <!-- ============ 7. mock test ============ -->
+      <section id="mock" aria-labelledby="h-mock">
+        <h2 id="h-mock"><span class="num"></span>Mock test</h2>
+        <div class="step two">
+          <div>
+            <p>A mock test works like the multiple-choice part of the real theory test: <strong>50 questions from every topic, 57 minutes on the clock, and 43 right to pass</strong>. You don't find out which answers were right until the end.</p>
+            <h3>Which kind of test?</h3>
+            <ul>
+              <li><strong>Like the real test</strong> — an even spread across all 14 topics.</li>
+              <li><strong>Surprise mix</strong> — 50 picked at random from everything.</li>
+              <li><strong>Build your own</strong> — choose how many from each topic. The screen shows the number of questions and how many you need to pass (86% of them, rounded up). The timer gives about a minute and 8 seconds a question, with a switch to turn it off.</li>
+            </ul>
+            <h3>During the test</h3>
+            <ul>
+              <li>The clock counts down at the top left. When it reaches zero the test ends by itself.</li>
+              <li><strong>Flag</strong> marks a question to come back to.</li>
+              <li><strong>← Back</strong> and <strong>Next →</strong> move between questions; you can change an answer until you end the test.</li>
+              <li>The speaker buttons still work — the real test has a voiceover option too.</li>
+              <li>If the app closes, the phone goes flat or you reload, the test is still there when you come back.</li>
+            </ul>
+          </div>
+          <figure class="shot">
+            <a href="help/img/mock-intro.png"><img src="help/img/mock-intro.png" width="390" height="844" alt="The Mock Test screen: 50 questions from every topic, 57 minutes on the clock, 43 correct answers to pass, and a choice of Like the real test, Surprise mix or Build your own." loading="lazy"></a>
+            <figcaption>Choosing a test</figcaption>
+          </figure>
+          <figure class="shot">
+            <a href="help/img/mock-question.png"><img src="help/img/mock-question.png" width="390" height="844" alt="A mock test question with the clock at 56:59, Question 1 of 50, a Flag button, four answers, and Back, Review and Next buttons." loading="lazy"></a>
+            <figcaption>A mock question</figcaption>
+          </figure>
+        </div>
+        <div class="step two">
+          <div>
+            <h3>Review, then end the test</h3>
+            <p><strong>Review</strong> shows a grid of all 50: filled in if answered, outlined in amber if flagged, blank if not answered. Tap a number to go to it. <strong>Keep going</strong> goes back to the test; <strong>End test</strong> marks it.</p>
+            <h3>Your result</h3>
+            <ul>
+              <li>Your score and <strong>PASS</strong> or not.</li>
+              <li><strong>Worth another look</strong> — every one you got wrong, with what you picked, the right answer and the explanation. <strong>Save for revision</strong> flags it; <strong>More like this</strong> practises similar questions.</li>
+              <li><strong>Pick ones to try again (My answers)</strong> opens My answers showing the questions you got wrong last time.</li>
+              <li><strong>By topic</strong> — how you did in each topic.</li>
+            </ul>
+            <p>Any question you flagged during the test is added to your <a href="#flagged">Flagged</a> list, and every answer goes into <a href="#answers">My answers</a>.</p>
+          </div>
+          <figure class="shot">
+            <a href="help/img/mock-review.png"><img src="help/img/mock-review.png" width="390" height="844" alt="The Review grid: 50 numbered squares, all answered, with 6 and 18 outlined as flagged, and Keep going and End test buttons." loading="lazy"></a>
+            <figcaption>Review</figcaption>
+          </figure>
+          <figure class="shot">
+            <a href="help/img/mock-results.png"><img src="help/img/mock-results.png" width="390" height="844" alt="A mock result of 44 out of 50, PASS, followed by Worth another look (6) listing the wrong answers with Save for revision and More like this buttons." loading="lazy"></a>
+            <figcaption>Your result</figcaption>
+          </figure>
+        </div>
+      </section>
+
+      <!-- ============ 8. flagged ============ -->
+      <section id="flagged" aria-labelledby="h-flagged">
+        <h2 id="h-flagged"><span class="num"></span>Flagged</h2>
+        <div class="step">
+          <div>
+            <p>Flag a question with <strong>Tricky?</strong> in practice, <strong>Flag</strong> in a mock test, or <strong>Save for revision</strong> on a mock result. It goes on your <strong>Flagged</strong> list (on Home) with its answer.</p>
+            <ul>
+              <li>A flag stays until <strong>you</strong> remove it — getting the question right does not remove it.</li>
+              <li><strong>Practise the flagged ones</strong> starts a session of just those.</li>
+              <li><strong>Un-flag</strong> removes one.</li>
+              <li>Flags are kept question by question across all your devices: flag something on your phone and it's flagged on your tablet too.</li>
+            </ul>
+          </div>
+          <figure class="shot">
+            <a href="help/img/flagged.png"><img src="help/img/flagged.png" width="390" height="844" alt="The Flagged screen: a Practise the flagged ones (6) button and a list of flagged questions, each with its answer and an Un-flag button." loading="lazy"></a>
+            <figcaption>Flagged</figcaption>
+          </figure>
+        </div>
+      </section>
+
+      <!-- ============ 9. my answers ============ -->
+      <section id="answers" aria-labelledby="h-answers">
+        <h2 id="h-answers"><span class="num"></span>My answers and More like this</h2>
+        <div class="step">
+          <div>
+            <p><strong>My answers</strong> lists every question you've answered, in practice and in mocks, newest first: what you said, the right answer, and how often you've got it right and wrong.</p>
+            <ol>
+              <li>Show <strong>All</strong>, <strong>Wrong last time</strong> or <strong>Right last time</strong>.</li>
+              <li>Tick the questions you want (or <strong>Tick all</strong>; <strong>Clear ticks</strong> to start again).</li>
+              <li>Then choose from the bar at the bottom:
+                <ul>
+                  <li><strong>Practise them</strong> — a practice session of exactly those,</li>
+                  <li><strong>Make a test</strong> — a mock test of exactly those (the <strong>Timer for tests</strong> switch decides whether it's timed),</li>
+                  <li><strong>More like these</strong> — similar questions you can practise.</li>
+                </ul>
+              </li>
+            </ol>
+            <h3>How "More like this" chooses</h3>
+            <p>It looks for questions with the most words in common (rarer words count for more), in the same topic, or about the same road sign. It only picks from the question sets that are switched on. You'll find it after any practice answer, on each wrong mock answer, on every row here, and at the end of a session.</p>
+          </div>
+          <figure class="shot">
+            <a href="help/img/my-answers.png"><img src="help/img/my-answers.png" width="390" height="844" alt="My answers with filters All, Wrong last time and Right last time, two questions ticked, and a bar at the bottom reading 3 ticked with Practise them, Make a test and More like these." loading="lazy"></a>
+            <figcaption>My answers, with 3 ticked</figcaption>
+          </figure>
+        </div>
+      </section>
+
+      <!-- ============ 10. road signs ============ -->
+      <section id="signs" aria-labelledby="h-signs">
+        <h2 id="h-signs"><span class="num"></span>Road signs</h2>
+        <div class="step">
+          <div>
+            <p><strong>Road Signs</strong> shows 20 common signs and road markings.</p>
+            <ul>
+              <li>Tap any sign to hear what it means.</li>
+              <li><strong>Quiz me on the signs</strong> starts a practice session on the signs.</li>
+            </ul>
+            <p>Signs also appear in the questions themselves wherever a question is about one.</p>
+          </div>
+          <figure class="shot">
+            <a href="help/img/road-signs.png"><img src="help/img/road-signs.png" width="390" height="844" alt="The Road Signs screen with a Quiz me on the signs button and a grid of signs: Stop, Give way, 30 and 20 speed limits, national speed limit and minimum speed 30." loading="lazy"></a>
+            <figcaption>Road Signs</figcaption>
+          </figure>
+        </div>
+      </section>
+
+      <!-- ============ 11. progress ============ -->
+      <section id="progress" aria-labelledby="h-progress">
+        <h2 id="h-progress"><span class="num"></span>My Progress, levels and badges</h2>
+        <div class="step">
+          <div>
+            <h3>How ready are you?</h3>
+            <p>The dial shows a readiness score out of 100 with a label: <strong>Keep practising</strong> (under 50), <strong>Getting there</strong> (50 to 74), <strong>Nearly ready</strong> (75 to 89) or <strong>Ready to book!</strong> (90 and over).</p>
+            <p>Once you've done a mock test, the score is made of:</p>
+            <ul>
+              <li>half: your average score in your last 3 mock tests,</li>
+              <li>a quarter: how many of your last 120 practice answers were right,</li>
+              <li>15%: how many of the questions you've seen are in the top memory box,</li>
+              <li>10%: how much of the question bank you've seen.</li>
+            </ul>
+            <p>Before your first mock the score can't go above 60 — a mock is the best evidence, so do one when you feel ready.</p>
+            <p class="known"><strong>Known problem:</strong> at the moment the number in the middle of the dial doesn't show — only the "%" does. The ring and the label are right, and the admin dashboard shows the number. This is being fixed.</p>
+            <h3>Your coach says</h3>
+            <p>A few plain sentences about your last mock, whether your scores are climbing, your weakest topic, and how many questions you haven't seen yet — with a <strong>Focus Drill</strong> button and a link to My answers.</p>
+            <h3>Your topics</h3>
+            <p>Every topic gets a coloured light, weakest first: <strong>Not tried much</strong> (fewer than 5 answers), <strong>Needs work</strong> (under 50% right), <strong>Shaky</strong> (50–69%), <strong>Good</strong> (70–84%) or <strong>Strong</strong> (85% and over). Needs work and Shaky topics show a tip for that topic.</p>
+            <h3>Your mock tests and Worth remembering</h3>
+            <p>A chart of your mock scores against the pass mark of 43, and a few short tips for your weakest topics.</p>
+          </div>
+          <figure class="shot">
+            <a href="help/img/progress.png"><img src="help/img/progress.png" width="390" height="844" alt="My Progress: the readiness dial labelled Getting there, and Your coach says with four lines of advice." loading="lazy"></a>
+            <figcaption>My Progress</figcaption>
+          </figure>
+        </div>
+        <div class="step">
+          <div>
+            <h3>Levels and badges</h3>
+            <p>Tap the level bar on Home to see your level, how much XP to the next one, and 10 badges earned from what you actually do: <strong>First go</strong>, <strong>Ten in a row</strong>, <strong>Century</strong> (100 answered), <strong>Five hundred</strong>, <strong>Week on the trot</strong> (7-day streak), <strong>Month of practice</strong> (30-day streak), <strong>Mock passed</strong>, <strong>Three mocks passed</strong>, <strong>Topic mastered</strong> (85% on a topic after 10 or more answers) and <strong>Every topic tried</strong>. Badges you haven't earned yet show how close you are, like "6 / 7".</p>
+          </div>
+          <figure class="shot">
+            <a href="help/img/badges.png"><img src="help/img/badges.png" width="390" height="844" alt="The Badges screen: Level 4 Roundabout Ready with an XP bar, and badges First go, Ten in a row and Century earned, Five hundred at 180 of 500, and Week on the trot at 6 of 7." loading="lazy"></a>
+            <figcaption>Badges</figcaption>
+          </figure>
+        </div>
+      </section>
+
+      <!-- ============ 12. print ============ -->
+      <section id="print" aria-labelledby="h-print">
+        <h2 id="h-print"><span class="num"></span>Print</h2>
+        <div class="step">
+          <div>
+            <p>For revising away from a screen. Choose what you want and tap <strong>Preview and print</strong>. For flashcards you also choose which questions: the whole bank, only ones you've got wrong, or one topic.</p>
+            <ul>
+              <li><strong>Flashcards</strong> — 4 per A4 page, questions on the left and answers on the right. Print single-sided, fold down the middle so each answer sits behind its question, and cut along the dashed lines.</li>
+              <li><strong>Test paper</strong> — 50 numbered questions across all topics, with the answer key on the last page.</li>
+              <li><strong>Full answer book</strong> — every question with its right answer, explanation and Highway Code rule.</li>
+            </ul>
+            <p>Printing always uses light colours, even in dark mode.</p>
+          </div>
+          <figure class="shot">
+            <a href="help/img/print.png"><img src="help/img/print.png" width="390" height="844" alt="The Print screen: Flashcards, Test paper or Full answer book, a Which questions list set to the whole bank, and a Preview and print button." loading="lazy"></a>
+            <figcaption>Print</figcaption>
+          </figure>
+        </div>
+      </section>
+
+      <!-- ============ 13. settings ============ -->
+      <section id="settings" aria-labelledby="h-settings">
+        <h2 id="h-settings"><span class="num"></span>Settings</h2>
+        <p>Tap <strong>Settings</strong> at the bottom of Home. Each learner has their own settings, except Appearance, which belongs to the device.</p>
+        <div class="step two">
+          <div>
+            <dl class="pairs">
+              <div><dt>Text size</dt><dd>Three sizes of A. Makes everything bigger or smaller.</dd></div>
+              <div><dt>Appearance</dt><dd><strong>Match device</strong>, <strong>Light</strong> or <strong>Dark</strong>. Match device follows your phone's dark mode. Set per device. This guide follows the same choice.</dd></div>
+              <div><dt>Read questions aloud automatically</dt><dd>The voice reads each question and answer as it appears.</dd></div>
+              <div><dt>Hint button (50:50)</dt><dd>Adds the button that takes away two wrong answers.</dd></div>
+              <div><dt>Move on by itself</dt><dd>After a right answer, goes to the next question on its own.</dd></div>
+              <div><dt>Easy-reading font</dt><dd>Switches to a font that is easier to read (Lexend).</dd></div>
+              <div><dt>High contrast</dt><dd>Stronger colours and darker text.</dd></div>
+              <div><dt>Reduce motion</dt><dd>Turns off the little animations.</dd></div>
+              <div><dt>Voice and Voice speed</dt><dd>Choose which voice reads aloud (the best-sounding ones are marked ★ and the app picks one for you), <strong>Slower</strong>, <strong>Normal</strong> or <strong>Faster</strong>, and <strong>Play sample</strong> to hear it.</dd></div>
+              <div><dt>My profile</dt><dd><strong>Upload a photo</strong> for your profile, or remove it.</dd></div>
+              <div><dt>Daily goal</dt><dd>10, 20 or 30 questions a day to keep your streak.</dd></div>
+              <div><dt>My theory test date</dt><dd>Shows a countdown on Home.</dd></div>
+              <div><dt>Daily reminder and Reminder time</dt><dd>See <a href="#reminders">Daily reminders</a>.</dd></div>
+              <div><dt>Quick setup</dt><dd><strong>Run it again</strong> goes back through the <a href="#setup">quick setup</a>: test date, daily goal and reminder, one at a time.</dd></div>
+              <div><dt>Profiles</dt><dd>Change the learner's and the parent's names, and <strong>+ Add another learner</strong>.</dd></div>
+              <div><dt>Reset all progress…</dt><dd>After asking you to confirm, clears this learner's answers, memory boxes and mock scores. Questions the admin added are kept. Flags, XP and streak are not cleared.</dd></div>
+              <div><dt>Help and legal</dt><dd><strong>Help</strong> (this guide), <strong>About</strong>, <strong>Privacy</strong> and <strong>Terms</strong>, each in its own tab, and a line saying the app is not affiliated with the DVSA.</dd></div>
+            </dl>
+            <p class="note"><strong>Voice sounds robotic?</strong> Some browsers only have basic voices. On an iPhone or iPad, open the device's <span class="path">Settings → Accessibility → Spoken Content → Voices → English (UK)</span> and download an Enhanced or Premium voice. It then appears in the app's Voice list, marked ★.</p>
+          </div>
+          <figure class="shot">
+            <a href="help/img/settings.png"><img src="help/img/settings.png" width="390" height="844" alt="Settings: text size, Appearance with Match device, Light and Dark, and switches for reading aloud, the hint button, moving on by itself, easy-reading font, high contrast and reduce motion." loading="lazy"></a>
+            <figcaption>Settings</figcaption>
+          </figure>
+          <figure class="shot">
+            <a href="help/img/settings-reminders.png"><img src="help/img/settings-reminders.png" width="390" height="844" alt="Further down Settings: Daily goal 10, 20 or 30, My theory test date, the Daily reminder switch, Reminder time 8am, Midday, 5pm or 8pm, Profiles and Reset all progress." loading="lazy"></a>
+            <figcaption>Goal, test date, reminders, profiles</figcaption>
+          </figure>
+        </div>
+        <div class="step">
+          <div>
+            <h3>At the bottom of Settings</h3>
+            <p><strong>Quick setup</strong> runs the first-open questions again. <strong>Help and legal</strong> lists this guide and the About, Privacy and Terms pages.</p>
+          </div>
+          <figure class="shot">
+            <a href="help/img/settings-help.png"><img src="help/img/settings-help.png" width="390" height="844" alt="The bottom of Settings: Quick setup with a Run it again button, Profiles, Add another learner, Reset all progress, and Help and legal with Help, About, Privacy and Terms." loading="lazy"></a>
+            <figcaption>Quick setup, and Help and legal</figcaption>
+          </figure>
+        </div>
+      </section>
+
+      <!-- ============ 14. reminders ============ -->
+      <section id="reminders" aria-labelledby="h-reminders">
+        <h2 id="h-reminders"><span class="num"></span>Daily reminders</h2>
+        <p>A reminder is a nudge on days you haven't practised — never on days you have.</p>
+        <ol>
+          <li>Go to <span class="path">Settings</span> and switch on <strong>Daily reminder</strong>. Your phone or browser asks if the app may show notifications: say yes.</li>
+          <li>Pick a <strong>Reminder time</strong>: <strong>8am</strong>, <strong>Midday</strong>, <strong>5pm</strong> or <strong>8pm</strong>, in your own time zone.</li>
+        </ol>
+        <p>The line under Reminder time says what's happening:</p>
+        <ul>
+          <li><strong>"On — a nudge arrives at the time below…"</strong> — reminders are sent to your device even when the app is closed.</li>
+          <li><strong>"On for this device…"</strong> — reminders from the server aren't set up yet, so the nudge shows only when you open the app after your reminder time on a day you haven't practised.</li>
+        </ul>
+        <p class="note"><strong>iPhone and iPad:</strong> Apple only lets an app show notifications once it's on the home screen. <a href="#install">Add it to your home screen</a>, open it from the icon, then switch the reminder on.</p>
+      </section>
+
+      <!-- ============ 15. notes ============ -->
+      <section id="notes" aria-labelledby="h-notes">
+        <h2 id="h-notes"><span class="num"></span>Notes</h2>
+        <div class="step">
+          <div>
+            <p>The round dark button in the bottom-right corner (on every screen except the sign-in screens and the quick setup) opens <strong>Notes</strong> for the screen you're on — for example, a note on Home, or one on the mock test. Just type; it saves as you go.</p>
+            <p>If you have notes on other screens, <strong>Also on:</strong> lists them so you can jump to one. <strong>✕</strong> closes the notes. Notes belong to each learner and sync with the account.</p>
+          </div>
+          <figure class="shot">
+            <a href="help/img/notes.png"><img src="help/img/notes.png" width="390" height="844" alt="The Notes panel open over Home, titled Notes · Home, with the note Stopping distances: 12, 23, 36, 53, 73, 96." loading="lazy"></a>
+            <figcaption>Notes on Home</figcaption>
+          </figure>
+        </div>
+      </section>
+
+      <!-- ============ 16. offline ============ -->
+      <section id="offline" aria-labelledby="h-offline">
+        <h2 id="h-offline"><span class="num"></span>Offline and syncing</h2>
+        <ul>
+          <li><strong>It works offline.</strong> Once you've opened the app online, it keeps a copy of itself and of the question bank on the device, so you can practise and take mock tests without signal. A test in progress survives a reload or a flat battery.</li>
+          <li><strong>One catch:</strong> the app also needs three code libraries from another website (unpkg.com). Your browser normally keeps these in its own cache, but if it has cleared them, the app needs a connection once to fetch them again.</li>
+          <li><strong>Syncing is automatic.</strong> When you open the app it fetches your latest progress; a few seconds after you answer, it saves back to your account. Answers made offline are sent when the device is online again. There's no sync button to remember.</li>
+          <li><strong>Two devices?</strong> Progress for each learner is merged, with the newest copy winning; flags are merged question by question.</li>
+          <li><strong>Updates:</strong> when a new version of the app arrives, a bar says <strong>"Updated — reload for the latest version"</strong> with a <strong>Reload</strong> button. It never reloads by itself, so it can't interrupt a test.</li>
+        </ul>
+      </section>
+
+      <!-- ============ 17. install ============ -->
+      <section id="install" aria-labelledby="h-install">
+        <h2 id="h-install"><span class="num"></span>Install on your home screen</h2>
+        <p>Theory Trainer runs in the browser, and can be added to your home screen like an app — full screen, with its own icon, and working offline.</p>
+        <dl class="pairs">
+          <div><dt>iPhone or iPad</dt><dd>Open the app in Safari, tap <strong>Share</strong>, then <strong>Add to Home Screen</strong>. Needed for reminders on Apple devices.</dd></div>
+          <div><dt>Android</dt><dd>Open the app in Chrome and choose <strong>Install app</strong> from the menu.</dd></div>
+          <div><dt>Computer</dt><dd>In a browser that can install web apps, such as Chrome or Edge, click the install icon in the address bar.</dd></div>
+        </dl>
+      </section>
+
+      <!-- ============ 18. paying ============ -->
+      <section id="paying" aria-labelledby="h-paying">
+        <h2 id="h-paying"><span class="num"></span>Subscription</h2>
+        <div class="step">
+          <div>
+            <p>The full question bank needs a subscription: <strong data-config="priceMonthly">£4.99 a month</strong> or <strong data-config="priceAnnual">£50 a year</strong>. Without one, the app shows a lock screen with:</p>
+            <ul>
+              <li><strong>Subscribe</strong> or <strong>Or … a year</strong> — pay on a page run by Stripe, the payment company. Access switches on by itself as soon as the payment goes through.</li>
+              <li><strong>Try <span data-config="trialCount">20</span> free questions</strong> — a free sample, where it's offered.</li>
+              <li><strong>Manage subscription</strong> — change your card or plan, or cancel, on Stripe's page.</li>
+              <li><strong>I've paid</strong> — checks again straight away if access hasn't switched on yet.</li>
+            </ul>
+            <p>If a payment fails, the lock screen says so and asks you to update the card; access comes straight back once it's paid. Family members and testers can be given free access by the admin instead.</p>
+            <p class="known"><strong>Not live yet:</strong> card payments still need setting up, so for now access is given by the admin.</p>
+          </div>
+          <figure class="shot">
+            <a href="help/img/paywall.png"><img src="help/img/paywall.png" width="390" height="844" alt="The lock screen: Unlock the full question bank, a Subscribe button for £4.99 a month, Or £50 a year, Manage subscription, I've paid and Switch learner." loading="lazy"></a>
+            <figcaption>The lock screen</figcaption>
+          </figure>
+        </div>
+      </section>
+
+      <!-- ============ 19. admin dashboard ============ -->
+      <section id="admin" aria-labelledby="h-admin">
+        <h2 id="h-admin"><span class="num"></span>The admin dashboard</h2>
+        <div class="step">
+          <div>
+            <p>For the parent, or whoever helps the learner. Open it with <strong>Admin</strong> on the <em>Who's here today?</em> screen, or the parent's name at the top of Home. From top to bottom:</p>
+            <ul>
+              <li><strong>Learner</strong> chips (if there's more than one) choose whose progress you're looking at; <strong>All time</strong> / <strong>Last 7 days</strong> changes the period.</li>
+              <li><strong>Coach summary</strong> — the readiness percentage and the coach's advice.</li>
+              <li><strong>Topics — weakest first</strong>, with a <strong>Focus Drill</strong> button.</li>
+              <li><strong>Mock test scores</strong> — tap a test to see it topic by topic. <strong>+ Log an external mock result</strong> lets you type in a score from another mock (for example a Safe Driving for Life or Theory Test Pro mock), with per-topic results if you have them, so everything is in one place.</li>
+              <li><strong>Everything she does</strong> — links to <a href="#activity">Activity</a> and <a href="#tips">Memory tips</a>.</li>
+              <li><strong>Flagged for extra revision</strong> and <strong>20 hardest questions</strong> (the ones she gets wrong most).</li>
+              <li><strong>Question packs</strong>, <strong>Subscription</strong>, <strong>Account</strong> and <strong>Data</strong> — see <a href="#editor">Questions and packs</a> and <a href="#access">Access and account tools</a>.</li>
+            </ul>
+            <p class="note"><strong>Which parts need an admin account?</strong> Activity, Memory tips and uploading the question bank need an account the server knows is the admin. The rest of the dashboard works on the device you're using.</p>
+          </div>
+          <figure class="shot">
+            <a href="help/img/admin-dashboard.png"><img src="help/img/admin-dashboard.png" width="390" height="844" alt="The admin Progress dashboard: an All time button, Coach summary at 64% ready with advice, and Topics weakest first." loading="lazy"></a>
+            <figcaption>The dashboard</figcaption>
+          </figure>
+        </div>
+        <div class="step">
+          <div>
+            <h3>Everything she does</h3>
+            <p>Two links, a count of flagged questions, and the 20 questions she finds hardest, with how many times each was got right and in which topic.</p>
+          </div>
+          <figure class="shot">
+            <a href="help/img/admin-links.png"><img src="help/img/admin-links.png" width="390" height="844" alt="The dashboard's Everything she does section with links to Activity and Memory tips, Flagged for extra revision, and the 20 hardest questions." loading="lazy"></a>
+            <figcaption>Activity, tips, flags and hardest</figcaption>
+          </figure>
+        </div>
+      </section>
+
+      <!-- ============ 20. activity ============ -->
+      <section id="activity" aria-labelledby="h-activity">
+        <h2 id="h-activity"><span class="num"></span>Activity</h2>
+        <div class="step">
+          <div>
+            <p>The app records what each learner does — every answer (and which option was chosen), each question shown, sessions, mock tests, hints, read-aloud, flags and the screens opened — and keeps it on the server. <strong>Activity</strong> shows the last 60 days:</p>
+            <ul>
+              <li>totals: answered, percent right, minutes, days used, hints used, read aloud,</li>
+              <li><strong>Day by day</strong>,</li>
+              <li><strong>Missed most</strong> — with the wrong answer she usually picks,</li>
+              <li><strong>Time to answer, by topic</strong>,</li>
+              <li><strong>Latest</strong> — the most recent things she did.</li>
+            </ul>
+            <p>Tap <strong>Refresh</strong> to fetch the newest. When more than one account has activity, chips at the top choose which account to show.</p>
+          </div>
+          <figure class="shot">
+            <a href="help/img/admin-activity.png"><img src="help/img/admin-activity.png" width="390" height="844" alt="The Activity screen: 129 answered, 77% right, 60 minutes, 6 days used, 0 hints, 0 read aloud, and a Day by day list." loading="lazy"></a>
+            <figcaption>Activity</figcaption>
+          </figure>
+        </div>
+      </section>
+
+      <!-- ============ 21. memory tips (admin) ============ -->
+      <section id="tips" aria-labelledby="h-tips">
+        <h2 id="h-tips"><span class="num"></span>Memory tips</h2>
+        <p>Memory tips are drafted on the admin's own computer by a local AI program, using only each question's own words. A check rejects any draft with a number that isn't in the question. Nothing reaches a learner until it is approved here.</p>
+        <ol>
+          <li>On the dashboard tap <strong>Memory tips: check the AI's tips before Catie sees them</strong>.</li>
+          <li>The tabs at the top are <strong>To check</strong>, <strong>Approved</strong> and <strong>Rejected</strong>, each with a count. Up to 50 tips show at a time.</li>
+          <li>Each question is shown with its answer and the drafted tip, which you can edit.</li>
+          <li>Tap <strong>Approve</strong> to make it live, or <strong>Reject</strong> to hide it. The status says <strong>Live for Catie</strong>, <strong>Hidden</strong> or <strong>Not shown yet</strong>. On an approved tip the button says <strong>Save</strong>, for saving an edit.</li>
+          <li>On the To check tab, <strong>Approve all … shown</strong> approves every tip on the screen at once, after asking you to confirm.</li>
+        </ol>
+      </section>
+
+      <!-- ============ 22. editor and packs ============ -->
+      <section id="editor" aria-labelledby="h-editor">
+        <h2 id="h-editor"><span class="num"></span>Questions and packs</h2>
+        <div class="step two">
+          <div>
+            <h3>Question packs</h3>
+            <p>The questions come in sets. Each set has two switches: <strong>Practise</strong> and <strong>Tests</strong>, so a set can be used for one and not the other. <strong>Load a question pack (JSON file)…</strong> adds a set you've written or have a licence for; it uses the same fields as the exported bank (question, four options, correctIndex, explanation, ruleRef, topic 1–14).</p>
+            <h3>Question editor</h3>
+            <p><span class="path">Dashboard → Data → Edit questions</span>. Choose a topic or search all questions, tap one to change its wording, options (tap ✓ to mark the right one), explanation, rule reference or sign picture, then <strong>Save</strong>. <strong>+ Add a question to this topic</strong> adds your own; <strong>Delete</strong> removes one. <strong>Export bank</strong> downloads all the questions as a file.</p>
+            <p class="note"><strong>Worth knowing:</strong> edits are saved in this account's own copy, not in the shared question bank on the server, so other accounts don't see them.</p>
+          </div>
+          <figure class="shot">
+            <a href="help/img/admin-packs.png"><img src="help/img/admin-packs.png" width="390" height="844" alt="Question packs: Set 1 Core, Set 2 Core and Set 3 Extension switched on for practise and tests, the Road-sign quiz switched off, and Load a question pack." loading="lazy"></a>
+            <figcaption>Question packs</figcaption>
+          </figure>
+          <figure class="shot">
+            <a href="help/img/admin-editor.png"><img src="help/img/admin-editor.png" width="390" height="844" alt="The Questions editor: a topic list set to 1. Alertness, a search box, Add a question to this topic, and the list of questions in that topic." loading="lazy"></a>
+            <figcaption>The question editor</figcaption>
+          </figure>
+        </div>
+      </section>
+
+      <!-- ============ 23. access and account ============ -->
+      <section id="access" aria-labelledby="h-access">
+        <h2 id="h-access"><span class="num"></span>Access and account tools</h2>
+        <div class="step">
+          <div>
+            <h3>Access for a learner</h3>
+            <p>Under <strong>Subscription</strong>, <strong>Access for …</strong> sets how the learner shown at the top gets in:</p>
+            <ul>
+              <li><strong>Default</strong> — a subscription is needed as normal.</li>
+              <li><strong>Always free</strong> or <strong>Free until…</strong> a date — for family and testers.</li>
+              <li><strong>Suspended</strong> or <strong>Blocked</strong> — locks the learner out until you change it back.</li>
+            </ul>
+            <p><strong>Show me the subscribe screen</strong> previews what a learner without access sees. Paying subscribers need nothing here.</p>
+            <h3>Account</h3>
+            <p>Shows who is signed in and their access, with <strong>Sync now</strong>, <strong>Manage subscription</strong>, <strong>I've paid</strong> and <strong>Sign out</strong>. An admin account also sees <strong>Upload question bank to server</strong> and <strong>Server settings</strong> (the one-time link to the database; learners never need it).</p>
+            <h3>Data</h3>
+            <p><strong>Export backup</strong> downloads a file with this learner's settings, memory boxes, answers and mock tests, plus any question edits. <strong>Import backup</strong> loads one back. <strong>Edit questions</strong> and <strong>Print</strong> open those screens.</p>
+          </div>
+          <figure class="shot">
+            <a href="help/img/admin-access.png"><img src="help/img/admin-access.png" width="390" height="844" alt="Access for Catie with Default, Always free, Free until, Suspended and Blocked, Show me the subscribe screen, and the Account section with Sync now, Manage subscription, I've paid, Sign out and Upload question bank to server." loading="lazy"></a>
+            <figcaption>Access and Account</figcaption>
+          </figure>
+        </div>
+      </section>
+
+      <!-- ============ 24. FAQ ============ -->
+      <section id="faq" class="faq" aria-labelledby="h-faq">
+        <h2 id="h-faq"><span class="num">?</span>Questions people ask</h2>
+        <details>
+          <summary>Are these the real DVSA theory test questions?</summary>
+          <div><p>No. The DVSA's own question bank is licensed and not published. Theory Trainer has 378 original questions in the same multiple-choice format, across the same 14 topics, each with an explanation and a Highway Code reference. The admin can load sets that you write yourself or have a licence for.</p></div>
+        </details>
+        <details>
+          <summary>Does it cover hazard perception?</summary>
+          <div><p>No. Hazard perception is the second part of the real test and uses video clips; the app doesn't have it. The app covers the multiple-choice part.</p></div>
+        </details>
+        <details>
+          <summary>Can the whole family use one account?</summary>
+          <div><p>Yes. One account covers every learner and every device. Each learner has their own progress; add learners on the <em>Who's here today?</em> screen or in Settings.</p></div>
+        </details>
+        <details>
+          <summary>Will my progress follow me to another phone or computer?</summary>
+          <div><p>Yes, as long as you sign in with the same account. It syncs by itself — see <a href="#offline">Offline and syncing</a>.</p></div>
+        </details>
+        <details>
+          <summary>What if I lose signal in the middle of a mock test?</summary>
+          <div><p>Carry on. The app works offline once it has been opened online, and a test in progress is saved on the device, so it survives a reload or a flat battery. Your answers sync when you're back online.</p></div>
+        </details>
+        <details>
+          <summary>Does getting a flagged question right remove the flag?</summary>
+          <div><p>No. Flags stay until you tap <strong>Un-flag</strong>, so you decide when you know it.</p></div>
+        </details>
+        <details>
+          <summary>How is the "ready" score worked out?</summary>
+          <div><p>Mostly from your last 3 mock tests, then your recent practice answers, how many questions are in the top memory box, and how much of the bank you've seen. Before your first mock it can't go above 60. <a href="#progress">Full details.</a></p></div>
+        </details>
+        <details>
+          <summary>How is the mock test marked?</summary>
+          <div><p>Like the real one: 50 questions, 57 minutes, 43 right to pass. Tests you build yourself need 86% of their questions right, rounded up.</p></div>
+        </details>
+        <details>
+          <summary>I didn't get the confirmation or password email.</summary>
+          <div><p>Check spam, and give it a few minutes. On the sign-in screen, <strong>Send the confirmation email again</strong> appears if the account isn't confirmed yet; <strong>Forgot password?</strong> sends a new reset link. The app's emails are sent through a service with a limit on how many it sends in an hour, so if you've asked several times, wait before trying again.</p></div>
+        </details>
+        <details>
+          <summary>Why don't reminders work on my iPhone?</summary>
+          <div><p>Apple only allows notifications for apps on the home screen. <a href="#install">Add it to your home screen</a>, open it from the icon, and switch the reminder on there.</p></div>
+        </details>
+        <details>
+          <summary>Why does the voice sound robotic?</summary>
+          <div><p>The app uses your device's own voices. Some browsers only have basic ones. On an iPhone or iPad, download an Enhanced English (UK) voice — the steps are in <a href="#settings">Settings</a>.</p></div>
+        </details>
+        <details>
+          <summary>How much does it cost?</summary>
+          <div><p>The app shows <span data-config="priceMonthly">£4.99 a month</span> or <span data-config="priceAnnual">£50 a year</span>, paid through Stripe. Card payments aren't live yet; for now the admin gives access. See <a href="#paying">Subscription</a> and the <a href="legal/refunds.html">refund policy (draft)</a>.</p></div>
+        </details>
+        <details>
+          <summary>Who can see what I do in the app?</summary>
+          <div><p>The admin can see your answers and activity in <a href="#activity">Activity</a>. The app has no adverts and no third-party tracking code. The <a href="legal/privacy.html">privacy notice (draft)</a> lists what is stored and where.</p></div>
+        </details>
+        <details>
+          <summary>How do I get a copy of my data, or have it deleted?</summary>
+          <div><p>A copy: <span class="path">Dashboard → Data → Export backup</span>. Deleting an account and its history isn't a button in the app yet — ask the admin. The <a href="legal/privacy.html#your-data">privacy notice</a> explains what can be deleted and how.</p></div>
+        </details>
+        <details>
+          <summary>What does "Reset all progress" delete?</summary>
+          <div><p>This learner's answers, memory boxes and mock scores, after asking you to confirm. Flags, XP, streak and questions the admin added are kept, and so is the activity history on the server.</p></div>
+        </details>
+      </section>
+
+      <!-- ============ 25. accuracy / DVSA ============ -->
+      <section id="about" aria-labelledby="h-about">
+        <h2 id="h-about"><span class="num">i</span>Accuracy and the DVSA</h2>
+        <p><strong>Theory Trainer is not affiliated with, endorsed by or connected to the DVSA</strong> (Driver and Vehicle Standards Agency) or any other government body.</p>
+        <p>The questions, answers and explanations are written for practice and are checked against the Highway Code, but mistakes are possible and rules change. Always check the current <a href="https://www.gov.uk/guidance/the-highway-code">Highway Code on GOV.UK</a> — it is the official source. A good score in the app is a sign you're preparing well, not a promise that you'll pass.</p>
+        <p>Found something wrong? Tell the admin, who can correct the question in the question editor.</p>
+      </section>
+    </main>
+  </div>
+
+  <!-- ============ footer ============ -->
+  <footer class="foot">
+    <nav aria-label="More pages">
+      <a href="Theory%20Trainer.dc.html">Open the app</a>
+      <a href="about.html">About Theory Trainer</a>
+      <a href="legal/privacy.html">Privacy (draft)</a>
+      <a href="legal/terms.html">Terms (draft)</a>
+      <a href="legal/cookies.html">Cookies and storage (draft)</a>
+      <a href="legal/refunds.html">Refunds (draft)</a>
+    </nav>
+    <p class="disclaimer">Not affiliated with the DVSA. Theory Trainer is an independent practice app; the official rules are in the Highway Code.</p>
+  </footer>
+</div>
+</body>
+</html>
