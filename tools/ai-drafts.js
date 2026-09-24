@@ -115,8 +115,10 @@ async function draftAll({ bank, outFile, field, check, prompt, ask, limit = Infi
     }
   });
 
-  const todo = bank.filter(q => !(done[q.id] && done[q.id][field])).slice(0, limit);
-  log(todo.length + ' of ' + bank.length + ' questions still need a draft.');
+  const need = bank.filter(q => !(done[q.id] && done[q.id][field]));
+  const todo = need.slice(0, limit);
+  log(need.length + ' of ' + bank.length + ' questions still need a draft' +
+      (todo.length < need.length ? '; doing ' + todo.length + ' this run (limit set).' : '.'));
   let n = 0;
   for (const q of todo) {
     let text = '', problems = null, go = 0;

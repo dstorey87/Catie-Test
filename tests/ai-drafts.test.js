@@ -118,8 +118,11 @@ test('draftAll(): saves after every question, so a stop half way keeps what was 
 test('draftAll(): a limit does only that many questions, and the rest count as not tried', async () => {
   const outFile = tmpFile();
   const m = fakeModel(['fine']);
-  const c = await drafts.draftAll({ bank: BANK, outFile, field: 'tip', check, prompt, ask: m.ask, limit: 1, log: quiet });
+  const lines = [];
+  const c = await drafts.draftAll({ bank: BANK, outFile, field: 'tip', check, prompt, ask: m.ask, limit: 1, log: l => lines.push(l) });
   assert.deepEqual(c, { total: 2, drafted: 1, rejected: 0, missing: 1, retried: 0 });
+  // The first line tells the truth about what is left, not just what this run will do.
+  assert.equal(lines[0], '2 of 2 questions still need a draft; doing 1 this run (limit set).');
 });
 
 test('draftAll(): a broken results file stops the run with the file name and what to do', async () => {
