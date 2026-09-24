@@ -84,8 +84,9 @@
   `plain_explanation` + `plain_status: 'approved'` to see Explain it differently.
 - **Browser checks done (fake server, 390 and 1280, light and dark):** download (the file is
   the server's export, named with the day), delete (off until DELETE is typed; a refusal shown
-  word for word; a real deletion lands on Sign in and leaves no session or learner progress
-  on the device), the admin's reason, an under-16 sign-up (create account → age question →
+  word for word; a real deletion lands on Sign in, and the device keeps only the theme and the
+  app's empty fresh-start defaults: no session, offline bank, unsent activity or any learner's
+  progress), the admin's reason, an under-16 sign-up (create account → age question →
   2012 → the tick and a parent's email, with saveAge's refusals for no tick and for the
   learner's own email), an adult answer, Not now then asked again after reopening, changing
   the answer from Settings, Explain it differently (shows after a wrong answer only, never for
