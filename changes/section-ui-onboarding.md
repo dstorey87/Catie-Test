@@ -63,9 +63,10 @@
   and in Settings; Privacy and Terms are in Settings and on the sign-in screen." Worth adding to
   CLAUDE.md's gotchas at the same time.
 - **Pending pages:** `tests/app-files.test.js` `PENDING_PAGES` lists `help.html`,
-  `legal/privacy.html`, `legal/terms.html` (issue #2) and `about.html` (issue #3). While a page is
-  missing, its link check is skipped with that reason. Once the page exists, the check runs for
-  real. Delete each line once its page is on develop.
+  `legal/privacy.html` and `legal/terms.html` (issue #2). While a page is missing, its link check
+  is skipped with that reason. Once the page exists, the check runs for real. Delete each line
+  once its page is on develop. (`about.html`, issue #3, was on develop at rebase and is checked
+  for real.)
 - **Browser checks from now on:** the harness learner has no answers, so tapping Catie opens the
   quick setup. Tap **Skip**, or seed her as set up:
   `seed: {'theoryTrainer.d.u1': JSON.stringify({settings: {learnerName: 'Catie', onboardedAt: '2026-09-24'}})}`.

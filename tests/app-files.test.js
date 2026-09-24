@@ -125,14 +125,14 @@ test('every link in the page opens in its own tab without handing it the app win
   }
 });
 
-// help.html and legal/*.html come from issue #2, about.html from issue #3 — written in
-// parallel by other agents. A page still missing here skips with that reason; the moment
-// it is on the branch its check runs for real. Delete a line once its page has landed.
+// help.html and legal/*.html come from issue #2, written in parallel by another agent
+// (about.html, issue #3, has landed and is checked for real). A page still missing here
+// skips with that reason; the moment it is on the branch its check runs for real. Delete
+// a line once its page has landed.
 const PENDING_PAGES = {
   'help.html': 'issue #2 (help-guide) is writing it',
   'legal/privacy.html': 'issue #2 (help-guide) is writing it',
-  'legal/terms.html': 'issue #2 (help-guide) is writing it',
-  'about.html': 'issue #3 (about-page) is writing it'
+  'legal/terms.html': 'issue #2 (help-guide) is writing it'
 };
 for (const l of W.LINKS) {
   const there = fs.existsSync(path.join(root, l.href));
