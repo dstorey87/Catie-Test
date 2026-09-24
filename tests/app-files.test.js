@@ -125,20 +125,11 @@ test('every link in the page opens in its own tab without handing it the app win
   }
 });
 
-// help.html and legal/*.html come from issue #2, written in parallel by another agent
-// (about.html, issue #3, has landed and is checked for real). A page still missing here
-// skips with that reason; the moment it is on the branch its check runs for real. Delete
-// a line once its page has landed.
-const PENDING_PAGES = {
-  'help.html': 'issue #2 (help-guide) is writing it',
-  'legal/privacy.html': 'issue #2 (help-guide) is writing it',
-  'legal/terms.html': 'issue #2 (help-guide) is writing it'
-};
+// Every help and legal page the app links to is a real file (help.html and legal/*.html
+// from issue #2, about.html from #3 have all landed, so nothing is waiting any more).
 for (const l of W.LINKS) {
-  const there = fs.existsSync(path.join(root, l.href));
-  const skip = !there && PENDING_PAGES[l.href] ? l.href + ' is not on this branch yet: ' + PENDING_PAGES[l.href] : false;
-  test('the ' + l.label + ' link points at a file that exists (' + l.href + ')', { skip }, () => {
-    assert.ok(there, l.href + ' is linked from the app but does not exist');
+  test('the ' + l.label + ' link points at a file that exists (' + l.href + ')', () => {
+    assert.ok(fs.existsSync(path.join(root, l.href)), l.href + ' is linked from the app but does not exist');
   });
 }
 
@@ -436,4 +427,24 @@ test('insights: drill buttons do not promise a session length the drill does not
   assert.match(app, /workBtn: work\.show \? 'Drill ' \+ work\.name \+ ' now'/);
   assert.doesNotMatch(app, /' questions' : ''/);
   assert.match(app, /planGoLabel: [^\n]*left today\)'/);
+});
+
+test('insights: the How-to guide explains them with the numbers the app really uses', () => {
+  // help.html (issue #2's guide) describes these screens; when coach.js or TTInsights.CFG changes,
+  // this says which sentence of the guide to update.
+  const guideText = fs.readFileSync(path.join(root, 'help.html'), 'utf8').replace(/<[^>]+>/g, ' ').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&').replace(/\s+/g, ' ');
+  const C = coach.coachDefaults;
+  const expect = [
+    'an answer ' + C.halfLifeDays + ' days older than your newest counts half as much',
+    'Chance of ' + C.passMark + ' or more',
+    'The prediction needs ' + C.minEvidence + ' answers',
+    'Until you\'ve answered ' + C.minEvidence + ' questions',
+    'Every ' + C.freeze.every + ' days you reach it earns a streak freeze , and you can hold ' + C.freeze.max,
+    'about ' + C.whatIfRight + ' more right answers here',
+    'the next ' + I.CFG.planDaysShown + ' days',
+    'questions this week (since ' + ['Sunday', 'Monday'][I.CFG.weekStartsOn] + ')'
+  ];
+  for (const e of expect) assert.ok(guideText.includes(e), 'help.html should say: "' + e + '"');
+  for (const id of ['freezes', 'workon', 'prediction', 'plan', 'family']) assert.match(fs.readFileSync(path.join(root, 'help.html'), 'utf8'), new RegExp('id="' + id + '"'), 'help.html has no #' + id);
+  assert.doesNotMatch(guideText, /You tend to pick|Miss a day and it starts again from 1/, 'help.html still describes the old wording');
 });

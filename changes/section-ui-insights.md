@@ -42,11 +42,22 @@
   drill doesn't keep (a stuck question comes round again on top); they no longer promise one.
 - The screen words live in one page-head block, `window.TTInsights` (like `TTWelcome`), with its
   tuning in `TTInsights.CFG`; the coach's numbers come from `TTCoach.coachDefaults`, not copies.
-- Tests (`tests/app-files.test.js`, +16, run against the real `coach.js`): dates and weeks, goal
+- **How-to guide (`help.html`) updated for all of the above**: new sections **Study plan** and
+  **Family board** (both in the contents), new parts **Streak freezes** and **What to work on**
+  under Home and **Pass prediction** under My Progress, the Family board switch under Settings,
+  and "Same wrong answer again" under My answers. Two lines had become wrong and were rewritten:
+  "Miss a day and it starts again from 1" (freezes now save a day) and "You tend to pick". Five
+  new screenshots and two re-taken (`home.png`, `tripping.png`), all 390×844, light.
+  `help.html` is the Pages lane's file: its section (#2) had merged and finished, nobody was
+  working on it, and its test "every Settings switch in the app is explained in the guide"
+  failed on the new switch, so it was updated here and said so on issues #2 and #8.
+- Tests (`tests/app-files.test.js`, +17, run against the real `coach.js`): dates and weeks, goal
   days, the streak tile, pass chance wording, prediction, what to work on, the study plan (all
   four states, missed days, the unseen-question raise), misconception lines, the badge nudge,
   the family board, the wiring on each screen, the family board being off by default, the
-  numbers coming from `coach.js`, and the two fixes above.
+  numbers coming from `coach.js`, the guide's numbers matching `coach.js`, and the two fixes
+  above. The "pages still being written" skip list is gone: help.html and the legal pages have
+  landed, so every help and legal link is now checked for real.
 
 ## Requirements
 - REQUIREMENTS.md line "**Distractor analysis**: record which wrong option was chosen…" → 🟡
@@ -82,9 +93,12 @@
   says what today needs, and catches up if you miss a day." / "Streak freezes: every 7 goal days
   earns one, and it saves your streak if you miss a day." / "What to work on, on Home, shows the
   topic that would lift your score most."
-- **Help guide (issue #2's `help.html`):** was written before these screens existed, so it
-  doesn't explain the pass prediction, study plan, streak freezes, badge nudge, family board or
-  the "you keep choosing" lines yet. Its owner should add them.
+- **Help guide:** `help.html` explains every new screen (see Changelog). Its `#progress` "Known
+  problem" box about the readiness number is still there: that bug is #12 part D, not fixed here.
+- **Issue #12 (App/UI bugs):** part B's My Progress overflow is fixed here ("Your topics" rows).
+  Its note that the admin dashboard's "Topics — weakest first" rows also overflow at 390px was
+  not checked or changed here. Parts A (screens open mid-scroll), C (notes button over Next) and
+  D (readiness number not drawn) are untouched.
 - The tuning values (70% for "close to a badge", 14 days listed in the plan, Monday week start,
   pass-chance colours at 70% and 40%) are choices, not measurements.
 - Home re-renders in 12–19 ms with 3,000 answers (the app's cap), measured in headless Chromium
