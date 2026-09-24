@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<!-- ===== Search and sharing basics ===== -->
+<title>Theory Trainer: UK driving theory test practice</title>
+<meta name="description" content="Practise for the UK car theory test: questions read aloud, mock tests like the real one, and a coach that brings back the questions you keep missing.">
+<link rel="canonical" href="https://dstorey87.github.io/Catie-Test/about.html">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Theory Trainer">
+<meta property="og:locale" content="en_GB">
+<meta property="og:title" content="Theory Trainer: UK driving theory test practice">
+<meta property="og:description" content="Daily practice, mock tests like the real one, and a coach that learns from every answer.">
+<meta property="og:url" content="https://dstorey87.github.io/Catie-Test/about.html">
+<meta property="og:image" content="https://dstorey87.github.io/Catie-Test/about/home-light.png">
+<meta property="og:image:width" content="390">
+<meta property="og:image:height" content="760">
+<meta property="og:image:alt" content="The Theory Trainer home screen: day streak, daily goal, XP, level, Today's lesson and Practise.">
+<meta name="twitter:card" content="summary">
+<meta name="theme-color" content="#0E7C6B">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon.png">
+<!-- ===== The app's fonts: Nunito for headings, Atkinson Hyperlegible for reading ===== -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@700;800;900&family=Atkinson+Hyperlegible:wght@400;700&display=swap">
+<link rel="stylesheet" href="about/about.css">
+<!-- ===== Scripts =====
+     about.js runs first, in the head, so the saved light/dark choice applies before anything
+     is drawn. config.js holds the prices; "defer" makes it load without blocking and run
+     before about.js fills the price words in. -->
+<script src="about/about.js"></script>
+<script src="config.js" defer></script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to the main content</a>
+
+<!-- ===== Icons, drawn once and reused below with <use> ===== -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <defs>
+    <symbol id="i-book" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" d="M2 4h7a3 3 0 0 1 3 3v13a2 2 0 0 0-2-2H2zM22 4h-7a3 3 0 0 0-3 3v13a2 2 0 0 1 2-2h8z"/></symbol>
+    <symbol id="i-timer" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2.5M9 2h6"/></g></symbol>
+    <symbol id="i-list" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="5" height="5" rx="1"/><path d="M4.5 16.5l1.5 1.5 2.5-3M11 6.5h10M11 16.5h10"/></g></symbol>
+    <symbol id="i-sign" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3L2 20h20z"/><path d="M12 9v5M12 17h.01"/></g></symbol>
+    <symbol id="i-flame" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" d="M12 2c1 4 6 6 6 12a6 6 0 0 1-12 0c0-3 1.5-5 3-6.5.5 2 1.5 3 3 3 0-3-1-5.5 0-8.5z"/></symbol>
+    <symbol id="i-chart" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M5 20V11M11 20V5M17 20v-7M3 20h18"/></symbol>
+    <symbol id="i-print" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M6 9V3h12v6M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 14h12v7H6z"/></g></symbol>
+    <symbol id="i-access" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="4.5" r="1.5"/><path d="M5 8.5l7 2 7-2M12 10.5v4.5M9 21l3-6 3 6"/></g></symbol>
+    <symbol id="i-phone" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="6" y="2" width="12" height="20" rx="2"/><path d="M11 18h2"/></g></symbol>
+    <symbol id="i-family" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="7" r="4"/><path d="M2 21v-2a4 4 0 0 1 4-4h6a4 4 0 0 1 4 4v2M16 3.1a4 4 0 0 1 0 7.8M22 21v-2a4 4 0 0 0-3-3.9"/></g></symbol>
+    <symbol id="i-wheel" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="2"/><path d="M12 14v7M10 11.5L3.5 9.5M14 11.5l6.5-2"/></g></symbol>
+    <symbol id="i-more" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12a8 8 0 0 1 14-5.3M20 12a8 8 0 0 1-14 5.3"/><path d="M18 3v4h-4M6 21v-4h4"/></g></symbol>
+  </defs>
+</svg>
+
+<!-- ===== Header: name, guide link, the way into the app ===== -->
+<header class="wrap top">
+  <a class="brand" href="about.html" aria-label="Theory Trainer, about page">
+    <img src="icon-192.png" width="40" height="40" alt="">
+    <span class="brand-name">Theory Trainer</span>
+  </a>
+  <nav aria-label="Main">
+    <a class="link" href="help.html">How to use it</a>
+    <a class="btn btn-primary btn-small" href="Theory%20Trainer.dc.html">Open the app</a>
+  </nav>
+</header>
+
+<main id="main">
+
+  <!-- ===== Hero: what it is, in one look ===== -->
+  <div class="wrap hero">
+    <div>
+      <span class="eyebrow">UK car theory test practice</span>
+      <h1>Driving theory practice that learns from every answer</h1>
+      <p class="lead">Theory Trainer is a practice app for the UK car theory test. A little practice every day, questions read aloud, mock tests like the real one, and a coach that brings back the questions you keep getting wrong.</p>
+      <div class="actions">
+        <a class="btn btn-primary" href="Theory%20Trainer.dc.html">Open the app</a>
+        <a class="btn btn-quiet" href="help.html">How to use it</a>
+      </div>
+      <!-- Filled from config.js by about/about.js; the fallback shows if that cannot happen. -->
+      <p class="fine" data-needs-prices hidden>Try <span data-fact="trial"></span> questions free, then <span data-fact="monthly"></span> or <span data-fact="annual"></span>. Works on phone, tablet and computer.</p>
+      <p class="fine" data-no-prices>Try a free sample of questions before you pay. Works on phone, tablet and computer.</p>
+    </div>
+    <div class="phone">
+      <img class="shot-light" src="about/home-light.png" width="390" height="760" alt="The home screen after a first practice session: a 1-day streak, 20 of 20 on today's goal, 150 XP at level 1, then buttons for Today's lesson, Practise and Focus Drill.">
+      <img class="shot-dark" src="about/home-dark.png" width="390" height="760" alt="The home screen in dark mode after a first practice session: a 1-day streak, 20 of 20 on today's goal, 150 XP at level 1, then buttons for Today's lesson, Practise and Focus Drill.">
+    </div>
+  </div>
+
+  <!-- ===== Who it is for ===== -->
+  <section aria-labelledby="who">
+    <div class="wrap">
+      <h2 id="who">Who it's for</h2>
+      <div class="who">
+        <div class="card">
+          <svg class="icon" aria-hidden="true"><use href="#i-wheel"/></svg>
+          <h3>Learner drivers</h3>
+          <p>Anyone getting ready for the UK car theory test who wants short, friendly practice sessions on their phone, with every question and answer read aloud if they like.</p>
+        </div>
+        <div class="card">
+          <svg class="icon" aria-hidden="true"><use href="#i-family"/></svg>
+          <h3>Parents and families</h3>
+          <p>One account covers every learner in a family and every device. The admin view shows how each learner is doing, and each learner's progress stays their own.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== What it does ===== -->
+  <section aria-labelledby="what">
+    <div class="wrap">
+      <h2 id="what">What it does</h2>
+      <p class="section-lead">Everything below is in the app today.</p>
+      <div class="cards">
+        <div class="card">
+          <svg class="icon" aria-hidden="true"><use href="#i-book"/></svg>
+          <h3>Practise, read aloud</h3>
+          <p>Questions from all 14 DVSA topics, each with four options, an explanation and a Highway Code reference. Pick your weakest topics, a bit of everything, or build your own mix. A 50:50 hint is there when you need it.</p>
+        </div>
+        <div class="card">
+          <svg class="icon" aria-hidden="true"><use href="#i-timer"/></svg>
+          <h3>Mock tests like the real one</h3>
+          <p>50 questions, 57 minutes, 43 correct to pass. No feedback until the end, flag a question and come back to it, then review every answer.</p>
+        </div>
+        <div class="card">
+          <svg class="icon" aria-hidden="true"><use href="#i-list"/></svg>
+          <h3>My answers</h3>
+          <p>Every question you have answered, newest first, with what you said and the right answer. Tick any of them to practise again or turn into your own timed or untimed test.</p>
+        </div>
+        <div class="card">
+          <svg class="icon" aria-hidden="true"><use href="#i-more"/></svg>
+          <h3>More like this</h3>
+          <p>After any practice answer, one tap brings similar questions into your session. At the end of a session, "More like the ones I missed" does the same for everything you got wrong.</p>
+        </div>
+        <div class="card">
+          <svg class="icon" aria-hidden="true"><use href="#i-sign"/></svg>
+          <h3>Road signs</h3>
+          <p>Learn the signs with their meanings spoken, then quiz yourself on them.</p>
+        </div>
+        <div class="card">
+          <svg class="icon" aria-hidden="true"><use href="#i-flame"/></svg>
+          <h3>A daily habit</h3>
+          <p>A daily goal of 10, 20 or 30 questions, a day streak, XP and levels from Provisional to Full Licence, and badges earned from real practice.</p>
+        </div>
+        <div class="card">
+          <svg class="icon" aria-hidden="true"><use href="#i-chart"/></svg>
+          <h3>See how you're doing</h3>
+          <p>A summary after every session, a readiness score, traffic lights for each topic, your mock test trend and the questions you find hardest.</p>
+        </div>
+        <div class="card">
+          <svg class="icon" aria-hidden="true"><use href="#i-print"/></svg>
+          <h3>Notes, flags and printing</h3>
+          <p>Add notes on any screen, flag questions to come back to, and print flashcards, a test paper or an answer book.</p>
+        </div>
+        <div class="card">
+          <svg class="icon" aria-hidden="true"><use href="#i-access"/></svg>
+          <h3>Easy to read</h3>
+          <p>Bigger text, an easy-reading font, high contrast, reduced motion and dark mode, all in Settings.</p>
+        </div>
+        <div class="card">
+          <svg class="icon" aria-hidden="true"><use href="#i-phone"/></svg>
+          <h3>Works offline</h3>
+          <p>Install it on your home screen and it keeps working without a signal. A test in progress survives a reload or a flat battery.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== How the coaching works ===== -->
+  <section aria-labelledby="coaching">
+    <div class="wrap">
+      <h2 id="coaching">How the coaching works</h2>
+      <p class="section-lead">The app keeps every answer and uses them to decide what you practise next.</p>
+      <div class="coach">
+        <ol class="steps">
+          <li><div><h3>Every answer counts</h3><p>Each practice and mock answer is saved to your account, so your progress follows you from phone to tablet to computer.</p></div></li>
+          <li><div><h3>Missed questions come back soon</h3><p>Questions move through boxes: the ones you miss come round again soon, the ones you know come back less often.</p></div></li>
+          <li><div><h3>Today's lesson is built from your answers</h3><p>It starts with the questions you keep missing, the ones you flagged and the ones due again, then tops up with a few you have not seen yet.</p></div></li>
+          <li><div><h3>"Keeps tripping you up"</h3><p>The coach shows the questions you keep missing, the wrong answer you tend to pick, and a memory tip. Tips are drafted by AI from the question's own words, checked for made-up numbers, and only shown once a person has approved them.</p></div></li>
+          <li><div><h3>Mock tests make the score honest</h3><p>Your readiness score leans on your mock test results. Until you have done one, the coach tells you so.</p></div></li>
+        </ol>
+        <div class="coach-shots">
+          <figure>
+            <img class="shot-light" src="about/coach-light.png" width="346" height="185" loading="lazy" alt="The coach's card on My Progress: Your coach says, do a first mock test when you feel ready, it unlocks the smart practice mix and a proper readiness score.">
+            <img class="shot-dark" src="about/coach-dark.png" width="346" height="185" loading="lazy" alt="The coach's card on My Progress in dark mode: Your coach says, do a first mock test when you feel ready, it unlocks the smart practice mix and a proper readiness score.">
+            <figcaption><b>The coach, after a first session</b>From the My Progress screen.</figcaption>
+          </figure>
+          <figure>
+            <img class="shot-light" src="about/results-light.png" width="390" height="760" loading="lazy" alt="The end of a practice session: 15 out of 20, really good work, a memory reminder, and the score for each topic in this session.">
+            <img class="shot-dark" src="about/results-dark.png" width="390" height="760" loading="lazy" alt="The end of a practice session in dark mode: 15 out of 20, really good work, a memory reminder, and the score for each topic in this session.">
+            <figcaption><b>After every session</b>Your score, a reminder worth keeping, and how each topic went.</figcaption>
+          </figure>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== Screenshots from the real app ===== -->
+  <section aria-labelledby="see">
+    <div class="wrap">
+      <h2 id="see">See it</h2>
+      <p class="section-lead">Real screens from the app, taken with a demo learner and the free sample questions.</p>
+      <div class="gallery" role="region" tabindex="0" aria-label="Screenshots, scroll sideways for more">
+        <figure>
+          <img class="shot-light" src="about/practise-light.png" width="390" height="760" loading="lazy" alt="A practice question answered correctly: the right answer is highlighted green, with an explanation and a read-aloud button, then More questions like this and Next question.">
+          <img class="shot-dark" src="about/practise-dark.png" width="390" height="760" loading="lazy" alt="A practice question in dark mode answered correctly: the right answer is highlighted green, with an explanation and a read-aloud button, then More questions like this and Next question.">
+          <figcaption><b>Practise</b>An explanation after every answer.</figcaption>
+        </figure>
+        <figure>
+          <img class="shot-light" src="about/mock-light.png" width="390" height="760" loading="lazy" alt="The mock test start screen: 50 questions from every topic, 57 minutes on the clock, 43 correct answers to pass, and a choice of test type.">
+          <img class="shot-dark" src="about/mock-dark.png" width="390" height="760" loading="lazy" alt="The mock test start screen in dark mode: 50 questions from every topic, 57 minutes on the clock, 43 correct answers to pass, and a choice of test type.">
+          <figcaption><b>Mock test</b>The same length, time and pass mark as the real one.</figcaption>
+        </figure>
+        <figure>
+          <img class="shot-light" src="about/answers-light.png" width="390" height="760" loading="lazy" alt="The My answers screen: filters for all, wrong last time and right last time, and each question with the learner's answer, the right answer and a More like this button.">
+          <img class="shot-dark" src="about/answers-dark.png" width="390" height="760" loading="lazy" alt="The My answers screen in dark mode: filters for all, wrong last time and right last time, and each question with the learner's answer, the right answer and a More like this button.">
+          <figcaption><b>My answers</b>Tick any question to practise it or build a test.</figcaption>
+        </figure>
+        <figure>
+          <img class="shot-light" src="about/home-light.png" width="390" height="760" loading="lazy" alt="The home screen: day streak, today's goal, XP and level, Today's lesson, Practise and Focus Drill.">
+          <img class="shot-dark" src="about/home-dark.png" width="390" height="760" loading="lazy" alt="The home screen in dark mode: day streak, today's goal, XP and level, Today's lesson, Practise and Focus Drill.">
+          <figcaption><b>Home</b>Streak, daily goal and Today's lesson.</figcaption>
+        </figure>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== Prices: every figure comes from config.js ===== -->
+  <section aria-labelledby="price">
+    <div class="wrap">
+      <h2 id="price">Try it free, then one simple price</h2>
+      <div class="price">
+        <div class="card">
+          <h3>Free sample</h3>
+          <p class="price-big" data-needs-prices hidden><span data-fact="trial"></span> questions free</p>
+          <p class="price-big" data-no-prices>A free sample</p>
+          <p>Create an account, then choose to try the free questions before you decide whether to pay.</p>
+        </div>
+        <div class="card paid">
+          <h3>Full access</h3>
+          <p class="price-big" data-needs-prices hidden><span data-fact="monthly"></span> or <span data-fact="annual"></span></p>
+          <p class="price-big" data-no-prices>See the prices in the app</p>
+          <p>All 14 topics, mock tests, progress tracking and read-aloud.</p>
+          <ul class="ticks">
+            <li>One account for every learner in the family</li>
+            <li>Payment is handled by Stripe</li>
+            <li>Cancel any time, from the app</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== Install to the home screen (steps checked against Apple's and Google's help pages, 2026-09-24) ===== -->
+  <section aria-labelledby="install" class="install">
+    <div class="wrap">
+      <h2 id="install">Put it on your home screen</h2>
+      <p class="section-lead">It opens full screen with its own icon, like any other app, and works without a signal.</p>
+      <div class="cards">
+        <div class="card">
+          <h3>iPhone and iPad (Safari)</h3>
+          <ol>
+            <li>Open the app in Safari.</li>
+            <li>Tap <b>Share</b> (in some layouts, tap <b>•••</b> first, then <b>Share</b>).</li>
+            <li>Scroll down and tap <b>Add to Home Screen</b>.</li>
+            <li>Leave <b>Open as Web App</b> on, then tap <b>Add</b>.</li>
+          </ol>
+        </div>
+        <div class="card">
+          <h3>Android (Chrome)</h3>
+          <ol>
+            <li>Open the app in Chrome.</li>
+            <li>Tap <b>More ⋮</b> at the right of the address bar.</li>
+            <li>Tap <b>Install and create shortcut</b>, then <b>Install</b>.</li>
+          </ol>
+        </div>
+        <div class="card">
+          <h3>Computer (Chrome)</h3>
+          <ol>
+            <li>Open the app in Chrome.</li>
+            <li>Select <b>More ⋮</b>, then <b>Cast, save and share</b>, then <b>Install page as app…</b></li>
+            <li>Or, if you see it, select <b>Install</b> at the right of the address bar.</li>
+          </ol>
+        </div>
+      </div>
+      <p class="muted" style="margin-top:14px">Step-by-step help for every screen is in the <a href="help.html">how-to guide</a>.</p>
+    </div>
+  </section>
+
+  <!-- ===== Honest notes ===== -->
+  <section aria-labelledby="honest">
+    <div class="wrap">
+      <div class="note">
+        <h2 id="honest">Good to know</h2>
+        <p><b>Not affiliated with the DVSA.</b> Theory Trainer is an independent app. It is not made, endorsed or checked by the Driver and Vehicle Standards Agency (DVSA).</p>
+        <p>The questions are our own, written in the same format as the real test, each with an explanation and a Highway Code reference. They are not the DVSA's official revision question bank, which is licensed and not published.</p>
+        <p>Practice helps, but no app can promise a pass.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== Last call to action ===== -->
+  <section aria-labelledby="start">
+    <div class="wrap">
+      <div class="cta-band">
+        <h2 id="start">Ready for a first go?</h2>
+        <p data-needs-prices hidden>Start with <span data-fact="trial"></span> free questions.</p>
+        <p data-no-prices>Start with the free sample.</p>
+        <div class="actions" style="justify-content:center">
+          <a class="btn btn-primary" href="Theory%20Trainer.dc.html">Open the app</a>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<!-- ===== Footer ===== -->
+<footer class="wrap">
+  <nav aria-label="Footer">
+    <a href="Theory%20Trainer.dc.html">Open the app</a>
+    <a href="help.html">How to use it</a>
+    <a href="legal/privacy.html">Privacy</a>
+    <a href="legal/terms.html">Terms</a>
+  </nav>
+  <p>Theory Trainer is not affiliated with the DVSA.</p>
+</footer>
+</body>
+</html>
