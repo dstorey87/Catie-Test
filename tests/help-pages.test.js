@@ -4,7 +4,8 @@
 // Three kinds of check:
 //   1. help/site.js behaves (theme from tt.theme, figures from config.js).
 //   2. The pages are sound: every link, anchor and image resolves; every page carries the
-//      DVSA disclaimer and links back to the app; the legal drafts invent no contact details.
+//      DVSA disclaimer and links back to the app; the legal pages carry a sample-policy banner
+//      and only obviously-mock business details (example.com, zeros, "(mock)").
 //   3. The pages can't drift from the app: settings, prices, coach rules, database tables,
 //      storage keys, outside websites and dark-mode colours are read from the app's own
 //      files and must match what the pages say. When one fails, the message says which
@@ -171,17 +172,91 @@ test('the guide has a section for every feature in the spec, each in the content
   assert.ok(faqs >= 10, 'the FAQ should answer at least 10 questions, has ' + faqs);
 });
 
-test('legal pages are marked as drafts and invent no contact details', () => {
+// The legal pages carry MOCK business details (issue #21: "I don't have a business, put in
+// mock values for now"). While they do, a banner says so at the top of every page. The two
+// go together: the banner comes off only when every "(mock)" value has been replaced with a
+// real one, and then these checks stop demanding mock values.
+const BANNER = /<div class="draft" role="note">([\s\S]*?)<\/div>/;
+const MOCK_EMAIL_HOST = 'example.com';          // reserved for examples (RFC 2606): reaches no one
+
+test('legal pages: no "to be filled in" placeholder is left', () => {
   for (const p of LEGAL) {
-    const s = html[p], w = words(s);
-    assert.match(w, /Draft — not yet in force/, p + ' must say it is a draft');
-    assert.match(w, /\[[^\]]*to be filled in by Darren\]/, p + ' must leave business details for Darren');
-    assert.match(s, /<meta name="robots" content="noindex">/, p + ': drafts stay out of search engines');
-    // Never invent a business name, email, phone number or address.
-    assert.ok(!/[\w.+-]+@[\w-]+\.[\w.]+/.test(w), p + ' contains an email address — use the placeholder');
-    assert.ok(!/(\+44|\b0\d{3})[\s\d]{8,}/.test(w), p + ' contains a phone number — use the placeholder');
-    assert.ok(!/\b[A-Z]{1,2}\d[A-Z\d]? ?\d[A-Z]{2}\b/.test(w), p + ' contains a postcode — use the placeholder');
+    const w = words(html[p]);
+    assert.ok(!/\[[^\]]*(Darren|to be (?:\w+ and )?(?:filled|checked|decided))[^\]]*\]/i.test(w),
+      p + ' still has a placeholder: ' + (w.match(/\[[^\]]*\]/) || [''])[0]);
+    assert.match(html[p], /<meta name="robots" content="noindex">/, p + ': sample policies stay out of search engines');
   }
+});
+
+test('legal pages: the same sample-policy banner sits at the top of every page (or of none)', () => {
+  // None = real details are in and the banner has come off everywhere; the next test makes
+  // sure no "(mock)" value is left behind when it does.
+  const up = LEGAL.filter(p => BANNER.test(html[p]));
+  if (up.length === 0) return;
+  assert.deepEqual(up, LEGAL, 'the banner is on ' + up.join(', ') + ' only — put it on every legal page, or on none');
+  const banners = LEGAL.map(p => {
+    const s = html[p], m = s.match(BANNER);
+    assert.ok(m, p + ' has no <div class="draft" role="note"> banner');
+    const main = s.indexOf('<main'), first = s.indexOf('<section', main);
+    assert.ok(main > 0 && s.indexOf(m[0]) > main && s.indexOf(m[0]) < first, p + ': the banner must come before the first section');
+    const w = words(m[1]);
+    for (const must of ['Sample policy with mock details', 'family project, not a registered business', 'before charging anyone', '(mock)'])
+      assert.ok(w.includes(must), p + ': the banner must say "' + must + '"');
+    return m[1].trim();
+  });
+  for (let i = 1; i < banners.length; i++) assert.equal(banners[i], banners[0], LEGAL[i] + ': banner differs from ' + LEGAL[0] + ' — keep them identical');
+});
+
+test('legal pages: while the banner is up, every business detail is an obvious mock', () => {
+  for (const p of LEGAL) {
+    const s = html[p], w = words(s), hasBanner = BANNER.test(s), hasMock = /\(mock\b/.test(w);
+    assert.equal(hasBanner, hasMock, p + (hasBanner ? ': banner says mock details, but none is marked (mock)' : ': a "(mock)" value is left but the banner has gone'));
+    if (!hasMock) continue;
+    // Emails: only the reserved example domain, each marked (mock).
+    for (const [addr, host] of w.matchAll(/[\w.+-]+@([\w-]+(?:\.[\w-]+)+)/g)) {
+      assert.equal(host.toLowerCase(), MOCK_EMAIL_HOST, p + ': ' + addr + ' is not a reserved example address');
+    }
+    // Every highlighted value is labelled as mock, so nothing on the page passes for real.
+    for (const [, inner] of s.matchAll(/<span class="fill">([\s\S]*?)<\/span>/g))
+      assert.match(words(inner), /\(mock\b/, p + ': highlighted value "' + words(inner).trim() + '" is not labelled (mock)');
+    // Registration numbers are all zeros.
+    for (const [n] of w.matchAll(/\b\d{8}\b/g)) assert.equal(n, '00000000', p + ': ' + n + ' looks like a real company number');
+    for (const [n] of w.matchAll(/\bZ[A-Z]\d{6}\b/g)) assert.equal(n, 'ZA000000', p + ': ' + n + ' looks like a real ICO registration');
+    // Nothing that could reach a real person or place.
+    assert.ok(!/(\+44|\b0\d{3})[\s\d]{8,}/.test(w), p + ' contains a phone number');
+    assert.ok(!/\b[A-Z]{1,2}\d[A-Z\d]? ?\d[A-Z]{2}\b/.test(w), p + ' contains a postcode');
+  }
+  // The pages that name the operator give the whole mock set (the privacy notice also the ICO number).
+  const OPERATOR = ['Theory Trainer (mock operator — not a registered business)', 'support@' + MOCK_EMAIL_HOST, '00000000 (mock)'];
+  for (const [p, extra] of [['legal/privacy.html', ['ZA000000 (mock)']], ['legal/terms.html', []]]) {
+    const w = words(html[p]);
+    if (!/\(mock\b/.test(w)) continue;
+    for (const must of OPERATOR.concat(extra)) assert.ok(w.includes(must), p + ' should name "' + must + '"');
+  }
+});
+
+test('legal pages: the guardian-consent age is read from config.js, never typed', () => {
+  // config.js → TT_CONFIG.age.guardianUnder is the one place the age lives.
+  const box = { window: {} };
+  vm.runInNewContext(read('config.js'), box);
+  const age = box.window.TT_CONFIG.age.guardianUnder;
+  const typed = new RegExp('(?:under|younger than|aged?) ' + age + '\\b', 'i');
+  for (const p of ['legal/privacy.html', 'legal/terms.html']) {
+    const s = html[p];
+    assert.ok(s.includes('data-config="age.guardianUnder"'), p + ' must show the age with data-config="age.guardianUnder"');
+    assert.ok(!typed.test(s), p + ' types the age ' + age + ' instead of reading it from config.js');
+  }
+});
+
+test('the privacy notice\'s "deleted with the account" is true of every table that holds personal data', () => {
+  const sql = read('supabase/schema.sql') + read('supabase/schema-notifications.sql');
+  const blocks = [...sql.matchAll(/create table if not exists public\.(\w+) \(([\s\S]*?)\n\);/g)];
+  assert.ok(blocks.length >= 6, 'could not read the tables from the schema');
+  for (const [, t, body] of blocks) {
+    if (t === 'questions') continue;                            // the question bank: not personal data
+    assert.match(body, /references auth\.users on delete cascade/, t + ' is not deleted with its account — legal/privacy.html "How long it is kept" is wrong');
+  }
+  assert.match(words(html['legal/privacy.html']), /kept for as long as the account exists/, 'legal/privacy.html should state the retention rule');
 });
 
 // ---------------------------------------------------------------- 3. no drift from the app

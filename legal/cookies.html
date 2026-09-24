@@ -31,8 +31,10 @@
       <p class="lede">Theory Trainer sets no cookies of its own. It does save things in your browser so it can work offline and remember you — this page lists all of them.</p>
     </div>
 
+    <!-- Sample banner: identical on every legal page (tests/help-pages.test.js checks). It comes
+         off only when every "(mock)" value is replaced with a real one — the test ties the two. -->
     <div class="draft" role="note">
-      <p><strong>Draft — not yet in force.</strong> Taken from the app's code. It has not been reviewed by a lawyer. Everything marked <span class="fill">[to be filled in by Darren]</span> must be completed before the app is offered to the public.</p>
+      <p><strong>Sample policy with mock details.</strong> Theory Trainer is a family project, not a registered business. The operator's name, address, email and registration numbers are mock values, highlighted and marked <span class="fill">(mock)</span>: they are not real and reach no one. Replace them with real details, and have the policy checked, before charging anyone. Everything else describes what the app really does, from its code and database set-up; promises such as reply times and refund rules are sensible defaults to confirm. Not reviewed by a lawyer.</p>
     </div>
 
     <section aria-labelledby="h-storage">
@@ -68,13 +70,14 @@
         <li><strong>Google Fonts</strong> (fonts.googleapis.com and fonts.gstatic.com) — the fonts.</li>
         <li><strong>Supabase</strong> (supabase.co) — your account and progress, once you sign in.</li>
       </ul>
-      <p>Whether any of these set cookies of their own has not been checked: <span class="fill">[to be checked and filled in by Darren]</span>. More in the <a href="privacy.html">privacy notice</a>.</p>
+      <p>None of them set a cookie. Checked on 24 September 2026 in a fresh browser: opening the live app, and the current app, help and legal pages, stored no cookie, and none of these services offered one. The app talks to Supabase without cookies: each request carries your sign-in session in a header, and the browser neither sends nor keeps cookies for it. These services could change that without telling us. More in the <a href="privacy.html">privacy notice</a>.</p>
     </section>
 
     <section aria-labelledby="h-consent">
       <h2 id="h-consent">Consent</h2>
-      <p>Everything the app saves is needed for it to work (signing in, progress, offline use), and there is no advertising or analytics storage. Whether a consent banner is needed: <span class="fill">[to be decided and filled in by Darren]</span>.</p>
-      <p>Version: draft. Last changed: <span class="fill">[date — to be filled in by Darren]</span>.</p>
+      <p>Everything the app saves is needed for it to work (signing in, progress, offline use), and there is no advertising or analytics storage, so the app shows no consent banner.</p>
+      <p>This follows the UK's cookie rules (PECR) as the <a href="https://ico.org.uk/for-organisations/direct-marketing-and-privacy-and-electronic-communications/guidance-on-the-use-of-storage-and-access-technologies/what-are-the-exceptions/">ICO's guidance</a> explains them: storage that is strictly necessary for something you asked for, such as staying signed in, keeping your progress, working offline or the reminder you switched on, needs no consent. Remembering your Appearance choice (<code>tt.theme</code>) comes under a separate exception for adapting how a service looks. That one also asks for clear information about it, which this page gives, and a simple, free way to object: choose <strong>Match device</strong> in Settings, or clear this site's data as described above. Checked against the ICO's guidance on 24 September 2026.</p>
+      <p>Version: sample. Last changed: 24 September 2026.</p>
     </section>
   </main>
 
