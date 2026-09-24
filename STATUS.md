@@ -10,7 +10,10 @@ States: ✅ done & verified · ⚠️ built, needs your account/keys to go live 
 - ✅ **More like this**: after any practice answer (slots similar questions in next), on each wrong mock answer, on every My answers row, and "More like the ones I missed" at the end of a session
 - ✅ Duolingo-style loop: daily goal, day streak, XP + levels, "Today's lesson" remix
 - ✅ Insights after every session, readiness dial, topic traffic-lights, mock trend, 20 hardest, external mock logging
-- ✅ Notes on any screen, question flagging, revision list, printable answer book / flashcards / test paper
+- ✅ Notes on any screen, question flagging (kept until she un-flags; her own Flagged screen), revision list, printable answer book / flashcards / test paper
+- ✅ The coach (`coach.js`): Today's lesson is a drill built from her answers; "Keeps tripping you up" shows what she keeps missing, the answer she tends to pick, and a memory tip
+- ✅ Memory tips: drafted by local AI from each question's own text, checked for invented numbers, live only once approved in Admin → Memory tips
+- ✅ Everything she does is recorded (`events` table) and shown in Admin → Activity. To delete an account's history: `delete from public.events where user_id = '<uuid>';`
 - ✅ Question editor with search, sign picker, pack import, bank export
 - ✅ Test-date countdown; accessibility (text size, dyslexia font, high contrast, reduced motion)
 - ✅ Dark mode: Settings → Appearance (match device / light / dark), per device; printing stays light
