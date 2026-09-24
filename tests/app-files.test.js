@@ -136,8 +136,17 @@ for (const l of W.LINKS) {
 test('the notes button stays off the sign-in screens, where it covered the DVSA line', () => {
   // Found 2026-09-24 in the browser check: at 390px the floating notes button sat on top of
   // the Sign in screen's DVSA line. The sign-in views are login, auth and setup.
-  const line = app.match(/notesAvail: ([^\n]+)/)[1];
+  const line = app.match(/const notesShown = ([^\n]+)/)[1];
   for (const v of ['login', 'auth', 'setup']) assert.match(line, new RegExp("view!=='" + v + "'"), 'notes button shows on ' + v);
+});
+
+test('the Settings Voice speed buttons wrap instead of running off a phone at the largest text size', () => {
+  // Found 2026-09-24 (issue #9's browser check): at 390px and the largest text size, "Faster"
+  // ended 6px past the screen. The row and its buttons may now wrap onto a second line.
+  const set = screen('SETTINGS');
+  const row = set.slice(set.lastIndexOf('<div', set.indexOf('>Voice speed<')), set.indexOf('{{ speedChoices }}'));
+  assert.match(row, /^<div style="display:flex;flex-wrap:wrap;/, 'the Voice speed row must be allowed to wrap');
+  assert.match(row, /<div style="display:flex;flex-wrap:wrap;gap:6px"/, 'its buttons must be allowed to wrap');
 });
 
 test('the Settings Voice list can shrink to fit its card on a phone', () => {
@@ -413,12 +422,97 @@ test('insights: the numbers on screen come from coach.js, not copies', () => {
   assert.match(app, /streak: this\.streakFor\(d\)\.count/);
 });
 
-test('My Progress topic rows fit a phone: the name can wrap and the bar can shrink', () => {
-  // Found 2026-09-24 in issue #8's browser check (and already on develop): at 390px a new
-  // learner's "Your topics" rows ("Not tried much") pushed My Progress 35px past the screen.
-  const row = screen('MY PROGRESS (learner)').match(/<sc-for list="\{\{ progTopics \}\}"[\s\S]*?<\/sc-for>/)[0];
-  assert.match(row, /<span style="flex:1;min-width:0;[^"]*">\{\{ t\.name \}\}/, 'the topic name must be allowed to shrink');
-  assert.match(row, /flex:0 1 110px;min-width:40px/, 'the bar must be allowed to shrink');
+// ---------- Issue #12: screens open mid-scroll, rows wider than a phone, notes button over
+// Next, readiness number not drawn. Each test below failed before its fix. ----------
+// TTScreen is a <script> in the page head (plain data and pure functions), run here in node.
+const screenSrc = [...app.matchAll(/<script>([\s\S]*?)<\/script>/g)].map(m => m[1]).find(s => s.includes('window.TTScreen ='));
+// Missing block: TS stays null and each #12 test fails on its own (not the whole file).
+const TS = screenSrc ? (() => { const ctx = { window: {} }; vm.runInNewContext(screenSrc, ctx); return ctx.window.TTScreen; })() : null;
+
+test('#12: the screen helpers live in the real head, not <helmet>', () => {
+  assert.ok(TS, 'no window.TTScreen block in the page head');
+  const at = app.indexOf('window.TTScreen =');
+  assert.ok(at > 0 && at < app.indexOf('\n<helmet>\n'), 'the camelCase rewrite in <helmet> would break it');
+});
+
+test('#12 A: a different screen or question gets a new screen key; answering in place does not', () => {
+  assert.ok(TS, 'no window.TTScreen block in the page head');
+  // Found 2026-09-24: tapping Road Signs low on Home opened Road Signs at scrollY 1398.
+  const base = { view: 'home', testView: 'run', printPreview: false, session: { startedAt: 5, i: 0, picked: -1 }, test: { startedAt: 7, i: 0, answers: {} } };
+  const key = patch => TS.key(Object.assign({}, base, patch));
+  const k0 = key({});
+  assert.notEqual(key({ view: 'signs' }), k0, 'another screen');
+  assert.notEqual(key({ testView: 'review' }), k0, 'mock test: run -> review');
+  assert.notEqual(key({ printPreview: true }), k0, 'print preview');
+  assert.notEqual(key({ session: { startedAt: 5, i: 1, picked: -1 } }), k0, 'next practice question');
+  assert.notEqual(key({ session: { startedAt: 9, i: 0, picked: -1 } }), k0, 'a new practice session');
+  assert.notEqual(key({ test: { startedAt: 7, i: 1, answers: {} } }), k0, 'next mock question');
+  assert.equal(key({ session: { startedAt: 5, i: 0, picked: 2 } }), k0, 'answering a question keeps her place');
+  assert.equal(key({ test: { startedAt: 7, i: 0, answers: { 0: 1 } } }), k0, 'picking a mock answer keeps her place');
+  assert.equal(TS.key(null), TS.key({}), 'no state yet');
+});
+
+test('#12 A: the page scrolls to the top when the screen key changes', () => {
+  const upd = app.slice(app.indexOf('  componentDidUpdate(){'), app.indexOf('\n  }\n', app.indexOf('  componentDidUpdate(){')));
+  assert.match(upd, /TTScreen\.key\(prev\) !== TTScreen\.key\(s\)[^\n]*window\.scrollTo\(0, 0\)/);
+  // It must come before the early return for a change of learner, or switching learner skips it.
+  assert.ok(upd.indexOf('window.scrollTo(0, 0)') < upd.indexOf("this.track('learner_opened'"), 'scroll before the learner early return');
+});
+
+test('#12 B: topic rows on My Progress and the admin dashboard wrap on a phone instead of squeezing', () => {
+  // Found 2026-09-24: the admin dashboard's "Topics — weakest first" was 421px wide at 390px, and
+  // after #22 My Progress's topic names had 18px left at the default text size, one or two
+  // letters a line. Now the row wraps: the name keeps a sensible width, and the bar and its
+  // figure move under it when the screen is narrow.
+  const rows = [
+    screen('MY PROGRESS (learner)').match(/<sc-for list="\{\{ progTopics \}\}"[\s\S]*?<\/sc-for>/)[0],
+    screen('DASHBOARD').match(/<sc-for list="\{\{ topicBars \}\}"[\s\S]*?<\/sc-for>/)[0]
+  ];
+  for (const row of rows) {
+    assert.match(row, /display:flex;flex-wrap:wrap/, 'the row must be allowed to wrap');
+    const name = row.match(/<span style="([^"]*)">\{\{ t\.name \}\}/)[1];
+    assert.match(name, /flex:1 1 \d+px/, 'the name keeps a basis, so it is never squeezed to a sliver');
+    assert.match(name, /min-width:0/, 'the name can still shrink below its longest word on a tiny screen');
+    assert.doesNotMatch(row, /width:150px/, 'no fixed 150px bar: it made the dashboard wider than a phone');
+  }
+  // "20 hardest questions": its one-line figure was 5px too wide at the largest text size.
+  const hard = screen('DASHBOARD').match(/<sc-for list="\{\{ hardRows \}\}"[\s\S]*?<\/sc-for>/)[0];
+  assert.match(hard, /display:flex;flex-wrap:wrap/);
+  assert.doesNotMatch(hard, /white-space:nowrap/, 'the figure must be allowed to wrap');
+});
+
+test('#12 C: on question screens the notes button sits in the page, never floating over Next', () => {
+  // Found 2026-09-24: at 390x844 the floating notes button covered "Next →" on a long mock question.
+  assert.ok(TS, 'no window.TTScreen block in the page head');
+  assert.deepEqual(plain(TS.INLINE_NOTES).sort(), ['learnQ', 'test']);
+  const line = app.match(/const notesAvail = ([^\n]+)/)[1];
+  assert.match(line, /!notesInline/, 'the floating button must not show where the in-page one does');
+  for (const name of ['LEARN QUESTION', 'TEST RUNNING', 'TEST REVIEW']) {
+    const s = screen(name);
+    assert.match(s, /<sc-if value="\{\{ notesInline \}\}"[^>]*>\s*<div[^>]*><button onClick="\{\{ toggleNotes \}\}"/, name + ' has no in-page notes button');
+    const next = name === 'TEST REVIEW' ? '{{ endTest }}' : name === 'TEST RUNNING' ? '{{ nextTQ }}' : '{{ nextQ }}';
+    assert.ok(s.indexOf('{{ notesInline }}') > s.indexOf(next), name + ': the notes button must come after the ' + next + ' row');
+  }
+  // Every other page leaves room under its last line, so it can be scrolled clear of the button.
+  assert.ok(TS.bottomPad(true) >= TS.NOTES.edge + TS.NOTES.size, 'the padding must clear the floating button');
+  assert.ok(TS.bottomPad(false) < TS.bottomPad(true));
+  assert.match(app, /<div style="\{\{ pageStyle \}\}">/, 'the page container takes its padding from TTScreen');
+  assert.match(app, /pageStyle: [^\n]*TTScreen\.bottomPad\(notesAvail\)/);
+  assert.match(app, /notesFabStyle: [^\n]*N\.size/, 'the floating button takes its size from TTScreen.NOTES');
+});
+
+test('#12 D: no {{ value }} inside SVG text, so the readiness number is drawn', () => {
+  // Found 2026-09-24: the dial's <text>{{ readyPct }}%</text> became <text><span>38</span>%</text>,
+  // and SVG does not draw an HTML <span>: only "%" showed.
+  const markup = app.replace(/<!--[\s\S]*?-->/g, '');          // comments may name <text> freely
+  const texts = [...markup.matchAll(/<text\b[^>]*>([\s\S]*?)<\/text>/g)].map(m => m[1]);
+  assert.ok(texts.length >= 2, 'expected the chart labels');
+  for (const t of texts) assert.doesNotMatch(t, /\{\{/, 'a value inside SVG <text> is never drawn: ' + t);
+  const dial = screen('MY PROGRESS (learner)').match(/<div data-tt-dial[\s\S]*?<\/div>\s*<\/div>/);
+  assert.ok(dial, 'My Progress has no HTML readiness label over the dial');
+  assert.match(dial[0], /\{\{ readyPct \}\}%/);
+  // The How-to guide said the number was missing; that line goes with the fix.
+  assert.doesNotMatch(fs.readFileSync(path.join(root, 'help.html'), 'utf8'), /number in the middle of the dial doesn't show/);
 });
 
 test('insights: drill buttons do not promise a session length the drill does not keep', () => {
@@ -447,4 +541,161 @@ test('insights: the How-to guide explains them with the numbers the app really u
   for (const e of expect) assert.ok(guideText.includes(e), 'help.html should say: "' + e + '"');
   for (const id of ['freezes', 'workon', 'prediction', 'plan', 'family']) assert.match(fs.readFileSync(path.join(root, 'help.html'), 'utf8'), new RegExp('id="' + id + '"'), 'help.html has no #' + id);
   assert.doesNotMatch(guideText, /You tend to pick|Miss a day and it starts again from 1/, 'help.html still describes the old wording');
+});
+
+// ---------- Issue #9: your data, your age, explain it differently ----------
+// TTPrivacy is a <script> in the page head (the words and small rules for Settings → Your data
+// and the age question), run here in node. The age rule itself is backend.js
+// TTAccount.needsGuardian reading config.js, loaded for real below, never a copy.
+const privacySrc = [...app.matchAll(/<script>([\s\S]*?)<\/script>/g)].map(m => m[1]).find(s => s.includes('window.TTPrivacy ='));
+const PV = privacySrc ? (() => { const ctx = { window: {} }; vm.runInNewContext(privacySrc, ctx); return ctx.window.TTPrivacy; })() : null;
+// backend.js in a bare fake browser, with the real config.js: only TTAccount's pure rules are used.
+const ACCOUNT = (() => {
+  const cfg = { window: {} }; vm.runInNewContext(fs.readFileSync(path.join(root, 'config.js'), 'utf8'), cfg);
+  const store = new Map();
+  const win = { TT_CONFIG: cfg.window.TT_CONFIG,
+    localStorage: { getItem: k => (store.has(k) ? store.get(k) : null), setItem: (k, v) => store.set(k, String(v)), removeItem: k => store.delete(k) },
+    location: { protocol: 'https:', origin: 'https://example.org', pathname: '/', search: '', hash: '' }, history: { replaceState() {} },
+    fetch: async () => ({ ok: true, status: 200, text: async () => '[]' }) };
+  win.window = win;
+  vm.runInNewContext(fs.readFileSync(path.join(root, 'backend.js'), 'utf8'), win);
+  return { account: win.TTAccount, rule: cfg.window.TT_CONFIG.age };
+})();
+const NOW = new Date().getFullYear();
+
+test('#9: the privacy words live in the real head, not <helmet>', () => {
+  assert.ok(PV, 'no window.TTPrivacy block in the page head');
+  const at = app.indexOf('window.TTPrivacy =');
+  assert.ok(at > 0 && at < app.indexOf('\n<helmet>\n'));
+});
+
+test('#9 delete: the typed word must be DELETE (any case, spaces trimmed)', () => {
+  for (const ok of ['DELETE', 'delete', '  Delete ']) assert.equal(PV.confirmOk(ok), true, ok);
+  for (const no of ['', 'DELET', 'DELETE ME', null, undefined]) assert.equal(PV.confirmOk(no), false, String(no));
+  assert.equal(PV.CONFIRM_WORD, 'DELETE');
+});
+
+test('#9 delete: the explanation names every table the server deletes with the account', () => {
+  // The server deletes the account; every table that references it "on delete cascade" goes too.
+  const sql = fs.readFileSync(path.join(root, 'supabase/schema.sql'), 'utf8') + fs.readFileSync(path.join(root, 'supabase/schema-notifications.sql'), 'utf8');
+  // A table runs to its own closing line; comments inside may hold a ";" (events does).
+  const owned = [...sql.matchAll(/create table if not exists public\.(\w+) \(([\s\S]*?)\n\);/g)]
+    .filter(m => /references auth\.users on delete cascade/.test(m[2])).map(m => m[1]);
+  assert.ok(owned.length >= 6, 'could not read the account-owned tables from the schema');
+  assert.deepEqual(plain(PV.DELETED.map(d => d.table)).sort(), owned.slice().sort(), 'TTPrivacy.DELETED must list exactly the tables that go with the account');
+  for (const d of PV.DELETED) assert.ok(d.say.length > 10, d.table + ' needs a plain description');
+  assert.match(PV.DEVICE, /signed out/);
+  assert.match(PV.BEFORE, /Download my data first/);
+  assert.match(PV.ADMIN, /admin account/);
+});
+
+test('#9 download: the file is named with the day it was made', () => {
+  assert.equal(PV.exportName('2026-09-24'), 'theory-trainer-my-data-2026-09-24.json');
+});
+
+test('#9 age: the question opens by itself only on a known "no answer yet", and "Not now" puts it off', () => {
+  const due = o => PV.ageDue(Object.assign({ signedIn: true, checked: true, info: { birthYear: null }, later: false }, o));
+  assert.equal(due({}), true, 'signed in, the server says no answer yet');
+  assert.equal(due({ info: { birthYear: 2008 } }), false, 'already answered');
+  assert.equal(due({ checked: false }), false, 'the server has not answered (offline): do not guess');
+  assert.equal(due({ info: null }), false, 'no profile row: nothing to save to');
+  assert.equal(due({ signedIn: false }), false, 'signed out');
+  assert.equal(due({ later: true }), false, '"Not now" until the app is next opened');
+  assert.equal(PV.ageDue(null), false);
+});
+
+test('#9 age: a parent or guardian is asked for exactly when the backend.js rule says so', () => {
+  // The rule is config.js TT_CONFIG.age.guardianUnder, applied by TTAccount.needsGuardian to the
+  // YOUNGER possible age (only a year is stored). Years relative to now, so this never goes stale.
+  const needs = ACCOUNT.account.needsGuardian, u = ACCOUNT.rule.guardianUnder;
+  assert.equal(PV.askGuardian(String(NOW - u), needs), true, 'turns ' + u + ' this year: may still be ' + (u - 1));
+  assert.equal(PV.askGuardian(String(NOW - u - 1), needs), false, 'at least ' + u);
+  assert.equal(PV.askGuardian(String(NOW - 12), needs), true);
+  assert.equal(PV.askGuardian(String(NOW - 40), needs), false);
+  for (const partial of ['', '20', '201', 'abcd', null]) assert.equal(PV.askGuardian(partial, needs), false, 'not a full year yet: ' + partial);
+});
+
+test('#9 age: Settings says what is saved, in plain words', () => {
+  assert.match(PV.ageLine(null), /Not given yet/);
+  assert.match(PV.ageLine({ birthYear: null }), /Not given yet/);
+  assert.equal(PV.ageLine({ birthYear: 1990, guardianConsent: false }), 'Born in 1990');
+  assert.equal(PV.ageLine({ birthYear: 2012, guardianConsent: true, guardianEmail: 'p@example.com' }), 'Born in 2012 · a parent or guardian agreed (p@example.com)');
+});
+
+test('#9 age: the screen asks for the year, and under the age a consent tick and an email', () => {
+  const age = screen('YOUR AGE');
+  assert.match(age, /<sc-if value="\{\{ vAge \}\}"/);
+  assert.match(age, /<input value="\{\{ ageYear \}\}" name="year" onChange="\{\{ ageChange \}\}" inputMode="numeric"/);
+  assert.match(age, /\{\{ ageNeedsGuardian \}\}[\s\S]*type="checkbox" checked="\{\{ ageConsent \}\}" onChange="\{\{ ageConsentChange \}\}"[\s\S]*value="\{\{ ageEmail \}\}"/);
+  assert.match(age, /role="alert"[^>]*>\{\{ ageErr \}\}/, 'the saveAge sentence is shown as it is');
+  assert.match(age, /onClick="\{\{ ageSave \}\}"/);
+  assert.match(age, /onClick="\{\{ ageLater \}\}"[^>]*>Not now</);
+  // It saves through backend.js (which checks everything first), and the age is never typed in.
+  assert.match(app, /TTAccount\.saveAge\(String\(s\.ageYear\|\|''\)\.trim\(\)/);
+  assert.match(app, /ageRule\.guardianUnder/);
+  assert.doesNotMatch(app, /'[^'\n]*under 16[^'\n]*'/, 'the age must come from config.js, not be written into the app');
+  // It opens by itself after sign-in (refreshAccess asks the server) and comes first.
+  assert.match(app, /refreshAccess\(\)\{[^]*?this\.checkAge\(\);/);
+  assert.match(app, /const ageAuto = \(view==='login' \|\| view==='home'\) && TTPrivacy\.ageDue\(/);
+  assert.match(app, /vLogin: view==='login' && !ageAuto/);
+  // The browser harness account has answered, so other browser checks don't land on it.
+  const harness = fs.readFileSync(path.join(root, 'tests/browser/harness.js'), 'utf8');
+  assert.match(harness, /birthYear = 2000/);
+  assert.match(harness, /birth_year: birthYear/);
+});
+
+test('#9 your data: Settings offers the download, the age and deleting the account', () => {
+  const set = screen('SETTINGS');
+  const sec = set.slice(set.indexOf('aria-label="Your data"'));
+  assert.ok(set.includes('aria-label="Your data"'), 'Settings has no Your data section');
+  assert.match(sec, /onClick="\{\{ privDownload \}\}"/);
+  assert.match(sec, /\{\{ privAgeLine \}\}[\s\S]*onClick="\{\{ privAgeOpen \}\}"/);
+  // Delete: what goes is listed, a word must be typed, and the button stays off until it is.
+  assert.match(sec, /onClick="\{\{ privDelToggle \}\}" aria-expanded="\{\{ privDelExpanded \}\}" aria-controls="tt-delete"/);
+  assert.match(sec, /id="tt-delete"[\s\S]*\{\{ privDeleted \}\}[\s\S]*\{\{ privDevice \}\}[\s\S]*Type \{\{ privWord \}\} to confirm<input value="\{\{ privTyped \}\}"/);
+  assert.match(sec, /<button onClick="\{\{ privDelete \}\}" disabled="\{\{ privDeleteOff \}\}"/);
+  assert.match(app, /privDeleteOff: !delReady/);
+  assert.match(app, /const delReady = P\.confirmOk\(s\.delTyped\) && !s\.delBusy/);
+  assert.match(sec, /role="alert"[^>]*>\{\{ privDelErr \}\}/);
+  // The admin account gets the reason instead of the button.
+  assert.match(sec, /<sc-if value="\{\{ privIsAdmin \}\}"[\s\S]*\{\{ privAdminNote \}\}/);
+  assert.match(app, /privIsAdmin: !!s\.isAdminAccount, privCanDelete: !s\.isAdminAccount/);
+  assert.match(sec, /href="legal\/privacy\.html#your-data"/);
+});
+
+test('#9 your data: the server does the work, its refusals are shown word for word, and the device forgets', () => {
+  assert.match(app, /TTAccount\.exportData\(\)\s*\.then\(d=>\{ this\.download\(name, d\)/);
+  assert.match(app, /TTAccount\.deleteAccount\(\)\s*\.then\(\(\)=>\{ this\.forgetThisDevice\(\); location\.replace\(location\.pathname \+ '\?deleted=1'\); \}\)/);
+  assert.match(app, /delErr: e\.hint \? String\(e\.message\)/, 'a refusal from the server (admin, renewing subscription) is its own sentence');
+  // After a deletion, the learners' progress on this device goes, or the next account signed in
+  // here would be sent it; the reload lands on the sign-in screen saying so.
+  const forget = app.slice(app.indexOf('  forgetThisDevice(){'), app.indexOf('\n  }\n', app.indexOf('  forgetThisDevice(){')));
+  for (const k of ["'users', 'active', 'content'", "this.BASE + '.d.' + u.id", 'this.KEY']) assert.ok(forget.includes(k), 'forgetThisDevice does not remove ' + k);
+  assert.match(app, /if\(\/\[\?&\]deleted=1\/\.test\(location\.search\)\)\{\s*this\.setState\(\{view:'auth'[^\n]*authMsg: TTPrivacy\.DONE\}\)/);
+});
+
+test('#9 explain it differently: after a wrong answer only, and only an approved one', () => {
+  const learn = screen('LEARN QUESTION');
+  assert.match(learn, /<sc-if value="\{\{ plainShow \}\}"[^>]*>\s*<button onClick="\{\{ plainToggle \}\}" aria-expanded="\{\{ plainExpanded \}\}" aria-controls="tt-plain"/);
+  assert.match(learn, /id="tt-plain"[^>]*><b>In other words:<\/b> \{\{ plainText \}\}/);
+  assert.match(app, /plainShow: answered && !ok && !!q\.plainExplanation,/);
+  // backend.js hands the app a plain explanation only once the admin approved it.
+  assert.match(fs.readFileSync(path.join(root, 'backend.js'), 'utf8'), /plainExplanation: r\.plain_status === 'approved' && r\.plain_explanation \? r\.plain_explanation : undefined/);
+  // The admin's Activity list says it in words.
+  assert.match(app, /case 'plain_shown': return 'Asked for it explained differently:' \+ qt;/);
+});
+
+test('#9 review: plain explanations reuse the memory-tips review screen, one entry per kind', () => {
+  const tips = screen('MEMORY TIPS (admin)');
+  assert.match(tips, /\{\{ tipsKinds \}\}[\s\S]*aria-pressed="\{\{ k\.on \}\}"/);
+  assert.match(tips, /aria-label="\{\{ t\.aria \}\}"/);
+  assert.match(tips, /\{\{ t\.originalShow \}\}[\s\S]*In the bank: \{\{ t\.original \}\}/);
+  // Both kinds are rows of one map; the screen and the save code read from it, not from copies.
+  const review = app.slice(app.indexOf('  REVIEW = {'), app.indexOf('\n  };', app.indexOf('  REVIEW = {')));
+  assert.match(review, /tip: \{[^]*load: \(\)=>TTBank\.tips\(\), save: \(qid, text, status\)=>TTBank\.saveTip\(qid, text, status\)/);
+  assert.match(review, /plain: \{[^]*load: \(\)=>TTBank\.explanations\(\), save: \(qid, text, status\)=>TTBank\.saveExplanation\(qid, text, status\)/);
+  assert.match(review, /text:'plain_explanation', status:'plain_status'/);
+  assert.match(app, /R\.save\(it\.qid, it\.tip, status\)/);
+  assert.equal((app.match(/TTBank\.saveTip\(/g) || []).length, 1, 'one call site: the REVIEW map');
+  assert.match(screen('DASHBOARD'), /Memory tips and plain explanations/);
 });

@@ -350,6 +350,102 @@ window.TTInsights = (function(){
 })();
 </script>
 <script>
+// ---------- Screen helpers (window.TTScreen) ----------
+// Which screen is showing, as one string, so a change of screen can be noticed and the page
+// scrolled back to the top (issue #12 part A). Plain data and pure functions only, so
+// tests/app-files.test.js runs this very block in node. Real head, not <helmet> (see below).
+window.TTScreen = (function(){
+  var S = {};
+  function n(v){ return v == null ? '' : String(v); }       // missing parts read as ''
+
+  // A key that changes whenever a different screen, practice question or mock question is
+  // shown, and stays the same while she answers the one in front of her (picking an answer
+  // must not jump the page away from the explanation).
+  S.key = function(s){
+    s = s || {};
+    var sess = s.session || {}, t = s.test || {};
+    return [n(s.view), n(s.testView), s.printPreview ? 'print' : '', n(sess.startedAt), n(sess.i), n(t.startedAt), n(t.i)].join('|');
+  };
+
+  // The floating notes button (px): its size, its distance from the screen's edges, and the
+  // clear space kept between it and a page's last line. PAD: a page's bottom padding when
+  // the floating button is not showing.
+  S.NOTES = {size: 56, edge: 18, gap: 22};
+  S.PAD = 28;
+  // Screens with a question and an answer row at the bottom. There the notes button sits in
+  // the page after that row instead of floating over it (issue #12 C: it covered "Next →").
+  S.INLINE_NOTES = ['learnQ', 'test'];
+  // A page's bottom padding: with the floating button showing, enough to scroll the last line
+  // clear of it.
+  S.bottomPad = function(floating){ return floating ? S.NOTES.edge + S.NOTES.size + S.NOTES.gap : S.PAD; };
+
+  return S;
+})();
+</script>
+<script>
+// ---------- Your data, your age, deleting the account (window.TTPrivacy) ----------
+// The words and small rules for Settings → Your data (download my data, your age, delete my
+// account) and the age question (issue #9). The server does the work and the deciding
+// (backend.js TTAccount; supabase/schema.sql export_my_data and delete_my_account); this block
+// only says it. Plain data and pure functions, so tests/app-files.test.js runs this very block
+// in node. Real head, not <helmet> (see below).
+window.TTPrivacy = (function(){
+  var P = {};
+
+  // ---- download my data ----
+  // The file's name, with the day it was made ('YYYY-MM-DD').
+  P.exportName = function(day){ return 'theory-trainer-my-data-' + day + '.json'; };
+
+  // ---- delete my account ----
+  // The word she types before the account is deleted, so one slip of a finger can't do it.
+  P.CONFIRM_WORD = 'DELETE';
+  P.confirmOk = function(typed){ return String(typed || '').trim().toUpperCase() === P.CONFIRM_WORD; };
+  // What the server deletes: every table that belongs to the account (each one references
+  // auth.users "on delete cascade" in supabase/schema*.sql). A test checks this list against
+  // the schema, so a new table can't be missing from the explanation.
+  P.DELETED = [
+    {table: 'profiles', say: 'your account: its email address, name and age answers (with a parent or guardian’s email, if one was given)'},
+    {table: 'entitlements', say: 'your access record (free access, trial or subscription)'},
+    {table: 'snapshots', say: 'the progress backup of every learner on this account: answers, memory boxes, mock scores, flags, notes and settings'},
+    {table: 'events', say: 'the activity history: every answer, practice session and mock test'},
+    {table: 'reminders', say: 'your daily reminder settings'},
+    {table: 'push_subs', say: 'the devices set up to receive reminders'}
+  ];
+  // This device: backend.js deleteAccount forgets the session, the offline question bank and
+  // unsent activity; the app then clears the learners' progress kept here, or the next account
+  // signed in on this device would be sent it.
+  P.DEVICE = 'This phone or computer forgets it too: you are signed out, and the learners’ progress, the offline question bank and any activity not yet sent are removed from it, so none of it can end up in another account later.';
+  P.BEFORE = 'Want a copy? Use Download my data first: after this there is nothing left to download. A subscription that is still set to renew has to be cancelled first (Manage subscription).';
+  P.DONE = 'Your account has been deleted, with everything the server kept for it, and this device has forgotten it too.';
+  // The admin account can't delete itself (the server refuses: supabase/schema.sql).
+  P.ADMIN = 'This is the admin account, so it can’t be deleted from the app: that would lock you out of the admin screens. Make another account the admin in Supabase first; this one can then delete itself here.';
+
+  // ---- your age ----
+  // The age question opens by itself once she is signed in, the server has answered, and no
+  // birth year is saved. "Not now" puts it off until the app is next opened; it keeps coming
+  // back until it is answered, because under the age in config.js a parent or guardian has to
+  // agree (REQUIREMENTS: under-16 sign-ups need parental consent).
+  //   o: {signedIn, checked: the server answered, info: TTAccount.age() or null, later}
+  P.ageDue = function(o){
+    return !!(o && o.signedIn && o.checked && o.info && !o.info.birthYear && !o.later);
+  };
+  // Does the year typed so far call for a parent or guardian? Only once it is four digits.
+  // The rule is TTAccount.needsGuardian (config.js, TT_CONFIG.age), passed in, never copied.
+  P.askGuardian = function(yearText, needsGuardian){
+    var y = String(yearText == null ? '' : yearText).trim();
+    return /^\d{4}$/.test(y) && !!needsGuardian(Number(y));
+  };
+  // What Settings says about the saved answer.
+  //   info: TTAccount.age() — {birthYear, guardianConsent, guardianEmail} or null
+  P.ageLine = function(info){
+    if(!info || !info.birthYear) return 'Not given yet. Everyone is asked once.';
+    return 'Born in ' + info.birthYear + (info.guardianConsent ? ' · a parent or guardian agreed (' + (info.guardianEmail || 'email saved') + ')' : '');
+  };
+
+  return P;
+})();
+</script>
+<script>
 // Lives in the real head, NOT in <helmet>: the dc compiler rewrites camelCase
 // tokens inside helmet content (its attribute-preservation pass), which
 // corrupts inline scripts there. Real-head scripts run once, untouched.
@@ -416,7 +512,8 @@ input,select{font-family:inherit}
 <div style="{{ dynStyle }}">
 
 <div class="app-chrome">
-<div style="max-width:680px;margin:0 auto;padding:20px 20px calc(28px + env(safe-area-inset-bottom))">
+<!-- pageStyle: the bottom padding leaves room for the floating notes button (TTScreen.bottomPad) -->
+<div style="{{ pageStyle }}">
 
 <!-- ============ LOGIN ============ -->
 <sc-if value="{{ vLogin }}" hint-placeholder-val="{{ false }}">
@@ -636,6 +733,45 @@ input,select{font-family:inherit}
     </sc-if>
     <button onClick="{{ onbNext }}" style="flex:1;background:#0E7C6B;color:#fff;border:none;border-radius:18px;min-height:56px;font-family:'Nunito',sans-serif;font-weight:900;font-size:18px;cursor:pointer">{{ onbNextLabel }}</button>
   </div>
+</div>
+</sc-if>
+
+<!-- ============ YOUR AGE ============ -->
+<!-- The age question (issue #9): by itself right after an account's first sign-in, and once for
+     accounts made before it existed (TTPrivacy.ageDue); any time from Settings → Your data.
+     Only the birth YEAR is kept. Someone who may be under the age in config.js
+     (TT_CONFIG.age.guardianUnder) needs a parent or guardian to tick the box and add their
+     email. backend.js TTAccount.saveAge checks every answer before saving; its words show here. -->
+<sc-if value="{{ vAge }}" hint-placeholder-val="{{ false }}">
+<div data-screen-label="Your age" style="max-width:460px;margin:0 auto;padding-top:8px">
+  <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+    <sc-if value="{{ ageFromSettings }}" hint-placeholder-val="{{ false }}">
+      <button onClick="{{ ageBack }}" aria-label="Back to Settings" style="flex:none;background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);border-radius:12px;width:44px;height:44px;cursor:pointer;font-size:18px">←</button>
+    </sc-if>
+    <div style="font-family:'Nunito',sans-serif;font-weight:900;font-size:26px;line-height:1.2">What year were you born?</div>
+  </div>
+  <div style="font-size:16px;color:var(--tt-fg-6e6a5e);line-height:1.5;margin-bottom:18px">{{ ageSub }}</div>
+  <label style="display:block;font-size:14px;font-weight:700;color:var(--tt-fg-6e6a5e)">Year you were born<input value="{{ ageYear }}" name="year" onChange="{{ ageChange }}" inputMode="numeric" maxLength="4" autoComplete="bday-year" placeholder="{{ agePlaceholder }}" style="display:block;width:100%;box-sizing:border-box;margin-top:6px;padding:12px 14px;min-height:54px;border:2px solid var(--tt-bd-e8e1d2);border-radius:14px;font-size:18px;background:var(--tt-bg-fff);color:var(--tt-fg-2a2c33)"></label>
+  <!-- Under the age: a parent or guardian agrees and gives their email -->
+  <sc-if value="{{ ageNeedsGuardian }}" hint-placeholder-val="{{ false }}">
+    <section aria-label="Parent or guardian" style="margin-top:16px;background:var(--tt-bg-fbf1dc);border:1px solid var(--tt-bd-f0d9a8);border-radius:16px;padding:14px 16px">
+      <div style="font-family:'Nunito',sans-serif;font-weight:900;font-size:17px">{{ ageGuardianHead }}</div>
+      <div style="font-size:14.5px;line-height:1.5;margin-top:4px">Ask your parent or guardian to read this, tick the box and add their email. Their email is kept with your account as the record that they agreed.</div>
+      <label style="display:flex;gap:12px;align-items:flex-start;margin-top:12px;font-size:15.5px;line-height:1.45;cursor:pointer">
+        <input type="checkbox" checked="{{ ageConsent }}" onChange="{{ ageConsentChange }}" style="flex:none;width:24px;height:24px;margin:0;accent-color:#0E7C6B">
+        <span>I am this learner’s parent or guardian, and I agree to them using Theory Trainer.</span>
+      </label>
+      <label style="display:block;margin-top:12px;font-size:14px;font-weight:700;color:var(--tt-fg-6e6a5e)">Parent or guardian’s email<input type="email" value="{{ ageEmail }}" name="email" onChange="{{ ageChange }}" autocapitalize="none" autoComplete="off" placeholder="name@example.com" style="display:block;width:100%;box-sizing:border-box;margin-top:6px;padding:12px;border:1px solid var(--tt-bd-e8e1d2);border-radius:12px;font-size:16px;background:var(--tt-bg-fff);color:var(--tt-fg-2a2c33)"></label>
+    </section>
+  </sc-if>
+  <sc-if value="{{ ageErrShow }}" hint-placeholder-val="{{ false }}">
+    <div role="alert" style="margin-top:12px;font-size:14.5px;color:var(--tt-fg-b8433d);line-height:1.45">{{ ageErr }}</div>
+  </sc-if>
+  <button onClick="{{ ageSave }}" style="width:100%;margin-top:20px;background:#0E7C6B;color:#fff;border:none;border-radius:18px;min-height:56px;font-family:'Nunito',sans-serif;font-weight:900;font-size:18px;cursor:pointer">{{ ageSaveLabel }}</button>
+  <sc-if value="{{ ageCanLater }}" hint-placeholder-val="{{ false }}">
+    <div style="text-align:center;margin-top:6px"><button onClick="{{ ageLater }}" style="background:none;border:none;color:var(--tt-fg-6e6a5e);font-size:15px;font-weight:700;cursor:pointer;padding:0 8px;min-height:44px;text-decoration:underline">Not now</button></div>
+  </sc-if>
+  <div style="font-size:13px;color:var(--tt-fg-6e6a5e);line-height:1.5;margin-top:14px">Only the year is kept, never the day or month. <a href="legal/privacy.html#h-children" target="_blank" rel="noopener">How the app handles young learners</a></div>
 </div>
 </sc-if>
 
@@ -905,6 +1041,15 @@ input,select{font-family:inherit}
           <sc-if value="{{ hasTip }}" hint-placeholder-val="{{ false }}">
             <div style="margin-top:10px;padding:10px 12px;background:var(--tt-bg-fff);border-radius:12px;font-size:15px;line-height:1.5"><b>{{ tipLabel }}</b> {{ tipText }}</div>
           </sc-if>
+          <!-- Explain it differently (issue #9): after a wrong answer, a plainer re-wording of the
+               same explanation. Only one the admin approved reaches here (backend.js passes
+               q.plainExplanation only when its status is 'approved'). -->
+          <sc-if value="{{ plainShow }}" hint-placeholder-val="{{ false }}">
+            <button onClick="{{ plainToggle }}" aria-expanded="{{ plainExpanded }}" aria-controls="tt-plain" style="margin-top:10px;display:inline-flex;align-items:center;min-height:44px;padding:0 14px;border-radius:12px;background:var(--tt-bg-fff);border:1px solid var(--tt-bd-0e7c6b);color:var(--tt-fg-0a5d50);font-size:15px;font-weight:700;cursor:pointer">{{ plainBtnLabel }}</button>
+            <sc-if value="{{ plainOpen }}" hint-placeholder-val="{{ false }}">
+              <div id="tt-plain" style="margin-top:8px;padding:10px 12px;background:var(--tt-bg-fff);border-radius:12px;font-size:16px;line-height:1.5"><b>In other words:</b> {{ plainText }}</div>
+            </sc-if>
+          </sc-if>
         </div>
         <button onClick="{{ speakExp }}" aria-label="Read the explanation aloud" style="flex:none;width:48px;height:48px;border-radius:50%;background:rgba(255,255,255,.7);border:none;cursor:pointer;color:var(--tt-fg-2a2c33);display:flex;align-items:center;justify-content:center">
           <svg width="22" height="22" viewBox="0 0 24 24"><path d="M4 9 L8 9 L13 4 L13 20 L8 15 L4 15 Z" fill="currentColor"/><path d="M16.5 8.5 Q19.5 12 16.5 15.5" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/></svg>
@@ -919,6 +1064,10 @@ input,select{font-family:inherit}
       <div role="status" style="margin-top:12px;background:var(--tt-bg-e4f2ef);border:1px solid var(--tt-bd-bfe0d8);border-radius:14px;padding:12px 14px;font-size:15px;color:var(--tt-fg-0a5d50);font-weight:700;text-align:center">{{ moreMsg }}</div>
     </sc-if>
     <button onClick="{{ nextQ }}" style="width:100%;margin-top:14px;background:#0E7C6B;color:#fff;border:none;border-radius:18px;min-height:60px;font-family:'Nunito',sans-serif;font-weight:900;font-size:20px;cursor:pointer">{{ nextLabel }}</button>
+  </sc-if>
+  <!-- Notes: in the page on question screens, after Next, so it can never cover it (#12 C) -->
+  <sc-if value="{{ notesInline }}" hint-placeholder-val="{{ false }}">
+    <div style="display:flex;justify-content:flex-end;margin-top:16px"><button onClick="{{ toggleNotes }}" style="{{ notesInlineStyle }}"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24"><path d="M5 4 L16 4 L20 8 L20 20 L5 20 Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M8.5 10.5 L16.5 10.5 M8.5 14 L14.5 14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>My notes</button></div>
   </sc-if>
 </div>
 </sc-if>
@@ -988,12 +1137,18 @@ input,select{font-family:inherit}
     <div style="font-family:'Nunito',sans-serif;font-weight:900;font-size:24px;flex:1">My Progress</div>
   </div>
   <div style="background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);border-radius:22px;padding:20px;display:flex;align-items:center;gap:20px">
-    <svg viewBox="0 0 140 140" style="width:132px;flex:none">
-      <circle cx="70" cy="70" r="58" style="stroke:var(--tt-bd-efe9dc)" stroke-width="13" fill="none"></circle>
-      <circle cx="70" cy="70" r="58" stroke="{{ readyColor }}" stroke-width="13" fill="none" stroke-linecap="round" stroke-dasharray="{{ readyDash }}" transform="rotate(-90 70 70)"></circle>
-      <text x="70" y="76" text-anchor="middle" font-family="Nunito,sans-serif" font-weight="900" font-size="30" style="fill:var(--tt-fg-2a2c33)">{{ readyPct }}%</text>
-      <text x="70" y="94" text-anchor="middle" font-size="11" style="fill:var(--tt-fg-6e6a5e)">ready</text>
-    </svg>
+    <!-- The number is HTML laid over the ring: a {{ value }} inside SVG <text> becomes an HTML
+         <span>, which SVG never draws, so the dial showed only "%" (issue #12 D) -->
+    <div data-tt-dial style="position:relative;width:132px;height:132px;flex:none">
+      <svg aria-hidden="true" viewBox="0 0 140 140" style="display:block;width:132px;height:132px">
+        <circle cx="70" cy="70" r="58" style="stroke:var(--tt-bd-efe9dc)" stroke-width="13" fill="none"></circle>
+        <circle cx="70" cy="70" r="58" stroke="{{ readyColor }}" stroke-width="13" fill="none" stroke-linecap="round" stroke-dasharray="{{ readyDash }}" transform="rotate(-90 70 70)"></circle>
+      </svg>
+      <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding-top:6px">
+        <span style="font-family:'Nunito',sans-serif;font-weight:900;font-size:28px;line-height:1;color:var(--tt-fg-2a2c33)">{{ readyPct }}%</span>
+        <span style="font-size:10.5px;line-height:1;color:var(--tt-fg-6e6a5e)">ready</span>
+      </div>
+    </div>
     <div style="flex:1">
       <div style="font-family:'Nunito',sans-serif;font-weight:900;font-size:22px">{{ readyLabel }}</div>
       <div style="font-size:14.5px;color:var(--tt-fg-6e6a5e);margin-top:6px;line-height:1.5">{{ readySub }}</div>
@@ -1041,13 +1196,16 @@ input,select{font-family:inherit}
   <div style="background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);border-radius:20px;padding:8px 18px">
     <sc-for list="{{ progTopics }}" as="t" hint-placeholder-count="6">
       <div style="padding:10px 0;border-bottom:1px solid var(--tt-bd-f2ede1)">
-        <div style="display:flex;align-items:center;gap:12px">
+        <!-- The row wraps on a phone: the name keeps its line and the bar and status move under
+             it. A row that could not wrap pushed the page 35px past a 390px screen (issue #8),
+             and one that squeezed the name left it 18px wide at the default text size (#12 B). -->
+        <div style="display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px">
           <span style="{{ t.dotStyle }}"></span>
-          <!-- min-width:0 and a bar that can shrink: at 390px a long topic name pushed this
-               row 35px past the screen (found 2026-09-24, issue #8's browser check) -->
-          <span style="flex:1;min-width:0;overflow-wrap:break-word;font-size:15px;line-height:1.3">{{ t.name }}</span>
-          <span style="flex:0 1 110px;min-width:40px;height:10px;background:var(--tt-bg-efe9dc);border-radius:5px;overflow:hidden"><span style="{{ t.barStyle }}"></span></span>
-          <span style="{{ t.statusStyle }}">{{ t.status }}</span>
+          <span style="flex:1 1 150px;min-width:0;overflow-wrap:break-word;font-size:15px;line-height:1.3">{{ t.name }}</span>
+          <span style="flex:0 0 auto;margin-left:auto;display:flex;align-items:center;gap:12px">
+            <span style="width:110px;height:10px;background:var(--tt-bg-efe9dc);border-radius:5px;overflow:hidden"><span style="{{ t.barStyle }}"></span></span>
+            <span style="{{ t.statusStyle }}">{{ t.status }}</span>
+          </span>
         </div>
         <sc-if value="{{ t.showAdvice }}" hint-placeholder-val="{{ false }}">
           <div style="margin:7px 0 2px 24px;font-size:13.5px;color:var(--tt-fg-6e6a5e);line-height:1.5">{{ t.advice }}</div>
@@ -1227,6 +1385,10 @@ input,select{font-family:inherit}
     <button onClick="{{ goReview }}" style="flex:1;background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);border-radius:16px;min-height:54px;font-family:'Nunito',sans-serif;font-weight:800;font-size:17px;cursor:pointer">Review</button>
     <button onClick="{{ nextTQ }}" style="flex:1;background:#0E7C6B;color:#fff;border:none;border-radius:16px;min-height:54px;font-family:'Nunito',sans-serif;font-weight:800;font-size:17px;cursor:pointer">Next →</button>
   </div>
+  <!-- Notes: in the page, after the Back / Review / Next row, so it can never cover Next (#12 C) -->
+  <sc-if value="{{ notesInline }}" hint-placeholder-val="{{ false }}">
+    <div style="display:flex;justify-content:flex-end;margin-top:16px"><button onClick="{{ toggleNotes }}" style="{{ notesInlineStyle }}"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24"><path d="M5 4 L16 4 L20 8 L20 20 L5 20 Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M8.5 10.5 L16.5 10.5 M8.5 14 L14.5 14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>My notes</button></div>
+  </sc-if>
 </div>
 </sc-if>
 
@@ -1252,6 +1414,10 @@ input,select{font-family:inherit}
     <button onClick="{{ backToTest }}" style="flex:1;background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);border-radius:16px;min-height:56px;font-family:'Nunito',sans-serif;font-weight:800;font-size:17px;cursor:pointer">Keep going</button>
     <button onClick="{{ endTest }}" style="flex:1;background:#B8433D;color:#fff;border:none;border-radius:16px;min-height:56px;font-family:'Nunito',sans-serif;font-weight:800;font-size:17px;cursor:pointer">End test</button>
   </div>
+  <!-- Notes: in the page, after Keep going / End test, so it can never cover them (#12 C) -->
+  <sc-if value="{{ notesInline }}" hint-placeholder-val="{{ false }}">
+    <div style="display:flex;justify-content:flex-end;margin-top:16px"><button onClick="{{ toggleNotes }}" style="{{ notesInlineStyle }}"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24"><path d="M5 4 L16 4 L20 8 L20 20 L5 20 Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M8.5 10.5 L16.5 10.5 M8.5 14 L14.5 14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>My notes</button></div>
+  </sc-if>
 </div>
 </sc-if>
 
@@ -1361,13 +1527,19 @@ input,select{font-family:inherit}
 </sc-if>
 
 <!-- ============ MEMORY TIPS (admin) ============ -->
-<!-- Local AI drafts a tip per question (tools/write-memory-tips.js); none reaches a learner
-     until it is approved here. -->
+<!-- The admin checks AI-drafted text before any learner sees it. One screen for both kinds
+     (this.REVIEW, issue #9): memory tips (tools/write-memory-tips.js) and the plain
+     explanations behind "Explain it differently" (tools/write-plain-explanations.js). None
+     reaches a learner until it is approved here. -->
 <sc-if value="{{ vTips }}" hint-placeholder-val="{{ false }}">
 <div data-screen-label="Memory tips">
-  <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+  <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
     <button onClick="{{ goDash }}" aria-label="Back to the dashboard" style="background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);border-radius:12px;width:44px;height:44px;cursor:pointer;font-size:18px">←</button>
-    <div style="font-family:'Nunito',sans-serif;font-weight:900;font-size:24px;flex:1">Memory tips</div>
+    <div style="font-family:'Nunito',sans-serif;font-weight:900;font-size:24px;flex:1">{{ tipsTitle }}</div>
+  </div>
+  <!-- which kind of AI text -->
+  <div role="group" aria-label="Which AI text to check" style="display:flex;gap:8px;margin-bottom:10px">
+    <sc-for list="{{ tipsKinds }}" as="k" hint-placeholder-count="2"><button onClick="{{ k.pick }}" aria-pressed="{{ k.on }}" style="{{ k.style }}">{{ k.label }}</button></sc-for>
   </div>
   <div style="font-size:13px;color:var(--tt-fg-6e6a5e);line-height:1.5;margin-bottom:10px">{{ tipsNote }}</div>
   <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
@@ -1381,7 +1553,11 @@ input,select{font-family:inherit}
       <div style="padding:12px 0;border-bottom:1px solid var(--tt-bd-f2ede1)">
         <div style="font-size:15px;line-height:1.4">{{ t.question }}</div>
         <div style="font-size:13.5px;margin-top:3px;color:var(--tt-fg-1c6b3c)">Answer: {{ t.answer }}</div>
-        <textarea name="{{ t.qid }}" value="{{ t.tip }}" onChange="{{ t.edit }}" aria-label="Memory tip for this question" rows="2" style="display:block;width:100%;box-sizing:border-box;margin-top:8px;padding:10px;border:1px solid var(--tt-bd-e8e1d2);border-radius:10px;font:inherit;font-size:15px;background:var(--tt-bg-faf6ef);color:var(--tt-fg-2a2c33)"></textarea>
+        <!-- plain explanations: the bank's own explanation, to check the re-wording says the same -->
+        <sc-if value="{{ t.originalShow }}" hint-placeholder-val="{{ false }}">
+          <div style="font-size:13.5px;margin-top:3px;color:var(--tt-fg-6e6a5e);line-height:1.45">In the bank: {{ t.original }}</div>
+        </sc-if>
+        <textarea name="{{ t.qid }}" value="{{ t.tip }}" onChange="{{ t.edit }}" aria-label="{{ t.aria }}" rows="{{ t.rows }}" style="display:block;width:100%;box-sizing:border-box;margin-top:8px;padding:10px;border:1px solid var(--tt-bd-e8e1d2);border-radius:10px;font:inherit;font-size:15px;background:var(--tt-bg-faf6ef);color:var(--tt-fg-2a2c33)"></textarea>
         <div style="display:flex;gap:8px;margin-top:8px;align-items:center;flex-wrap:wrap">
           <button onClick="{{ t.approve }}" style="background:#0E7C6B;color:#fff;border:none;border-radius:10px;padding:0 14px;min-height:40px;font-size:14px;font-weight:700;cursor:pointer">{{ t.approveLabel }}</button>
           <button onClick="{{ t.reject }}" style="background:var(--tt-bg-fbeae9);color:var(--tt-fg-b8433d);border:none;border-radius:10px;padding:0 14px;min-height:40px;font-size:14px;font-weight:700;cursor:pointer">Reject</button>
@@ -1522,10 +1698,14 @@ input,select{font-family:inherit}
   <div style="font-family:'Nunito',sans-serif;font-weight:800;font-size:18px;margin:6px 0 10px">Topics — weakest first</div>
   <div style="background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);border-radius:20px;padding:8px 18px">
     <sc-for list="{{ topicBars }}" as="t" hint-placeholder-count="6">
-      <div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--tt-bd-f2ede1)">
-        <span style="flex:1;font-size:15px;line-height:1.3">{{ t.name }}</span>
-        <span style="width:150px;height:10px;background:var(--tt-bg-efe9dc);border-radius:5px;overflow:hidden;flex:none"><span style="{{ t.barStyle }}"></span></span>
-        <span style="width:76px;text-align:right;font-size:14px;color:var(--tt-fg-6e6a5e);flex:none">{{ t.label }}</span>
+      <!-- Wraps on a phone like My Progress's rows: a fixed 150px bar made this 421px wide at
+           390px (#12 B). Bar + figure (218px) still fit the card at the largest text size. -->
+      <div style="display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px;padding:10px 0;border-bottom:1px solid var(--tt-bd-f2ede1)">
+        <span style="flex:1 1 150px;min-width:0;overflow-wrap:break-word;font-size:15px;line-height:1.3">{{ t.name }}</span>
+        <span style="flex:0 0 auto;margin-left:auto;display:flex;align-items:center;gap:12px">
+          <span style="width:130px;height:10px;background:var(--tt-bg-efe9dc);border-radius:5px;overflow:hidden;flex:none"><span style="{{ t.barStyle }}"></span></span>
+          <span style="width:76px;text-align:right;font-size:14px;color:var(--tt-fg-6e6a5e);flex:none">{{ t.label }}</span>
+        </span>
       </div>
     </sc-for>
   </div>
@@ -1592,7 +1772,7 @@ input,select{font-family:inherit}
   <div style="font-family:'Nunito',sans-serif;font-weight:800;font-size:18px;margin:28px 0 10px">Everything she does</div>
   <button onClick="{{ goActivity }}" style="width:100%;background:var(--tt-bg-e4f2ef);border:1px solid var(--tt-bd-bfe0d8);border-radius:16px;min-height:52px;padding:12px 16px;font-size:15.5px;font-weight:700;color:var(--tt-fg-0a5d50);cursor:pointer;text-align:left">Activity: every answer, session and mock, day by day →</button>
 
-  <button onClick="{{ goTips }}" style="width:100%;margin-top:10px;background:var(--tt-bg-fbf1dc);border:1px solid var(--tt-bd-f0d9a8);border-radius:16px;min-height:52px;padding:12px 16px;font-size:15.5px;font-weight:700;color:var(--tt-fg-2a2c33);cursor:pointer;text-align:left">Memory tips: check the AI's tips before Catie sees them →</button>
+  <button onClick="{{ goTips }}" style="width:100%;margin-top:10px;background:var(--tt-bg-fbf1dc);border:1px solid var(--tt-bd-f0d9a8);border-radius:16px;min-height:52px;padding:12px 16px;font-size:15.5px;font-weight:700;color:var(--tt-fg-2a2c33);cursor:pointer;text-align:left">Memory tips and plain explanations: check the AI's words before Catie sees them →</button>
 
   <div style="font-family:'Nunito',sans-serif;font-weight:800;font-size:18px;margin:28px 0 10px">Flagged for extra revision</div>
   <button onClick="{{ goFlagged }}" style="width:100%;background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);border-radius:16px;min-height:52px;padding:12px 16px;font-size:15.5px;font-weight:700;color:var(--tt-fg-2a2c33);cursor:pointer;text-align:left">{{ flaggedLine }} →</button>
@@ -1601,10 +1781,12 @@ input,select{font-family:inherit}
   <sc-if value="{{ hasHard }}" hint-placeholder-val="{{ false }}">
     <div style="background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);border-radius:20px;padding:4px 18px">
       <sc-for list="{{ hardRows }}" as="h" hint-placeholder-count="5">
-        <div style="display:flex;gap:12px;align-items:baseline;padding:10px 0;border-bottom:1px solid var(--tt-bd-f2ede1)">
+        <!-- Wraps: at the largest text size the one-line figure ("0/2 · Incidents and
+             emergencies") pushed the dashboard 5px past a 390px screen (#12 B) -->
+        <div style="display:flex;flex-wrap:wrap;gap:2px 12px;align-items:baseline;padding:10px 0;border-bottom:1px solid var(--tt-bd-f2ede1)">
           <span style="flex:none;width:24px;font-family:'Nunito',sans-serif;font-weight:900;color:var(--tt-fg-b5ae9e);font-size:14px">{{ h.rank }}</span>
-          <span style="flex:1;font-size:14.5px;line-height:1.35">{{ h.text }}</span>
-          <span style="flex:none;font-size:12.5px;color:var(--tt-fg-6e6a5e);white-space:nowrap">{{ h.meta }}</span>
+          <span style="flex:1 1 150px;min-width:0;font-size:14.5px;line-height:1.35">{{ h.text }}</span>
+          <span style="flex:0 1 auto;margin-left:auto;font-size:12.5px;color:var(--tt-fg-6e6a5e)">{{ h.meta }}</span>
         </div>
       </sc-for>
     </div>
@@ -1795,9 +1977,10 @@ input,select{font-family:inherit}
         <sc-for list="{{ voiceOpts }}" as="v" hint-placeholder-count="2"><option value="{{ v.v }}">{{ v.label }}</option></sc-for>
       </select>
     </div>
-    <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 0;border-bottom:1px solid var(--tt-bd-f2ede1)">
+    <!-- wraps: at the largest text size "Faster" ran 6px past a 390px screen -->
+    <div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;padding:14px 0;border-bottom:1px solid var(--tt-bd-f2ede1)">
       <span style="font-size:16.5px">Voice speed</span>
-      <div style="display:flex;gap:6px">
+      <div style="display:flex;flex-wrap:wrap;gap:6px">
         <sc-for list="{{ speedChoices }}" as="s" hint-placeholder-count="3"><button onClick="{{ s.pick }}" style="{{ s.style }}">{{ s.label }}</button></sc-for>
       </div>
     </div>
@@ -1853,6 +2036,59 @@ input,select{font-family:inherit}
   </div>
   <button onClick="{{ addLearner }}" style="width:100%;margin-top:12px;background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);border-radius:14px;min-height:50px;font-size:15px;cursor:pointer;color:var(--tt-fg-0e7c6b);font-weight:700">+ Add another learner</button>
   <button onClick="{{ resetProgress }}" style="width:100%;margin-top:24px;background:none;border:1px solid #D14B45;color:var(--tt-fg-b8433d);border-radius:14px;min-height:50px;font-size:15px;cursor:pointer">Reset all progress…</button>
+  <!-- Your data (issue #9): a copy of everything the server keeps for this account, the age
+       answer, and deleting the account. TTPrivacy has the words; backend.js TTAccount does the
+       work, and the server's own sentence is shown when it refuses. -->
+  <div style="font-family:'Nunito',sans-serif;font-weight:800;font-size:18px;margin:24px 0 10px">Your data</div>
+  <section aria-label="Your data" style="background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);border-radius:20px;padding:6px 18px">
+    <sc-if value="{{ privSignedOut }}" hint-placeholder-val="{{ false }}">
+      <div style="padding:14px 0;font-size:14.5px;color:var(--tt-fg-6e6a5e);line-height:1.5">Sign in to download or delete what the server keeps for your account. Without an account, progress is kept on this device only.</div>
+    </sc-if>
+    <sc-if value="{{ privSignedIn }}" hint-placeholder-val="{{ true }}">
+      <!-- download my data -->
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;padding:14px 0;border-bottom:1px solid var(--tt-bd-f2ede1)">
+        <span style="flex:1 1 200px;font-size:16.5px">Download my data<span style="display:block;font-size:13px;color:var(--tt-fg-6e6a5e);margin-top:2px;line-height:1.45">Everything the server keeps for this account, in one file: account, access, progress backup, reminders and activity.</span></span>
+        <button onClick="{{ privDownload }}" style="flex:none;background:var(--tt-bg-e4f2ef);color:var(--tt-fg-0a5d50);border:none;border-radius:12px;min-height:44px;padding:0 16px;font-size:14.5px;font-weight:700;cursor:pointer">{{ privDownloadLabel }}</button>
+      </div>
+      <sc-if value="{{ privDlMsgShow }}" hint-placeholder-val="{{ false }}">
+        <div role="status" style="padding:10px 0;border-bottom:1px solid var(--tt-bd-f2ede1);font-size:13.5px;line-height:1.45;color:var(--tt-fg-6e6a5e)">{{ privDlMsg }}</div>
+      </sc-if>
+      <!-- your age -->
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;padding:14px 0;border-bottom:1px solid var(--tt-bd-f2ede1)">
+        <span style="flex:1 1 200px;font-size:16.5px">Your age<span style="display:block;font-size:13px;color:var(--tt-fg-6e6a5e);margin-top:2px;line-height:1.45;overflow-wrap:anywhere">{{ privAgeLine }}</span></span>
+        <button onClick="{{ privAgeOpen }}" style="flex:none;background:var(--tt-bg-e4f2ef);color:var(--tt-fg-0a5d50);border:none;border-radius:12px;min-height:44px;padding:0 16px;font-size:14.5px;font-weight:700;cursor:pointer">{{ privAgeBtn }}</button>
+      </div>
+      <!-- delete my account: the admin account can't, and says why -->
+      <sc-if value="{{ privIsAdmin }}" hint-placeholder-val="{{ false }}">
+        <div style="padding:14px 0">
+          <div style="font-size:16.5px">Delete my account</div>
+          <div style="font-size:13.5px;color:var(--tt-fg-6e6a5e);margin-top:4px;line-height:1.5">{{ privAdminNote }}</div>
+        </div>
+      </sc-if>
+      <sc-if value="{{ privCanDelete }}" hint-placeholder-val="{{ true }}">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;padding:14px 0">
+          <span style="flex:1 1 200px;font-size:16.5px">Delete my account<span style="display:block;font-size:13px;color:var(--tt-fg-6e6a5e);margin-top:2px;line-height:1.45">Deletes this account and everything the server keeps for it. You are shown exactly what first.</span></span>
+          <button onClick="{{ privDelToggle }}" aria-expanded="{{ privDelExpanded }}" aria-controls="tt-delete" style="flex:none;background:none;border:1px solid #D14B45;color:var(--tt-fg-b8433d);border-radius:12px;min-height:44px;padding:0 16px;font-size:14.5px;font-weight:700;cursor:pointer">{{ privDelToggleLabel }}</button>
+        </div>
+        <sc-if value="{{ privDelOpen }}" hint-placeholder-val="{{ false }}">
+          <div id="tt-delete" style="background:var(--tt-bg-fbeae9);border:1px solid var(--tt-bd-e8b7b4);border-radius:16px;padding:14px 16px;margin-bottom:14px;font-size:14.5px;line-height:1.5;color:var(--tt-fg-2a2c33)">
+            <div style="font-family:'Nunito',sans-serif;font-weight:900;font-size:16px;color:var(--tt-fg-b8433d)">This deletes, for good:</div>
+            <ul style="margin:6px 0 0;padding-left:20px;display:flex;flex-direction:column;gap:4px">
+              <sc-for list="{{ privDeleted }}" as="d" hint-placeholder-count="6"><li>{{ d.say }}</li></sc-for>
+            </ul>
+            <p style="margin:10px 0 0">{{ privDevice }}</p>
+            <p style="margin:8px 0 0">{{ privBefore }}</p>
+            <label style="display:block;margin-top:12px;font-size:14px;font-weight:700">Type {{ privWord }} to confirm<input value="{{ privTyped }}" onChange="{{ privTypedChange }}" autocapitalize="characters" autoComplete="off" spellCheck="false" style="display:block;width:100%;box-sizing:border-box;margin-top:6px;padding:12px;border:1px solid var(--tt-bd-e8b7b4);border-radius:12px;font-size:16px;background:var(--tt-bg-fff);color:var(--tt-fg-2a2c33)"></label>
+            <button onClick="{{ privDelete }}" disabled="{{ privDeleteOff }}" style="{{ privDeleteStyle }}">{{ privDeleteLabel }}</button>
+            <sc-if value="{{ privDelErrShow }}" hint-placeholder-val="{{ false }}">
+              <div role="alert" style="margin-top:10px;font-weight:700;color:var(--tt-fg-b8433d)">{{ privDelErr }}</div>
+            </sc-if>
+          </div>
+        </sc-if>
+      </sc-if>
+    </sc-if>
+  </section>
+  <div style="font-size:13px;color:var(--tt-fg-6e6a5e);line-height:1.5;margin-top:8px">What is kept, and why: <a href="legal/privacy.html#your-data" target="_blank" rel="noopener">Privacy</a></div>
   <!-- Help and legal pages (TTWelcome.LINKS), each in its own tab, and the DVSA line -->
   <div style="font-family:'Nunito',sans-serif;font-weight:800;font-size:18px;margin:24px 0 10px">Help and legal</div>
   <nav aria-label="Help and legal" style="background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);border-radius:20px;padding:4px 18px;display:flex;flex-direction:column">
@@ -2076,7 +2312,13 @@ class Component extends DCLogic {
       printFormat: 'cards', printScope: 'all', printPreview: false, printData: null, printRendered: 0,
       // appVersion: sw.js VERSION once read (loadVersion) · cloudPulled: this account's saved
       // copy has come down (pullCloud) · onbStep: which quick-setup question is showing
-      appVersion: '', cloudPulled: false, onbStep: 0
+      appVersion: '', cloudPulled: false, onbStep: 0,
+      // Your data and the age question (issue #9). ageInfo: TTAccount.age() once the server has
+      // answered (ageChecked) · ageLater: "Not now" pressed, until the app is next opened ·
+      // ageYear/ageConsent/ageEmail: the form · ageFrom: 'settings' when opened from there ·
+      // dl*: Download my data · del*: Delete my account (delTyped: what she typed to confirm)
+      ageInfo: null, ageChecked: false, ageLater: false, ageYear: '', ageConsent: false, ageEmail: '', ageErr: '', ageBusy: false, ageFrom: '',
+      dlBusy: false, dlMsg: '', delOpen: false, delTyped: '', delBusy: false, delErr: ''
     };
     const au = users.find(x=>x.id===activeId) || users[0];
     if(!saved.settings || !saved.settings.learnerName || saved.settings.learnerName==='Learner') this.state.settings.learnerName = au.name;
@@ -2260,6 +2502,12 @@ class Component extends DCLogic {
       setTimeout(()=>this.refreshAccess(), 4000);
       try { history.replaceState(null, '', location.pathname); } catch(e) {}
     }
+    // Back from deleting the account (deleteMyAccount reloads the page with ?deleted=1): say
+    // it is done on the sign-in screen, and take the flag out of the address bar.
+    if(/[?&]deleted=1/.test(location.search)){
+      this.setState({view:'auth', authView:'signin', authOk:true, authCode:'', authMsg: TTPrivacy.DONE});
+      try { history.replaceState(null, '', location.pathname); } catch(e) { /* the address keeps the flag: harmless */ }
+    }
     setTimeout(()=>this.maybeLocalNudge(), 2500);
     this.tick = setInterval(()=>{ if(this.state.test && !this.state.test.ended) this.setState({now: Date.now()}); }, 500);
     if(window.speechSynthesis){ speechSynthesis.getVoices(); speechSynthesis.onvoiceschanged = ()=>this.forceUpdate(); }
@@ -2276,22 +2524,43 @@ class Component extends DCLogic {
       .then(([events, accounts])=>this.setState({actBusy:false, actEvents:events, actAccountsList:accounts}))
       .catch(e=>this.setState({actBusy:false, actErr:'Could not load activity: '+String(e.message||e)+'. Check the connection and press Refresh.'}));
   }
-  // Admin → Memory tips: load every drafted tip; save one (approve, reject, or edit).
-  openTips(){
-    this.setState({view:'tips', tipsBusy:true, tipsErr:'', tipsEdits:{}});
-    if(!(window.TTBank && TTBank.tips && window.TTAuth && TTAuth.signedIn())){ this.setState({tipsBusy:false, tipsErr:'Sign in as the admin to review tips.'}); return; }
-    TTBank.tips().then(rows=>this.setState({tipsBusy:false, tipsList:rows}))
-      .catch(e=>this.setState({tipsBusy:false, tipsErr:'Could not load the tips: '+String(e.message||e)+'. Check the connection and open this screen again.'}));
+  // Admin → Memory tips: the AI-drafted text the admin checks before a learner sees it. One
+  // review screen serves every kind; each kind is one entry here (issue #9: reuse the memory
+  // tips review, don't copy it). load/save are backend.js TTBank calls; text/status are the
+  // server's column names; showOriginal puts the bank's own explanation beside the draft.
+  REVIEW = {
+    tip: {label:'Memory tips', noun:'tips', text:'memory_tip', status:'tip_status', showOriginal:false, rows:2,
+      aria:'Memory tip for this question',
+      load: ()=>TTBank.tips(), save: (qid, text, status)=>TTBank.saveTip(qid, text, status),
+      empty:'No tips yet. They are written by the local AI on the home PC (tools/write-memory-tips.js), then loaded here as drafts.',
+      about:'Each tip was written by the local AI from its own question and checked for invented numbers. Catie only sees a tip once you approve it. Edit any wording first if you like.'},
+    plain: {label:'Plain explanations', noun:'explanations', text:'plain_explanation', status:'plain_status', showOriginal:true, rows:3,
+      aria:'Plain explanation for this question',
+      load: ()=>TTBank.explanations(), save: (qid, text, status)=>TTBank.saveExplanation(qid, text, status),
+      empty:'No plain explanations yet. The local AI drafts them on the home PC (tools/write-plain-explanations.js), then they are loaded here as drafts.',
+      about:'Each one says the same as the bank\u2019s explanation in plainer words, for \u201cExplain it differently\u201d after a wrong answer. The local AI drafted it from the question, the right answer and the explanation, and it was machine-checked. Catie only sees one once you approve it. Check it against \u201cIn the bank\u201d, and edit any wording first if you like.'}
+  };
+  // Opens the review screen on one kind (the last one looked at, or memory tips) and loads it.
+  openTips(kind){
+    const k = this.REVIEW[kind] ? kind : (this.REVIEW[this.state.tipsKind] ? this.state.tipsKind : 'tip'), R = this.REVIEW[k];
+    this.setState({view:'tips', tipsKind:k, tipsList:[], tipsBusy:true, tipsErr:'', tipsEdits:{}});
+    if(!(window.TTBank && window.TTAuth && TTAuth.signedIn())){ this.setState({tipsBusy:false, tipsErr:'Sign in as the admin to review ' + R.noun + '.'}); return; }
+    // A reply for a kind no longer on screen (she switched while it loaded) is dropped.
+    R.load().then(rows=>{ if(this.state.tipsKind===k) this.setState({tipsBusy:false, tipsList:rows}); })
+      .catch(e=>{ if(this.state.tipsKind===k) this.setState({tipsBusy:false, tipsErr:'Could not load the ' + R.noun + ': '+String(e.message||e)+'. Check the connection and open this screen again.'}); });
   }
+  // Saves drafts of the kind on screen (approve, reject, or edit).
+  //   items: [{qid, tip}] — saved one by one; the list updates as each one lands
   saveTips(items, status){
-    // items: [{qid, tip}] — saved one by one; the list updates as each one lands
+    const kind = this.state.tipsKind || 'tip', R = this.REVIEW[kind];
     const next = (this.state.tipsList||[]).slice();
-    return items.reduce((p, it)=>p.then(()=>TTBank.saveTip(it.qid, it.tip, status).then(()=>{
-      const k = next.findIndex(r=>r.qid===it.qid); if(k>=0) next[k] = {qid:it.qid, memory_tip:it.tip, tip_status:status};
-      this.track('tip_'+status, it.qid);
+    const mine = ()=>this.state.tipsKind===kind;            // still showing this kind?
+    return items.reduce((p, it)=>p.then(()=>R.save(it.qid, it.tip, status).then(()=>{
+      const k = next.findIndex(r=>r.qid===it.qid); if(k>=0) next[k] = Object.assign({}, next[k], {[R.text]: it.tip, [R.status]: status});
+      this.track(kind + '_' + status, it.qid);                // tip_approved, plain_rejected, ...
     })), Promise.resolve())
-      .then(()=>{ this.setState({tipsList:next, tipsErr:''}); this.loadBank(); })
-      .catch(e=>this.setState({tipsList:next, tipsErr:'Saving failed: '+String(e.message||e)+'. Nothing after that one was saved; try again.'}));
+      .then(()=>{ if(mine()) this.setState({tipsList:next, tipsErr:''}); this.loadBank(); })
+      .catch(e=>{ if(mine()) this.setState({tipsList:next, tipsErr:'Saving failed: '+String(e.message||e)+'. Nothing after that one was saved; try again.'}); });
   }
   // Questions she keeps missing (coach.js "stuck"), worst first. Each says which wrong
   // answer she keeps choosing and how often (coach.js misconceptions), or, when she hasn't
@@ -2347,6 +2616,9 @@ class Component extends DCLogic {
     const prev = this._seen, s = this.state, now = Date.now();
     this._seen = s;
     if(!prev || prev === s) return;
+    // A different screen (or the next question) starts at the top, not at the old screen's
+    // scroll position (issue #12 A: Road Signs opened half-way down after a tap low on Home).
+    if(window.TTScreen && TTScreen.key(prev) !== TTScreen.key(s)) { try { window.scrollTo(0, 0); } catch(e) { /* no window to scroll */ } }
     const secs = t=>Math.round((now - (t||now))/1000);
     if(s.view !== prev.view) this.track('screen', null, {view: s.view, from: prev.view});
     // A different learner (or a sync reloading this one) isn't something she did:
@@ -2438,7 +2710,8 @@ class Component extends DCLogic {
   }
   refreshAccess(){
     const on = !!(window.TTBackend && TTBackend.configured() && window.TTAuth && TTAuth.signedIn());
-    if(!on){ this.setState({access:null, accessBusy:false}); return; }
+    if(!on){ this.setState({access:null, accessBusy:false, ageInfo:null, ageChecked:false}); return; }
+    this.checkAge();
     this.setState({accessBusy:true});
     TTBill.status().then(a=>{
       const gained = a.active && !(this.state.access && this.state.access.active);
@@ -2446,6 +2719,66 @@ class Component extends DCLogic {
       if(gained || (a.active && this.state.bankSource!=='server')) this.loadBank();
     }).catch(()=>this.setState({accessBusy:false}));
     TTAuth.isAdmin().then(v=>this.setState({isAdminAccount:v})).catch(()=>{});
+  }
+  // ---------- your data and your age (issue #9; words in TTPrivacy) ----------
+  // Asks the server for this account's age answer. Until it answers (or if it can't, e.g.
+  // offline) the age question stays away: it is only asked on a known "no answer yet".
+  checkAge(){
+    if(!(window.TTAccount && window.TTAuth && TTAuth.signedIn())) return;
+    TTAccount.age()
+      .then(info=>this.setState({ageInfo: info, ageChecked: true}))
+      .catch(e=>{ console.warn('Age check: could not read the saved answer (' + String(e.message||e) + '); it is asked again next time the app opens.'); this.setState({ageChecked:false}); });
+  }
+  // The age question, from Settings → Your data (Back returns there) or by itself (Not now).
+  openAge(fromSettings){
+    const a = this.state.ageInfo || {};
+    this.setState({view: fromSettings ? 'age' : this.state.view, ageFrom: fromSettings ? 'settings' : '',
+      ageYear: a.birthYear ? String(a.birthYear) : '', ageConsent: !!a.guardianConsent, ageEmail: a.guardianEmail || '', ageErr: ''});
+  }
+  // Does the year typed so far need a parent or guardian? (TTAccount.needsGuardian: config.js)
+  ageNeedsGuardian(){
+    try { return TTPrivacy.askGuardian(this.state.ageYear, TTAccount.needsGuardian); }
+    catch(e) { return false; }                               // rule missing: saveAge says so on Save
+  }
+  // Save: backend.js TTAccount.saveAge checks everything first (a real year; under the age, the
+  // box ticked and a parent's or guardian's email that isn't her own) and its sentence shows here.
+  saveAgeAnswer(){
+    const s = this.state, need = this.ageNeedsGuardian();
+    this.setState({ageBusy:true, ageErr:''});
+    TTAccount.saveAge(String(s.ageYear||'').trim(), need ? s.ageConsent === true : false, need ? s.ageEmail : '')
+      .then(saved=>{
+        const info = {birthYear: saved.birthYear, guardianConsent: !!saved.guardianConsent, guardianEmail: saved.guardianEmail || '', needsGuardian: saved.needsGuardian};
+        this.setState({ageBusy:false, ageInfo: info, ageChecked: true, ageErr: '', view: s.ageFrom==='settings' ? 'settings' : s.view, ageFrom: ''});
+      })
+      .catch(e=>this.setState({ageBusy:false, ageErr: String(e.message||e)}));
+  }
+  // Download my data: everything the server keeps for this account, as one JSON file.
+  downloadMyData(){
+    const name = TTPrivacy.exportName(TTInsights.localDay(Date.now()));
+    this.setState({dlBusy:true, dlMsg:''});
+    TTAccount.exportData()
+      .then(d=>{ this.download(name, d); this.setState({dlBusy:false, dlMsg:'Downloaded ' + name + '. It is a JSON file: any text editor can open it.'}); })
+      .catch(e=>this.setState({dlBusy:false, dlMsg:'Could not download your data: ' + String(e.message||e) + '. Check the connection and try again.'}));
+  }
+  // Delete my account. The server deletes the account and every row it owns, or refuses with
+  // a sentence saying what to do (the admin account; a subscription still set to renew), shown
+  // word for word. Once deleted, this device forgets it too and the page starts again.
+  deleteMyAccount(){
+    const s = this.state;
+    if(!TTPrivacy.confirmOk(s.delTyped)){ this.setState({delErr:'Type ' + TTPrivacy.CONFIRM_WORD + ' in the box first, then press the button.'}); return; }
+    this.setState({delBusy:true, delErr:''});
+    TTAccount.deleteAccount()
+      .then(()=>{ this.forgetThisDevice(); location.replace(location.pathname + '?deleted=1'); })
+      .catch(e=>this.setState({delBusy:false, delErr: e.hint ? String(e.message) : 'Deleting did not finish: ' + String(e.message||e) + '. Check the connection and try again.'}));
+  }
+  // After a deletion: the learners' progress kept on this device goes too. Left here, the next
+  // account signed in on this device would be sent it (pullCloud, then flushCloud pushes this
+  // device's copy). The theme and other device choices stay.
+  forgetThisDevice(){
+    clearTimeout(this._pushT); this._dirty = false;
+    const keys = ['users', 'active', 'content'].map(k=>this.BASE + '.' + k)
+      .concat(this.users.map(u=>this.BASE + '.d.' + u.id), [this.KEY, 'theoryTrainer.sync', 'tt.events.q']);
+    keys.forEach(k=>{ try { localStorage.removeItem(k); } catch(e) { /* storage blocked: nothing kept to remove */ } });
   }
   authSubmit(){
     const s = this.state, mode = s.authView||'signin';
@@ -2494,7 +2827,7 @@ class Component extends DCLogic {
   }
   doSignOut(){
     if(!window.TTAuth) return;
-    TTAuth.signOut().then(()=>this.setState({view:'auth', access:null, isAdminAccount:false, authPw:'', authMsg:'', bank:[], bankSource:'', loaded:false, cloudPulled:false}, ()=>this.loadBank()));
+    TTAuth.signOut().then(()=>this.setState({view:'auth', access:null, isAdminAccount:false, authPw:'', authMsg:'', bank:[], bankSource:'', loaded:false, cloudPulled:false, ageInfo:null, ageChecked:false, ageLater:false, delOpen:false, delTyped:'', dlMsg:''}, ()=>this.loadBank()));
   }
   saveServerConfig(){
     const u = (this.state.cfgUrl||'').trim(), k = (this.state.cfgKey||'').trim();
@@ -2937,7 +3270,7 @@ class Component extends DCLogic {
 
   tipsVals(chip){
     const s = this.state, view = s.view;
-    const out = {vTips: view==='tips', goTips: ()=>this.openTips()};
+    const out = {vTips: view==='tips', goTips: ()=>this.openTips(s.tipsKind)};
     // "Keeps tripping you up" — worked out only where it shows
     const trip = (view==='home' || view==='learnDone') ? this.tripping() : [];
     Object.assign(out, {tripShow: trip.length>0, tripCount: trip.length, tripRows: trip.slice(0,3),
@@ -2945,18 +3278,25 @@ class Component extends DCLogic {
       tripDrill: ()=>this.buildSession(trip.map(t=>t.id), 'Tripping me up', {drill:true, repeats:{}})});
     if(view!=='tips') return out;
     const bank = {}; this.questions().forEach(q=>{ bank[q.id] = q; });
-    const tab = s.tipsTab || 'draft', rows = (s.tipsList||[]).filter(r=>(r.tip_status||'draft')===tab && bank[r.qid]);
-    const edits = s.tipsEdits || {}, textOf = r=>(edits[r.qid]!=null ? edits[r.qid] : r.memory_tip) || '';
-    const count = st=>(s.tipsList||[]).filter(r=>(r.tip_status||'draft')===st).length;
+    // The kind on screen (this.REVIEW): which columns hold its text and status.
+    const kind = this.REVIEW[s.tipsKind] ? s.tipsKind : 'tip', R = this.REVIEW[kind], statusOf = r=>r[R.status]||'draft';
+    const tab = s.tipsTab || 'draft', rows = (s.tipsList||[]).filter(r=>statusOf(r)===tab && bank[r.qid]);
+    const edits = s.tipsEdits || {}, textOf = r=>(edits[r.qid]!=null ? edits[r.qid] : r[R.text]) || '';
+    const count = st=>(s.tipsList||[]).filter(r=>statusOf(r)===st).length;
+    // The two kinds as a pair of big buttons; the one on screen is filled green.
+    const kindStyle = on => 'flex:1;min-height:48px;padding:6px 10px;border-radius:14px;cursor:pointer;font-size:15px;font-weight:800;' + (on ? 'background:#0E7C6B;color:#fff;border:2px solid #0E7C6B' : 'background:var(--tt-bg-fff);color:var(--tt-fg-2a2c33);border:2px solid var(--tt-bd-e8e1d2)');
     return Object.assign(out, {
-      tipsNote: s.tipsBusy ? 'Loading\u2026' : s.tipsErr ? s.tipsErr : !(s.tipsList||[]).length ? 'No tips yet. They are written by the local AI on the home PC (tools/write-memory-tips.js), then loaded here as drafts.' : 'Each tip was written by the local AI from its own question and checked for invented numbers. Catie only sees a tip once you approve it. Edit any wording first if you like.',
+      tipsTitle: R.label,
+      tipsKinds: Object.keys(this.REVIEW).map(k=>({label: this.REVIEW[k].label, on: String(k===kind), style: kindStyle(k===kind), pick: ()=>{ if(k!==kind) this.openTips(k); }})),
+      tipsNote: s.tipsBusy ? 'Loading\u2026' : s.tipsErr ? s.tipsErr : !(s.tipsList||[]).length ? R.empty : R.about,
       tipsTabs: [['draft','To check'],['approved','Approved'],['rejected','Rejected']].map(([k,l])=>({label: l+' ('+count(k)+')', pick: ()=>this.setState({tipsTab:k}), style: chip(tab===k)})),
       tipsShownCount: Math.min(rows.length, 50),
       tipsCanApproveAll: tab==='draft' && rows.length>0,
-      tipsApproveAll: ()=>{ const list = rows.slice(0,50); if(confirm('Approve these '+list.length+' tips as they stand? Catie will start seeing them.')) this.saveTips(list.map(r=>({qid:r.qid, tip:textOf(r)})), 'approved'); },
+      tipsApproveAll: ()=>{ const list = rows.slice(0,50); if(confirm('Approve these '+list.length+' '+R.noun+' as they stand? Catie will start seeing them.')) this.saveTips(list.map(r=>({qid:r.qid, tip:textOf(r)})), 'approved'); },
       tipsRows: rows.slice(0,50).map(r=>{ const q = bank[r.qid]; return {qid:r.qid, question:q.question, answer:q.options[q.correctIndex], tip: textOf(r),
-        status: r.tip_status==='approved' ? 'Live for Catie' : r.tip_status==='rejected' ? 'Hidden' : 'Not shown yet',
-        approveLabel: r.tip_status==='approved' ? 'Save' : 'Approve',
+        aria: R.aria, rows: R.rows, originalShow: R.showOriginal, original: R.showOriginal ? (q.explanation || '') : '',
+        status: statusOf(r)==='approved' ? 'Live for Catie' : statusOf(r)==='rejected' ? 'Hidden' : 'Not shown yet',
+        approveLabel: statusOf(r)==='approved' ? 'Save' : 'Approve',
         edit: e=>this.setState({tipsEdits: Object.assign({}, s.tipsEdits, {[r.qid]: e.target.value})}),
         approve: ()=>this.saveTips([{qid:r.qid, tip:textOf(r)}], 'approved'),
         reject: ()=>this.saveTips([{qid:r.qid, tip:textOf(r)}], 'rejected')}; })
@@ -3102,6 +3442,7 @@ class Component extends DCLogic {
         case 'flag': return 'Flagged:' + qt;
         case 'unflag': return 'Un-flagged:' + qt;
         case 'more_like_this': return 'Asked for more like this (' + d.found + ' found)';
+        case 'plain_shown': return 'Asked for it explained differently:' + qt;
         case 'screen': return 'Opened ' + (SCREEN[d.view] || d.view);
         default: return e.kind.replace(/_/g,' ') + qt;
       }
@@ -3109,7 +3450,7 @@ class Component extends DCLogic {
     // Screen ids as a person would say them, for the "Latest" list.
     const SCREEN = {home:'Home', login:'who\u2019s-here', auth:'sign in', learnSetup:'Practise', learnQ:'a practice question', learnDone:'session results',
       testIntro:'Mock test', test:'the mock test', dash:'the Admin dashboard', settings:'Settings', answers:'My answers', flagged:'Flagged',
-      activity:'Activity', progress:'My Progress', signs:'Road signs', print:'Print', editor:'the question editor', payPreview:'plans', setup:'server settings', plan:'the study plan'};
+      activity:'Activity', progress:'My Progress', signs:'Road signs', print:'Print', editor:'the question editor', payPreview:'plans', setup:'server settings', plan:'the study plan', age:'the age question'};
     const dayLabel = k=>{ try { return new Date(k+'T12:00').toLocaleDateString('en-GB', {weekday:'short', day:'numeric', month:'short'}); } catch(e){ return k; } };
     return {
       vActivity: s.view==='activity',
@@ -3165,13 +3506,18 @@ class Component extends DCLogic {
     const forceAuth = backendOn && !signedIn;
     const view = forceAuth ? (s.view==='setup' ? 'setup' : s.view==='login' ? 'login' : 'auth') : (s.printPreview ? 'printPreview' : s.view);
 
+    // ----- the age question (issue #9) -----
+    // It opens by itself over the learner picker or Home once the server says this account has
+    // no answer yet (TTPrivacy.ageDue), and comes first: the quick setup and What's new wait.
+    const ageAuto = (view==='login' || view==='home') && TTPrivacy.ageDue({signedIn, checked: s.ageChecked, info: s.ageInfo, later: s.ageLater});
+
     // ----- quick setup and What's new (the rules are TTWelcome's, in the page head) -----
     // Home turns into the quick setup while it's due, whichever way she got to Home.
     const TW = window.TTWelcome;
     const learnerNow = {settings: st, attempts: s.attempts, tests: s.tests, isParent};
     const dataReady = !(window.TTSync && TTSync.configured()) || !!s.cloudPulled;
-    const onbShow = view==='onboard' || (view==='home' && !locked && TW.onboardingDue(Object.assign({dataReady}, learnerNow)));
-    const newsShow = view==='home' && !locked && !onbShow && TW.newsDue(Object.assign({version: s.appVersion}, learnerNow));
+    const onbShow = view==='onboard' || (view==='home' && !locked && !ageAuto && TW.onboardingDue(Object.assign({dataReady}, learnerNow)));
+    const newsShow = view==='home' && !locked && !ageAuto && !onbShow && TW.newsDue(Object.assign({version: s.appVersion}, learnerNow));
     const onbStep = Math.max(0, Math.min(2, s.onbStep||0));
     const setGoal = g => this.set({settings: Object.assign({}, st, {dailyGoal:g})});
     // Big, 60px-tall choice buttons for the quick setup; chosen = filled green.
@@ -3249,6 +3595,7 @@ class Component extends DCLogic {
         return 'flex:none;width:38px;height:38px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-family:Nunito,sans-serif;font-weight:900;font-size:17px;background:'+c;
       };
       const ok = answered && picked===vq.correctIndex;
+      const plainOpen = answered && !ok && !!q.plainExplanation && sess.plainFor===q.id;
       const goodWords = ['Nice one!','You got it!','Brilliant!','That\u2019s right!','Great remembering!'];
       const tryWords = ['Good try \u2014 have a look:','Nearly! Here\u2019s the tip:','No worries \u2014 remember this:','Tricky one! Here\u2019s why:'];
       learnVals = {
@@ -3270,7 +3617,19 @@ class Component extends DCLogic {
         microTitle: ok ? goodWords[(sess.i)%goodWords.length] : tryWords[(sess.i)%tryWords.length],
         explanation: q.explanation, ruleRef: q.ruleRef,
         speakQ: ()=>this.speakQFull(q),
-        speakExp: ()=>this.speak(q.explanation + '. ' + q.ruleRef),
+        // Reads the plain re-wording too while it is open.
+        speakExp: ()=>this.speak(q.explanation + '. ' + (plainOpen ? q.plainExplanation + '. ' : '') + q.ruleRef),
+        // "Explain it differently": after a wrong answer, when the admin approved a plain
+        // re-wording for this question. Opened per question (session.plainFor), so the next
+        // question starts closed.
+        plainShow: answered && !ok && !!q.plainExplanation,
+        plainOpen, plainExpanded: plainOpen ? 'true' : 'false', plainText: q.plainExplanation || '',
+        plainBtnLabel: plainOpen ? 'Hide the other explanation' : 'Explain it differently',
+        plainToggle: ()=>{
+          const cur = this.state.session, open = cur.plainFor===q.id;
+          if(!open) this.track('plain_shown', q.id);
+          this.setState({session: Object.assign({}, cur, {plainFor: open ? null : q.id})});
+        },
         hasTip: answered && picked!==vq.correctIndex && !!(q.memoryTip || this.tipAt(q.topic, sess.i)),
         tipText: q.memoryTip || this.tipAt(q.topic, sess.i),
         tipLabel: q.memoryTip ? 'Memory tip:' : 'Remember:',
@@ -3606,15 +3965,72 @@ class Component extends DCLogic {
       }
     };
 
+    // ----- your data and the age question (issue #9; TTPrivacy has the words) -----
+    const P = window.TTPrivacy, ageOnScreen = view==='age' || ageAuto;
+    const ageRule = (()=>{ try { return window.TTAccount ? TTAccount.ageRule() : null; } catch(e) { return null; } })();   // config.js TT_CONFIG.age
+    const delReady = P.confirmOk(s.delTyped) && !s.delBusy;
+    const privacyVals = {
+      // the age question
+      vAge: ageOnScreen,
+      ageFromSettings: view==='age' && s.ageFrom==='settings',
+      ageBack: ()=>this.setState({view:'settings', ageFrom:'', ageErr:''}),
+      ageCanLater: ageAuto,
+      ageLater: ()=>this.setState({ageLater:true, ageErr:''}),
+      ageSub: 'Everyone is asked once.' + (ageRule ? ' Anyone who may be under ' + ageRule.guardianUnder + ' needs a parent or guardian to agree to them using Theory Trainer.' : ''),
+      agePlaceholder: 'for example ' + (new Date().getFullYear() - 17),
+      ageYear: s.ageYear || '', ageEmail: s.ageEmail || '', ageConsent: !!s.ageConsent,
+      // the year box keeps digits only (at most four); the email box takes what she types
+      ageChange: e=>this.setState(e.target.name==='year' ? {ageYear: String(e.target.value).replace(/\D/g, '').slice(0, 4), ageErr:''} : {ageEmail: e.target.value, ageErr:''}),
+      ageConsentChange: e=>this.setState({ageConsent: !!e.target.checked, ageErr:''}),
+      ageNeedsGuardian: ageOnScreen && this.ageNeedsGuardian(),
+      ageGuardianHead: ageRule ? 'You may be under ' + ageRule.guardianUnder + ', so a parent or guardian needs to agree.' : 'A parent or guardian needs to agree.',
+      ageErr: s.ageErr || '', ageErrShow: !!s.ageErr,
+      ageSave: ()=>{ if(!s.ageBusy) this.saveAgeAnswer(); },
+      ageSaveLabel: s.ageBusy ? 'Saving\u2026' : 'Save',
+      // Settings → Your data
+      privSignedIn: backendOn && signedIn, privSignedOut: !(backendOn && signedIn),
+      privDownload: ()=>{ if(!s.dlBusy) this.downloadMyData(); },
+      privDownloadLabel: s.dlBusy ? 'Preparing\u2026' : 'Download',
+      privDlMsg: s.dlMsg || '', privDlMsgShow: !!s.dlMsg,
+      privAgeLine: s.ageChecked ? P.ageLine(s.ageInfo) : 'Not read from the server yet: check the connection, or answer again.',
+      privAgeBtn: s.ageInfo && s.ageInfo.birthYear ? 'Change' : 'Answer',
+      privAgeOpen: ()=>this.openAge(true),
+      // the admin account can't delete itself (the server refuses too), so it gets the reason
+      privIsAdmin: !!s.isAdminAccount, privCanDelete: !s.isAdminAccount, privAdminNote: P.ADMIN,
+      privDelOpen: !!s.delOpen, privDelExpanded: s.delOpen ? 'true' : 'false',
+      privDelToggleLabel: s.delOpen ? 'Cancel' : 'Delete\u2026',
+      privDelToggle: ()=>this.setState({delOpen: !s.delOpen, delTyped:'', delErr:''}),
+      privDeleted: P.DELETED.map(d=>({say: d.say})),
+      privDevice: P.DEVICE, privBefore: P.BEFORE, privWord: P.CONFIRM_WORD,
+      privTyped: s.delTyped || '', privTypedChange: e=>this.setState({delTyped: e.target.value, delErr:''}),
+      // the button stays off until the word is typed
+      privDeleteOff: !delReady,
+      privDeleteStyle: 'width:100%;margin-top:12px;border:none;border-radius:14px;min-height:52px;font-family:Nunito,sans-serif;font-weight:900;font-size:16px;' + (delReady ? 'background:#B8433D;color:#fff;cursor:pointer' : 'background:var(--tt-bg-efe9dc);color:var(--tt-fg-6e6a5e);cursor:not-allowed'),
+      privDeleteLabel: s.delBusy ? 'Deleting\u2026' : 'Delete my account for good',
+      privDelete: ()=>{ if(delReady) this.deleteMyAccount(); },
+      privDelErr: s.delErr || '', privDelErrShow: !!s.delErr
+    };
+
+    // ----- notes button -----
+    // Not on the sign-in screens (login, auth, setup; 'cloudLogin' is v2's old cloud sign-in
+    // screen), where it covered the DVSA line; not in the quick setup; hidden while the My
+    // answers action bar is up (it sits where the bar's buttons are) or the notes are open.
+    const notesShown = view!=='login' && view!=='cloudLogin' && view!=='auth' && view!=='setup' && view!=='age' && !ageAuto && !onbShow && !s.printPreview && !s.notesOpen && !ansVals.ansAnyTicked;
+    // On a question screen it sits in the page after the answer row, elsewhere it floats
+    // (TTScreen.INLINE_NOTES, issue #12 C: floating, it covered "Next →"). A finished mock's
+    // results page floats it as usual.
+    const notesInline = notesShown && TTScreen.INLINE_NOTES.indexOf(view) >= 0 && !(view==='test' && (!t || t.ended));
+    const notesAvail = notesShown && !notesInline, N = TTScreen.NOTES;
+
     return Object.assign({
       dynStyle: dyn,
-      vHome: view==='home' && !locked && !onbShow, vPaywall: (view==='home' && locked) || view==='payPreview', vLearnSetup: view==='learnSetup', vLearnQ: view==='learnQ', vLearnDone: view==='learnDone',
+      vHome: view==='home' && !locked && !onbShow && !ageAuto, vPaywall: (view==='home' && locked && !ageAuto) || view==='payPreview', vLearnSetup: view==='learnSetup', vLearnQ: view==='learnQ', vLearnDone: view==='learnDone',
       vTestIntro: view==='test' && (!t || t.ended && s.testView!=='results') ? false : (view==='testIntro'),
       vTestRun: view==='test' && t && !t.ended && s.testView==='run',
       vTestReview: view==='test' && t && !t.ended && s.testView==='review',
       vTestResults: view==='test' && t && t.ended && s.testView==='results',
       vDash: view==='dash', vSettings: view==='settings', vEditor: view==='editor', vPrint: view==='print',
-      vLogin: view==='login', vSigns: view==='signs',
+      vLogin: view==='login' && !ageAuto, vSigns: view==='signs',
       ...this.activityVals(chip),
       ...this.tipsVals(chip),
       vFlagged: view==='flagged', goFlagged: ()=>this.setState({view:'flagged', printPreview:false}),
@@ -3792,13 +4208,13 @@ class Component extends DCLogic {
       hasAvatar: !!s.avatar, noAvatar: !s.avatar, avatarSrc: s.avatar||'', learnerInitial: (st.learnerName||'?')[0].toUpperCase(),
       avatarUpload: e=>{ const f = e.target.files && e.target.files[0]; if(!f) return; const rd = new FileReader(); rd.onload = ()=>{ const img = new Image(); img.onload = ()=>{ const c = document.createElement('canvas'); const S = 128; c.width = S; c.height = S; const x = c.getContext('2d'); const m = Math.min(img.width, img.height); x.drawImage(img, (img.width-m)/2, (img.height-m)/2, m, m, 0, 0, S, S); this.set({avatar: c.toDataURL('image/jpeg', .82)}); }; img.src = rd.result; }; rd.readAsDataURL(f); e.target.value = ''; },
       avatarRemove: ()=>this.set({avatar:''}),
-      // Hidden while the My answers action bar is up — it sits where the bar's buttons are.
-      // Not on the sign-in screens (login, auth, setup; 'cloudLogin' is v2's old cloud sign-in
-      // screen), where it covered the DVSA line; not in the quick setup either.
-      notesAvail: view!=='login' && view!=='cloudLogin' && view!=='auth' && view!=='setup' && !onbShow && !s.printPreview && !s.notesOpen && !ansVals.ansAnyTicked,
+      // The notes button: floating (notesAvail) or in the page on question screens (notesInline).
+      notesAvail: notesAvail, notesInline: notesInline,
+      notesInlineStyle: 'display:flex;align-items:center;gap:8px;background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);border-radius:14px;min-height:48px;padding:0 16px;font-size:15px;font-weight:700;color:var(--tt-fg-6e6a5e);cursor:pointer',
+      pageStyle: 'max-width:680px;margin:0 auto;padding:20px 20px calc(' + TTScreen.bottomPad(notesAvail) + 'px + env(safe-area-inset-bottom))',
       notesOpen: !!s.notesOpen,
       toggleNotes: ()=>this.setState({notesOpen: !s.notesOpen, notesKey: s.view}),
-      notesFabStyle: 'position:fixed;right:18px;bottom:calc(18px + env(safe-area-inset-bottom));width:56px;height:56px;border-radius:50%;background:var(--tt-bg-2a2c33);color:#fff;border:none;cursor:pointer;box-shadow:0 6px 18px rgba(0,0,0,.22);z-index:60;display:flex;align-items:center;justify-content:center',
+      notesFabStyle: 'position:fixed;right:' + N.edge + 'px;bottom:calc(' + N.edge + 'px + env(safe-area-inset-bottom));width:' + N.size + 'px;height:' + N.size + 'px;border-radius:50%;background:var(--tt-bg-2a2c33);color:#fff;border:none;cursor:pointer;box-shadow:0 6px 18px rgba(0,0,0,.22);z-index:60;display:flex;align-items:center;justify-content:center',
       notesScreenName: this.NOTESN[s.notesKey||s.view] || 'This screen',
       notesText: (s.notes||{})[s.notesKey||s.view] || '',
       notesChange: e=>{ const n = Object.assign({}, s.notes); const k = s.notesKey||s.view; if(e.target.value) n[k] = e.target.value; else delete n[k]; this.set({notes:n}); },
@@ -3856,7 +4272,7 @@ class Component extends DCLogic {
         rd.readAsText(f);
         e.target.value = '';
       }
-    }, learnVals, testVals, resultVals, ansVals, edVals, printVals, settingsVals, logVals, welcomeVals, this.insightVals(view));
+    }, learnVals, testVals, resultVals, ansVals, edVals, printVals, settingsVals, logVals, welcomeVals, privacyVals, this.insightVals(view));
   }
 }
 </script>
