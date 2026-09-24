@@ -495,7 +495,8 @@ test('#12 C: on question screens the notes button sits in the page, never floati
 test('#12 D: no {{ value }} inside SVG text, so the readiness number is drawn', () => {
   // Found 2026-09-24: the dial's <text>{{ readyPct }}%</text> became <text><span>38</span>%</text>,
   // and SVG does not draw an HTML <span>: only "%" showed.
-  const texts = [...app.matchAll(/<text\b[^>]*>([\s\S]*?)<\/text>/g)].map(m => m[1]);
+  const markup = app.replace(/<!--[\s\S]*?-->/g, '');          // comments may name <text> freely
+  const texts = [...markup.matchAll(/<text\b[^>]*>([\s\S]*?)<\/text>/g)].map(m => m[1]);
   assert.ok(texts.length >= 2, 'expected the chart labels');
   for (const t of texts) assert.doesNotMatch(t, /\{\{/, 'a value inside SVG <text> is never drawn: ' + t);
   const dial = screen('MY PROGRESS (learner)').match(/<div data-tt-dial[\s\S]*?<\/div>\s*<\/div>/);
