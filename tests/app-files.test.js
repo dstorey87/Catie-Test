@@ -533,3 +533,160 @@ test('insights: the How-to guide explains them with the numbers the app really u
   for (const id of ['freezes', 'workon', 'prediction', 'plan', 'family']) assert.match(fs.readFileSync(path.join(root, 'help.html'), 'utf8'), new RegExp('id="' + id + '"'), 'help.html has no #' + id);
   assert.doesNotMatch(guideText, /You tend to pick|Miss a day and it starts again from 1/, 'help.html still describes the old wording');
 });
+
+// ---------- Issue #9: your data, your age, explain it differently ----------
+// TTPrivacy is a <script> in the page head (the words and small rules for Settings → Your data
+// and the age question), run here in node. The age rule itself is backend.js
+// TTAccount.needsGuardian reading config.js, loaded for real below, never a copy.
+const privacySrc = [...app.matchAll(/<script>([\s\S]*?)<\/script>/g)].map(m => m[1]).find(s => s.includes('window.TTPrivacy ='));
+const PV = privacySrc ? (() => { const ctx = { window: {} }; vm.runInNewContext(privacySrc, ctx); return ctx.window.TTPrivacy; })() : null;
+// backend.js in a bare fake browser, with the real config.js: only TTAccount's pure rules are used.
+const ACCOUNT = (() => {
+  const cfg = { window: {} }; vm.runInNewContext(fs.readFileSync(path.join(root, 'config.js'), 'utf8'), cfg);
+  const store = new Map();
+  const win = { TT_CONFIG: cfg.window.TT_CONFIG,
+    localStorage: { getItem: k => (store.has(k) ? store.get(k) : null), setItem: (k, v) => store.set(k, String(v)), removeItem: k => store.delete(k) },
+    location: { protocol: 'https:', origin: 'https://example.org', pathname: '/', search: '', hash: '' }, history: { replaceState() {} },
+    fetch: async () => ({ ok: true, status: 200, text: async () => '[]' }) };
+  win.window = win;
+  vm.runInNewContext(fs.readFileSync(path.join(root, 'backend.js'), 'utf8'), win);
+  return { account: win.TTAccount, rule: cfg.window.TT_CONFIG.age };
+})();
+const NOW = new Date().getFullYear();
+
+test('#9: the privacy words live in the real head, not <helmet>', () => {
+  assert.ok(PV, 'no window.TTPrivacy block in the page head');
+  const at = app.indexOf('window.TTPrivacy =');
+  assert.ok(at > 0 && at < app.indexOf('\n<helmet>\n'));
+});
+
+test('#9 delete: the typed word must be DELETE (any case, spaces trimmed)', () => {
+  for (const ok of ['DELETE', 'delete', '  Delete ']) assert.equal(PV.confirmOk(ok), true, ok);
+  for (const no of ['', 'DELET', 'DELETE ME', null, undefined]) assert.equal(PV.confirmOk(no), false, String(no));
+  assert.equal(PV.CONFIRM_WORD, 'DELETE');
+});
+
+test('#9 delete: the explanation names every table the server deletes with the account', () => {
+  // The server deletes the account; every table that references it "on delete cascade" goes too.
+  const sql = fs.readFileSync(path.join(root, 'supabase/schema.sql'), 'utf8') + fs.readFileSync(path.join(root, 'supabase/schema-notifications.sql'), 'utf8');
+  // A table runs to its own closing line; comments inside may hold a ";" (events does).
+  const owned = [...sql.matchAll(/create table if not exists public\.(\w+) \(([\s\S]*?)\n\);/g)]
+    .filter(m => /references auth\.users on delete cascade/.test(m[2])).map(m => m[1]);
+  assert.ok(owned.length >= 6, 'could not read the account-owned tables from the schema');
+  assert.deepEqual(plain(PV.DELETED.map(d => d.table)).sort(), owned.slice().sort(), 'TTPrivacy.DELETED must list exactly the tables that go with the account');
+  for (const d of PV.DELETED) assert.ok(d.say.length > 10, d.table + ' needs a plain description');
+  assert.match(PV.DEVICE, /signed out/);
+  assert.match(PV.BEFORE, /Download my data first/);
+  assert.match(PV.ADMIN, /admin account/);
+});
+
+test('#9 download: the file is named with the day it was made', () => {
+  assert.equal(PV.exportName('2026-09-24'), 'theory-trainer-my-data-2026-09-24.json');
+});
+
+test('#9 age: the question opens by itself only on a known "no answer yet", and "Not now" puts it off', () => {
+  const due = o => PV.ageDue(Object.assign({ signedIn: true, checked: true, info: { birthYear: null }, later: false }, o));
+  assert.equal(due({}), true, 'signed in, the server says no answer yet');
+  assert.equal(due({ info: { birthYear: 2008 } }), false, 'already answered');
+  assert.equal(due({ checked: false }), false, 'the server has not answered (offline): do not guess');
+  assert.equal(due({ info: null }), false, 'no profile row: nothing to save to');
+  assert.equal(due({ signedIn: false }), false, 'signed out');
+  assert.equal(due({ later: true }), false, '"Not now" until the app is next opened');
+  assert.equal(PV.ageDue(null), false);
+});
+
+test('#9 age: a parent or guardian is asked for exactly when the backend.js rule says so', () => {
+  // The rule is config.js TT_CONFIG.age.guardianUnder, applied by TTAccount.needsGuardian to the
+  // YOUNGER possible age (only a year is stored). Years relative to now, so this never goes stale.
+  const needs = ACCOUNT.account.needsGuardian, u = ACCOUNT.rule.guardianUnder;
+  assert.equal(PV.askGuardian(String(NOW - u), needs), true, 'turns ' + u + ' this year: may still be ' + (u - 1));
+  assert.equal(PV.askGuardian(String(NOW - u - 1), needs), false, 'at least ' + u);
+  assert.equal(PV.askGuardian(String(NOW - 12), needs), true);
+  assert.equal(PV.askGuardian(String(NOW - 40), needs), false);
+  for (const partial of ['', '20', '201', 'abcd', null]) assert.equal(PV.askGuardian(partial, needs), false, 'not a full year yet: ' + partial);
+});
+
+test('#9 age: Settings says what is saved, in plain words', () => {
+  assert.match(PV.ageLine(null), /Not given yet/);
+  assert.match(PV.ageLine({ birthYear: null }), /Not given yet/);
+  assert.equal(PV.ageLine({ birthYear: 1990, guardianConsent: false }), 'Born in 1990');
+  assert.equal(PV.ageLine({ birthYear: 2012, guardianConsent: true, guardianEmail: 'p@example.com' }), 'Born in 2012 · a parent or guardian agreed (p@example.com)');
+});
+
+test('#9 age: the screen asks for the year, and under the age a consent tick and an email', () => {
+  const age = screen('YOUR AGE');
+  assert.match(age, /<sc-if value="\{\{ vAge \}\}"/);
+  assert.match(age, /<input value="\{\{ ageYear \}\}" name="year" onChange="\{\{ ageChange \}\}" inputMode="numeric"/);
+  assert.match(age, /\{\{ ageNeedsGuardian \}\}[\s\S]*type="checkbox" checked="\{\{ ageConsent \}\}" onChange="\{\{ ageConsentChange \}\}"[\s\S]*value="\{\{ ageEmail \}\}"/);
+  assert.match(age, /role="alert"[^>]*>\{\{ ageErr \}\}/, 'the saveAge sentence is shown as it is');
+  assert.match(age, /onClick="\{\{ ageSave \}\}"/);
+  assert.match(age, /onClick="\{\{ ageLater \}\}"[^>]*>Not now</);
+  // It saves through backend.js (which checks everything first), and the age is never typed in.
+  assert.match(app, /TTAccount\.saveAge\(String\(s\.ageYear\|\|''\)\.trim\(\)/);
+  assert.match(app, /ageRule\.guardianUnder/);
+  assert.doesNotMatch(app, /'[^'\n]*under 16[^'\n]*'/, 'the age must come from config.js, not be written into the app');
+  // It opens by itself after sign-in (refreshAccess asks the server) and comes first.
+  assert.match(app, /refreshAccess\(\)\{[^]*?this\.checkAge\(\);/);
+  assert.match(app, /const ageAuto = \(view==='login' \|\| view==='home'\) && TTPrivacy\.ageDue\(/);
+  assert.match(app, /vLogin: view==='login' && !ageAuto/);
+  // The browser harness account has answered, so other browser checks don't land on it.
+  const harness = fs.readFileSync(path.join(root, 'tests/browser/harness.js'), 'utf8');
+  assert.match(harness, /birthYear = 2000/);
+  assert.match(harness, /birth_year: birthYear/);
+});
+
+test('#9 your data: Settings offers the download, the age and deleting the account', () => {
+  const set = screen('SETTINGS');
+  const sec = set.slice(set.indexOf('aria-label="Your data"'));
+  assert.ok(set.includes('aria-label="Your data"'), 'Settings has no Your data section');
+  assert.match(sec, /onClick="\{\{ privDownload \}\}"/);
+  assert.match(sec, /\{\{ privAgeLine \}\}[\s\S]*onClick="\{\{ privAgeOpen \}\}"/);
+  // Delete: what goes is listed, a word must be typed, and the button stays off until it is.
+  assert.match(sec, /onClick="\{\{ privDelToggle \}\}" aria-expanded="\{\{ privDelExpanded \}\}" aria-controls="tt-delete"/);
+  assert.match(sec, /id="tt-delete"[\s\S]*\{\{ privDeleted \}\}[\s\S]*\{\{ privDevice \}\}[\s\S]*Type \{\{ privWord \}\} to confirm<input value="\{\{ privTyped \}\}"/);
+  assert.match(sec, /<button onClick="\{\{ privDelete \}\}" disabled="\{\{ privDeleteOff \}\}"/);
+  assert.match(app, /privDeleteOff: !delReady/);
+  assert.match(app, /const delReady = P\.confirmOk\(s\.delTyped\) && !s\.delBusy/);
+  assert.match(sec, /role="alert"[^>]*>\{\{ privDelErr \}\}/);
+  // The admin account gets the reason instead of the button.
+  assert.match(sec, /<sc-if value="\{\{ privIsAdmin \}\}"[\s\S]*\{\{ privAdminNote \}\}/);
+  assert.match(app, /privIsAdmin: !!s\.isAdminAccount, privCanDelete: !s\.isAdminAccount/);
+  assert.match(sec, /href="legal\/privacy\.html#your-data"/);
+});
+
+test('#9 your data: the server does the work, its refusals are shown word for word, and the device forgets', () => {
+  assert.match(app, /TTAccount\.exportData\(\)\s*\.then\(d=>\{ this\.download\(name, d\)/);
+  assert.match(app, /TTAccount\.deleteAccount\(\)\s*\.then\(\(\)=>\{ this\.forgetThisDevice\(\); location\.replace\(location\.pathname \+ '\?deleted=1'\); \}\)/);
+  assert.match(app, /delErr: e\.hint \? String\(e\.message\)/, 'a refusal from the server (admin, renewing subscription) is its own sentence');
+  // After a deletion, the learners' progress on this device goes, or the next account signed in
+  // here would be sent it; the reload lands on the sign-in screen saying so.
+  const forget = app.slice(app.indexOf('  forgetThisDevice(){'), app.indexOf('\n  }\n', app.indexOf('  forgetThisDevice(){')));
+  for (const k of ["'users', 'active', 'content'", "this.BASE + '.d.' + u.id", 'this.KEY']) assert.ok(forget.includes(k), 'forgetThisDevice does not remove ' + k);
+  assert.match(app, /if\(\/\[\?&\]deleted=1\/\.test\(location\.search\)\)\{\s*this\.setState\(\{view:'auth'[^\n]*authMsg: TTPrivacy\.DONE\}\)/);
+});
+
+test('#9 explain it differently: after a wrong answer only, and only an approved one', () => {
+  const learn = screen('LEARN QUESTION');
+  assert.match(learn, /<sc-if value="\{\{ plainShow \}\}"[^>]*>\s*<button onClick="\{\{ plainToggle \}\}" aria-expanded="\{\{ plainExpanded \}\}" aria-controls="tt-plain"/);
+  assert.match(learn, /id="tt-plain"[^>]*><b>In other words:<\/b> \{\{ plainText \}\}/);
+  assert.match(app, /plainShow: answered && !ok && !!q\.plainExplanation,/);
+  // backend.js hands the app a plain explanation only once the admin approved it.
+  assert.match(fs.readFileSync(path.join(root, 'backend.js'), 'utf8'), /plainExplanation: r\.plain_status === 'approved' && r\.plain_explanation \? r\.plain_explanation : undefined/);
+  // The admin's Activity list says it in words.
+  assert.match(app, /case 'plain_shown': return 'Asked for it explained differently:' \+ qt;/);
+});
+
+test('#9 review: plain explanations reuse the memory-tips review screen, one entry per kind', () => {
+  const tips = screen('MEMORY TIPS (admin)');
+  assert.match(tips, /\{\{ tipsKinds \}\}[\s\S]*aria-pressed="\{\{ k\.on \}\}"/);
+  assert.match(tips, /aria-label="\{\{ t\.aria \}\}"/);
+  assert.match(tips, /\{\{ t\.originalShow \}\}[\s\S]*In the bank: \{\{ t\.original \}\}/);
+  // Both kinds are rows of one map; the screen and the save code read from it, not from copies.
+  const review = app.slice(app.indexOf('  REVIEW = {'), app.indexOf('\n  };', app.indexOf('  REVIEW = {')));
+  assert.match(review, /tip: \{[^]*load: \(\)=>TTBank\.tips\(\), save: \(qid, text, status\)=>TTBank\.saveTip\(qid, text, status\)/);
+  assert.match(review, /plain: \{[^]*load: \(\)=>TTBank\.explanations\(\), save: \(qid, text, status\)=>TTBank\.saveExplanation\(qid, text, status\)/);
+  assert.match(review, /text:'plain_explanation', status:'plain_status'/);
+  assert.match(app, /R\.save\(it\.qid, it\.tip, status\)/);
+  assert.equal((app.match(/TTBank\.saveTip\(/g) || []).length, 1, 'one call site: the REVIEW map');
+  assert.match(screen('DASHBOARD'), /Memory tips and plain explanations/);
+});

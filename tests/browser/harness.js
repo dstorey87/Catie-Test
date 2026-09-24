@@ -26,13 +26,16 @@ const json = (status, body) => r => r.fulfill({ status, contentType: 'applicatio
 const ROWS = [1, 2, 3, 4, 5].flatMap(n => require(path.join(REPO, 'questions-' + n + '.json'))).map(q => ({
   qid: q.id, topic: q.topic, question: q.question, options: q.options, correct_index: q.correctIndex,
   explanation: q.explanation, rule_ref: q.ruleRef, sign: q.imageHint || '', test_type: 'car', pack: q.pack || 'p1',
-  memory_tip: q.memoryTip || null, tip_status: q.tipStatus || null }));
+  memory_tip: q.memoryTip || null, tip_status: q.tipStatus || null,
+  plain_explanation: q.plainExplanation || null, plain_status: q.plainStatus || null }));
 const SESSION = JSON.stringify({ access_token: 'AT', refresh_token: 'RT', expires_at: 4102444800, user: { id: 'u1', email: 'catie@example.com' } });
 
 // Opens the app signed in as a learner with full access. extraRoutes: [[glob, handler]] added
 // AFTER the defaults, so they win (Playwright tries the most recently added route first).
 // seed: extra localStorage keys. role: 'user' | 'admin'.
-async function open(browser, { width = 390, theme = 'light', base = process.env.BASE, extraRoutes = [], seed = {}, role = 'user' } = {}) {
+// birthYear: the account's saved age answer. Answered by default, so the age question (issue #9)
+// stays away; pass null for an account that has never answered, which opens it.
+async function open(browser, { width = 390, theme = 'light', base = process.env.BASE, extraRoutes = [], seed = {}, role = 'user', birthYear = 2000 } = {}) {
   if (!base) throw new Error('open(): pass base (e.g. http://127.0.0.1:8781/) or set BASE');
   const ctx = await browser.newContext({ viewport: { width, height: width < 500 ? 844 : 900 }, serviceWorkers: 'block' });
   const page = await ctx.newPage();
@@ -41,7 +44,8 @@ async function open(browser, { width = 390, theme = 'light', base = process.env.
   page.on('pageerror', e => errors.push(String(e)));
   await page.route('**/rest/v1/**', r => { if (r.request().method() !== 'GET') posted.push({ url: r.request().url(), body: r.request().postData() }); return json(200, [])(r); });
   await page.route('**/rest/v1/entitlements**', json(200, [{ status: 'comp', plan: 'comp' }]));
-  await page.route('**/rest/v1/profiles**', json(200, [{ id: 'u1', email: 'catie@example.com', name: 'Catie', role }]));
+  await page.route('**/rest/v1/profiles**', json(200, [{ id: 'u1', email: 'catie@example.com', name: 'Catie', role,
+    birth_year: birthYear, guardian_consent: false, guardian_email: null }]));
   await page.route('**/rest/v1/questions**', json(200, ROWS));
   for (const [pat, fn] of extraRoutes) await page.route(pat, fn);
   await page.addInitScript(([t, sess, extra]) => {
