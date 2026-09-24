@@ -60,7 +60,21 @@ test('the prompt asks for a 17-year-old\'s level with one everyday analogy, in B
   assert.match(p, /17-year-old/);
   assert.match(p, /everyday analogy/);
   assert.match(p, /British English/);
-  assert.match(p, /do not add any rule, fact or\s+number/);
+  assert.match(p, /do not add any rule, fact,\s+number, colour, sign or light/);
+});
+
+test('the prompt keeps the analogy to the idea: no comparing a distance, size, speed, time or amount', () => {
+  const p = prompt(Q, null);
+  assert.match(p, /Never use it to compare a distance,\s+size, speed, time or amount/);
+  assert.match(p, /exactly as written above, in the same units/);
+});
+
+test('the real "football pitch" draft for t04q01 is rejected; the same idea without it passes', () => {
+  const T = { id: 't04q01', question: 'What is the typical stopping distance at 30 mph?', options: ['23 metres', '12 metres', '36 metres', '53 metres'], correctIndex: 0,
+    explanation: 'At 30 mph you need about 23 metres to think and brake to a stop.', ruleRef: 'HC Rule 126' };
+  assert.match(checkExplanation('If you\'re going 30 mph, it takes about 23 metres to stop. That\'s like the length of a football pitch. You need that much space to think and brake safely.', T).join(),
+    /compares a measurement with something not in the question: "length of a"/);
+  assert.deepEqual(checkExplanation('At 30 mph you need about 23 metres to stop: first you notice, then you brake, like spotting a friend and then stopping to say hi.', T), []);
 });
 
 test('a retry prompt says why the last draft was rejected; the first prompt does not', () => {

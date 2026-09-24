@@ -13,9 +13,11 @@
 //   drafts and only show once Darren approves them in the admin screen.
 //
 // WHY LOCAL AI, AND WHY IT CAN'T MAKE THINGS UP
-//   Free, and the question text never leaves the PC. A draft with any number not in the
-//   question's own text is rejected, as is one that repeats a wrong option or just copies the
-//   existing explanation. Darren still reads every draft before it goes live.
+//   Free, and the question text never leaves the PC. A draft with any number or colour not in
+//   the question's own text is rejected, as is one that compares a measurement with something
+//   else ("the length of a football pitch"), repeats a wrong option or just copies the existing
+//   explanation. The checks cannot judge whether an analogy is apt: Darren still reads every
+//   draft before it goes live.
 //
 // RUN (Windows or WSL, Ollama running):   node tools/write-plain-explanations.js
 //   Re-run any time: questions that already have a good draft are skipped, so it resumes.
@@ -65,8 +67,10 @@ function prompt(q, lastProblems) {
     '',
     'Explain again why the right answer is right, in plainer words than the "Why" above, the way',
     'you would explain it to a 17-year-old, using one everyday analogy (home, school, sport, a phone).',
-    'At most ' + SETTINGS.askWords + ' words. Use only the facts written above: do not add any rule, fact or',
-    'number that is not written above, and do not say how old the learner is.',
+    'The analogy is only for the idea. Never use it to compare a distance, size, speed, time or amount',
+    'with something else; keep any of those exactly as written above, in the same units.',
+    'At most ' + SETTINGS.askWords + ' words. Use only the facts written above: do not add any rule, fact,',
+    'number, colour, sign or light that is not written above, and do not say how old the learner is.',
     'Do not mention the wrong answers. Plain British English, friendly, no emoji, no heading.',
     lastProblems ? 'Your last answer was rejected because: ' + lastProblems.join('; ') + '. Try again.' : ''
   ].filter(Boolean).join('\n');

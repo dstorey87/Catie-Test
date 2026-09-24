@@ -13,6 +13,14 @@
 //      words ("halves", "two", "four times"). A number is the easiest fact to invent.
 //   4. Does not repeat a wrong answer word for word (only wrong answers of 3+ words are checked,
 //      so short everyday phrases like "Speed up" do not cause false alarms).
+//   5. No colour that the question's own text does not contain. In driving theory a colour is a
+//      fact (lights, signs, road markings): "amber" where the question says "red" is invented.
+//   6. Does not compare a measurement with something the question never mentions ("the length
+//      of a football pitch" for 23 metres). Such an analogy is a made-up fact without a number.
+//      Caught by the phrases in COMPARISONS; a phrase the question itself uses is allowed.
+//
+// These checks catch the kinds of invention a machine can spot. They cannot judge whether an
+// analogy is apt: that is what Darren's review is for, and nothing goes live without it.
 //
 // These are pure functions: no network, no files. tests/ai-checks.test.js covers every rule.
 'use strict';
@@ -37,6 +45,25 @@ function numbers(text) {
   // Whole words that are in the number-word list above.
   const words = (t.match(/[a-z]+/g) || []).filter(w => w in NUMBER_WORDS).map(w => NUMBER_WORDS[w]);
   return digits.concat(words);
+}
+
+// Colour words. All of the first nine appear in this bank's questions and answers.
+const COLOURS = ['red', 'amber', 'green', 'blue', 'yellow', 'white', 'black', 'orange', 'brown', 'grey', 'gray', 'purple', 'pink'];
+
+// Every colour word in a piece of text (whole words only: "whiteboard" is not "white").
+function colours(text) {
+  return (String(text).toLowerCase().match(/[a-z]+/g) || []).filter(w => COLOURS.includes(w));
+}
+
+// Phrases that compare a size or distance with some other thing: "the length of a bus",
+// "as far as a football pitch". "as long as you…" is NOT matched (it means "provided that"),
+// because each pattern needs "a" or "an" straight after it. "distance of a" is left out on
+// purpose: "the stopping distance of a car" is a plain statement, not a comparison.
+const COMPARISONS = /\b(?:length|size|width|height|depth|weight) of an?\b|\bas (?:long|far|big|wide|tall|high|heavy|deep|fast) as an?\b/g;
+
+// Every comparison phrase in a piece of text, in lower case.
+function comparisons(text) {
+  return String(text).toLowerCase().match(COMPARISONS) || [];
 }
 
 // The question's own words: the ONLY text the AI is allowed to draw facts from. The wrong
@@ -70,7 +97,18 @@ function checkDraft(text, q, maxWords) {
     const o = String(opt).toLowerCase().replace(/[.!?]+$/, '');
     if (o.split(/\s+/).length >= 3 && t.toLowerCase().includes(o)) problems.push('repeats a wrong answer: "' + opt + '"');
   });
+
+  // Rule 5: every colour in the draft must also appear in the question's own text.
+  const source = sourceText(q);
+  const allowedColours = new Set(colours(source));
+  const newColours = [...new Set(colours(t).filter(c => !allowedColours.has(c)))];
+  if (newColours.length) problems.push('colour not in the question: ' + newColours.join(', '));
+
+  // Rule 6: no "length of a …" style comparison, unless the question itself uses that phrase.
+  const sourcePhrases = new Set(comparisons(source));
+  const newPhrases = [...new Set(comparisons(t).filter(p => !sourcePhrases.has(p)))];
+  if (newPhrases.length) problems.push('compares a measurement with something not in the question: "' + newPhrases.join('", "') + '"');
   return problems;
 }
 
-module.exports = { NUMBER_WORDS, numbers, sourceText, checkDraft };
+module.exports = { NUMBER_WORDS, COLOURS, numbers, colours, comparisons, sourceText, checkDraft };

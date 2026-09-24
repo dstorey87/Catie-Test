@@ -2,7 +2,7 @@
 // plain explanations both use these, so one set of tests covers both tools' safety rules).
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const { numbers, sourceText, checkDraft } = require('../tools/ai-checks.js');
+const { numbers, colours, comparisons, sourceText, checkDraft } = require('../tools/ai-checks.js');
 
 // A made-up question in the bank's shape, used by most tests below.
 const Q = {
@@ -50,6 +50,31 @@ test('checkDraft() lists every problem at once, so the retry prompt can name the
   assert.match(p[0], /too long/);
   assert.match(p[1], /number not in the question: 2, 5/);
   assert.match(p[2], /repeats a wrong answer/);
+});
+
+test('a colour the question never mentions is rejected; the question\'s own colours are allowed', () => {
+  const L = { id: 'l', question: 'What does a steady red traffic light mean?', options: ['Stop', 'Go', 'Get ready', 'Give way'], correctIndex: 0,
+    explanation: 'Red means stop and wait behind the white stop line.', ruleRef: 'HC Rule 175' };
+  assert.match(checkDraft('Amber and green come later: for now, stop.', L, 45).join(), /colour not in the question: amber, green/);
+  assert.deepEqual(checkDraft('Red is like a closed door: stop at the white line and wait.', L, 45), []);
+  // Whole words only: a "whiteboard" is not the colour white, and each colour is named once.
+  assert.deepEqual(colours('the whiteboard, then blue, blue sky'), ['blue', 'blue']);
+  assert.match(checkDraft('Blue sky, blue car: stop.', L, 45).join(), /colour not in the question: blue$/);
+});
+
+test('comparing a measurement with something the question never mentions is rejected ("length of a football pitch")', () => {
+  const D = { id: 'd', question: 'What is the typical stopping distance at 30 mph?', options: ['23 metres', '12 metres', '36 metres', '53 metres'], correctIndex: 0,
+    explanation: 'At 30 mph you need about 23 metres to think and brake to a stop.', ruleRef: 'HC Rule 126' };
+  assert.match(checkDraft('23 metres is the length of a football pitch.', D, 45).join(), /compares a measurement with something not in the question: "length of a"/);
+  assert.match(checkDraft('That is as far as a bus stop.', D, 45).join(), /"as far as a"/);
+  // "as long as you…" means "provided that", and "the stopping distance of a car" is a plain
+  // statement — neither is a comparison, so both pass.
+  assert.deepEqual(checkDraft('You can stop in 23 metres at 30 mph, as long as you are paying attention.', D, 45), []);
+  assert.deepEqual(checkDraft('The stopping distance of a car at 30 mph is about 23 metres.', D, 45), []);
+  // A phrase the question itself uses is the question's own fact, so it is allowed.
+  const own = Object.assign({}, D, { explanation: D.explanation + ' That is about the length of a tennis court.' });
+  assert.deepEqual(comparisons(own.explanation), ['length of a']);
+  assert.deepEqual(checkDraft('23 metres: about the length of a tennis court.', own, 45), []);
 });
 
 test('short wrong answers (under 3 words) are not treated as copied — they are too common to check', () => {
