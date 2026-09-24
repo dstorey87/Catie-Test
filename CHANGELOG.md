@@ -3,6 +3,12 @@
 Newest first. The version is the service-worker `VERSION` in `sw.js` — it changes on every
 deploy that touches the app's cached files. Earlier history: `git log`.
 
+## v11-2026-09-24 (hotfix)
+- Fixed: the admin account could lose its admin screens. The "am I admin?" check asked the
+  server for one profile without saying whose; since v10 the admin may read every profile
+  (for Activity), so it could get a learner's row back. It now asks for its own row by id.
+  Found by the server-privacy section (PR #11); test in `tests/backend.test.js`.
+
 ## v10-2026-09-24
 - **Flags stay until she un-flags them.** New **Flagged** screen (Home card, and from the Admin
   dashboard): each flagged question with its answer and an **Un-flag** button. Getting it right
