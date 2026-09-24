@@ -66,6 +66,13 @@ test('site.js: figures are copied from config into [data-config] elements, as te
   assert.deepEqual(els.map(e => e.textContent), ['£9 a month', '<b>x</b>', '20', 'fallback', 'fallback', 'fallback']);
   assert.equal(site.fillConfig(null, {}), 0);
   assert.equal(site.fillConfig(doc, undefined), 0);
+  // Nested settings, such as the age rule: TT_CONFIG.age.guardianUnder.
+  const age = [{ textContent: '16', getAttribute: () => 'age.guardianUnder' }, { textContent: 'x', getAttribute: () => 'age.nope.deeper' }];
+  site.fillConfig({ querySelectorAll: () => age }, { age: { guardianUnder: 18 } });
+  assert.deepEqual(age.map(e => e.textContent), ['18', 'x']);
+  assert.equal(site.configValue({ a: { b: 0 } }, 'a.b'), 0);
+  assert.equal(site.configValue({ a: 1 }, 'a.b'), undefined);
+  assert.equal(site.configValue({}, 'toString'), undefined, 'must not read inherited properties');
 });
 
 test('site.js: the contents open beside the page on wide screens and start closed on phones', () => {
@@ -192,9 +199,10 @@ test('prices and the free-sample size on the pages match config.js', () => {
   const cfg = box.window.TT_CONFIG;
   let seen = 0;
   for (const [p, s] of Object.entries(html)) {
-    for (const [, key, text] of s.matchAll(/data-config="(\w+)">([^<]*)</g)) {
-      assert.ok(key in cfg, p + ': data-config="' + key + '" is not a config.js setting');
-      assert.equal(text, String(cfg[key]), p + ': the fallback for ' + key + ' is out of date with config.js');
+    for (const [, key, text] of s.matchAll(/data-config="([\w.]+)">([^<]*)</g)) {
+      const v = site.configValue(cfg, key);
+      assert.ok(v !== undefined, p + ': data-config="' + key + '" is not a config.js setting');
+      assert.equal(text, String(v), p + ': the fallback for ' + key + ' is out of date with config.js');
       seen++;
     }
   }
