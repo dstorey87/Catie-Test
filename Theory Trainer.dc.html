@@ -20,16 +20,18 @@ var TT_DARK = {
   'bg-faf6ef':'#121411', 'bg-fffdf8':'#191b18', 'bg-fff':'#1c1f1c', 'bg-efe9dc':'#2a2c28',
   'bg-f2ede1':'#262824', 'bg-e4f2ef':'#163631', 'bg-e7f6ec':'#173322', 'bg-fbf1dc':'#3a2f17',
   'bg-fbeae9':'#3d201e', 'bg-f3faf8':'#183a34', 'bg-2a2c33':'#3a3d45', 'bg-d8d0bf':'#4a4c45',
+  'bg-eaf2fb':'#172636',   // streak-freeze blue panel
   // text: body, muted, faint, links and status words
   'fg-2a2c33':'#ece8df', 'fg-6e6a5e':'#aaa596', 'fg-b5ae9e':'#817c70', 'fg-0e7c6b':'#46c7ae',
   'fg-0a5d50':'#6fd8c3', 'fg-1c6b3c':'#72d596', 'fg-b8433d':'#f28b83', 'fg-8a5a0b':'#eab45e',
   'fg-8a6a22':'#e2c070', 'fg-c77e14':'#eba748', 'fg-111':'#eeeeee', 'fg-444':'#cccccc',
   'fg-555':'#bbbbbb', 'fg-888':'#9a9a9a', 'fg-999':'#8a8a8a', 'fg-aaa':'#777777', 'fg-c9c2b2':'#6c6960',
+  'fg-2f6ea8':'#8cbbe8',   // streak-freeze blue text and snowflake
   // borders and dividers
   'bd-e8e1d2':'#363833', 'bd-f2ede1':'#2e302b', 'bd-d8d0bf':'#4a4c45', 'bd-efe9dc':'#363833',
   'bd-bfe0d8':'#23514a', 'bd-bce3c8':'#27503a', 'bd-f0d9a8':'#5e4a24', 'bd-e8b7b4':'#63302d',
   'bd-c9c2b2':'#5a5b53', 'bd-eee':'#333333', 'bd-bbb':'#555555', 'bd-999':'#777777',
-  'bd-333':'#bbbbbb', 'bd-0e7c6b':'#2fae96'
+  'bd-333':'#bbbbbb', 'bd-0e7c6b':'#2fae96', 'bd-c3d9f0':'#2c4a66'
 };
 (function(){
   function block(dark){
@@ -136,6 +138,215 @@ window.TTWelcome = (function(){
   };
 
   return W;
+})();
+</script>
+<script>
+// ---------- Coach insights on screen (window.TTInsights) ----------
+// coach.js works out the numbers (pass prediction, what to work on, the study plan, the wrong
+// answers she keeps picking, the nearest badge, streak freezes). This block turns them into
+// the words and rows the screens show, and builds the family board. Plain data and pure
+// functions only: no page, no storage, and no clock unless one is passed in, so
+// tests/app-files.test.js runs this very block in node against the real coach.js.
+// It lives in the real head, not <helmet>, for the camelCase reason noted below.
+window.TTInsights = (function(){
+  var I = {};
+
+  // Tuning for the screens. The coach's own numbers (pass mark, freeze rules, how many
+  // answers a prediction needs) live in coach.js COACH and are passed in, never copied here.
+  // These are choices, not measurements.
+  I.CFG = {
+    nudgeMinProgress: 0.7,  // "close to a badge" once she is 70% of the way (5 of a 7-day streak)
+    planDaysShown: 14,      // the study plan lists this many days, then "and N more days"
+    weekStartsOn: 1,        // the family board's week starts on Monday (0 would be Sunday)
+    goalDaysKept: 400,      // goal days remembered per learner (a year and a bit)
+    chanceBands: [0.7, 0.4] // pass chance shown green from 70%, amber from 40%, red below
+  };
+
+  var DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  var MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  var DAY = 86400000;
+  function two(n){ return (n < 10 ? '0' : '') + n; }
+  function plural(n, one, many){ return n + ' ' + (n === 1 ? one : many); }
+
+  // ---- dates ----
+  // A time (ms) as her own local day, 'YYYY-MM-DD' — the same days coach.js dayCounts uses.
+  I.localDay = function(ms){
+    var d = new Date(ms);
+    return d.getFullYear() + '-' + two(d.getMonth() + 1) + '-' + two(d.getDate());
+  };
+  // 'YYYY-MM-DD' -> whole days since 1970 (UTC, so a clock change never makes a 23-hour day).
+  function dayNum(s){
+    var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(s || ''));
+    return m ? Date.UTC(+m[1], +m[2] - 1, +m[3]) / DAY : null;
+  }
+  function dayStr(n){ return new Date(n * DAY).toISOString().slice(0, 10); }
+  // 'YYYY-MM-DD' -> 'Wed 24 Sep'. Built by hand, not by the browser's locale, so it reads
+  // the same on every phone and in the tests.
+  I.fmtDay = function(s){
+    var n = dayNum(s); if(n === null) return String(s || '');
+    var d = new Date(n * DAY);
+    return DAYS[d.getUTCDay()] + ' ' + d.getUTCDate() + ' ' + MONTHS[d.getUTCMonth()];
+  };
+  // The first day of the week that `today` is in (weekStartsOn: 1 = Monday).
+  I.weekStart = function(today, startsOn){
+    var n = dayNum(today); if(n === null) return '';
+    var dow = new Date(n * DAY).getUTCDay(), s = startsOn == null ? I.CFG.weekStartsOn : startsOn;
+    return dayStr(n - ((dow - s + 7) % 7));
+  };
+
+  // ---- streak ----
+  // Once her answers today reach her daily goal, today goes on her list of goal days. The
+  // list is what the streak is worked out from, so raising the goal later never takes a day
+  // back. Returns a new list (sorted, no repeats, the newest goalDaysKept only), or the same
+  // list untouched when today doesn't count or is already on it.
+  I.recordGoalDay = function(days, today, countToday, goal){
+    var list = Array.isArray(days) ? days : [];
+    if(!(goal > 0) || !(countToday >= goal) || dayNum(today) === null || list.indexOf(today) >= 0) return list;
+    return list.concat([today]).sort().slice(-I.CFG.goalDaysKept);
+  };
+  // Every day her goal was met: the days recorded at the time, plus any day whose answers
+  // reach today's goal (her history from before days were recorded).
+  //   counts: coach.js dayCounts(attempts), {'YYYY-MM-DD': answers}
+  I.goalDays = function(recorded, counts, goal){
+    var out = {};
+    (Array.isArray(recorded) ? recorded : []).forEach(function(d){ if(dayNum(d) !== null) out[d] = true; });
+    Object.keys(counts || {}).forEach(function(d){ if(goal > 0 && counts[d] >= goal) out[d] = true; });
+    return Object.keys(out).sort();
+  };
+  // What the streak tile and its "how freezes work" panel say.
+  //   info:  coach.js streakWithFreeze(...) — {count, freezes, frozen, today, nextFreezeIn}
+  //   rules: coach.js COACH.freeze — {every, max}
+  I.streakTile = function(info, rules){
+    var i = info || {}, f = i.freezes || 0, r = rules || {};
+    var saved = (i.frozen || []).map(I.fmtDay);
+    return {
+      count: String(i.count || 0),
+      freezeLine: f ? plural(f, 'freeze', 'freezes') : 'no freezes',
+      held: f ? 'you have ' + f : 'you have none yet',
+      howTo: 'Every ' + r.every + ' days you reach your daily goal earns a streak freeze (you can hold ' + r.max +
+        '). Miss a day and a freeze is used up instead, so your streak carries on.',
+      next: i.nextFreezeIn == null ? 'You are holding the most you can (' + r.max + ').'
+        : plural(i.nextFreezeIn, 'more goal day earns', 'more goal days earn') + ' the next one.',
+      saved: saved.length ? 'A freeze saved your streak on ' + saved.join(', ') + '.' : ''
+    };
+  };
+
+  // ---- pass prediction (My Progress) ----
+  // A chance (0–1) as a percentage. Never "0%" or "100%": the estimate can't be that sure.
+  I.pct = function(p){
+    if(p == null || isNaN(p)) return '—';
+    var n = Math.round(p * 100);
+    if(n < 1) return 'under 1%';
+    if(n > 99) return 'over 99%';
+    return n + '%';
+  };
+  //   pred: coach.js passPrediction(...); top: the first improvements() row, or null
+  //   minEvidence: coach.js COACH.minEvidence (answers needed before a prediction is shown)
+  I.prediction = function(pred, top, minEvidence){
+    var p = pred || {}, have = p.evidence || 0, need = Math.max(0, minEvidence - have);
+    var ready = !!p.enough && p.expected != null;
+    return {
+      enough: ready,
+      score: ready ? String(Math.round(p.expected)) : '',
+      total: String(p.total || ''), passMark: String(p.passMark || ''),
+      chance: ready ? I.pct(p.probability) : '',
+      basis: 'Based on your ' + plural(have, 'answer', 'answers') + ', recent ones counting more. An estimate from your own answers, not a promise.',
+      need: 'The prediction needs ' + minEvidence + ' answers. You have ' + have + ', so ' + plural(need, 'more', 'more') + ' to go.',
+      needBar: Math.max(0, Math.min(100, Math.round(100 * have / (minEvidence || 1)))),
+      raise: ready && top ? top.say : ''
+    };
+  };
+
+  // ---- what to work on (Home) ----
+  //   list: coach.js improvements(...), best first; pred and minEvidence as above
+  I.workOn = function(list, pred, minEvidence){
+    var l = list || [], a = l[0], b = l[1];
+    if(!a) return {show: false};
+    var have = (pred && pred.evidence) || 0;
+    return {
+      show: true, topic: a.topic, name: a.name, say: a.say,
+      early: pred && !pred.enough ? 'Early days: this firms up once you have answered ' + minEvidence + ' (you have ' + have + ').' : '',
+      next: b ? {topic: b.topic, name: b.name} : null
+    };
+  };
+
+  // ---- study plan ----
+  //   plan:  coach.js studyPlan(...)
+  //   names: topic number -> name (the app's TOPICS array, topic 1 = names[0])
+  // The workload line says when the plan asks more than her goal alone would (plan.total -
+  // plan.done): that is the coach making room for every question she hasn't seen yet.
+  I.plan = function(plan, names){
+    var p = plan || {}, day0 = (p.days || [])[0] || null;
+    var nm = function(t){ return (names && names[Number(t) - 1]) || ('topic ' + t); };
+    var topicsOf = function(d){ return d && d.topics && d.topics.length ? d.topics.map(nm).join(' & ') : 'a bit of everything'; };
+    var out = {status: p.status || 'no-date', ok: p.status === 'ok', rows: [], more: '', missed: '', today: null, workload: ''};
+    if(p.status === 'no-date') out.headline = 'Set your theory test date and your plan fills in, day by day.';
+    else if(p.status === 'passed') out.headline = 'Your test date (' + I.fmtDay(p.testDate) + ') has passed. Set the next one for a new plan.';
+    else if(p.status === 'test-day') out.headline = 'It’s test day! No practice plan today. Good luck.';
+    if(!out.ok) return out;
+    out.headline = 'Test on ' + I.fmtDay(p.testDate) + ' · ' + plural(p.daysLeft, 'day', 'days') + ' to go';
+    var left = Math.max(0, day0.target - day0.done);
+    out.today = {date: I.fmtDay(day0.date), target: day0.target, done: day0.done, left: left, topics: topicsOf(day0),
+      line: left ? day0.done + ' done so far · ' + left + ' to go' : 'Done for today — anything more is a bonus.',
+      bar: Math.max(0, Math.min(100, Math.round(100 * day0.done / (day0.target || 1))))};
+    if(p.missed && p.missed.length) {
+      out.missed = 'You missed ' + plural(p.missed.length, 'day', 'days') + ' (' + p.missed.slice(-3).map(I.fmtDay).join(', ') +
+        (p.missed.length > 3 ? ' and more' : '') + '). Those questions are spread over the days left, so each day asks a little more.';
+    }
+    var fromGoal = Math.max(0, p.total - p.done);
+    out.workload = plural(p.remaining, 'question', 'questions') + ' over the ' + plural(p.daysLeft, 'day', 'days') + ' left. Your goal is ' + p.goal + ' a day' +
+      (p.remaining > fromGoal ? '; the plan asks more so every question you haven’t seen yet comes up before test day.' : '.');
+    out.rows = p.days.slice(0, I.CFG.planDaysShown).map(function(d){
+      return {date: d.isToday ? 'Today' : I.fmtDay(d.date), target: String(d.target), topics: topicsOf(d), isToday: !!d.isToday};
+    });
+    if(p.days.length > I.CFG.planDaysShown) out.more = 'and ' + plural(p.days.length - I.CFG.planDaysShown, 'more day', 'more days') + ' to test day';
+    return out;
+  };
+
+  // ---- the wrong answer she keeps choosing ----
+  //   res: coach.js misconceptions(...); returns {questionId: its row}
+  I.missByQid = function(res){
+    var o = {};
+    ((res && res.questions) || []).forEach(function(m){ o[m.qid] = m; });
+    return o;
+  };
+  // One line for a question: which wrong answer she keeps choosing and how often, in the
+  // bank's own words. '' when she hasn't picked the same wrong answer twice.
+  // When her latest answer was right, it says so, and that the wrong answer was what she USED
+  // to choose.
+  I.missLine = function(m){
+    if(!m) return '';
+    var often = m.count === m.recorded ? 'every time you got it wrong (' + m.count + ' times).' : m.count + ' of your ' + m.recorded + ' wrong answers.';
+    return m.lastOk ? 'Right last time. Before that you chose “' + m.option + '” — ' + often
+      : 'You keep choosing “' + m.option + '” — ' + often;
+  };
+
+  // ---- close to a badge (Home) ----
+  //   closeness: coach.js badgeCloseness(...)
+  I.badgeNudge = function(closeness, minProgress){
+    var n = closeness && closeness.nearest, min = minProgress == null ? I.CFG.nudgeMinProgress : minProgress;
+    return n && n.progress >= min ? {show: true, text: n.say} : {show: false, text: ''};
+  };
+
+  // ---- family board (Home, opt-in) ----
+  // Compares the learners on this account who switched the board on — nobody else — by
+  // questions answered this week and current streak. Worked out from this device's copy.
+  //   learners: [{id, name, on, counts: dayCounts(attempts), streak: current streak}]
+  //   meId: the learner looking; weekFrom: I.weekStart(today)
+  I.family = function(learners, meId, weekFrom){
+    var rows = (learners || []).filter(function(l){ return l && l.on; }).map(function(l){
+      var week = 0;
+      Object.keys(l.counts || {}).forEach(function(d){ if(d >= weekFrom) week += l.counts[d] || 0; });
+      var name = String(l.name || 'Learner');
+      return {id: l.id, name: name + (l.id === meId ? ' (you)' : ''), initial: name.charAt(0).toUpperCase() || '?',
+        me: l.id === meId, weekN: week, streakN: l.streak || 0,
+        week: plural(week, 'question', 'questions') + ' this week', streak: (l.streak || 0) + '-day streak'};
+    });
+    rows.sort(function(a, b){ return b.weekN - a.weekN || b.streakN - a.streakN || (a.name < b.name ? -1 : a.name > b.name ? 1 : 0); });
+    return {rows: rows, alone: rows.length < 2};
+  };
+
+  return I;
 })();
 </script>
 <script>
@@ -456,11 +667,13 @@ input,select{font-family:inherit}
     </section>
   </sc-if>
   <div style="display:flex;gap:10px;margin-bottom:14px">
-    <div style="flex:1;background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);border-radius:16px;padding:12px 6px;display:flex;flex-direction:column;align-items:center;gap:3px">
+    <!-- Streak, with the freezes she holds (coach.js streakWithFreeze). Tap: how freezes work. -->
+    <button onClick="{{ freezeToggle }}" aria-expanded="{{ freezeExpanded }}" aria-controls="tt-freeze-info" style="flex:1;min-width:0;background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);border-radius:16px;padding:12px 6px;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;color:var(--tt-fg-2a2c33)">
       <svg width="22" height="22" viewBox="0 0 24 24"><path d="M12 2 Q14 7 17.5 9.5 Q21 12 20 16 Q19 20.5 12 22 Q5 20.5 4 16 Q3 12 6.5 9.5 Q10 7 12 2 Z" fill="{{ streakFlame }}"/><path d="M12 11 Q13 13 14.6 14.3 Q16.2 15.7 15.4 17.5 Q14.5 19.6 12 20.1 Q9.5 19.6 8.6 17.5 Q7.8 15.7 9.4 14.3 Q11 13 12 11 Z" fill="#fff" opacity=".8"/></svg>
       <span style="font-family:'Nunito',sans-serif;font-weight:900;font-size:17px;line-height:1">{{ streakDays }}</span>
       <span style="font-size:11.5px;color:var(--tt-fg-6e6a5e)">day streak</span>
-    </div>
+      <span style="display:flex;align-items:center;gap:3px;font-size:11.5px;font-weight:700;color:var(--tt-fg-2f6ea8)"><svg aria-hidden="true" width="11" height="11" viewBox="0 0 24 24"><path d="M12 2 L12 22 M3.3 7 L20.7 17 M3.3 17 L20.7 7 M9 3.5 L12 6 L15 3.5 M9 20.5 L12 18 L15 20.5" stroke="currentColor" stroke-width="2.4" fill="none" stroke-linecap="round"/></svg>{{ freezeLine }}</span>
+    </button>
     <div style="flex:1;background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);border-radius:16px;padding:12px 6px;display:flex;flex-direction:column;align-items:center;gap:3px">
       <svg width="22" height="22" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="{{ goalRingColor }}" stroke-width="2.2"/><circle cx="12" cy="12" r="4.6" fill="none" stroke="{{ goalRingColor }}" stroke-width="2.2"/><circle cx="12" cy="12" r="1.6" fill="{{ goalRingColor }}"/></svg>
       <span style="font-family:'Nunito',sans-serif;font-weight:900;font-size:17px;line-height:1">{{ goalToday }}</span>
@@ -472,22 +685,55 @@ input,select{font-family:inherit}
       <span style="font-size:11.5px;color:var(--tt-fg-6e6a5e)">XP · {{ xpLevel }}</span>
     </div>
   </div>
+  <!-- How streak freezes work: opened from the streak tile (TTInsights.streakTile) -->
+  <sc-if value="{{ freezeOpen }}" hint-placeholder-val="{{ false }}">
+    <section id="tt-freeze-info" aria-label="Streak freezes" style="background:var(--tt-bg-eaf2fb);border:1px solid var(--tt-bd-c3d9f0);border-radius:16px;padding:12px 14px;margin:-4px 0 14px;font-size:14px;line-height:1.5;color:var(--tt-fg-2a2c33);display:flex;flex-direction:column;gap:4px">
+      <div style="font-family:'Nunito',sans-serif;font-weight:900;font-size:15.5px;color:var(--tt-fg-2f6ea8)">Streak freezes: {{ freezeHeld }}</div>
+      <div>{{ freezeHowTo }}</div>
+      <div style="font-weight:700">{{ freezeNext }}</div>
+      <sc-if value="{{ freezeSavedShow }}" hint-placeholder-val="{{ false }}"><div>{{ freezeSaved }}</div></sc-if>
+    </section>
+  </sc-if>
   <button onClick="{{ goBadges }}" style="width:100%;background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);border-radius:16px;padding:13px 14px;margin-bottom:14px;cursor:pointer;display:flex;flex-direction:column;gap:7px;text-align:left">
     <span style="display:flex;justify-content:space-between;align-items:baseline;gap:10px;width:100%">
       <span style="font-family:'Nunito',sans-serif;font-weight:900;font-size:15.5px;color:var(--tt-fg-2a2c33)">Level {{ levelNum }} · {{ levelName }}</span>
       <span style="font-size:12.5px;color:var(--tt-fg-6e6a5e);white-space:nowrap">{{ levelNext }}</span>
     </span>
     <span style="display:block;width:100%;height:9px;border-radius:99px;background:var(--tt-bg-f2ede1);overflow:hidden"><span style="{{ levelBarStyle }}"></span></span>
+    <!-- "You're close to a badge" (coach.js badgeCloseness), once she is half-way to one -->
+    <sc-if value="{{ nudgeShow }}" hint-placeholder-val="{{ false }}">
+      <span style="display:flex;align-items:center;gap:7px;width:100%;box-sizing:border-box;font-size:13.5px;font-weight:700;line-height:1.35;color:var(--tt-fg-8a5a0b);background:var(--tt-bg-fbf1dc);border-radius:10px;padding:7px 10px"><svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" style="flex:none"><path d="M12 2.5 L14.6 8.6 L21.2 9.2 L16.2 13.6 L17.7 20.1 L12 16.7 L6.3 20.1 L7.8 13.6 L2.8 9.2 L9.4 8.6 Z" fill="#F2A93B"/></svg><span>Close to a badge: {{ nudgeText }}</span></span>
+    </sc-if>
     <span style="font-size:12px;color:var(--tt-fg-b5ae9e)">{{ badgeCountLine }} · tap to see them</span>
   </button>
+  <!-- Test countdown, and what today's study plan asks; tap for the whole plan -->
   <sc-if value="{{ hasExamDate }}" hint-placeholder-val="{{ false }}">
-    <div style="background:var(--tt-bg-e4f2ef);border:1px solid var(--tt-bd-bfe0d8);border-radius:14px;padding:11px 14px;margin-bottom:14px;font-size:14.5px;color:var(--tt-fg-0a5d50);font-weight:700;text-align:center">{{ examCountdown }}</div>
+    <button onClick="{{ goPlan }}" style="width:100%;display:flex;flex-direction:column;align-items:center;gap:3px;background:var(--tt-bg-e4f2ef);border:1px solid var(--tt-bd-bfe0d8);border-radius:14px;padding:11px 14px;margin-bottom:14px;cursor:pointer;color:var(--tt-fg-0a5d50);text-align:center">
+      <span style="font-size:14.5px;font-weight:700">{{ examCountdown }}</span>
+      <span style="font-size:13.5px">{{ planHomeLine }}</span>
+    </button>
   </sc-if>
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
     <button onClick="{{ startDailyLesson }}" style="grid-column:1/-1;display:flex;align-items:center;gap:16px;background:var(--tt-bg-2a2c33);color:#fff;border:none;border-radius:22px;padding:18px 22px;cursor:pointer;text-align:left">
       <svg width="34" height="34" viewBox="0 0 24 24" style="flex:none"><circle cx="12" cy="12" r="9.4" fill="none" stroke="#F2A93B" stroke-width="2"/><path d="M10 8.2 L16 12 L10 15.8 Z" fill="#F2A93B"/></svg>
       <span><span style="display:block;font-family:'Nunito',sans-serif;font-weight:900;font-size:19px">Today's lesson</span><span style="display:block;font-size:14.5px;opacity:.8;margin-top:2px">{{ dailyDesc }}</span></span>
     </button>
+    <!-- What to work on: the topic where more right answers would lift her expected mock
+         score most (coach.js improvements), with a button that drills it -->
+    <sc-if value="{{ workShow }}" hint-placeholder-val="{{ false }}">
+    <section aria-label="What to work on" style="grid-column:1/-1;background:var(--tt-bg-fff);border:2px solid var(--tt-bd-f0d9a8);border-radius:20px;padding:16px 18px;text-align:left">
+      <div style="font-family:'Nunito',sans-serif;font-weight:900;font-size:18px">What to work on</div>
+      <div style="font-size:15px;line-height:1.5;margin-top:6px">{{ workSay }}</div>
+      <sc-if value="{{ workEarlyShow }}" hint-placeholder-val="{{ false }}"><div style="font-size:13px;color:var(--tt-fg-6e6a5e);margin-top:6px;line-height:1.45">{{ workEarly }}</div></sc-if>
+      <button onClick="{{ workDrill }}" style="width:100%;margin-top:12px;background:#0E7C6B;color:#fff;border:none;border-radius:14px;min-height:50px;padding:8px 14px;font-family:'Nunito',sans-serif;font-weight:900;font-size:16px;cursor:pointer">{{ workBtn }}</button>
+      <sc-if value="{{ workNextShow }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px 10px;margin-top:10px">
+          <span style="font-size:14px;color:var(--tt-fg-6e6a5e)">After that: {{ workNextName }}</span>
+          <button onClick="{{ workNextDrill }}" style="background:var(--tt-bg-fff);border:1px solid var(--tt-bd-0e7c6b);color:var(--tt-fg-0a5d50);border-radius:10px;min-height:44px;padding:0 14px;font-size:14px;font-weight:700;cursor:pointer">{{ workNextBtn }}</button>
+        </div>
+      </sc-if>
+    </section>
+    </sc-if>
     <!-- Questions she keeps missing, with the answer she tends to pick and a way to remember -->
     <sc-if value="{{ tripShow }}" hint-placeholder-val="{{ false }}">
     <div style="grid-column:1/-1;background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);border-radius:20px;border:2px solid var(--tt-bd-e8b7b4);padding:16px 18px;text-align:left">
@@ -496,7 +742,7 @@ input,select{font-family:inherit}
       <sc-for list="{{ tripRows }}" as="t" hint-placeholder-count="2">
         <div style="padding:10px 0;border-top:1px solid var(--tt-bd-f2ede1)">
           <div style="font-size:15px;line-height:1.4;font-weight:700">{{ t.text }}</div>
-          <div style="font-size:14px;margin-top:4px;color:var(--tt-fg-b8433d)">You tend to pick: {{ t.usual }}</div>
+          <div style="font-size:14px;margin-top:4px;color:var(--tt-fg-b8433d)">{{ t.miss }}</div>
           <div style="font-size:14px;margin-top:2px;color:var(--tt-fg-1c6b3c)">Right answer: {{ t.answer }}</div>
           <div style="font-size:14px;margin-top:4px;line-height:1.45"><b>{{ t.tipLabel }}</b> {{ t.tip }}</div>
         </div>
@@ -543,6 +789,24 @@ input,select{font-family:inherit}
       <span style="font-size:14px;color:var(--tt-fg-6e6a5e)">Flashcards and papers</span>
     </button>
   </div>
+  <!-- Family board (opt-in, Settings): learners on THIS account who switched it on, from this
+       device's copy of their progress (TTInsights.family). Nothing goes to a server for it. -->
+  <sc-if value="{{ famShow }}" hint-placeholder-val="{{ false }}">
+    <section aria-label="Family board" style="margin-top:14px;background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);border-radius:20px;padding:14px 18px">
+      <div style="font-family:'Nunito',sans-serif;font-weight:900;font-size:18px">Family board</div>
+      <div style="font-size:13px;color:var(--tt-fg-6e6a5e);margin:2px 0 6px;line-height:1.45">{{ famSub }}</div>
+      <sc-for list="{{ famRows }}" as="f" hint-placeholder-count="2">
+        <div style="{{ f.rowStyle }}">
+          <span aria-hidden="true" style="flex:none;width:36px;height:36px;border-radius:50%;background:#0E7C6B;color:#fff;display:flex;align-items:center;justify-content:center;font-family:'Nunito',sans-serif;font-weight:900;font-size:16px">{{ f.initial }}</span>
+          <span style="flex:1;min-width:0;font-size:15.5px;font-weight:700;line-height:1.3">{{ f.name }}</span>
+          <span style="flex:none;text-align:right;font-size:13.5px;line-height:1.4"><span style="display:block;font-weight:700">{{ f.week }}</span><span style="display:block;color:var(--tt-fg-6e6a5e)">{{ f.streak }}</span></span>
+        </div>
+      </sc-for>
+      <sc-if value="{{ famAlone }}" hint-placeholder-val="{{ false }}">
+        <div style="font-size:13.5px;color:var(--tt-fg-6e6a5e);line-height:1.45;padding-top:8px;border-top:1px solid var(--tt-bd-f2ede1)">Only you so far. The board fills in when another learner on this account switches on Family board in their Settings.</div>
+      </sc-if>
+    </section>
+  </sc-if>
   <div style="display:flex;gap:12px;margin-top:18px">
     <button onClick="{{ goSettings }}" style="flex:1;background:none;border:1px solid var(--tt-bd-e8e1d2);border-radius:14px;padding:12px;cursor:pointer;font-size:15px;color:var(--tt-fg-6e6a5e)">Settings</button>
     <!-- Help opens in its own tab, so whatever she was in the middle of stays put -->
@@ -679,7 +943,7 @@ input,select{font-family:inherit}
       <sc-for list="{{ tripRows }}" as="t" hint-placeholder-count="2">
         <div style="padding:10px 0;border-top:1px solid var(--tt-bd-f2ede1)">
           <div style="font-size:15px;line-height:1.4;font-weight:700">{{ t.text }}</div>
-          <div style="font-size:14px;margin-top:4px;color:var(--tt-fg-b8433d)">You tend to pick: {{ t.usual }}</div>
+          <div style="font-size:14px;margin-top:4px;color:var(--tt-fg-b8433d)">{{ t.miss }}</div>
           <div style="font-size:14px;margin-top:2px;color:var(--tt-fg-1c6b3c)">Right answer: {{ t.answer }}</div>
           <div style="font-size:14px;margin-top:4px;line-height:1.45"><b>{{ t.tipLabel }}</b> {{ t.tip }}</div>
         </div>
@@ -735,6 +999,32 @@ input,select{font-family:inherit}
       <div style="font-size:14.5px;color:var(--tt-fg-6e6a5e);margin-top:6px;line-height:1.5">{{ readySub }}</div>
     </div>
   </div>
+  <!-- Pass prediction (coach.js passPrediction): expected mock score and the chance of a pass,
+       or "not enough answers yet" below one mock's worth; and what would raise it -->
+  <section aria-label="Pass prediction" style="background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);border-radius:22px;padding:18px 20px;margin-top:14px">
+    <div style="font-family:'Nunito',sans-serif;font-weight:900;font-size:18px">Pass prediction</div>
+    <sc-if value="{{ predEnough }}" hint-placeholder-val="{{ false }}">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px">
+        <div style="background:var(--tt-bg-faf6ef);border-radius:16px;padding:12px 14px">
+          <div style="font-family:'Nunito',sans-serif;font-weight:900;font-size:28px;line-height:1.1">{{ predScore }}<span style="font-size:16px;color:var(--tt-fg-6e6a5e)"> / {{ predTotal }}</span></div>
+          <div style="font-size:13px;color:var(--tt-fg-6e6a5e);margin-top:4px;line-height:1.35">expected mock score</div>
+        </div>
+        <div style="background:var(--tt-bg-faf6ef);border-radius:16px;padding:12px 14px">
+          <div style="font-family:'Nunito',sans-serif;font-weight:900;font-size:{{ predChanceSize }};line-height:1.1;color:{{ predChanceColor }}">{{ predChance }}</div>
+          <div style="font-size:13px;color:var(--tt-fg-6e6a5e);margin-top:4px;line-height:1.35">chance of {{ predPassMark }} or more (a pass)</div>
+        </div>
+      </div>
+      <sc-if value="{{ predRaiseShow }}" hint-placeholder-val="{{ false }}">
+        <div style="font-size:14.5px;line-height:1.5;margin-top:12px"><b>What would raise it:</b> {{ predRaise }}</div>
+      </sc-if>
+      <div style="font-size:13px;color:var(--tt-fg-6e6a5e);margin-top:10px;line-height:1.45">{{ predBasis }}</div>
+    </sc-if>
+    <sc-if value="{{ predShort }}" hint-placeholder-val="{{ false }}">
+      <div style="font-size:16px;font-weight:700;margin-top:8px">Not enough answers yet</div>
+      <div style="font-size:14px;color:var(--tt-fg-6e6a5e);margin-top:4px;line-height:1.45">{{ predNeed }}</div>
+      <span role="progressbar" aria-label="Answers towards a prediction" aria-valuemin="0" aria-valuemax="100" aria-valuenow="{{ predNeedPct }}" style="display:block;height:9px;border-radius:99px;background:var(--tt-bg-f2ede1);overflow:hidden;margin-top:10px"><span style="{{ predNeedBar }}"></span></span>
+    </sc-if>
+  </section>
   <div style="background:var(--tt-bg-e4f2ef);border:1px solid var(--tt-bd-bfe0d8);border-radius:22px;padding:18px 20px;margin-top:14px">
     <div style="font-family:'Nunito',sans-serif;font-weight:900;font-size:17px;margin-bottom:10px;color:var(--tt-fg-0a5d50)">Your coach says</div>
     <div style="display:flex;flex-direction:column;gap:10px">
@@ -745,14 +1035,18 @@ input,select{font-family:inherit}
   </div>
   <button onClick="{{ startFocusDrill }}" style="width:100%;margin-top:14px;background:var(--tt-bg-fbf1dc);border:2px solid #F2A93B;border-radius:16px;min-height:56px;font-family:'Nunito',sans-serif;font-weight:900;font-size:18px;cursor:pointer;color:var(--tt-fg-2a2c33)">Focus Drill: {{ focusDesc }}</button>
   <button onClick="{{ goAnswers }}" style="width:100%;margin-top:10px;background:var(--tt-bg-fff);border:2px solid var(--tt-bd-0e7c6b);border-radius:16px;min-height:56px;font-family:'Nunito',sans-serif;font-weight:900;font-size:18px;cursor:pointer;color:var(--tt-fg-0a5d50)">My answers: tick some, make a test</button>
+  <!-- The study plan to her test date (or where to set the date) -->
+  <button onClick="{{ goPlan }}" style="width:100%;margin-top:10px;background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);border-radius:16px;min-height:56px;padding:8px 14px;font-family:'Nunito',sans-serif;font-weight:900;font-size:17px;cursor:pointer;color:var(--tt-fg-2a2c33)">{{ planProgressLabel }}</button>
   <div style="font-family:'Nunito',sans-serif;font-weight:800;font-size:18px;margin:26px 0 10px">Your topics</div>
   <div style="background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);border-radius:20px;padding:8px 18px">
     <sc-for list="{{ progTopics }}" as="t" hint-placeholder-count="6">
       <div style="padding:10px 0;border-bottom:1px solid var(--tt-bd-f2ede1)">
         <div style="display:flex;align-items:center;gap:12px">
           <span style="{{ t.dotStyle }}"></span>
-          <span style="flex:1;font-size:15px;line-height:1.3">{{ t.name }}</span>
-          <span style="width:110px;height:10px;background:var(--tt-bg-efe9dc);border-radius:5px;overflow:hidden;flex:none"><span style="{{ t.barStyle }}"></span></span>
+          <!-- min-width:0 and a bar that can shrink: at 390px a long topic name pushed this
+               row 35px past the screen (found 2026-09-24, issue #8's browser check) -->
+          <span style="flex:1;min-width:0;overflow-wrap:break-word;font-size:15px;line-height:1.3">{{ t.name }}</span>
+          <span style="flex:0 1 110px;min-width:40px;height:10px;background:var(--tt-bg-efe9dc);border-radius:5px;overflow:hidden"><span style="{{ t.barStyle }}"></span></span>
           <span style="{{ t.statusStyle }}">{{ t.status }}</span>
         </div>
         <sc-if value="{{ t.showAdvice }}" hint-placeholder-val="{{ false }}">
@@ -784,6 +1078,51 @@ input,select{font-family:inherit}
     </sc-for>
   </div>
   <button onClick="{{ goLearn }}" style="width:100%;margin-top:20px;background:#0E7C6B;color:#fff;border:none;border-radius:18px;min-height:58px;font-family:'Nunito',sans-serif;font-weight:900;font-size:19px;cursor:pointer">Practise now</button>
+</div>
+</sc-if>
+
+<!-- ============ STUDY PLAN ============ -->
+<!-- Day by day to the test date (coach.js studyPlan), rebuilt every time it is opened: a missed
+     day's questions move onto the days left. From Home (the countdown) and My Progress. -->
+<sc-if value="{{ vPlan }}" hint-placeholder-val="{{ false }}">
+<div data-screen-label="Study plan">
+  <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
+    <button onClick="{{ goHome }}" aria-label="Back to home" style="background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);border-radius:12px;width:44px;height:44px;cursor:pointer;font-size:18px">←</button>
+    <div style="font-family:'Nunito',sans-serif;font-weight:900;font-size:24px;flex:1">Study plan</div>
+  </div>
+  <div style="background:var(--tt-bg-e4f2ef);border:1px solid var(--tt-bd-bfe0d8);border-radius:16px;padding:12px 16px;font-size:15.5px;font-weight:700;color:var(--tt-fg-0a5d50);line-height:1.45">{{ planHeadline }}</div>
+  <sc-if value="{{ planOk }}" hint-placeholder-val="{{ false }}">
+    <!-- today -->
+    <section aria-label="Today" style="background:var(--tt-bg-fff);border:2px solid var(--tt-bd-0e7c6b);border-radius:22px;padding:18px 20px;margin-top:14px">
+      <div style="font-size:13px;font-weight:700;color:var(--tt-fg-6e6a5e);text-transform:uppercase;letter-spacing:.04em">Today · {{ planTodayDate }}</div>
+      <div style="font-family:'Nunito',sans-serif;font-weight:900;font-size:26px;margin-top:4px">{{ planTodayTarget }} questions</div>
+      <span role="progressbar" aria-label="Today's questions done" aria-valuemin="0" aria-valuemax="100" aria-valuenow="{{ planTodayPct }}" style="display:block;height:10px;border-radius:99px;background:var(--tt-bg-f2ede1);overflow:hidden;margin-top:10px"><span style="{{ planTodayBar }}"></span></span>
+      <div style="font-size:14.5px;margin-top:8px">{{ planTodayLine }}</div>
+      <div style="font-size:14.5px;margin-top:4px;color:var(--tt-fg-6e6a5e)">Focus: {{ planTodayTopics }}</div>
+      <button onClick="{{ planGo }}" style="width:100%;margin-top:14px;background:#0E7C6B;color:#fff;border:none;border-radius:16px;min-height:56px;padding:8px 14px;font-family:'Nunito',sans-serif;font-weight:900;font-size:17px;cursor:pointer">{{ planGoLabel }}</button>
+    </section>
+    <sc-if value="{{ planMissedShow }}" hint-placeholder-val="{{ false }}">
+      <div role="status" style="margin-top:12px;background:var(--tt-bg-fbf1dc);border:1px solid var(--tt-bd-f0d9a8);border-radius:16px;padding:12px 14px;font-size:14.5px;line-height:1.5">{{ planMissed }}</div>
+    </sc-if>
+    <div style="font-size:13.5px;color:var(--tt-fg-6e6a5e);margin-top:12px;line-height:1.5">{{ planWorkload }}</div>
+    <!-- the days ahead -->
+    <div style="font-family:'Nunito',sans-serif;font-weight:800;font-size:18px;margin:22px 0 10px">Day by day</div>
+    <div style="background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);border-radius:20px;padding:4px 18px">
+      <sc-for list="{{ planRows }}" as="d" hint-placeholder-count="5">
+        <div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--tt-bd-f2ede1)">
+          <span style="{{ d.dateStyle }}">{{ d.date }}</span>
+          <span style="flex:1;min-width:0;font-size:14px;color:var(--tt-fg-6e6a5e);line-height:1.35">{{ d.topics }}</span>
+          <span style="flex:none;font-family:'Nunito',sans-serif;font-weight:900;font-size:16px">{{ d.target }}</span>
+        </div>
+      </sc-for>
+      <sc-if value="{{ planMoreShow }}" hint-placeholder-val="{{ false }}"><div style="padding:10px 0;font-size:13.5px;color:var(--tt-fg-6e6a5e)">{{ planMore }}</div></sc-if>
+    </div>
+  </sc-if>
+  <!-- the test date: set it here, or change it (the same setting as Settings and the quick setup) -->
+  <label style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px 12px;margin-top:16px;background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);border-radius:16px;padding:12px 16px;font-size:15.5px">
+    <span>Theory test date<span style="display:block;font-size:13px;color:var(--tt-fg-6e6a5e);margin-top:2px">Changing it starts a fresh plan from today</span></span>
+    <input type="date" value="{{ examDate }}" onChange="{{ examDateChange }}" style="padding:10px;border:1px solid var(--tt-bd-e8e1d2);border-radius:10px;font-size:15px;background:var(--tt-bg-fff);color:var(--tt-fg-2a2c33)">
+  </label>
 </div>
 </sc-if>
 
@@ -1117,6 +1456,8 @@ input,select{font-family:inherit}
               <span style="display:block;font-size:15.5px;font-weight:700;line-height:1.4">{{ r.text }}</span>
               <span style="{{ r.resultStyle }}">{{ r.result }}</span>
               <span style="{{ r.answerStyle }}">{{ r.answer }}</span>
+              <!-- the wrong answer she keeps choosing, and how often (coach.js misconceptions) -->
+              <span style="{{ r.missStyle }}">{{ r.miss }}</span>
               <span style="display:block;font-size:13px;color:var(--tt-fg-6e6a5e);margin-top:3px;line-height:1.4">{{ r.meta }}</span>
             </span>
           </button>
@@ -1741,7 +2082,7 @@ class Component extends DCLogic {
     if(!saved.settings || !saved.settings.learnerName || saved.settings.learnerName==='Learner') this.state.settings.learnerName = au.name;
     if(this.state.settings.parentName==='Parent') this.state.settings.parentName = 'Admin';
   }
-  NOTESN = {home:'Home', onboard:'Quick setup', learnSetup:'Practise setup', learnQ:'Practising', learnDone:'Session results', testIntro:'Test setup', test:'Mock test', dash:'Admin', settings:'Settings', progress:'My progress', signs:'Road signs', editor:'Questions', print:'Print', answers:'My answers'};
+  NOTESN = {home:'Home', onboard:'Quick setup', learnSetup:'Practise setup', learnQ:'Practising', learnDone:'Session results', testIntro:'Test setup', test:'Mock test', dash:'Admin', settings:'Settings', progress:'My progress', signs:'Road signs', editor:'Questions', print:'Print', answers:'My answers', plan:'Study plan'};
   award(qCount, correctCount, bonus){
     const today = new Date().toISOString().slice(0,10);
     const stk = Object.assign({count:0, last:'', todayDate:'', todayN:0}, this.state.streak);
@@ -1752,6 +2093,14 @@ class Component extends DCLogic {
       const y = new Date(Date.now()-86400000).toISOString().slice(0,10);
       stk.count = (stk.last===y) ? (stk.count||0)+1 : 1;
       stk.last = today;
+    }
+    // The streak on screen is worked out from the local days her goal was met (streakFor).
+    // Today goes on that list the moment her answers today (these qCount included — they
+    // aren't in attempts yet) reach her goal, so raising the goal later never undoes a day.
+    if(window.TTCoach && window.TTInsights){
+      const I = window.TTInsights, localToday = I.localDay(Date.now());
+      const doneToday = (TTCoach.dayCounts(this.state.attempts)[localToday] || 0) + qCount;
+      stk.goalDays = I.recordGoalDay(stk.goalDays, localToday, doneToday, goal);
     }
     const before = this.levelInfo(this.state.xp||0).level;
     const xp = (this.state.xp||0) + correctCount*10 + (bonus||0);
@@ -1767,27 +2116,51 @@ class Component extends DCLogic {
     return {level: level, name: level<=names.length? names[level-1] : ('Full Licence +' + (level-names.length)),
       into: into, per: per, toNext: per-into, pct: Math.round(into/per*100)};
   }
-  badgeList(){
-    const s = this.state, at = s.attempts||[], tests = s.tests||[], stk = s.streak||{};
-    const answered = at.length, passes = tests.filter(t=>t.pass).length;
+  // The numbers the badges count, in the names coach.js badgeCloseness uses (COACH.badgeStat):
+  // run = right answers in a row NOW, bestRun = the longest ever, streak = her current streak
+  // (streakFor, so a freeze-saved day keeps it going, same as the Home tile).
+  badgeStats(){
+    const s = this.state, at = s.attempts||[], tests = s.tests||[];
     const perTopic = {};
     at.forEach(a=>{ const t = perTopic[a.topic] = perTopic[a.topic] || {n:0, ok:0}; t.n++; if(a.ok) t.ok++; });
-    const mastered = Object.keys(perTopic).filter(k=>perTopic[k].n>=10 && perTopic[k].ok/perTopic[k].n>=0.85).length;
     let run = 0, bestRun = 0;
     at.forEach(a=>{ run = a.ok? run+1 : 0; if(run>bestRun) bestRun = run; });
+    return {answered: at.length, run, bestRun, streak: this.streakFor(s).count,
+      passes: tests.filter(t=>t.pass).length, topics: Object.keys(perTopic).length,
+      mastered: Object.keys(perTopic).filter(k=>perTopic[k].n>=10 && perTopic[k].ok/perTopic[k].n>=0.85).length};
+  }
+  badgeList(){
+    const b = this.badgeStats(), answered = b.answered, passes = b.passes, streak = b.streak;
     const defs = [
       {id:'start', label:'First go', note:'Answer your first question', done: answered>=1, at: answered, need:1},
-      {id:'ten', label:'Ten in a row', note:'Ten correct back to back', done: bestRun>=10, at: bestRun, need:10},
+      {id:'ten', label:'Ten in a row', note:'Ten correct back to back', done: b.bestRun>=10, at: b.bestRun, need:10},
       {id:'hundred', label:'Century', note:'100 questions answered', done: answered>=100, at: answered, need:100},
       {id:'fivehundred', label:'Five hundred', note:'500 questions answered', done: answered>=500, at: answered, need:500},
-      {id:'streak7', label:'Week on the trot', note:'7-day streak', done:(stk.count||0)>=7, at: stk.count||0, need:7},
-      {id:'streak30', label:'Month of practice', note:'30-day streak', done:(stk.count||0)>=30, at: stk.count||0, need:30},
+      {id:'streak7', label:'Week on the trot', note:'7-day streak', done: streak>=7, at: streak, need:7},
+      {id:'streak30', label:'Month of practice', note:'30-day streak', done: streak>=30, at: streak, need:30},
       {id:'mock', label:'Mock passed', note:'43 or more on a mock test', done: passes>=1, at: passes, need:1},
       {id:'mock3', label:'Three mocks passed', note:'Consistency, not luck', done: passes>=3, at: passes, need:3},
-      {id:'topic', label:'Topic mastered', note:'85% on a topic, 10+ answers', done: mastered>=1, at: mastered, need:1},
-      {id:'alltopics', label:'Every topic tried', note:'All 14 DVSA topics attempted', done: Object.keys(perTopic).length>=14, at: Object.keys(perTopic).length, need:14}
+      {id:'topic', label:'Topic mastered', note:'85% on a topic, 10+ answers', done: b.mastered>=1, at: b.mastered, need:1},
+      {id:'alltopics', label:'Every topic tried', note:'All 14 DVSA topics attempted', done: b.topics>=14, at: b.topics, need:14}
     ];
     return defs;
+  }
+  // Her current streak with freezes (coach.js streakWithFreeze), for any learner's saved data
+  // d = {attempts, streak, settings}: the Home tile, the badges and the family board all use
+  // this. Goal days = the days recorded at the time plus any day whose answers reach her goal
+  // now (TTInsights.goalDays). Remembered until her answers, goal or the day change, because
+  // the badges ask for it on every screen.
+  streakFor(d){
+    const C = window.TTCoach, I = window.TTInsights;
+    if(!C || !I) return {count:0, freezes:0, frozen:[], today:false, nextFreezeIn:null};
+    const today = I.localDay(Date.now()), goal = ((d.settings||{}).dailyGoal) || C.coachDefaults.planGoal;
+    const rec = (d.streak||{}).goalDays, memo = this._streakMemo || (this._streakMemo = new Map());
+    const hit = memo.get(d.attempts);
+    if(hit && hit.goal===goal && hit.rec===rec && hit.today===today) return hit.val;
+    const val = C.streakWithFreeze(I.goalDays(rec, C.dayCounts(d.attempts||[]), goal), null, today);
+    if(memo.size > 20) memo.clear();                      // one entry per answer list seen: keep it small
+    memo.set(d.attempts, {goal, rec, today, val});
+    return val;
   }
   maybeLocalNudge(){
     const st = this.state.settings||{};
@@ -1920,17 +2293,37 @@ class Component extends DCLogic {
       .then(()=>{ this.setState({tipsList:next, tipsErr:''}); this.loadBank(); })
       .catch(e=>this.setState({tipsList:next, tipsErr:'Saving failed: '+String(e.message||e)+'. Nothing after that one was saved; try again.'}));
   }
-  // Questions she keeps missing (coach.js "stuck"), worst first, with her usual wrong pick.
+  // Questions she keeps missing (coach.js "stuck"), worst first. Each says which wrong
+  // answer she keeps choosing and how often (coach.js misconceptions), or, when she hasn't
+  // picked the same wrong one twice, how many times she has missed it.
   tripping(){
     if(!window.TTCoach) return [];
     const qs = this.questionsFor('learn'), prof = TTCoach.profile(this.state.attempts, {}, qs);
+    const miss = TTInsights.missByQid(TTCoach.misconceptions(this.state.attempts, qs));
     return Object.keys(prof).filter(id=>prof[id].stuck).sort((a,b)=>prof[b].wrong-prof[a].wrong).map(id=>{
-      const q = this.qById(id), picks = {};
-      this.state.attempts.forEach(a=>{ if(a.q===id && !a.ok && a.p!=null) picks[a.p] = (picks[a.p]||0)+1; });
-      const usual = Object.keys(picks).sort((x,y)=>picks[y]-picks[x])[0];
-      return {id, text:q.question, usual: usual!=null ? q.options[usual] : '\u2014', answer:q.options[q.correctIndex],
+      const q = this.qById(id);
+      return {id, text:q.question, answer:q.options[q.correctIndex],
+        miss: TTInsights.missLine(miss[id]) || ('Missed ' + prof[id].wrong + (prof[id].wrong===1 ? ' time' : ' times') + ', with different wrong answers.'),
         tip: q.memoryTip || q.explanation || '', tipLabel: q.memoryTip ? 'Memory tip:' : 'Why:'};
     });
+  }
+  // A short practice on one or more topics: the coach's drill rules (stuck, flagged, due, then
+  // new) inside those topics, topped up from the Leitner boxes (drawPool, weakest box first)
+  // when the coach has fewer than n to offer. Every question is from the bank.
+  topicDrill(topics, n, label){
+    const want = new Set(topics.map(Number)), qs = this.questionsFor('learn').filter(q=>want.has(Number(q.topic)));
+    if(!qs.length){
+      alert('No ' + topics.map(t=>this.TOPICS[t-1]).join(' or ') + ' questions are switched on for practice. Turn a question set on in the Admin dashboard (Question packs), then try again.');
+      return;
+    }
+    const ids = window.TTCoach ? TTCoach.buildDrill(TTCoach.profile(this.state.attempts, this.state.revisionFlags, qs), qs, {n}).ids : [];
+    // Top-up takes one question from each topic in turn, so two focus topics share it.
+    const have = new Set(ids), pools = topics.map(t=>this.drawPool(Number(t)));
+    for(let k = 0; ids.length < n && pools.some(p=>p.length); k = (k + 1) % pools.length){
+      const q = pools[k].shift();
+      if(q && !have.has(q.id)){ have.add(q.id); ids.push(q.id); }
+    }
+    this.buildSession(ids, label, {drill:true, repeats:{}});
   }
   // ---------- activity log ----------
   // Everything she does becomes a small event (backend.js TTTrack queues and sends them).
@@ -2569,6 +2962,118 @@ class Component extends DCLogic {
         reject: ()=>this.saveTips([{qid:r.qid, tip:textOf(r)}], 'rejected')}; })
     });
   }
+  // ---------- coach insights on screen ----------
+  // coach.js does the sums; TTInsights (page head) has the words. Each part is worked out only
+  // on the screens that show it, because renderVals runs on every change.
+  // Pass prediction and what to work on: her answers and mocks against the mock's own topic
+  // mix (built from the questions switched on for tests), every question in the bank as evidence.
+  coachNow(){
+    const C = TTCoach, s = this.state;
+    const opts = {mix: C.mockMix(this.questionsFor('test'), C.coachDefaults.mockSize), topicNames: this.TOPICS};
+    const all = this.questions().concat(this.signBank());
+    return {pred: C.passPrediction(s.attempts, s.tests, all, opts), list: C.improvements(s.attempts, s.tests, all, opts)};
+  }
+  // The study plan, rebuilt from scratch every time (that is how it adapts). Topics come
+  // best-gain first from improvements; before she has answered anything, all 14 in order.
+  planNow(list){
+    const C = TTCoach, s = this.state, st = s.settings, seen = new Set(s.attempts.map(a=>a.q));
+    return C.studyPlan(st.examDate || '', TTInsights.localDay(Date.now()), {
+      goal: st.dailyGoal || C.coachDefaults.planGoal, start: st.planStart, practised: C.dayCounts(s.attempts),
+      topics: list.length ? list.map(x=>x.topic) : this.TOPICS.map((_, i)=>i + 1),
+      unseen: this.questionsFor('learn').filter(q=>!seen.has(q.id)).length});
+  }
+  insightVals(view){
+    const s = this.state, st = s.settings, T = this.TOPICS, C = window.TTCoach, I = window.TTInsights;
+    const out = {vPlan: view==='plan'};
+    if(!C || !I) return out;                                // coach.js missing: the cards just don't show
+    const today = I.localDay(Date.now()), counts = C.dayCounts(s.attempts);
+    const goal = st.dailyGoal || C.coachDefaults.planGoal, doneToday = counts[today] || 0;
+    const bar = pct => 'display:block;height:100%;border-radius:99px;background:#0E7C6B;width:' + pct + '%';
+    const needCoach = view==='home' || view==='progress' || view==='plan';
+    const cn = needCoach ? this.coachNow() : {pred: null, list: []};
+    const minEv = C.coachDefaults.minEvidence;
+
+    // ----- streak tile, with freezes (Home) -----
+    const info = this.streakFor(s), tile = I.streakTile(info, C.coachDefaults.freeze);
+    Object.assign(out, {
+      streakDays: tile.count,
+      streakFlame: (info.today || doneToday > 0) ? '#F2A93B' : '#D8D0BF',
+      goalToday: doneToday + ' / ' + goal,
+      goalRingColor: doneToday >= goal ? '#0E7C6B' : '#B5AE9E',
+      freezeLine: tile.freezeLine, freezeHeld: tile.held, freezeHowTo: tile.howTo, freezeNext: tile.next,
+      freezeSaved: tile.saved, freezeSavedShow: !!tile.saved,
+      freezeOpen: !!s.freezeOpen, freezeExpanded: s.freezeOpen ? 'true' : 'false',
+      freezeToggle: ()=>this.setState({freezeOpen: !s.freezeOpen})
+    });
+
+    // ----- close to a badge (Home) -----
+    const nudge = view==='home' ? I.badgeNudge(C.badgeCloseness(this.badgeStats(), this.badgeList())) : {show:false, text:''};
+    Object.assign(out, {nudgeShow: nudge.show, nudgeText: nudge.text});
+
+    // ----- what to work on (Home) -----
+    const work = I.workOn(cn.list, cn.pred, minEv), nWork = C.coachDefaults.whatIfRight;
+    Object.assign(out, {
+      workShow: view==='home' && work.show, workSay: work.say || '',
+      workEarly: work.early || '', workEarlyShow: !!work.early,
+      // No count on the button: the drill brings a stuck question round again on top of the
+      // nWork (found in the browser check: "10 questions" started 15).
+      workBtn: work.show ? 'Drill ' + work.name + ' now' : '',
+      workDrill: ()=>this.topicDrill([work.topic], nWork, 'Work on: ' + work.name),
+      workNextShow: !!work.next, workNextName: work.next ? work.next.name : '',
+      workNextBtn: work.next ? 'Drill ' + work.next.name : '',
+      workNextDrill: ()=>{ if(work.next) this.topicDrill([work.next.topic], nWork, 'Work on: ' + work.next.name); }
+    });
+
+    // ----- pass prediction (My Progress) -----
+    const pr = I.prediction(cn.pred, cn.list[0] || null, minEv), prob = cn.pred ? cn.pred.probability : null;
+    const band = I.CFG.chanceBands;
+    Object.assign(out, {
+      predEnough: pr.enough, predShort: !pr.enough, predScore: pr.score, predTotal: pr.total, predPassMark: pr.passMark,
+      predChance: pr.chance, predBasis: pr.basis, predNeed: pr.need,
+      predChanceColor: prob >= band[0] ? 'var(--tt-fg-1c6b3c)' : prob >= band[1] ? 'var(--tt-fg-c77e14)' : 'var(--tt-fg-b8433d)',
+      // "under 1%" and "over 99%" are longer: a size down keeps them on one line at 390px.
+      predChanceSize: pr.chance.length > 4 ? '21px' : '28px',
+      predRaise: pr.raise, predRaiseShow: !!pr.raise,
+      predNeedPct: String(pr.needBar), predNeedBar: bar(pr.needBar)
+    });
+
+    // ----- study plan (its own screen; a line on Home and a button on My Progress) -----
+    const plan = needCoach ? this.planNow(cn.list) : null, pv = I.plan(plan, T), td = pv.today;
+    const maxGo = C.drillDefaults.n, goN = td && td.left ? Math.min(td.left, maxGo) : maxGo;
+    Object.assign(out, {
+      planHeadline: pv.headline || '', planOk: pv.ok,
+      planHomeLine: pv.ok ? 'Today’s plan: ' + td.target + ' questions' + (td.done ? ' (' + td.done + ' done)' : '') + ' · see the plan →'
+        : pv.status==='passed' ? 'Set the next date in your study plan →' : '',
+      planProgressLabel: pv.ok ? 'Study plan: ' + td.target + ' questions today →' : pv.status==='test-day' ? 'Study plan: it’s test day →'
+        : pv.status==='passed' ? 'Study plan: set your next test date →' : 'Study plan: set your test date first →',
+      planTodayDate: td ? td.date : '', planTodayTarget: td ? String(td.target) : '', planTodayLine: td ? td.line : '',
+      planTodayTopics: td ? td.topics : '', planTodayPct: String(td ? td.bar : 0), planTodayBar: bar(td ? td.bar : 0),
+      planGoLabel: !td ? '' : td.left ? 'Practise today’s topics now (' + td.left + ' left today)' : 'Practise more today (a bonus)',
+      planGo: ()=>{ if(plan && plan.days[0]) this.topicDrill(plan.days[0].topics.length ? plan.days[0].topics : T.map((_, i)=>i + 1), goN, 'Study plan'); },
+      planMissed: pv.missed, planMissedShow: !!pv.missed, planWorkload: pv.workload,
+      planRows: pv.rows.map(r=>Object.assign({}, r, {dateStyle: 'flex:none;width:92px;font-size:14.5px;' + (r.isToday ? 'font-weight:800;color:var(--tt-fg-0a5d50)' : 'font-weight:700')})),
+      planMore: pv.more, planMoreShow: !!pv.more,
+      // Opening the plan remembers the day it began, so from then on a missed day shows up
+      // and its questions move onto the days left (a new test date starts it again).
+      goPlan: ()=>{ if(st.examDate && !st.planStart) this.set({settings: Object.assign({}, st, {planStart: today}), view:'plan'}); else this.setState({view:'plan'}); }
+    });
+
+    // ----- family board (Home, opt-in) -----
+    if(view==='home' && st.familyBoard){
+      const weekFrom = I.weekStart(today);
+      const learners = this.users.map(u=>{
+        let d = s;                                            // the learner here now: her live state
+        if(u.id!==s.userId){ try { d = JSON.parse(localStorage.getItem(this.BASE+'.d.'+u.id)) || {}; } catch(e){ d = {}; } }
+        const ds = d.settings || {};
+        return {id: u.id, name: ds.learnerName || u.name, on: !!ds.familyBoard, counts: C.dayCounts(d.attempts||[]), streak: this.streakFor(d).count};
+      });
+      const fam = I.family(learners, s.userId, weekFrom);
+      Object.assign(out, {famShow: true, famAlone: fam.alone,
+        famSub: 'This week, since ' + I.fmtDay(weekFrom) + '. Only learners on this account who switch on Family board in Settings are shown.',
+        famRows: fam.rows.map((r, i)=>Object.assign({}, r, {rowStyle: 'display:flex;align-items:center;gap:12px;padding:10px 0' + (i ? ';border-top:1px solid var(--tt-bd-f2ede1)' : '')}))});
+    } else Object.assign(out, {famShow: false, famAlone: false, famRows: [], famSub: ''});
+    return out;
+  }
   activityVals(chip){
     const s = this.state, T = this.TOPICS, evs = s.actEvents || [];
     const accts = s.actAccountsList || [];
@@ -2604,7 +3109,7 @@ class Component extends DCLogic {
     // Screen ids as a person would say them, for the "Latest" list.
     const SCREEN = {home:'Home', login:'who\u2019s-here', auth:'sign in', learnSetup:'Practise', learnQ:'a practice question', learnDone:'session results',
       testIntro:'Mock test', test:'the mock test', dash:'the Admin dashboard', settings:'Settings', answers:'My answers', flagged:'Flagged',
-      activity:'Activity', progress:'My Progress', signs:'Road signs', print:'Print', editor:'the question editor', payPreview:'plans', setup:'server settings'};
+      activity:'Activity', progress:'My Progress', signs:'Road signs', print:'Print', editor:'the question editor', payPreview:'plans', setup:'server settings', plan:'the study plan'};
     const dayLabel = k=>{ try { return new Date(k+'T12:00').toLocaleDateString('en-GB', {weekday:'short', day:'numeric', month:'short'}); } catch(e){ return k; } };
     return {
       vActivity: s.view==='activity',
@@ -2918,15 +3423,18 @@ class Component extends DCLogic {
     if(view==='answers'){
       const sel = s.ansSel || {};
       const sh = a => a.map(x=>[Math.random(),x]).sort((p,q)=>p[0]-q[0]).map(p=>p[1]);
-      const shownAll = hist.filter(r=> s.ansFilter==='wrong' ? !r.lastOk : s.ansFilter==='right' ? r.lastOk : true);
+      // The wrong answer she keeps choosing on each question (picked the same one twice or more).
+      const missOf = window.TTCoach ? TTInsights.missByQid(TTCoach.misconceptions(s.attempts, Array.from(qMap.values()))) : {};
+      const shownAll = hist.filter(r=> s.ansFilter==='wrong' ? !r.lastOk : s.ansFilter==='right' ? r.lastOk : s.ansFilter==='same' ? !!missOf[r.id] : true);
       const shown = shownAll.slice(0, s.ansShow);
       const ticked = hist.filter(r=>sel[r.id]).map(r=>r.id);
-      const nWrong = hist.filter(r=>!r.lastOk).length;
+      const nWrong = hist.filter(r=>!r.lastOk).length, nSame = hist.filter(r=>missOf[r.id]).length;
       const optText = (q, i) => (q.options && q.options[i]) || '';
       const ago = ms => { const d = Math.floor((Date.now()-ms)/864e5); return d<=0 ? 'today' : d===1 ? 'yesterday' : d + ' days ago'; };
       const setSel = patch => this.setState({ansSel: Object.assign({}, sel, patch)});
       ansVals = {
         ansFilters: [{v:'all', label:'All (' + hist.length + ')'}, {v:'wrong', label:'Wrong last time (' + nWrong + ')'}, {v:'right', label:'Right last time (' + (hist.length-nWrong) + ')'}]
+          .concat(nSame ? [{v:'same', label:'Same wrong answer again (' + nSame + ')'}] : [])
           .map(f=>({label:f.label, style: chip(s.ansFilter===f.v), pick: ()=>this.setState({ansFilter:f.v, ansShow:40})})),
         ansRows: shown.map(r=>{
           const q = r.q, on = !!sel[r.id], right = optText(q, q.correctIndex);
@@ -2937,6 +3445,10 @@ class Component extends DCLogic {
             resultStyle: 'display:block;font-size:14px;margin-top:5px;line-height:1.4;font-weight:700;color:' + (r.lastOk ? 'var(--tt-fg-1c6b3c)' : 'var(--tt-fg-b8433d)'),
             answer: r.lastOk ? '' : ('✓ Answer: ' + right),
             answerStyle: r.lastOk ? 'display:none' : 'display:block;font-size:14px;margin-top:2px;line-height:1.4;font-weight:700;color:var(--tt-fg-1c6b3c)',
+            miss: TTInsights.missLine(missOf[r.id]),
+            // red while she still picks it; amber once her latest answer was right
+            missStyle: !missOf[r.id] ? 'display:none' : 'display:block;font-size:13.5px;margin-top:6px;line-height:1.4;padding:6px 10px;border-radius:10px;'
+              + (missOf[r.id].lastOk ? 'background:var(--tt-bg-fbf1dc);color:var(--tt-fg-8a5a0b)' : 'background:var(--tt-bg-fbeae9);color:var(--tt-fg-b8433d)'),
             meta: T[q.topic-1] + ' · ' + r.right + ' right, ' + r.wrong + ' wrong' + (r.src==='test' ? ' · last in a mock' : '') + (r.t ? ' · ' + ago(r.t) : ''),
             hasSign: !!q.imageHint && (this.props.showSignImages !== false), sign: q.imageHint || '',
             aria: on ? 'true' : 'false',
@@ -3048,7 +3560,9 @@ class Component extends DCLogic {
       ['autoAdvance','Move on by itself','After a correct answer, goes to the next question automatically'],
       ['dyslexiaFont','Easy-reading font','Switches to a font that is easier to read'],
       ['highContrast','High contrast','Stronger colours and darker text'],
-      ['reducedMotion','Reduce motion','Turns off little animations']
+      ['reducedMotion','Reduce motion','Turns off little animations'],
+      // Off unless she switches it on; only learners who switch it on appear on the board.
+      ['familyBoard','Family board','Home compares your streak and this week’s questions with the other learners on this account who switch it on. Worked out on this device; nothing extra is sent anywhere.']
     ];
     const setSetting = (k,v) => this.set({settings: Object.assign({}, st, {[k]:v})});
     const choiceStyle = on => 'padding:9px 13px;border-radius:11px;cursor:pointer;font-size:13.5px;font-weight:700;'+(on?'background:#0E7C6B;color:#fff;border:none':'background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);color:var(--tt-fg-6e6a5e)');
@@ -3236,10 +3750,7 @@ class Component extends DCLogic {
       practiseFlagged: ()=>{ const ids = Object.keys(s.revisionFlags).filter(id=>this.qById(id)).map(x=>[Math.random(),x]).sort((a,b)=>a[0]-b[0]).map(p=>p[1]); this.buildSession(ids.slice(0,30), 'Flagged'); },
       printPreview: s.printPreview,
       greeting: 'Hi ' + (isParent? st.parentName : st.learnerName) + '!',
-      streakDays: (function(){ const stk = s.streak||{}; if(!stk.last) return '0'; const y = new Date(Date.now()-86400000).toISOString().slice(0,10); return String((stk.last===todayStr||stk.last===y)? stk.count||0 : 0); })(),
-      streakFlame: (s.streak && (s.streak.last===todayStr || (s.streak.todayDate===todayStr && s.streak.todayN>0)))? '#F2A93B' : '#D8D0BF',
-      goalToday: String((s.streak && s.streak.todayDate===todayStr ? s.streak.todayN : 0)||0) + ' / ' + (st.dailyGoal||20),
-      goalRingColor: (s.streak && s.streak.todayDate===todayStr && s.streak.todayN >= (st.dailyGoal||20))? '#0E7C6B' : '#B5AE9E',
+      // streakDays, streakFlame, goalToday, goalRingColor: insightVals (local days, with freezes)
       xpTotal: String(s.xp||0), xpLevel: 'Lv ' + this.levelInfo(s.xp||0).level,
       levelNum: String(this.levelInfo(s.xp||0).level),
       levelName: this.levelInfo(s.xp||0).name,
@@ -3275,7 +3786,8 @@ class Component extends DCLogic {
       hasExamDate: !!st.examDate,
       examCountdown: (function(){ if(!st.examDate) return ''; const d = Math.ceil((new Date(st.examDate+'T09:00') - Date.now())/86400000); return d>1? (d + ' days until your theory test') : d===1? 'Your theory test is tomorrow!' : d===0? 'Test day \u2014 good luck!' : 'Your test date has passed \u2014 set the next one in Settings'; })(),
       examDate: st.examDate||'',
-      examDateChange: e=>this.set({settings: Object.assign({}, st, {examDate: e.target.value})}),
+      // A new test date also restarts the study plan from today (settings.planStart).
+      examDateChange: e=>this.set({settings: Object.assign({}, st, {examDate: e.target.value, planStart: e.target.value ? window.TTInsights.localDay(Date.now()) : ''})}),
       goalChoices: TW.GOALS.map(g=>({label:String(g), style: chip((st.dailyGoal||20)===g), pick: ()=>setGoal(g)})),
       hasAvatar: !!s.avatar, noAvatar: !s.avatar, avatarSrc: s.avatar||'', learnerInitial: (st.learnerName||'?')[0].toUpperCase(),
       avatarUpload: e=>{ const f = e.target.files && e.target.files[0]; if(!f) return; const rd = new FileReader(); rd.onload = ()=>{ const img = new Image(); img.onload = ()=>{ const c = document.createElement('canvas'); const S = 128; c.width = S; c.height = S; const x = c.getContext('2d'); const m = Math.min(img.width, img.height); x.drawImage(img, (img.width-m)/2, (img.height-m)/2, m, m, 0, 0, S, S); this.set({avatar: c.toDataURL('image/jpeg', .82)}); }; img.src = rd.result; }; rd.readAsDataURL(f); e.target.value = ''; },
@@ -3344,7 +3856,7 @@ class Component extends DCLogic {
         rd.readAsText(f);
         e.target.value = '';
       }
-    }, learnVals, testVals, resultVals, ansVals, edVals, printVals, settingsVals, logVals, welcomeVals);
+    }, learnVals, testVals, resultVals, ansVals, edVals, printVals, settingsVals, logVals, welcomeVals, this.insightVals(view));
   }
 }
 </script>
