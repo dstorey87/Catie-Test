@@ -1,0 +1,20 @@
+# Runs every test on every pull request and on every push to develop/main.
+# A pull request is merged only when this check has run and passed (the PR gate:
+# python scripts/pr-gate.py <N> --repo dstorey87/Catie-Test, in everyday-im-hustling).
+name: tests
+on:
+  pull_request:
+    branches: [develop, main]
+  push:
+    branches: [develop, main]
+jobs:
+  node-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      # Node's built-in runner: finds tests/*.test.js, nothing to install.
+      - run: node --test
