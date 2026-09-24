@@ -67,7 +67,7 @@
           <li class="toc-group">For the parent or admin</li>
           <li><a href="#admin">The admin dashboard</a></li>
           <li><a href="#activity">Activity</a></li>
-          <li><a href="#tips">Memory tips</a></li>
+          <li><a href="#tips">Memory tips and plain explanations</a></li>
           <li><a href="#editor">Questions and packs</a></li>
           <li><a href="#access">Access and account tools</a></li>
           <li class="toc-group">Help</li>
@@ -112,6 +112,22 @@
           <figure class="shot">
             <a href="help/img/create-account.png"><img src="help/img/create-account.png" width="390" height="844" alt="The Create your account screen: boxes for your name, email and password, and a Create account button." loading="lazy"></a>
             <figcaption>Create your account</figcaption>
+          </figure>
+        </div>
+        <div class="step">
+          <div>
+            <h3 id="age">Your year of birth</h3>
+            <p>Right after your first sign-in, the app asks the year you were born. Everyone is asked once, including accounts made before the question existed.</p>
+            <ul>
+              <li>Type the year and tap <strong>Save</strong>. Only the year is kept, never the day or month.</li>
+              <li>If you may be under <span data-config="age.guardianUnder">16</span>, a box appears for a parent or guardian: they tick it to agree to you using Theory Trainer, and add their email (not yours). Their email is kept with your account as the record that they agreed.</li>
+              <li><strong>Not now</strong> puts the question off until you next open the app; it keeps coming back until it's answered.</li>
+              <li>You can change the answer any time in <a href="#yourdata">Settings → Your data</a>.</li>
+            </ul>
+          </div>
+          <figure class="shot">
+            <a href="help/img/age.png"><img src="help/img/age.png" width="390" height="844" alt="What year were you born? with 2012 typed in, and a box saying a parent or guardian needs to agree, with their tick and their email, then Save and Not now." loading="lazy"></a>
+            <figcaption>Your year of birth</figcaption>
           </figure>
         </div>
       </section>
@@ -284,6 +300,7 @@
             <ul>
               <li>Tap an answer. You find out straight away: your pick turns red if it's wrong and the right one turns green. On a computer you can use the keyboard: <strong>Tab</strong> to an answer, then press <strong>Enter</strong> or <strong>Space</strong>.</li>
               <li>Underneath is the explanation and its <strong>Highway Code</strong> rule, often with a tip to remember it. The speaker button reads the explanation out.</li>
+              <li><strong>Explain it differently</strong> appears under a wrong answer when the question has a plainer explanation: tap it to read the same explanation in other words (<strong>In other words: …</strong>), and tap again to hide it. The admin checks every one before it appears, so only some questions have one.</li>
               <li><strong>Speaker buttons</strong> read the question, or any one answer, aloud.</li>
               <li><strong>Hint: take two away</strong> removes two wrong answers (you can turn this button off in Settings).</li>
               <li><strong>Tricky?</strong> at the top flags the question so you can revise it later. It changes to <strong>Flagged</strong>; tap again to un-flag.</li>
@@ -559,6 +576,7 @@
               <div><dt>Daily reminder and Reminder time</dt><dd>See <a href="#reminders">Daily reminders</a>.</dd></div>
               <div><dt>Quick setup</dt><dd><strong>Run it again</strong> goes back through the <a href="#setup">quick setup</a>: test date, daily goal and reminder, one at a time.</dd></div>
               <div><dt>Profiles</dt><dd>Change the learner's and the parent's names, and <strong>+ Add another learner</strong>.</dd></div>
+              <div><dt>Your data</dt><dd>Download everything the server keeps for your account, see or change your year of birth, and delete your account. <a href="#yourdata">More below.</a></dd></div>
               <div><dt>Reset all progress…</dt><dd>After asking you to confirm, clears this learner's answers, memory boxes and mock scores. Questions the admin added are kept. Flags, XP and streak are not cleared.</dd></div>
               <div><dt>Help and legal</dt><dd><strong>Help</strong> (this guide), <strong>About</strong>, <strong>Privacy</strong> and <strong>Terms</strong>, each in its own tab, and a line saying the app is not affiliated with the DVSA.</dd></div>
             </dl>
@@ -581,6 +599,22 @@
           <figure class="shot">
             <a href="help/img/settings-help.png"><img src="help/img/settings-help.png" width="390" height="844" alt="The bottom of Settings: Quick setup with a Run it again button, Profiles, Add another learner, Reset all progress, and Help and legal with Help, About, Privacy and Terms." loading="lazy"></a>
             <figcaption>Quick setup, and Help and legal</figcaption>
+          </figure>
+        </div>
+        <div class="step">
+          <div>
+            <h3 id="yourdata">Your data</h3>
+            <p>Near the bottom of Settings, when you're signed in:</p>
+            <ul>
+              <li><strong>Download my data</strong> saves everything the server keeps for your account as one file (JSON, which any text editor opens): your account, your access, the progress backup of every learner, reminder settings and the whole activity history.</li>
+              <li><strong>Your age</strong> shows the year you gave, and the parent's or guardian's email if one agreed. <strong>Change</strong> opens the <a href="#age">question</a> again.</li>
+              <li><strong>Delete my account</strong> deletes the account and everything the server keeps for it. <strong>Delete…</strong> first lists exactly what goes. Then type <strong>DELETE</strong> and tap <strong>Delete my account for good</strong>; the button stays grey until you've typed it. This phone or computer forgets the account too: you're signed out and the learners' progress on it is removed. There's no undo, so download your data first if you want a copy.</li>
+              <li>A subscription that is still set to renew has to be cancelled first (<strong>Manage subscription</strong>); the app says so if you try. The admin account can't be deleted here: it shows why instead of the button.</li>
+            </ul>
+          </div>
+          <figure class="shot">
+            <a href="help/img/settings-your-data.png"><img src="help/img/settings-your-data.png" width="390" height="844" alt="Settings, Your data: Download my data, Your age born in 2000 with a Change button, and Delete my account open, listing what it deletes for good." loading="lazy"></a>
+            <figcaption>Your data</figcaption>
           </figure>
         </div>
       </section>
@@ -688,14 +722,14 @@
               <li><strong>Coach summary</strong> — the readiness percentage and the coach's advice.</li>
               <li><strong>Topics — weakest first</strong>, with a <strong>Focus Drill</strong> button.</li>
               <li><strong>Mock test scores</strong> — tap a test to see it topic by topic. <strong>+ Log an external mock result</strong> lets you type in a score from another mock (for example a Safe Driving for Life or Theory Test Pro mock), with per-topic results if you have them, so everything is in one place.</li>
-              <li><strong>Everything she does</strong> — links to <a href="#activity">Activity</a> and <a href="#tips">Memory tips</a>.</li>
+              <li><strong>Everything she does</strong> — links to <a href="#activity">Activity</a> and to <a href="#tips">Memory tips and plain explanations</a>.</li>
               <li><strong>Flagged for extra revision</strong> and <strong>20 hardest questions</strong> (the ones she gets wrong most).</li>
               <li><strong>Question packs</strong>, <strong>Subscription</strong>, <strong>Account</strong> and <strong>Data</strong> — see <a href="#editor">Questions and packs</a> and <a href="#access">Access and account tools</a>.</li>
             </ul>
             <p class="note"><strong>Which parts need an admin account?</strong> Activity, Memory tips and uploading the question bank need an account the server knows is the admin. The rest of the dashboard works on the device you're using.</p>
           </div>
           <figure class="shot">
-            <a href="help/img/admin-dashboard.png"><img src="help/img/admin-dashboard.png" width="390" height="844" alt="The admin Progress dashboard: an All time button, Coach summary at 64% ready with advice, and Topics weakest first." loading="lazy"></a>
+            <a href="help/img/admin-dashboard.png"><img src="help/img/admin-dashboard.png" width="390" height="844" alt="The admin Progress dashboard: an All time button, Coach summary at 69% ready with advice, and Topics weakest first, each topic's bar and score under its name." loading="lazy"></a>
             <figcaption>The dashboard</figcaption>
           </figure>
         </div>
@@ -705,7 +739,7 @@
             <p>Two links, a count of flagged questions, and the 20 questions she finds hardest, with how many times each was got right and in which topic.</p>
           </div>
           <figure class="shot">
-            <a href="help/img/admin-links.png"><img src="help/img/admin-links.png" width="390" height="844" alt="The dashboard's Everything she does section with links to Activity and Memory tips, Flagged for extra revision, and the 20 hardest questions." loading="lazy"></a>
+            <a href="help/img/admin-links.png"><img src="help/img/admin-links.png" width="390" height="844" alt="The dashboard's Everything she does section with links to Activity and to Memory tips and plain explanations, Flagged for extra revision with 4 flagged, and the 20 hardest questions." loading="lazy"></a>
             <figcaption>Activity, tips, flags and hardest</figcaption>
           </figure>
         </div>
@@ -735,14 +769,14 @@
 
       <!-- ============ 21. memory tips (admin) ============ -->
       <section id="tips" aria-labelledby="h-tips">
-        <h2 id="h-tips"><span class="num"></span>Memory tips</h2>
-        <p>Memory tips are drafted on the admin's own computer by a local AI program, using only each question's own words. A check rejects any draft with a number that isn't in the question. Nothing reaches a learner until it is approved here.</p>
+        <h2 id="h-tips"><span class="num"></span>Memory tips and plain explanations</h2>
+        <p>Memory tips, and the plain explanations behind <a href="#practise">Explain it differently</a>, are drafted on the admin's own computer by a local AI program. A tip uses only its question's own words; a plain explanation uses the question, its right answer and its explanation. A check rejects any draft with a number that isn't in the question. Nothing reaches a learner until it is approved here.</p>
         <ol>
-          <li>On the dashboard tap <strong>Memory tips: check the AI's tips before Catie sees them</strong>.</li>
-          <li>The tabs at the top are <strong>To check</strong>, <strong>Approved</strong> and <strong>Rejected</strong>, each with a count. Up to 50 tips show at a time.</li>
-          <li>Each question is shown with its answer and the drafted tip, which you can edit.</li>
+          <li>On the dashboard tap <strong>Memory tips and plain explanations: check the AI's words before Catie sees them</strong>.</li>
+          <li>Choose <strong>Memory tips</strong> or <strong>Plain explanations</strong> at the top. Under that, the tabs are <strong>To check</strong>, <strong>Approved</strong> and <strong>Rejected</strong>, each with a count. Up to 50 show at a time.</li>
+          <li>Each question is shown with its answer and the draft, which you can edit. A plain explanation also shows <strong>In the bank</strong>: the question's own explanation, so you can check the new wording says the same thing.</li>
           <li>Tap <strong>Approve</strong> to make it live, or <strong>Reject</strong> to hide it. The status says <strong>Live for Catie</strong>, <strong>Hidden</strong> or <strong>Not shown yet</strong>. On an approved tip the button says <strong>Save</strong>, for saving an edit.</li>
-          <li>On the To check tab, <strong>Approve all … shown</strong> approves every tip on the screen at once, after asking you to confirm.</li>
+          <li>On the To check tab, <strong>Approve all … shown</strong> approves everything on the screen at once, after asking you to confirm.</li>
         </ol>
       </section>
 
@@ -784,7 +818,7 @@
             <h3>Account</h3>
             <p>Shows who is signed in and their access, with <strong>Sync now</strong>, <strong>Manage subscription</strong>, <strong>I've paid</strong> and <strong>Sign out</strong>. An admin account also sees <strong>Upload question bank to server</strong> and <strong>Server settings</strong> (the one-time link to the database; learners never need it).</p>
             <h3>Data</h3>
-            <p><strong>Export backup</strong> downloads a file with this learner's settings, memory boxes, answers and mock tests, plus any question edits. <strong>Import backup</strong> loads one back. <strong>Edit questions</strong> and <strong>Print</strong> open those screens.</p>
+            <p><strong>Export backup</strong> downloads a file with this learner's settings, memory boxes, answers and mock tests, plus any question edits. <strong>Import backup</strong> loads one back. (For everything the server keeps for the account, use <a href="#yourdata">Settings → Your data → Download my data</a>.) <strong>Edit questions</strong> and <strong>Print</strong> open those screens.</p>
           </div>
           <figure class="shot">
             <a href="help/img/admin-access.png"><img src="help/img/admin-access.png" width="390" height="844" alt="Access for Catie with Default, Always free, Free until, Suspended and Blocked, Show me the subscribe screen, and the Account section with Sync now, Manage subscription, I've paid, Sign out and Upload question bank to server." loading="lazy"></a>
@@ -803,6 +837,14 @@
         <details>
           <summary>Does it cover hazard perception?</summary>
           <div><p>No. Hazard perception is the second part of the real test and uses video clips; the app doesn't have it. The app covers the multiple-choice part.</p></div>
+        </details>
+        <details>
+          <summary>How do I get a copy of my data, or delete my account?</summary>
+          <div><p>In <a href="#yourdata">Settings → Your data</a>. <strong>Download my data</strong> saves everything the server keeps for your account as one file. <strong>Delete my account</strong> lists exactly what will be deleted and asks you to type DELETE first. If your subscription is still set to renew, cancel it first with Manage subscription.</p></div>
+        </details>
+        <details>
+          <summary>Why does the app ask the year I was born?</summary>
+          <div><p>Anyone who may be under <span data-config="age.guardianUnder">16</span> needs a parent or guardian to agree to them using the app. Only the year is kept, never the day or month. See <a href="#age">Your year of birth</a>.</p></div>
         </details>
         <details>
           <summary>Can the whole family use one account?</summary>
