@@ -19,6 +19,12 @@ deploy that touches the app's cached files. Earlier history: `git log`.
   nothing is lost offline (`backend.js` `TTTrack`, tested).
 - **Admin → Activity:** totals, day by day, the questions she misses most (with the wrong
   answer she usually picks), time to answer by topic, and a plain-English log of the latest.
+- **Today's lesson is now a drill built from her own answers** (`coach.js`, tested): questions
+  she's stuck on (missed 3 times, or on 2 different days, and not since right twice running)
+  first, then flagged, then ones due again by spacing (after 1, 3, 7, 14, 30 days as she keeps
+  getting them right), then new ones, with topics alternating. A question she misses in the
+  drill comes back 4 questions later, up to twice. The card says why: "Built from your answers:
+  3 you keep missing · 2 flagged · 9 due again · 6 new". Only questions from the bank are used.
 - Fixed: the answer options couldn't be chosen with a keyboard or a screen reader. They now
   take focus and answer on Enter or Space.
 
