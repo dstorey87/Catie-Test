@@ -188,7 +188,12 @@ test('legal pages: no "to be filled in" placeholder is left', () => {
   }
 });
 
-test('legal pages: the same sample-policy banner sits at the top of every page', () => {
+test('legal pages: the same sample-policy banner sits at the top of every page (or of none)', () => {
+  // None = real details are in and the banner has come off everywhere; the next test makes
+  // sure no "(mock)" value is left behind when it does.
+  const up = LEGAL.filter(p => BANNER.test(html[p]));
+  if (up.length === 0) return;
+  assert.deepEqual(up, LEGAL, 'the banner is on ' + up.join(', ') + ' only — put it on every legal page, or on none');
   const banners = LEGAL.map(p => {
     const s = html[p], m = s.match(BANNER);
     assert.ok(m, p + ' has no <div class="draft" role="note"> banner');
@@ -221,14 +226,13 @@ test('legal pages: while the banner is up, every business detail is an obvious m
     assert.ok(!/(\+44|\b0\d{3})[\s\d]{8,}/.test(w), p + ' contains a phone number');
     assert.ok(!/\b[A-Z]{1,2}\d[A-Z\d]? ?\d[A-Z]{2}\b/.test(w), p + ' contains a postcode');
   }
-  // The pages that name the operator give the whole mock set.
-  for (const p of ['legal/privacy.html', 'legal/terms.html']) {
+  // The pages that name the operator give the whole mock set (the privacy notice also the ICO number).
+  const OPERATOR = ['Theory Trainer (mock operator — not a registered business)', 'support@' + MOCK_EMAIL_HOST, '00000000 (mock)'];
+  for (const [p, extra] of [['legal/privacy.html', ['ZA000000 (mock)']], ['legal/terms.html', []]]) {
     const w = words(html[p]);
     if (!/\(mock\b/.test(w)) continue;
-    for (const must of ['Theory Trainer (mock operator — not a registered business)', 'support@' + MOCK_EMAIL_HOST, '00000000 (mock)'])
-      assert.ok(w.includes(must), p + ' should name "' + must + '"');
+    for (const must of OPERATOR.concat(extra)) assert.ok(w.includes(must), p + ' should name "' + must + '"');
   }
-  assert.ok(words(html['legal/privacy.html']).includes('ZA000000 (mock)'), 'legal/privacy.html should give the mock ICO registration');
 });
 
 test('legal pages: the guardian-consent age is read from config.js, never typed', () => {
