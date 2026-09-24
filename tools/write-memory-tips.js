@@ -32,8 +32,18 @@ const SETTINGS = {
   tries: 3
 };
 
-// Every number written in a piece of text ("1.6 mm", "70 mph", "2 metres" → 1.6, 70, 2).
-function numbers(text) { return (String(text).match(/\d+(?:\.\d+)?/g) || []).map(Number); }
+// Every number in a piece of text, written as digits ("1.6 mm", "70 mph" → 1.6, 70) or as
+// words ("halves", "twice", "four times" → 0.5, 2, 4). Words count too: "rain halves your grip"
+// is a made-up fact just as much as "rain cuts grip by 50".
+const NUMBER_WORDS = { half: 0.5, halves: 0.5, halve: 0.5, halved: 0.5, quarter: 0.25, double: 2, doubles: 2,
+  doubled: 2, twice: 2, triple: 3, triples: 3, tripled: 3, three: 3, four: 4, five: 5, six: 6, seven: 7,
+  eight: 8, nine: 9, ten: 10, twenty: 20, thirty: 30, forty: 40, fifty: 50, sixty: 60, seventy: 70, hundred: 100 };
+function numbers(text) {
+  const t = String(text).toLowerCase();
+  const digits = (t.match(/\d+(?:\.\d+)?/g) || []).map(Number);
+  const words = (t.match(/[a-z]+/g) || []).filter(w => w in NUMBER_WORDS).map(w => NUMBER_WORDS[w]);
+  return digits.concat(words);
+}
 
 // The question's own words: everything the tip is allowed to draw facts from.
 function sourceText(q) {
@@ -99,6 +109,8 @@ async function main() {
   const bank = [1, 2, 3, 4, 5].flatMap(n => JSON.parse(fs.readFileSync(path.join(ROOT, 'questions-' + n + '.json'), 'utf8')));
   fs.mkdirSync(path.dirname(OUT), { recursive: true });
   const done = fs.existsSync(OUT) ? JSON.parse(fs.readFileSync(OUT, 'utf8')) : {};
+  // Tips written under older, weaker checks are checked again; any that now fail are redone.
+  bank.forEach(q => { const d = done[q.id]; if (d && d.tip && checkTip(d.tip, q).length) done[q.id] = { tip: '', rejected: d.tip, problems: checkTip(d.tip, q) }; });
   const todo = bank.filter(q => !(done[q.id] && done[q.id].tip)).slice(0, SETTINGS.limit);
   console.log(todo.length + ' of ' + bank.length + ' questions still need a tip (model ' + SETTINGS.model + ').');
   let n = 0;

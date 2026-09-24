@@ -27,8 +27,10 @@ deploy that touches the app's cached files. Earlier history: `git log`.
   3 you keep missing · 2 flagged · 9 due again · 6 new". Only questions from the bank are used.
 - **Memory tips.** Local AI (Ollama, `qwen3:14b`, on the home PC) drafts one tip per question
   from that question's own text (`tools/write-memory-tips.js`). A tip with a number the question
-  doesn't contain, one that repeats a wrong answer, or one over 25 words is rejected and asked for
-  again. Drafts go into the bank as `draft`; **Admin → Memory tips** shows each beside its
+  doesn't contain (digits or words like "twice"/"halves"), one that repeats a wrong answer, or
+  one over 25 words is rejected and asked for again. First run, 2026-09-24: 372 drafts loaded
+  for review; 4 more rejected by hand for false analogies (e.g. "30 days in March"); 2
+  questions have no tip and keep the topic tip. Drafts go into the bank as `draft`; **Admin → Memory tips** shows each beside its
   question to approve, edit or reject. Only approved tips reach Catie: after a wrong answer
   ("Memory tip: …", else the topic tip as before).
 - **Keeps tripping you up** card (Home and session results): the questions she's stuck on, the
