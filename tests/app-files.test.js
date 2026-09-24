@@ -413,12 +413,92 @@ test('insights: the numbers on screen come from coach.js, not copies', () => {
   assert.match(app, /streak: this\.streakFor\(d\)\.count/);
 });
 
-test('My Progress topic rows fit a phone: the name can wrap and the bar can shrink', () => {
-  // Found 2026-09-24 in issue #8's browser check (and already on develop): at 390px a new
-  // learner's "Your topics" rows ("Not tried much") pushed My Progress 35px past the screen.
-  const row = screen('MY PROGRESS (learner)').match(/<sc-for list="\{\{ progTopics \}\}"[\s\S]*?<\/sc-for>/)[0];
-  assert.match(row, /<span style="flex:1;min-width:0;[^"]*">\{\{ t\.name \}\}/, 'the topic name must be allowed to shrink');
-  assert.match(row, /flex:0 1 110px;min-width:40px/, 'the bar must be allowed to shrink');
+// ---------- Issue #12: screens open mid-scroll, rows wider than a phone, notes button over
+// Next, readiness number not drawn. Each test below failed before its fix. ----------
+// TTScreen is a <script> in the page head (plain data and pure functions), run here in node.
+const screenSrc = [...app.matchAll(/<script>([\s\S]*?)<\/script>/g)].map(m => m[1]).find(s => s.includes('window.TTScreen ='));
+// Missing block: TS stays null and each #12 test fails on its own (not the whole file).
+const TS = screenSrc ? (() => { const ctx = { window: {} }; vm.runInNewContext(screenSrc, ctx); return ctx.window.TTScreen; })() : null;
+
+test('#12: the screen helpers live in the real head, not <helmet>', () => {
+  assert.ok(TS, 'no window.TTScreen block in the page head');
+  const at = app.indexOf('window.TTScreen =');
+  assert.ok(at > 0 && at < app.indexOf('\n<helmet>\n'), 'the camelCase rewrite in <helmet> would break it');
+});
+
+test('#12 A: a different screen or question gets a new screen key; answering in place does not', () => {
+  assert.ok(TS, 'no window.TTScreen block in the page head');
+  // Found 2026-09-24: tapping Road Signs low on Home opened Road Signs at scrollY 1398.
+  const base = { view: 'home', testView: 'run', printPreview: false, session: { startedAt: 5, i: 0, picked: -1 }, test: { startedAt: 7, i: 0, answers: {} } };
+  const key = patch => TS.key(Object.assign({}, base, patch));
+  const k0 = key({});
+  assert.notEqual(key({ view: 'signs' }), k0, 'another screen');
+  assert.notEqual(key({ testView: 'review' }), k0, 'mock test: run -> review');
+  assert.notEqual(key({ printPreview: true }), k0, 'print preview');
+  assert.notEqual(key({ session: { startedAt: 5, i: 1, picked: -1 } }), k0, 'next practice question');
+  assert.notEqual(key({ session: { startedAt: 9, i: 0, picked: -1 } }), k0, 'a new practice session');
+  assert.notEqual(key({ test: { startedAt: 7, i: 1, answers: {} } }), k0, 'next mock question');
+  assert.equal(key({ session: { startedAt: 5, i: 0, picked: 2 } }), k0, 'answering a question keeps her place');
+  assert.equal(key({ test: { startedAt: 7, i: 0, answers: { 0: 1 } } }), k0, 'picking a mock answer keeps her place');
+  assert.equal(TS.key(null), TS.key({}), 'no state yet');
+});
+
+test('#12 A: the page scrolls to the top when the screen key changes', () => {
+  const upd = app.slice(app.indexOf('  componentDidUpdate(){'), app.indexOf('\n  }\n', app.indexOf('  componentDidUpdate(){')));
+  assert.match(upd, /TTScreen\.key\(prev\) !== TTScreen\.key\(s\)[^\n]*window\.scrollTo\(0, 0\)/);
+  // It must come before the early return for a change of learner, or switching learner skips it.
+  assert.ok(upd.indexOf('window.scrollTo(0, 0)') < upd.indexOf("this.track('learner_opened'"), 'scroll before the learner early return');
+});
+
+test('#12 B: topic rows on My Progress and the admin dashboard wrap on a phone instead of squeezing', () => {
+  // Found 2026-09-24: the admin dashboard's "Topics — weakest first" was 421px wide at 390px, and
+  // after #22 My Progress's topic names had 18px left at the default text size, one or two
+  // letters a line. Now the row wraps: the name keeps a sensible width, and the bar and its
+  // figure move under it when the screen is narrow.
+  const rows = [
+    screen('MY PROGRESS (learner)').match(/<sc-for list="\{\{ progTopics \}\}"[\s\S]*?<\/sc-for>/)[0],
+    screen('DASHBOARD').match(/<sc-for list="\{\{ topicBars \}\}"[\s\S]*?<\/sc-for>/)[0]
+  ];
+  for (const row of rows) {
+    assert.match(row, /display:flex;flex-wrap:wrap/, 'the row must be allowed to wrap');
+    const name = row.match(/<span style="([^"]*)">\{\{ t\.name \}\}/)[1];
+    assert.match(name, /flex:1 1 \d+px/, 'the name keeps a basis, so it is never squeezed to a sliver');
+    assert.match(name, /min-width:0/, 'the name can still shrink below its longest word on a tiny screen');
+    assert.doesNotMatch(row, /width:150px/, 'no fixed 150px bar: it made the dashboard wider than a phone');
+  }
+});
+
+test('#12 C: on question screens the notes button sits in the page, never floating over Next', () => {
+  // Found 2026-09-24: at 390x844 the floating notes button covered "Next →" on a long mock question.
+  assert.ok(TS, 'no window.TTScreen block in the page head');
+  assert.deepEqual(plain(TS.INLINE_NOTES).sort(), ['learnQ', 'test']);
+  const line = app.match(/notesAvail: ([^\n]+)/)[1];
+  assert.match(line, /!notesInline/, 'the floating button must not show where the in-page one does');
+  for (const name of ['LEARN QUESTION', 'TEST RUNNING', 'TEST REVIEW']) {
+    const s = screen(name);
+    assert.match(s, /<sc-if value="\{\{ notesInline \}\}"[^>]*>\s*<button onClick="\{\{ toggleNotes \}\}"/, name + ' has no in-page notes button');
+    const next = name === 'TEST REVIEW' ? '{{ endTest }}' : name === 'TEST RUNNING' ? '{{ nextTQ }}' : '{{ nextQ }}';
+    assert.ok(s.indexOf('{{ notesInline }}') > s.indexOf(next), name + ': the notes button must come after the ' + next + ' row');
+  }
+  // Every other page leaves room under its last line, so it can be scrolled clear of the button.
+  assert.ok(TS.bottomPad(true) >= TS.NOTES.edge + TS.NOTES.size, 'the padding must clear the floating button');
+  assert.ok(TS.bottomPad(false) < TS.bottomPad(true));
+  assert.match(app, /<div style="\{\{ pageStyle \}\}">/, 'the page container takes its padding from TTScreen');
+  assert.match(app, /pageStyle: [^\n]*TTScreen\.bottomPad\(notesAvail\)/);
+  assert.match(app, /notesFabStyle: [^\n]*N\.size/, 'the floating button takes its size from TTScreen.NOTES');
+});
+
+test('#12 D: no {{ value }} inside SVG text, so the readiness number is drawn', () => {
+  // Found 2026-09-24: the dial's <text>{{ readyPct }}%</text> became <text><span>38</span>%</text>,
+  // and SVG does not draw an HTML <span>: only "%" showed.
+  const texts = [...app.matchAll(/<text\b[^>]*>([\s\S]*?)<\/text>/g)].map(m => m[1]);
+  assert.ok(texts.length >= 2, 'expected the chart labels');
+  for (const t of texts) assert.doesNotMatch(t, /\{\{/, 'a value inside SVG <text> is never drawn: ' + t);
+  const dial = screen('MY PROGRESS (learner)').match(/<div data-tt-dial[\s\S]*?<\/div>\s*<\/div>/);
+  assert.ok(dial, 'My Progress has no HTML readiness label over the dial');
+  assert.match(dial[0], /\{\{ readyPct \}\}%/);
+  // The How-to guide said the number was missing; that line goes with the fix.
+  assert.doesNotMatch(fs.readFileSync(path.join(root, 'help.html'), 'utf8'), /number in the middle of the dial doesn't show/);
 });
 
 test('insights: drill buttons do not promise a session length the drill does not keep', () => {
