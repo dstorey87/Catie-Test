@@ -350,6 +350,27 @@ window.TTInsights = (function(){
 })();
 </script>
 <script>
+// ---------- Screen helpers (window.TTScreen) ----------
+// Which screen is showing, as one string, so a change of screen can be noticed and the page
+// scrolled back to the top (issue #12 part A). Plain data and pure functions only, so
+// tests/app-files.test.js runs this very block in node. Real head, not <helmet> (see below).
+window.TTScreen = (function(){
+  var S = {};
+  function n(v){ return v == null ? '' : String(v); }       // missing parts read as ''
+
+  // A key that changes whenever a different screen, practice question or mock question is
+  // shown, and stays the same while she answers the one in front of her (picking an answer
+  // must not jump the page away from the explanation).
+  S.key = function(s){
+    s = s || {};
+    var sess = s.session || {}, t = s.test || {};
+    return [n(s.view), n(s.testView), s.printPreview ? 'print' : '', n(sess.startedAt), n(sess.i), n(t.startedAt), n(t.i)].join('|');
+  };
+
+  return S;
+})();
+</script>
+<script>
 // Lives in the real head, NOT in <helmet>: the dc compiler rewrites camelCase
 // tokens inside helmet content (its attribute-preservation pass), which
 // corrupts inline scripts there. Real-head scripts run once, untouched.
@@ -2347,6 +2368,9 @@ class Component extends DCLogic {
     const prev = this._seen, s = this.state, now = Date.now();
     this._seen = s;
     if(!prev || prev === s) return;
+    // A different screen (or the next question) starts at the top, not at the old screen's
+    // scroll position (issue #12 A: Road Signs opened half-way down after a tap low on Home).
+    if(window.TTScreen && TTScreen.key(prev) !== TTScreen.key(s)) { try { window.scrollTo(0, 0); } catch(e) { /* no window to scroll */ } }
     const secs = t=>Math.round((now - (t||now))/1000);
     if(s.view !== prev.view) this.track('screen', null, {view: s.view, from: prev.view});
     // A different learner (or a sync reloading this one) isn't something she did:
