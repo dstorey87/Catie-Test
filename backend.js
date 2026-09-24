@@ -4,6 +4,9 @@
 // Capacitor WebView unchanged.
 (function () {
   var CFGKEY = 'tt.sb.cfg', SESSKEY = 'tt.sb.session', BANKKEY = 'tt.bank.v2';
+  // Review statuses for admin-approved text (plain explanations). Mirrors the server's
+  // questions_plain_status_check constraint in supabase/schema.sql.
+  var PLAIN_STATUSES = ['draft', 'approved', 'rejected'];
 
   function readJSON(k) { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } }
   function writeJSON(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
@@ -60,6 +63,9 @@
     if (!r.ok) {
       var err = new Error(why(r.status, body)); err.status = r.status;
       err.code = (body && body.error_code) || ''; // e.g. email_not_confirmed — the UI branches on it
+      // A database refusal (raise exception ... hint = 'admin_account') carries a short
+      // reason in "hint"; the message itself is already the sentence to show.
+      err.hint = (body && typeof body.hint === 'string') ? body.hint : '';
       throw err;
     }
     return body;
@@ -269,6 +275,88 @@
     document.addEventListener('visibilitychange', function () { if (document.hidden) window.TTTrack.flush(); });
   } catch (e) {}
 
+  // Account privacy: download my data, delete my account, and age / guardian consent.
+  // The server does the deciding (supabase/schema.sql: export_my_data, delete_my_account);
+  // this is the thin layer the Settings screens call.
+
+  // The age rule lives in ONE place: config.js, TT_CONFIG.age. Nothing here guesses it —
+  // if it is missing, every age call stops and says where to put it back.
+  function ageRule() {
+    var a = (window.TT_CONFIG || {}).age;
+    if (!a || !(Number(a.guardianUnder) > 0) || !(Number(a.oldest) > 0))
+      throw new Error('The age rule is missing from config.js (TT_CONFIG.age: guardianUnder and oldest). Put it back, then reload the app.');
+    return { guardianUnder: Number(a.guardianUnder), oldest: Number(a.oldest) };
+  }
+  // Only a birth YEAR is stored, so today's age is one of two numbers. Take the younger
+  // one: someone born (this year - N) may not have had their Nth birthday yet.
+  function needsGuardian(year) {
+    var youngest = new Date().getFullYear() - Number(year) - 1;
+    return youngest < ageRule().guardianUnder;
+  }
+
+  window.TTAccount = {
+    ageRule: ageRule,
+    needsGuardian: needsGuardian,
+
+    // Everything the server holds about this account, as one JSON object, exactly as
+    // the server sent it (profile, entitlement, snapshot, reminders, push devices, events).
+    exportData: async function () {
+      return rest('/rpc/export_my_data', { method: 'POST', body: '{}' });
+    },
+
+    // Deletes this account and everything it owns on the server. No checks here on
+    // purpose: the server refuses the admin account and a subscription that would
+    // still bill, and its sentence (err.message) and reason (err.hint) reach the screen
+    // unchanged. Once deleted, this device forgets the account too — the session, the
+    // offline question bank and any activity not yet sent (it would otherwise be sent
+    // under whoever signs in next). No logout call: the session died with the account.
+    deleteAccount: async function () {
+      await rest('/rpc/delete_my_account', { method: 'POST', body: '{}' });
+      sess = null; drop(SESSKEY); drop(BANKKEY); drop(EVKEY);
+      return true;
+    },
+
+    // This account's saved age answers, or null when signed out / not found.
+    age: async function () {
+      var uid = sess && sess.user && sess.user.id;
+      if (!uid) return null;
+      var rows = await rest('/profiles?select=birth_year,guardian_consent,guardian_email&id=eq.' + encodeURIComponent(uid) + '&limit=1');
+      var r = rows && rows[0];
+      if (!r) return null;
+      return { birthYear: r.birth_year, guardianConsent: !!r.guardian_consent, guardianEmail: r.guardian_email || '',
+        needsGuardian: r.birth_year ? needsGuardian(r.birth_year) : null };
+    },
+
+    // Saves the birth year and, when the learner may be under the age in config.js, a
+    // parent's or guardian's consent and email. Everything is checked BEFORE anything
+    // is sent. An adult's row keeps no guardian email (no need to hold a third
+    // person's address). Returns what was saved.
+    saveAge: async function (year, consent, guardianEmail) {
+      var rule = ageRule();
+      var uid = sess && sess.user && sess.user.id;
+      if (!uid) throw new Error('Sign in first: your age is saved to your account.');
+      var y = Number(year), now = new Date().getFullYear();
+      if (year === null || year === '' || !Number.isInteger(y) || y > now || y < now - rule.oldest)
+        throw new Error('Enter the year you were born as four digits, for example ' + (now - 17) + '.');
+      var needs = needsGuardian(y);
+      var email = String(guardianEmail || '').trim();
+      if (needs) {
+        if (consent !== true)
+          throw new Error('You may still be under ' + rule.guardianUnder + ', so a parent or guardian needs to agree. Ask them to tick the box and add their email.');
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
+          throw new Error('Add your parent or guardian’s email address, for example name@example.com.');
+        if (email.toLowerCase() === String(window.TTAuth.email() || '').toLowerCase())
+          throw new Error('That is your own email. Add your parent or guardian’s email instead.');
+      }
+      var row = { birth_year: y, guardian_consent: needs, guardian_email: needs ? email : null };
+      var saved = await rest('/profiles?id=eq.' + encodeURIComponent(uid), { method: 'PATCH',
+        headers: { Prefer: 'return=representation' }, body: JSON.stringify(row) });
+      if (!saved || !saved.length)
+        throw new Error('Your age was not saved: this account’s profile was not found. Sign out, sign back in, then try again.');
+      return { birthYear: y, needsGuardian: needs, guardianConsent: needs, guardianEmail: row.guardian_email };
+    }
+  };
+
   window.TTBill = {
     status: async function () {
       var rows = await rest('/entitlements?select=status,plan,current_period_end,cancel_at_period_end&limit=1');
@@ -314,7 +402,7 @@
       var out = null;
       if (cfg() && sess && navigator.onLine) {
         try {
-          var rows = await rest('/questions?select=qid,topic,question,options,correct_index,explanation,rule_ref,sign,test_type,pack,memory_tip,tip_status&order=qid');
+          var rows = await rest('/questions?select=qid,topic,question,options,correct_index,explanation,rule_ref,sign,test_type,pack,memory_tip,tip_status,plain_explanation,plain_status&order=qid');
           if (rows && rows.length) {
             out = rows.map(function (r) {
               // topic must be numeric (the app compares q.topic===n) and the
@@ -324,7 +412,9 @@
                 sign: r.sign || '', imageHint: r.sign || undefined,
                 pack: r.pack || 'p1', testType: r.test_type || 'car',
                 // an AI-drafted tip reaches a learner only after the admin approves it
-                memoryTip: r.tip_status === 'approved' && r.memory_tip ? r.memory_tip : undefined };
+                memoryTip: r.tip_status === 'approved' && r.memory_tip ? r.memory_tip : undefined,
+                // "Explain it differently": same rule — only an approved plain re-wording
+                plainExplanation: r.plain_status === 'approved' && r.plain_explanation ? r.plain_explanation : undefined };
             });
             writeJSON(BANKKEY, { at: Date.now(), rows: out });
             return { questions: out, source: 'server' };
@@ -344,6 +434,23 @@
     saveTip: async function (qid, tip, status) {
       await rest('/questions?qid=eq.' + encodeURIComponent(qid), { method: 'PATCH',
         headers: { Prefer: 'return=minimal' }, body: JSON.stringify({ memory_tip: tip, tip_status: status }) });
+      return true;
+    },
+    // Admin → "Explain it differently" review: every drafted plain explanation with its
+    // status, and saving one. The server holds the same three statuses as a check
+    // constraint (questions_plain_status_check); checking here first gives a clear
+    // message instead of a database error.
+    explanations: async function () {
+      return (await rest('/questions?select=qid,plain_explanation,plain_status&plain_explanation=not.is.null&order=qid')) || [];
+    },
+    saveExplanation: async function (qid, text, status) {
+      if (PLAIN_STATUSES.indexOf(status) < 0)
+        throw new Error('Not saved: the status must be draft, approved or rejected (got "' + status + '").');
+      var saved = await rest('/questions?qid=eq.' + encodeURIComponent(qid), { method: 'PATCH',
+        headers: { Prefer: 'return=representation' }, body: JSON.stringify({ plain_explanation: text, plain_status: status }) });
+      // Row-level security turns a non-admin's write into "0 rows changed", not an error.
+      if (!saved || !saved.length)
+        throw new Error('Not saved: question ' + qid + ' was not changed. Only the admin account can edit explanations; check you are signed in as the admin and the question still exists.');
       return true;
     },
     // Admin only: fills the server bank from a local pack (used once, by you).
