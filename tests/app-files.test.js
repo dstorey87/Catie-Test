@@ -18,7 +18,8 @@ function screen(name) {
 
 test('a wrong practice answer shows its "Remember" tip once, not twice', () => {
   // Bug found 2026-09-23: two blocks printed the same topic tip one above the other.
-  const count = (screen('LEARN QUESTION').match(/<b>Remember:<\/b>/g) || []).length;
+  // (The label now reads "Memory tip:" or "Remember:", so the tip text itself is counted.)
+  const count = (screen('LEARN QUESTION').match(/\{\{ tipText \}\}/g) || []).length;
   assert.equal(count, 1);
 });
 

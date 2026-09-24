@@ -25,6 +25,16 @@ deploy that touches the app's cached files. Earlier history: `git log`.
   getting them right), then new ones, with topics alternating. A question she misses in the
   drill comes back 4 questions later, up to twice. The card says why: "Built from your answers:
   3 you keep missing · 2 flagged · 9 due again · 6 new". Only questions from the bank are used.
+- **Memory tips.** Local AI (Ollama, `qwen3:14b`, on the home PC) drafts one tip per question
+  from that question's own text (`tools/write-memory-tips.js`). A tip with a number the question
+  doesn't contain, one that repeats a wrong answer, or one over 25 words is rejected and asked for
+  again. Drafts go into the bank as `draft`; **Admin → Memory tips** shows each beside its
+  question to approve, edit or reject. Only approved tips reach Catie: after a wrong answer
+  ("Memory tip: …", else the topic tip as before).
+- **Keeps tripping you up** card (Home and session results): the questions she's stuck on, the
+  wrong answer she tends to pick, the right answer, the memory tip (or the explanation), and
+  **Drill these**.
+- Fixed: the tip box after a wrong answer was a fixed pale box, unreadable in dark mode.
 - Fixed: the answer options couldn't be chosen with a keyboard or a screen reader. They now
   take focus and answer on Enter or Space.
 

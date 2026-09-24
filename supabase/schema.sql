@@ -67,6 +67,10 @@ create table if not exists public.questions (
 -- Upgrades for a database that ran an earlier version of this file (create
 -- table if not exists is a no-op there). Both statements re-run harmlessly.
 alter table public.questions add column if not exists pack text not null default 'p1';
+-- Memory tips: drafted by local AI (tools/write-memory-tips.js), shown to learners only once
+-- the admin approves them (Admin → Memory tips). 'draft' | 'approved' | 'rejected'.
+alter table public.questions add column if not exists memory_tip text;
+alter table public.questions add column if not exists tip_status text;
 alter table public.questions alter column topic type int using topic::int;
 
 create index if not exists questions_topic_idx on public.questions (topic);

@@ -309,7 +309,7 @@
       var out = null;
       if (cfg() && sess && navigator.onLine) {
         try {
-          var rows = await rest('/questions?select=qid,topic,question,options,correct_index,explanation,rule_ref,sign,test_type,pack&order=qid');
+          var rows = await rest('/questions?select=qid,topic,question,options,correct_index,explanation,rule_ref,sign,test_type,pack,memory_tip,tip_status&order=qid');
           if (rows && rows.length) {
             out = rows.map(function (r) {
               // topic must be numeric (the app compares q.topic===n) and the
@@ -317,7 +317,9 @@
               return { id: r.qid, topic: Number(r.topic), question: r.question, options: r.options,
                 correctIndex: r.correct_index, explanation: r.explanation, ruleRef: r.rule_ref,
                 sign: r.sign || '', imageHint: r.sign || undefined,
-                pack: r.pack || 'p1', testType: r.test_type || 'car' };
+                pack: r.pack || 'p1', testType: r.test_type || 'car',
+                // an AI-drafted tip reaches a learner only after the admin approves it
+                memoryTip: r.tip_status === 'approved' && r.memory_tip ? r.memory_tip : undefined };
             });
             writeJSON(BANKKEY, { at: Date.now(), rows: out });
             return { questions: out, source: 'server' };
@@ -329,6 +331,15 @@
       if (out) return { questions: out, source: 'cache' };
       var free = await fetch('./questions-free.json').then(function (r) { return r.ok ? r.json() : []; }).catch(function () { return []; });
       return { questions: free, source: 'free' };
+    },
+    // Admin → Memory tips: every drafted tip with its status, and saving one.
+    tips: async function () {
+      return (await rest('/questions?select=qid,memory_tip,tip_status&memory_tip=not.is.null&order=qid')) || [];
+    },
+    saveTip: async function (qid, tip, status) {
+      await rest('/questions?qid=eq.' + encodeURIComponent(qid), { method: 'PATCH',
+        headers: { Prefer: 'return=minimal' }, body: JSON.stringify({ memory_tip: tip, tip_status: status }) });
+      return true;
     },
     // Admin only: fills the server bank from a local pack (used once, by you).
     upload: async function (list) {
