@@ -117,6 +117,11 @@ img { max-width: 100%; height: auto; }
 .doc > section { background: var(--card); border: 1px solid var(--border); border-radius: 22px; padding: 22px 20px; margin-bottom: 18px; box-shadow: var(--shadow); }
 @media (min-width: 700px) { .doc > section { padding: 30px 32px; } }
 .doc > section > h2 { display: flex; align-items: center; gap: 12px; }
+/* Sections number themselves (1, 2, 3…), so adding one never means renumbering the rest.
+   A .num with its own text (the FAQ's "?", the "i") shows that text instead. */
+.doc { counter-reset: section; }
+.doc > section { counter-increment: section; }
+.num:empty::before { content: counter(section); }
 .num { flex: none; display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px; border-radius: 11px; background: var(--tint); color: var(--link); font-size: 17px; }
 
 /* Text beside its screenshots on wide screens. */

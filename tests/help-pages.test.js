@@ -159,7 +159,7 @@ test('every screenshot has alt text, its true size, and every file in help/img i
 
 test('the guide has a section for every feature in the spec, each in the contents', () => {
   // Issue #2's feature list, as section ids. A feature without its section fails here.
-  const ids = ['start', 'learners', 'home', 'lesson', 'tripping', 'practise', 'mock', 'flagged', 'answers',
+  const ids = ['start', 'learners', 'setup', 'home', 'lesson', 'tripping', 'practise', 'mock', 'flagged', 'answers',
     'signs', 'progress', 'print', 'settings', 'reminders', 'notes', 'offline', 'install', 'paying',
     'admin', 'activity', 'tips', 'editor', 'access', 'faq', 'about'];
   const s = html['help.html'];
@@ -191,6 +191,17 @@ test('every Settings switch in the app is explained in the guide', () => {
   const names = [...block.matchAll(/\['\w+','([^']+)'/g)].map(m => m[1]);
   assert.ok(names.length >= 6, 'could not read the toggles list from the app');
   for (const n of names) assert.ok(guide.includes(n), 'help.html #settings does not explain "' + n + '"');
+});
+
+test('the quick setup section names every daily goal and reminder time the app offers', () => {
+  // One list in the app (TTWelcome) feeds both the quick setup and Settings.
+  const goals = (app.match(/W\.GOALS = \[([^\]]+)\]/) || [])[1];
+  const times = [...((app.match(/W\.REMIND_TIMES = \[([^\]]+)\]/) || [])[1] || '').matchAll(/label:'([^']+)'/g)].map(m => m[1]);
+  assert.ok(goals && times.length, 'could not read TTWelcome.GOALS / REMIND_TIMES from the app');
+  const s = html['help.html'], setup = words(s.slice(s.indexOf('<section id="setup"'), s.indexOf('</section>', s.indexOf('<section id="setup"'))));
+  const g = goals.split(',').map(x => x.trim());
+  assert.ok(setup.includes(g.slice(0, -1).join(', ') + ' or ' + g[g.length - 1]), 'help.html #setup should list the goals ' + g.join(', '));
+  for (const t of times) assert.ok(setup.includes(t), 'help.html #setup does not name the reminder time ' + t);
 });
 
 test('prices and the free-sample size on the pages match config.js', () => {
