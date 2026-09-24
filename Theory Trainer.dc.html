@@ -6,6 +6,8 @@
 <script src="./support.js"></script>
 <!-- Question picking for "My answers" and "More like this" (window.TTPicker). -->
 <script src="./picker.js"></script>
+<!-- The coach: flag merging, drills and "keeps getting wrong" (window.TTCoach). -->
+<script src="./coach.js"></script>
 <script>
 // ---------- Colour themes (light / dark / follow the device) ----------
 // The app's colours are written as var(--tt-<role>-<hex>) where light and dark differ:
@@ -335,8 +337,24 @@ input,select{font-family:inherit}
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
     <button onClick="{{ startDailyLesson }}" style="grid-column:1/-1;display:flex;align-items:center;gap:16px;background:var(--tt-bg-2a2c33);color:#fff;border:none;border-radius:22px;padding:18px 22px;cursor:pointer;text-align:left">
       <svg width="34" height="34" viewBox="0 0 24 24" style="flex:none"><circle cx="12" cy="12" r="9.4" fill="none" stroke="#F2A93B" stroke-width="2"/><path d="M10 8.2 L16 12 L10 15.8 Z" fill="#F2A93B"/></svg>
-      <span><span style="display:block;font-family:'Nunito',sans-serif;font-weight:900;font-size:19px">Today's lesson</span><span style="display:block;font-size:14.5px;opacity:.8;margin-top:2px">Picked for you — reviews due, tricky flags, weak topics</span></span>
+      <span><span style="display:block;font-family:'Nunito',sans-serif;font-weight:900;font-size:19px">Today's lesson</span><span style="display:block;font-size:14.5px;opacity:.8;margin-top:2px">{{ dailyDesc }}</span></span>
     </button>
+    <!-- Questions she keeps missing, with the answer she tends to pick and a way to remember -->
+    <sc-if value="{{ tripShow }}" hint-placeholder-val="{{ false }}">
+    <div style="grid-column:1/-1;background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);border-radius:20px;border:2px solid var(--tt-bd-e8b7b4);padding:16px 18px;text-align:left">
+      <div style="font-family:'Nunito',sans-serif;font-weight:900;font-size:18px">Keeps tripping you up</div>
+      <div style="font-size:13px;color:var(--tt-fg-6e6a5e);margin:2px 0 6px">{{ tripSub }}</div>
+      <sc-for list="{{ tripRows }}" as="t" hint-placeholder-count="2">
+        <div style="padding:10px 0;border-top:1px solid var(--tt-bd-f2ede1)">
+          <div style="font-size:15px;line-height:1.4;font-weight:700">{{ t.text }}</div>
+          <div style="font-size:14px;margin-top:4px;color:var(--tt-fg-b8433d)">You tend to pick: {{ t.usual }}</div>
+          <div style="font-size:14px;margin-top:2px;color:var(--tt-fg-1c6b3c)">Right answer: {{ t.answer }}</div>
+          <div style="font-size:14px;margin-top:4px;line-height:1.45"><b>{{ t.tipLabel }}</b> {{ t.tip }}</div>
+        </div>
+      </sc-for>
+      <button onClick="{{ tripDrill }}" style="width:100%;margin-top:8px;background:#0E7C6B;color:#fff;border:none;border-radius:14px;min-height:50px;font-family:'Nunito',sans-serif;font-weight:900;font-size:16px;cursor:pointer">Drill these ({{ tripCount }})</button>
+    </div>
+    </sc-if>
     <button onClick="{{ goLearn }}" style="grid-column:1/-1;display:flex;align-items:center;gap:16px;background:#0E7C6B;color:#fff;border:none;border-radius:22px;padding:22px 22px;cursor:pointer;text-align:left;min-height:96px">
       <svg width="40" height="40" viewBox="0 0 24 24" style="flex:none"><path d="M5 4.5 C8 3.2 10.5 3.4 12 4.6 C13.5 3.4 16 3.2 19 4.5 L19 19 C16 17.8 13.5 18 12 19.2 C10.5 18 8 17.8 5 19 Z" fill="none" stroke="#fff" stroke-width="2"/><path d="M12 4.6 L12 19.2" stroke="#fff" stroke-width="2"/></svg>
       <span><span style="display:block;font-family:'Nunito',sans-serif;font-weight:900;font-size:22px">Practise</span><span style="display:block;font-size:15px;opacity:.9;margin-top:2px">Friendly questions, read aloud</span></span>
@@ -349,6 +367,11 @@ input,select{font-family:inherit}
     <button onClick="{{ goAnswers }}" style="grid-column:1/-1;display:flex;align-items:center;gap:16px;background:var(--tt-bg-fff);color:var(--tt-fg-2a2c33);border:2px solid var(--tt-bd-0e7c6b);border-radius:22px;padding:18px 22px;cursor:pointer;text-align:left">
       <svg width="34" height="34" viewBox="0 0 24 24" style="flex:none"><rect x="3.5" y="3.5" width="7" height="7" rx="2" fill="#0E7C6B"/><path d="M5.3 7 L6.7 8.4 L9 5.8" stroke="#fff" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/><rect x="3.5" y="13.5" width="7" height="7" rx="2" fill="none" stroke="#0E7C6B" stroke-width="1.6"/><path d="M13.5 7 L20.5 7 M13.5 17 L20.5 17" stroke="#0E7C6B" stroke-width="2" stroke-linecap="round"/></svg>
       <span><span style="display:block;font-family:'Nunito',sans-serif;font-weight:900;font-size:19px">My answers</span><span style="display:block;font-size:14.5px;color:var(--tt-fg-6e6a5e);margin-top:2px">{{ answersDesc }}</span></span>
+    </button>
+    <!-- Flagged: everything she flagged, until she un-flags it -->
+    <button onClick="{{ goFlagged }}" style="grid-column:1/-1;display:flex;align-items:center;gap:16px;background:var(--tt-bg-fff);color:var(--tt-fg-2a2c33);border:1px solid var(--tt-bd-e8e1d2);border-radius:22px;padding:16px 22px;cursor:pointer;text-align:left">
+      <svg width="30" height="30" viewBox="0 0 24 24" style="flex:none"><path d="M6 21 L6 4 M6 4 L18 4 L15 8.5 L18 13 L6 13" fill="none" stroke="#F2A93B" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/></svg>
+      <span><span style="display:block;font-family:'Nunito',sans-serif;font-weight:900;font-size:18px">Flagged</span><span style="display:block;font-size:14.5px;color:var(--tt-fg-6e6a5e);margin-top:2px">{{ flaggedLine }}</span></span>
     </button>
     <button onClick="{{ goTest }}" style="display:flex;flex-direction:column;align-items:flex-start;gap:8px;background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);border-radius:22px;padding:18px;cursor:pointer;text-align:left">
       <svg width="30" height="30" viewBox="0 0 24 24"><circle cx="12" cy="13" r="8" fill="none" stroke="#0E7C6B" stroke-width="2"/><path d="M12 13 L12 8.5 M9.5 3 L14.5 3" stroke="#0E7C6B" stroke-width="2" stroke-linecap="round"/></svg>
@@ -425,7 +448,7 @@ input,select{font-family:inherit}
     <button onClick="{{ quitLearn }}" style="background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);border-radius:12px;width:44px;height:44px;cursor:pointer;font-size:17px;color:var(--tt-fg-6e6a5e)">✕</button>
     <div style="flex:1;height:10px;background:var(--tt-bg-efe9dc);border-radius:6px;overflow:hidden"><div style="{{ learnBarStyle }}"></div></div>
     <div style="font-size:15px;color:var(--tt-fg-6e6a5e);white-space:nowrap">{{ qNum }} of {{ qTotal }}</div>
-    <button onClick="{{ toggleQFlag }}" aria-label="Save this question for extra practice" style="{{ qFlagStyle }}">
+    <button onClick="{{ toggleQFlag }}" aria-label="Flag this question to revise later" aria-pressed="{{ qFlagPressed }}" style="{{ qFlagStyle }}">
       <svg width="16" height="16" viewBox="0 0 24 24"><path d="M6 21 L6 4 L18 4 L14.5 8.5 L18 13 L6 13" fill="currentColor" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
       {{ qFlagLabel }}
     </button>
@@ -448,7 +471,7 @@ input,select{font-family:inherit}
   </sc-if>
   <div style="display:flex;flex-direction:column;gap:12px;margin-top:16px">
     <sc-for list="{{ opts }}" as="o" hint-placeholder-count="4">
-      <div onClick="{{ o.pick }}" style="{{ o.style }}">
+      <div onClick="{{ o.pick }}" onKeyDown="{{ o.key }}" role="button" tabindex="0" aria-label="{{ o.label }}" style="{{ o.style }}">
         <span style="{{ o.letterStyle }}">{{ o.letter }}</span>
         <span style="flex:1;font-size:19px;line-height:1.4">{{ o.text }}</span>
         <button onClick="{{ o.speak }}" aria-label="Read this answer aloud" style="flex:none;width:44px;height:44px;border-radius:50%;background:rgba(0,0,0,.05);border:none;cursor:pointer;color:var(--tt-fg-6e6a5e);display:flex;align-items:center;justify-content:center">
@@ -465,7 +488,7 @@ input,select{font-family:inherit}
           <div style="font-size:17px;line-height:1.5;margin-top:6px">{{ explanation }}</div>
           <div style="font-size:14px;color:var(--tt-fg-6e6a5e);margin-top:8px">{{ ruleRef }}</div>
           <sc-if value="{{ hasTip }}" hint-placeholder-val="{{ false }}">
-            <div style="margin-top:10px;padding:10px 12px;background:rgba(255,255,255,.7);border-radius:12px;font-size:15px;line-height:1.5"><b>Remember:</b> {{ tipText }}</div>
+            <div style="margin-top:10px;padding:10px 12px;background:var(--tt-bg-fff);border-radius:12px;font-size:15px;line-height:1.5"><b>{{ tipLabel }}</b> {{ tipText }}</div>
           </sc-if>
         </div>
         <button onClick="{{ speakExp }}" aria-label="Read the explanation aloud" style="flex:none;width:48px;height:48px;border-radius:50%;background:rgba(255,255,255,.7);border:none;cursor:pointer;color:var(--tt-fg-2a2c33);display:flex;align-items:center;justify-content:center">
@@ -497,6 +520,23 @@ input,select{font-family:inherit}
       <span><span style="display:block;font-family:'Nunito',sans-serif;font-weight:900;font-size:17px">Levelled up</span><span style="display:block;font-size:14px;opacity:.9">{{ levelUpLine }}</span></span>
     </div>
   </sc-if>
+  <div style="max-width:420px;margin:20px auto 0">
+    <sc-if value="{{ tripShow }}" hint-placeholder-val="{{ false }}">
+    <div style="grid-column:1/-1;background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);border-radius:20px;border:2px solid var(--tt-bd-e8b7b4);padding:16px 18px;text-align:left">
+      <div style="font-family:'Nunito',sans-serif;font-weight:900;font-size:18px">Keeps tripping you up</div>
+      <div style="font-size:13px;color:var(--tt-fg-6e6a5e);margin:2px 0 6px">{{ tripSub }}</div>
+      <sc-for list="{{ tripRows }}" as="t" hint-placeholder-count="2">
+        <div style="padding:10px 0;border-top:1px solid var(--tt-bd-f2ede1)">
+          <div style="font-size:15px;line-height:1.4;font-weight:700">{{ t.text }}</div>
+          <div style="font-size:14px;margin-top:4px;color:var(--tt-fg-b8433d)">You tend to pick: {{ t.usual }}</div>
+          <div style="font-size:14px;margin-top:2px;color:var(--tt-fg-1c6b3c)">Right answer: {{ t.answer }}</div>
+          <div style="font-size:14px;margin-top:4px;line-height:1.45"><b>{{ t.tipLabel }}</b> {{ t.tip }}</div>
+        </div>
+      </sc-for>
+      <button onClick="{{ tripDrill }}" style="width:100%;margin-top:8px;background:#0E7C6B;color:#fff;border:none;border-radius:14px;min-height:50px;font-family:'Nunito',sans-serif;font-weight:900;font-size:16px;cursor:pointer">Drill these ({{ tripCount }})</button>
+    </div>
+    </sc-if>
+  </div>
   <sc-if value="{{ doneTipShow }}" hint-placeholder-val="{{ false }}">
     <div style="max-width:420px;margin:20px auto 0;background:var(--tt-bg-fbf1dc);border:1px solid var(--tt-bd-f0d9a8);border-radius:16px;padding:14px 16px;font-size:15.5px;text-align:left;line-height:1.5"><b>Remember:</b> {{ doneTip }}</div>
   </sc-if>
@@ -683,7 +723,7 @@ input,select{font-family:inherit}
   </div>
   <div style="display:flex;flex-direction:column;gap:11px;margin-top:14px">
     <sc-for list="{{ tOpts }}" as="o" hint-placeholder-count="4">
-      <div onClick="{{ o.pick }}" style="{{ o.style }}">
+      <div onClick="{{ o.pick }}" onKeyDown="{{ o.key }}" role="button" tabindex="0" aria-label="{{ o.label }}" style="{{ o.style }}">
         <span style="{{ o.letterStyle }}">{{ o.letter }}</span>
         <span style="flex:1;font-size:18px;line-height:1.4">{{ o.text }}</span>
         <button onClick="{{ o.speak }}" aria-label="Read this answer aloud" style="flex:none;width:42px;height:42px;border-radius:50%;background:rgba(0,0,0,.05);border:none;cursor:pointer;color:var(--tt-fg-6e6a5e);display:flex;align-items:center;justify-content:center">
@@ -770,6 +810,126 @@ input,select{font-family:inherit}
     <button onClick="{{ goProgress }}" style="flex:1;background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);border-radius:16px;min-height:56px;font-family:'Nunito',sans-serif;font-weight:800;font-size:17px;cursor:pointer">My Progress</button>
     <button onClick="{{ goHome }}" style="flex:1;background:#0E7C6B;color:#fff;border:none;border-radius:16px;min-height:56px;font-family:'Nunito',sans-serif;font-weight:800;font-size:17px;cursor:pointer">Home</button>
   </div>
+</div>
+</sc-if>
+
+<!-- ============ ACTIVITY ============ -->
+<!-- Admin: what a learner actually did, from the events table (backend.js TTTrack). -->
+<sc-if value="{{ vActivity }}" hint-placeholder-val="{{ false }}">
+<div data-screen-label="Activity">
+  <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+    <button onClick="{{ goDash }}" aria-label="Back to the dashboard" style="background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);border-radius:12px;width:44px;height:44px;cursor:pointer;font-size:18px">←</button>
+    <div style="font-family:'Nunito',sans-serif;font-weight:900;font-size:24px;flex:1">Activity</div>
+    <button onClick="{{ reloadActivity }}" style="background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);border-radius:12px;min-height:44px;padding:0 14px;cursor:pointer;font-size:14px;font-weight:700;color:var(--tt-fg-0e7c6b)">Refresh</button>
+  </div>
+  <div style="font-size:13px;color:var(--tt-fg-6e6a5e);line-height:1.5;margin-bottom:12px">{{ actNote }}</div>
+  <sc-if value="{{ actManyAccounts }}" hint-placeholder-val="{{ false }}">
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
+      <sc-for list="{{ actAccounts }}" as="a" hint-placeholder-count="2"><button onClick="{{ a.pick }}" style="{{ a.style }}">{{ a.label }}</button></sc-for>
+    </div>
+  </sc-if>
+  <sc-if value="{{ actHas }}" hint-placeholder-val="{{ false }}">
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(100px,1fr));gap:10px">
+      <sc-for list="{{ actTiles }}" as="t" hint-placeholder-count="6">
+        <div style="background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);border-radius:20px;padding:12px;text-align:center"><div style="font-family:'Nunito',sans-serif;font-weight:900;font-size:22px">{{ t.value }}</div><div style="font-size:13px;color:var(--tt-fg-6e6a5e)">{{ t.label }}</div></div>
+      </sc-for>
+    </div>
+
+    <div style="font-family:'Nunito',sans-serif;font-weight:800;font-size:18px;margin:24px 0 10px">Day by day</div>
+    <div style="background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);border-radius:20px;padding:4px 18px">
+      <sc-for list="{{ actDays }}" as="d" hint-placeholder-count="4">
+        <div style="padding:11px 0;border-bottom:1px solid var(--tt-bd-f2ede1)"><div style="font-weight:700;font-size:15px">{{ d.label }}</div><div style="font-size:13px;color:var(--tt-fg-6e6a5e);margin-top:2px">{{ d.detail }}</div></div>
+      </sc-for>
+    </div>
+
+    <div style="font-family:'Nunito',sans-serif;font-weight:800;font-size:18px;margin:24px 0 10px">Missed most</div>
+    <div style="background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);border-radius:20px;padding:4px 18px">
+      <sc-for list="{{ actMissed }}" as="m" hint-placeholder-count="4">
+        <div style="padding:11px 0;border-bottom:1px solid var(--tt-bd-f2ede1)">
+          <div style="font-size:15px;line-height:1.35">{{ m.text }}</div>
+          <div style="font-size:13.5px;margin-top:4px;color:var(--tt-fg-b8433d)">Wrong {{ m.wrong }} of {{ m.seen }} · usually picks: {{ m.usual }}</div>
+          <div style="font-size:13.5px;margin-top:2px;color:var(--tt-fg-1c6b3c)">Answer: {{ m.answer }}</div>
+        </div>
+      </sc-for>
+    </div>
+
+    <div style="font-family:'Nunito',sans-serif;font-weight:800;font-size:18px;margin:24px 0 10px">Time to answer, by topic</div>
+    <div style="background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);border-radius:20px;padding:4px 18px">
+      <sc-for list="{{ actTopicTime }}" as="t" hint-placeholder-count="4">
+        <div style="padding:11px 0;border-bottom:1px solid var(--tt-bd-f2ede1);display:flex;justify-content:space-between;gap:10px"><span style="font-size:15px">{{ t.name }}</span><span style="font-size:13px;color:var(--tt-fg-6e6a5e);white-space:nowrap">{{ t.detail }}</span></div>
+      </sc-for>
+    </div>
+
+    <div style="font-family:'Nunito',sans-serif;font-weight:800;font-size:18px;margin:24px 0 10px">Latest</div>
+    <div style="background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);border-radius:20px;padding:4px 18px">
+      <sc-for list="{{ actRecent }}" as="r" hint-placeholder-count="6">
+        <div style="padding:11px 0;border-bottom:1px solid var(--tt-bd-f2ede1);display:flex;gap:12px"><span style="font-size:13px;color:var(--tt-fg-6e6a5e);flex:none;width:92px">{{ r.when }}</span><span style="font-size:14.5px;line-height:1.35">{{ r.text }}</span></div>
+      </sc-for>
+    </div>
+  </sc-if>
+</div>
+</sc-if>
+
+<!-- ============ MEMORY TIPS (admin) ============ -->
+<!-- Local AI drafts a tip per question (tools/write-memory-tips.js); none reaches a learner
+     until it is approved here. -->
+<sc-if value="{{ vTips }}" hint-placeholder-val="{{ false }}">
+<div data-screen-label="Memory tips">
+  <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+    <button onClick="{{ goDash }}" aria-label="Back to the dashboard" style="background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);border-radius:12px;width:44px;height:44px;cursor:pointer;font-size:18px">←</button>
+    <div style="font-family:'Nunito',sans-serif;font-weight:900;font-size:24px;flex:1">Memory tips</div>
+  </div>
+  <div style="font-size:13px;color:var(--tt-fg-6e6a5e);line-height:1.5;margin-bottom:10px">{{ tipsNote }}</div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
+    <sc-for list="{{ tipsTabs }}" as="t" hint-placeholder-count="3"><button onClick="{{ t.pick }}" style="{{ t.style }}">{{ t.label }}</button></sc-for>
+  </div>
+  <sc-if value="{{ tipsCanApproveAll }}" hint-placeholder-val="{{ false }}">
+    <button onClick="{{ tipsApproveAll }}" style="width:100%;margin-bottom:12px;background:var(--tt-bg-fff);border:2px solid var(--tt-bd-0e7c6b);border-radius:14px;min-height:48px;font-size:15px;font-weight:700;color:var(--tt-fg-0a5d50);cursor:pointer">Approve all {{ tipsShownCount }} shown</button>
+  </sc-if>
+  <div style="background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);border-radius:20px;padding:4px 18px">
+    <sc-for list="{{ tipsRows }}" as="t" hint-placeholder-count="3">
+      <div style="padding:12px 0;border-bottom:1px solid var(--tt-bd-f2ede1)">
+        <div style="font-size:15px;line-height:1.4">{{ t.question }}</div>
+        <div style="font-size:13.5px;margin-top:3px;color:var(--tt-fg-1c6b3c)">Answer: {{ t.answer }}</div>
+        <textarea name="{{ t.qid }}" value="{{ t.tip }}" onChange="{{ t.edit }}" aria-label="Memory tip for this question" rows="2" style="display:block;width:100%;box-sizing:border-box;margin-top:8px;padding:10px;border:1px solid var(--tt-bd-e8e1d2);border-radius:10px;font:inherit;font-size:15px;background:var(--tt-bg-faf6ef);color:var(--tt-fg-2a2c33)"></textarea>
+        <div style="display:flex;gap:8px;margin-top:8px;align-items:center;flex-wrap:wrap">
+          <button onClick="{{ t.approve }}" style="background:#0E7C6B;color:#fff;border:none;border-radius:10px;padding:0 14px;min-height:40px;font-size:14px;font-weight:700;cursor:pointer">{{ t.approveLabel }}</button>
+          <button onClick="{{ t.reject }}" style="background:var(--tt-bg-fbeae9);color:var(--tt-fg-b8433d);border:none;border-radius:10px;padding:0 14px;min-height:40px;font-size:14px;font-weight:700;cursor:pointer">Reject</button>
+          <span style="font-size:13px;color:var(--tt-fg-6e6a5e)">{{ t.status }}</span>
+        </div>
+      </div>
+    </sc-for>
+  </div>
+</div>
+</sc-if>
+
+<!-- ============ FLAGGED ============ -->
+<!-- Questions she (or a mock) flagged. They stay until she un-flags them. -->
+<sc-if value="{{ vFlagged }}" hint-placeholder-val="{{ false }}">
+<div data-screen-label="Flagged">
+  <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+    <button onClick="{{ goHome }}" aria-label="Back to home" style="background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);border-radius:12px;width:44px;height:44px;cursor:pointer;font-size:18px">←</button>
+    <div style="font-family:'Nunito',sans-serif;font-weight:900;font-size:24px;flex:1">Flagged</div>
+  </div>
+  <div style="font-size:15.5px;color:var(--tt-fg-6e6a5e);line-height:1.5;margin-bottom:14px">Questions you flagged stay here until you un-flag them, even when you get them right.</div>
+  <sc-if value="{{ hasRevFlags }}" hint-placeholder-val="{{ false }}">
+    <button onClick="{{ practiseFlagged }}" style="width:100%;margin-bottom:12px;background:var(--tt-bg-fbf1dc);border:2px solid #F2A93B;border-radius:16px;min-height:52px;font-family:'Nunito',sans-serif;font-weight:900;font-size:17px;cursor:pointer;color:var(--tt-fg-2a2c33)">Practise the flagged ones ({{ flaggedCount }})</button>
+    <div style="background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);border-radius:20px;padding:4px 18px">
+      <sc-for list="{{ revRows }}" as="r" hint-placeholder-count="3">
+        <div style="display:flex;gap:12px;align-items:flex-start;padding:12px 0;border-bottom:1px solid var(--tt-bd-f2ede1)">
+          <span style="flex:1;min-width:0">
+            <span style="display:block;font-size:15px;line-height:1.35">{{ r.text }}</span>
+            <span style="display:block;font-size:14px;line-height:1.35;margin-top:4px;color:var(--tt-fg-1c6b3c)">Answer: {{ r.answer }}</span>
+            <span style="display:block;font-size:12.5px;margin-top:3px;color:var(--tt-fg-6e6a5e)">{{ r.meta }}</span>
+          </span>
+          <button onClick="{{ r.unflag }}" style="flex:none;background:var(--tt-bg-e7f6ec);color:var(--tt-fg-1c6b3c);border:none;border-radius:10px;padding:8px 12px;min-height:40px;font-size:13px;font-weight:700;cursor:pointer">Un-flag</button>
+        </div>
+      </sc-for>
+    </div>
+  </sc-if>
+  <sc-if value="{{ noRevFlags }}" hint-placeholder-val="{{ false }}">
+    <div style="background:var(--tt-bg-fff);border:1px dashed var(--tt-bd-d8d0bf);border-radius:20px;padding:22px;text-align:center;color:var(--tt-fg-6e6a5e);font-size:15.5px">Nothing flagged yet. Tap "Tricky?" on any practice question, or Flag in a mock test, and it stays here until you un-flag it.</div>
+  </sc-if>
 </div>
 </sc-if>
 
@@ -937,22 +1097,13 @@ input,select{font-family:inherit}
     </div>
   </sc-if>
 
+  <div style="font-family:'Nunito',sans-serif;font-weight:800;font-size:18px;margin:28px 0 10px">Everything she does</div>
+  <button onClick="{{ goActivity }}" style="width:100%;background:var(--tt-bg-e4f2ef);border:1px solid var(--tt-bd-bfe0d8);border-radius:16px;min-height:52px;padding:12px 16px;font-size:15.5px;font-weight:700;color:var(--tt-fg-0a5d50);cursor:pointer;text-align:left">Activity: every answer, session and mock, day by day →</button>
+
+  <button onClick="{{ goTips }}" style="width:100%;margin-top:10px;background:var(--tt-bg-fbf1dc);border:1px solid var(--tt-bd-f0d9a8);border-radius:16px;min-height:52px;padding:12px 16px;font-size:15.5px;font-weight:700;color:var(--tt-fg-2a2c33);cursor:pointer;text-align:left">Memory tips: check the AI's tips before Catie sees them →</button>
+
   <div style="font-family:'Nunito',sans-serif;font-weight:800;font-size:18px;margin:28px 0 10px">Flagged for extra revision</div>
-  <sc-if value="{{ hasRevFlags }}" hint-placeholder-val="{{ false }}">
-    <div style="background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);border-radius:20px;padding:4px 18px">
-      <sc-for list="{{ revRows }}" as="r" hint-placeholder-count="3">
-        <div style="display:flex;gap:12px;align-items:center;padding:10px 0;border-bottom:1px solid var(--tt-bd-f2ede1)">
-          <span style="flex:1;font-size:14.5px;line-height:1.35">{{ r.text }}</span>
-          <span style="flex:none;font-size:12.5px;color:var(--tt-fg-6e6a5e);white-space:nowrap">{{ r.meta }}</span>
-          <button onClick="{{ r.unflag }}" style="flex:none;background:var(--tt-bg-e7f6ec);color:var(--tt-fg-1c6b3c);border:none;border-radius:10px;padding:8px 12px;font-size:13px;font-weight:700;cursor:pointer">Got it now</button>
-        </div>
-      </sc-for>
-    </div>
-    <button onClick="{{ practiseFlagged }}" style="width:100%;margin-top:12px;background:var(--tt-bg-fbf1dc);border:2px solid #F2A93B;border-radius:16px;min-height:52px;font-family:'Nunito',sans-serif;font-weight:900;font-size:17px;cursor:pointer;color:var(--tt-fg-2a2c33)">Practise the flagged ones ({{ flaggedCount }})</button>
-  </sc-if>
-  <sc-if value="{{ noRevFlags }}" hint-placeholder-val="{{ false }}">
-    <div style="background:var(--tt-bg-fff);border:1px dashed var(--tt-bd-d8d0bf);border-radius:20px;padding:22px;text-align:center;color:var(--tt-fg-6e6a5e);font-size:15.5px">Nothing flagged yet. The flag button on any practice or test question saves it here.</div>
-  </sc-if>
+  <button onClick="{{ goFlagged }}" style="width:100%;background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);border-radius:16px;min-height:52px;padding:12px 16px;font-size:15.5px;font-weight:700;color:var(--tt-fg-2a2c33);cursor:pointer;text-align:left">{{ flaggedLine }} →</button>
 
   <div style="font-family:'Nunito',sans-serif;font-weight:800;font-size:18px;margin:28px 0 10px">20 hardest questions</div>
   <sc-if value="{{ hasHard }}" hint-placeholder-val="{{ false }}">
@@ -1404,7 +1555,7 @@ class Component extends DCLogic {
       profile: 'learner', userId: activeId,
       leitner: saved.leitner || {}, attempts: saved.attempts || [], tests: saved.tests || [],
       overrides: content.overrides || {}, custom: content.custom || [], deleted: content.deleted || [],
-      revisionFlags: saved.revisionFlags || {},
+      revisionFlags: saved.revisionFlags || {}, flagCleared: saved.flagCleared || {},
       xp: saved.xp || 0, streak: saved.streak || {count:0, last:'', todayDate:'', todayN:0}, notes: saved.notes || {}, avatar: saved.avatar || '',
       notesOpen: false, notesKey: '', testMix: {}, customTimer: true,
       ansSel: {}, ansFilter: 'all', ansShow: 40,   // My answers: ticked ids, which filter, how many rows shown
@@ -1509,17 +1660,19 @@ class Component extends DCLogic {
     this.set({settings: Object.assign({}, st, {remindHour:h})});
     if(window.TTPush && st.remindOn) TTPush.save({enabled:true, hour:h});
   }
-  startDailyLesson(){
-    const sh = a=>a.map(x=>[Math.random(),x]).sort((p,q)=>p[0]-q[0]).map(p=>p[1]);
+  // Today's lesson: the coach (coach.js) reads every answer she has given and builds a
+  // drill — questions she's stuck on first, then flagged, then ones due for review by
+  // spacing, then a few new ones — topics alternating. Only questions from the bank.
+  drillPlan(){
     const qs = this.questionsFor('learn');
-    const due = qs.filter(q=>{ const r = this.rec(q.id); return r.seen>0 && r.box<3; });
-    const flagged = qs.filter(q=>this.state.revisionFlags[q.id]);
-    const weak = this.weakestTopics(3);
-    const weakQ = qs.filter(q=>weak.indexOf(q.topic)>=0);
-    const fresh = qs.filter(q=>this.rec(q.id).seen===0);
-    const ids = []; const seen = new Set();
-    sh(flagged).slice(0,4).concat(sh(due).slice(0,6), sh(weakQ).slice(0,6), sh(fresh)).forEach(q=>{ if(!seen.has(q.id)){ seen.add(q.id); ids.push(q.id); } });
-    this.buildSession(ids.slice(0, Math.max(10, Math.min(20, this.state.settings.dailyGoal||20))), "Today's lesson");
+    if(!window.TTCoach || !qs.length) return {ids:[], reasons:{stuck:0, flagged:0, due:0, weak:0, fresh:0}};
+    const n = Math.max(10, Math.min(20, this.state.settings.dailyGoal||20));
+    return TTCoach.buildDrill(TTCoach.profile(this.state.attempts, this.state.revisionFlags, qs), qs, {n});
+  }
+  startDailyLesson(){
+    const plan = this.drillPlan();
+    this.track('drill_built', null, {n: plan.ids.length, reasons: plan.reasons});
+    this.buildSession(plan.ids, "Today's lesson", {drill:true, repeats:{}});
   }
   componentDidMount(){
     this.loadBank();
@@ -1538,6 +1691,102 @@ class Component extends DCLogic {
     setTimeout(()=>this.pullCloud(), 800);
   }
   componentWillUnmount(){ clearInterval(this.tick); }
+  // Admin → Activity: send anything queued on this device, then read the last 60 days.
+  openActivity(){
+    this.setState({view:'activity', actBusy:true, actErr:''});
+    if(!(window.TTTrack && window.TTAuth && TTAuth.signedIn())){ this.setState({actBusy:false, actErr:'Sign in as the admin to see activity.'}); return; }
+    const since = new Date(Date.now() - 60*86400000).toISOString();
+    TTTrack.flush().then(()=>Promise.all([TTTrack.read(since), TTTrack.accounts()]))
+      .then(([events, accounts])=>this.setState({actBusy:false, actEvents:events, actAccountsList:accounts}))
+      .catch(e=>this.setState({actBusy:false, actErr:'Could not load activity: '+String(e.message||e)+'. Check the connection and press Refresh.'}));
+  }
+  // Admin → Memory tips: load every drafted tip; save one (approve, reject, or edit).
+  openTips(){
+    this.setState({view:'tips', tipsBusy:true, tipsErr:'', tipsEdits:{}});
+    if(!(window.TTBank && TTBank.tips && window.TTAuth && TTAuth.signedIn())){ this.setState({tipsBusy:false, tipsErr:'Sign in as the admin to review tips.'}); return; }
+    TTBank.tips().then(rows=>this.setState({tipsBusy:false, tipsList:rows}))
+      .catch(e=>this.setState({tipsBusy:false, tipsErr:'Could not load the tips: '+String(e.message||e)+'. Check the connection and open this screen again.'}));
+  }
+  saveTips(items, status){
+    // items: [{qid, tip}] — saved one by one; the list updates as each one lands
+    const next = (this.state.tipsList||[]).slice();
+    return items.reduce((p, it)=>p.then(()=>TTBank.saveTip(it.qid, it.tip, status).then(()=>{
+      const k = next.findIndex(r=>r.qid===it.qid); if(k>=0) next[k] = {qid:it.qid, memory_tip:it.tip, tip_status:status};
+      this.track('tip_'+status, it.qid);
+    })), Promise.resolve())
+      .then(()=>{ this.setState({tipsList:next, tipsErr:''}); this.loadBank(); })
+      .catch(e=>this.setState({tipsList:next, tipsErr:'Saving failed: '+String(e.message||e)+'. Nothing after that one was saved; try again.'}));
+  }
+  // Questions she keeps missing (coach.js "stuck"), worst first, with her usual wrong pick.
+  tripping(){
+    if(!window.TTCoach) return [];
+    const qs = this.questionsFor('learn'), prof = TTCoach.profile(this.state.attempts, {}, qs);
+    return Object.keys(prof).filter(id=>prof[id].stuck).sort((a,b)=>prof[b].wrong-prof[a].wrong).map(id=>{
+      const q = this.qById(id), picks = {};
+      this.state.attempts.forEach(a=>{ if(a.q===id && !a.ok && a.p!=null) picks[a.p] = (picks[a.p]||0)+1; });
+      const usual = Object.keys(picks).sort((x,y)=>picks[y]-picks[x])[0];
+      return {id, text:q.question, usual: usual!=null ? q.options[usual] : '\u2014', answer:q.options[q.correctIndex],
+        tip: q.memoryTip || q.explanation || '', tipLabel: q.memoryTip ? 'Memory tip:' : 'Why:'};
+    });
+  }
+  // ---------- activity log ----------
+  // Everything she does becomes a small event (backend.js TTTrack queues and sends them).
+  // Almost all of it is worked out HERE by comparing each state change with the one
+  // before, so the rest of the app doesn't need tracking calls sprinkled through it.
+  track(kind, qid, data){
+    try {
+      const u = this.users.find(x=>x.id===this.state.userId) || {};
+      if(window.TTTrack) TTTrack.track(kind, qid||null, data||{}, {id: this.state.userId, name: u.name || (this.state.settings||{}).learnerName});
+    } catch(e) { /* tracking must never break the app */ }
+  }
+  currentQid(){
+    const s = this.state;
+    if(s.view==='learnQ' && s.session) return s.session.ids[s.session.i] || null;
+    if(s.view==='test' && s.test && !s.test.ended) return s.test.ids[s.test.i] || null;
+    return null;
+  }
+  // This app's framework (support.js) passes only the previous PROPS here, never the
+  // previous state, so the last state seen is kept in this._seen and compared by hand.
+  componentDidUpdate(){
+    const prev = this._seen, s = this.state, now = Date.now();
+    this._seen = s;
+    if(!prev || prev === s) return;
+    const secs = t=>Math.round((now - (t||now))/1000);
+    if(s.view !== prev.view) this.track('screen', null, {view: s.view, from: prev.view});
+    // A different learner (or a sync reloading this one) isn't something she did:
+    // compare sessions and tests only within the same learner.
+    if(s.userId !== prev.userId){ this.track('learner_opened', null, {}); return; }
+    // practice sessions
+    const ps = prev.session, cs = s.session;
+    if(cs && (!ps || ps.startedAt !== cs.startedAt)) this.track('session_start', null, {label: cs.label||'', n: cs.ids.length});
+    if(cs && cs.ids[cs.i] && (!ps || ps.startedAt !== cs.startedAt || ps.i !== cs.i)){ this._shownAt = now; this.track('question_shown', cs.ids[cs.i], {i: cs.i, label: cs.label||''}); }
+    if(cs && ps && ps.startedAt === cs.startedAt){
+      if(ps.picked < 0 && cs.picked >= 0){
+        const qid = cs.ids[cs.i], q = this.qById(qid), ok = !!q && cs.picked === this.viewQ(q).correctIndex;
+        this.track('answer', qid, {ok, p: q ? this.seedPerm(qid)[cs.picked] : null, ms: now - (this._shownAt||now), src:'learn', label: cs.label||'', hint: !!(cs.hint && cs.hint.length)});
+      }
+      if(!(ps.hint && ps.hint.length) && cs.hint && cs.hint.length) this.track('hint_used', cs.ids[cs.i]);
+      if(cs.ids.length > ps.ids.length && cs.moreN) this.track('more_like_this_added', cs.ids[cs.i], {n: cs.moreN});
+    }
+    if(s.view==='learnDone' && prev.view!=='learnDone' && cs) this.track('session_end', null, {label: cs.label||'', n: cs.ids.length, answered: (cs.log||[]).length, correct: cs.correct, secs: secs(cs.startedAt)});
+    if(ps && ps.startedAt && (!cs || cs.startedAt !== ps.startedAt) && prev.view==='learnQ') this.track('session_left', null, {label: ps.label||'', at: ps.i, of: ps.ids.length, secs: secs(ps.startedAt)});
+    // mock and custom tests
+    const pt = prev.test, ct = s.test;
+    if(ct && (!pt || pt.startedAt !== ct.startedAt)){
+      if(pt && !pt.ended) this.track('test_abandoned', null, {kind: pt.kind||'mock', answered: Object.keys(pt.answers||{}).length, of: pt.ids.length, secs: secs(pt.startedAt)});
+      this.track('test_start', null, {kind: ct.kind||'mock', n: ct.ids.length, timed: !ct.noTimer});
+    }
+    if(ct && !ct.ended && ct.ids[ct.i] && (!pt || pt.startedAt !== ct.startedAt || pt.i !== ct.i || s.view!==prev.view) && s.view==='test'){ this._shownAt = now; this.track('question_shown', ct.ids[ct.i], {i: ct.i, test: ct.kind||'mock'}); }
+    if(ct && pt && pt.startedAt === ct.startedAt){
+      Object.keys(ct.answers||{}).forEach(k=>{
+        const a = ct.answers[k], was = (pt.answers||{})[k];
+        if(a === was) return;
+        const qid = ct.ids[k], q = this.qById(qid);
+        this.track(was===undefined ? 'answer' : 'answer_changed', qid, {ok: !!q && a === this.viewQ(q).correctIndex, p: q ? this.seedPerm(qid)[a] : null, ms: now - (this._shownAt||now), src:'test', from: was===undefined ? null : (q ? this.seedPerm(qid)[was] : null)});
+      });
+      if(!pt.ended && ct.ended) this.track('test_end', null, {kind: ct.kind||'mock', score: ct.score, total: ct.ids.length, answered: Object.keys(ct.answers||{}).length, secs: secs(ct.startedAt)});
+    }
+  }
   // Confirmation and password-reset emails link back to this page with a session in the
   // URL. A reset link opens "Set a new password"; a confirmation link just signs you in.
   arriveFromEmailLink(){
@@ -1553,7 +1802,7 @@ class Component extends DCLogic {
   }
   persist(extra){
     const s = this.state;
-    const user = {settings:s.settings, plan:s.plan, leitner:s.leitner, attempts:s.attempts, tests:s.tests, revisionFlags:s.revisionFlags, xp:s.xp, streak:s.streak, notes:s.notes, avatar:s.avatar, updatedAt: Date.now(), testInProgress: (s.test && !s.test.ended) ? s.test : null};
+    const user = {settings:s.settings, plan:s.plan, leitner:s.leitner, attempts:s.attempts, tests:s.tests, revisionFlags:s.revisionFlags, flagCleared:s.flagCleared||{}, xp:s.xp, streak:s.streak, notes:s.notes, avatar:s.avatar, updatedAt: Date.now(), testInProgress: (s.test && !s.test.ended) ? s.test : null};
     const content = {overrides:s.overrides, custom:s.custom, deleted:s.deleted, packNames:s.packNames, packLearn:s.packLearn, packTest:s.packTest, sub:s.sub, updatedAt: Date.now()};
     Object.assign(user, extra||{});
     const u = this.users.find(x=>x.id===s.userId);
@@ -1564,13 +1813,13 @@ class Component extends DCLogic {
     if(window.TTSync && TTSync.configured()){ clearTimeout(this._pushT); this._pushT = setTimeout(()=>this.flushCloud(), 2500); }
   }
   set(patch){ this.setState(patch, ()=>this.persist()); }
-  loadUser(id){
+  loadUser(id, keepSession){
     let blob = {}; try { blob = JSON.parse(localStorage.getItem(this.BASE+'.d.'+id)) || {}; } catch(e) {}
     try { localStorage.setItem(this.BASE+'.active', id); } catch(e) {}
     const u = this.users.find(x=>x.id===id);
     const st = Object.assign({textSize:1, dyslexiaFont:false, highContrast:false, autoRead:false, reducedMotion:false, learnerName:(u&&u.name)||'Learner', parentName:'Admin', voiceName:'', voiceRate:0.95, fiftyFifty:true, autoAdvance:false}, blob.settings);
     if(!blob.settings || !blob.settings.learnerName) st.learnerName = (u&&u.name)||st.learnerName;
-    this.setState({userId:id, settings:st, plan: blob.plan||'', leitner:blob.leitner||{}, attempts:blob.attempts||[], tests:blob.tests||[], revisionFlags:blob.revisionFlags||{}, xp:blob.xp||0, streak:blob.streak||{count:0, last:'', todayDate:'', todayN:0}, notes:blob.notes||{}, avatar:blob.avatar||'', notesOpen:false, test:blob.testInProgress||null, session:null, openTest:-1}, ()=>this.persist());
+    this.setState({userId:id, settings:st, plan: blob.plan||'', leitner:blob.leitner||{}, attempts:blob.attempts||[], tests:blob.tests||[], revisionFlags:blob.revisionFlags||{}, flagCleared:blob.flagCleared||{}, xp:blob.xp||0, streak:blob.streak||{count:0, last:'', todayDate:'', todayN:0}, notes:blob.notes||{}, avatar:blob.avatar||'', notesOpen:false, test:blob.testInProgress||null, session: keepSession ? this.state.session : null, openTest:-1}, ()=>this.persist());
   }
   addLearner(){
     const name = prompt('New learner\u2019s name?'); if(!name || !name.trim()) return;
@@ -1695,9 +1944,14 @@ class Component extends DCLogic {
     const data = b.data||{}; let reloadMe = false;
     Object.keys(data).forEach(id=>{
       let loc = {}; try { loc = JSON.parse(localStorage.getItem(this.BASE+'.d.'+id)) || {}; } catch(e) {}
-      if((data[id].updatedAt||0) > (loc.updatedAt||0)){
-        try { localStorage.setItem(this.BASE+'.d.'+id, JSON.stringify(data[id])); } catch(e) {}
+      const remote = data[id];
+      const m = TTCoach.mergeFlags({flags:loc.revisionFlags, cleared:loc.flagCleared}, {flags:remote.revisionFlags, cleared:remote.flagCleared});
+      const win = (remote.updatedAt||0) > (loc.updatedAt||0) ? remote : loc;
+      const flagsMoved = JSON.stringify(m.flags) !== JSON.stringify(loc.revisionFlags||{});
+      if(win===remote || flagsMoved){
+        try { localStorage.setItem(this.BASE+'.d.'+id, JSON.stringify(Object.assign({}, win, {revisionFlags:m.flags, flagCleared:m.cleared}))); } catch(e) {}
         if(id===this.state.userId) reloadMe = true;
+        if(win===loc) this._dirty = true;   // our copy gained the other device's flags: send it back
       }
     });
     let locC = {}; try { locC = JSON.parse(localStorage.getItem(this.BASE+'.content')) || {}; } catch(e) {}
@@ -1706,7 +1960,7 @@ class Component extends DCLogic {
       try { localStorage.setItem(this.BASE+'.content', JSON.stringify(rc)); } catch(e) {}
       this.setState({overrides:rc.overrides||{}, custom:rc.custom||[], deleted:rc.deleted||[], packNames:rc.packNames||this.state.packNames, packLearn:rc.packLearn||this.state.packLearn, packTest:rc.packTest||this.state.packTest, sub:rc.sub||this.state.sub});
     }
-    if(reloadMe) this.loadUser(this.state.userId);
+    if(reloadMe) this.loadUser(this.state.userId, true);
     this.forceUpdate();
   }
   pullCloud(){
@@ -1742,6 +1996,7 @@ class Component extends DCLogic {
   speak(text){
     if(!window.speechSynthesis || !text) return;
     speechSynthesis.cancel();
+    this.track('read_aloud', this.currentQid(), {chars: text.length});
     const u = new SpeechSynthesisUtterance(text);
     u.voice = this.bestVoice();
     u.rate = this.state.settings.voiceRate || this.props.speechRate || 0.95;
@@ -1749,9 +2004,9 @@ class Component extends DCLogic {
   }
   speakQFull(q){ const v = this.viewQ(q); this.speak(q.question + '. Option A: ' + v.options[0] + '. Option B: ' + v.options[1] + '. Option C: ' + v.options[2] + '. Option D: ' + v.options[3]); }
   // ---------- learn ----------
-  buildSession(ids, label){
+  buildSession(ids, label, extra){
     if(!ids.length) return;
-    this.setState({session:{ids, i:0, correct:0, picked:-1, hint:null, wrongTopics:[], log:[], label}, view:'learnQ'}, ()=>{
+    this.setState({session:Object.assign({ids, i:0, correct:0, picked:-1, hint:null, wrongTopics:[], log:[], label, startedAt: Date.now()}, extra||{}), view:'learnQ'}, ()=>{
       const q = this.qById(ids[0]);
       if(this.state.settings.autoRead && q) this.speakQFull(q);
     });
@@ -1771,11 +2026,15 @@ class Component extends DCLogic {
     });
     return this._sb;
   }
-  toggleRevFlag(id){
-    const rf = Object.assign({}, this.state.revisionFlags);
-    if(rf[id]) delete rf[id]; else rf[id] = {t: Date.now(), src:'learn'};
-    this.set({revisionFlags: rf});
+  // A flag stays until she takes it off — getting the question right doesn't remove it.
+  setRevFlag(id, on, src){
+    const rf = Object.assign({}, this.state.revisionFlags), fc = Object.assign({}, this.state.flagCleared);
+    if(on){ rf[id] = {t: Date.now(), src: src||'learn'}; delete fc[id]; }
+    else { delete rf[id]; fc[id] = Date.now(); }
+    this.track(on ? 'flag' : 'unflag', id, {src: src||'learn'});
+    return {revisionFlags: rf, flagCleared: fc};
   }
+  toggleRevFlag(id){ this.set(this.setRevFlag(id, !this.state.revisionFlags[id])); }
   isPackOn(mode, id){ const m = mode==='test' ? this.state.packTest : this.state.packLearn; return (id in m) ? !!m[id] : id!=='signs'; }
   questionsFor(mode){
     const base = this.questions().filter(q=>this.isPackOn(mode, q.pack||'p1'));
@@ -1850,7 +2109,8 @@ class Component extends DCLogic {
     // p = the option she picked, as its index in the question's own order (the
     // screen shuffles options), so "My answers" can show what she said.
     const attempts = this.state.attempts.concat([{q:q.id, t:Date.now(), ok, topic:q.topic, p:this.seedPerm(q.id)[i]}]).slice(-3000);
-    this.setState(Object.assign({session: Object.assign({}, s, {picked:i, correct: s.correct + (ok?1:0), wrongTopics: ok ? (s.wrongTopics||[]) : (s.wrongTopics||[]).concat([q.topic]), log:(s.log||[]).concat([{t:q.topic, ok, q:q.id}])}), leitner, attempts}, this.award(1, ok?1:0)), ()=>{
+    const again = (!ok && s.drill && window.TTCoach) ? TTCoach.requeue(s.ids, s.i, s.repeats) : null;
+    this.setState(Object.assign({session: Object.assign({}, s, again ? {ids: again.ids, repeats: again.repeats} : {}, {picked:i, correct: s.correct + (ok?1:0), wrongTopics: ok ? (s.wrongTopics||[]) : (s.wrongTopics||[]).concat([q.topic]), log:(s.log||[]).concat([{t:q.topic, ok, q:q.id}])}), leitner, attempts}, this.award(1, ok?1:0)), ()=>{
       this.persist();
       if(this.state.settings.autoRead) this.speak((ok?'Correct. ':'The answer is ' + 'ABCD'[vq.correctIndex] + ', ' + vq.options[vq.correctIndex] + '. ') + q.explanation);
       if(ok && this.state.settings.autoAdvance){
@@ -1973,6 +2233,7 @@ class Component extends DCLogic {
     const pool = this.questionsFor('learn').filter(q=>!already.has(q.id));
     const opts = Object.assign({}, (window.TT_CONFIG||{}).moreLike, {boxOf: id=>this.rec(id).box});
     const found = window.TTPicker ? TTPicker.similar(targets, pool, opts).map(q=>q.id) : [];
+    this.track('more_like_this', null, {from: ids.slice(0, 20), found: found.length});
     if(!inSession){
       if(found.length) this.buildSession(found, targets.length>1 ? 'More like these' : 'More like this');
       else alert('No more questions like that in the question sets that are switched on. Turn more sets on in the Admin dashboard, or try Practise → A bit of everything.');
@@ -1988,7 +2249,7 @@ class Component extends DCLogic {
   launchTest(ids, timed){
     const sh = a => a.map(x=>[Math.random(),x]).sort((p,q)=>p[0]-q[0]).map(p=>p[1]);
     const mins = Math.max(3, Math.round(ids.length*1.14));
-    const test = {ids: sh(ids), answers:{}, flags:{}, i:0, endAt: Date.now() + (timed ? mins*60000 : 12*3600000), noTimer: !timed, ended:false};
+    const test = {ids: sh(ids), answers:{}, flags:{}, i:0, endAt: Date.now() + (timed ? mins*60000 : 12*3600000), noTimer: !timed, ended:false, startedAt: Date.now(), kind:'custom'};
     this.setState({test, view:'test', testView:'run'}, ()=>this.persist());
   }
   startTest(){
@@ -2010,7 +2271,7 @@ class Component extends DCLogic {
       ids = []; let round = 0;
       while(ids.length<50 && round<25){ for(let t=0;t<14 && ids.length<50;t++){ const q = byTopic[t][round]; if(q) ids.push(q.id); } round++; }
     }
-    const test = {ids: sh(ids).slice(0,50), answers:{}, flags:{}, i:0, endAt: Date.now() + 57*60000, ended:false};
+    const test = {ids: sh(ids).slice(0,50), answers:{}, flags:{}, i:0, endAt: Date.now() + 57*60000, ended:false, startedAt: Date.now(), kind:'mock'};
     this.setState({test, view:'test', testView:'run'}, ()=>this.persist());
   }
   answerTest(i){
@@ -2075,6 +2336,92 @@ class Component extends DCLogic {
   adaptive(){ return this.state.tests.length >= 2; }
   fmtDate(d){ try { return new Date(d+'T12:00').toLocaleDateString('en-GB', {day:'numeric', month:'short', year:'2-digit'}); } catch(e){ return d; } }
 
+  tipsVals(chip){
+    const s = this.state, view = s.view;
+    const out = {vTips: view==='tips', goTips: ()=>this.openTips()};
+    // "Keeps tripping you up" — worked out only where it shows
+    const trip = (view==='home' || view==='learnDone') ? this.tripping() : [];
+    Object.assign(out, {tripShow: trip.length>0, tripCount: trip.length, tripRows: trip.slice(0,3),
+      tripSub: trip.length>3 ? 'Your '+trip.length+' most-missed questions \u2014 here are the top 3.' : 'The questions you\u2019ve missed most. One more go makes them stick.',
+      tripDrill: ()=>this.buildSession(trip.map(t=>t.id), 'Tripping me up', {drill:true, repeats:{}})});
+    if(view!=='tips') return out;
+    const bank = {}; this.questions().forEach(q=>{ bank[q.id] = q; });
+    const tab = s.tipsTab || 'draft', rows = (s.tipsList||[]).filter(r=>(r.tip_status||'draft')===tab && bank[r.qid]);
+    const edits = s.tipsEdits || {}, textOf = r=>(edits[r.qid]!=null ? edits[r.qid] : r.memory_tip) || '';
+    const count = st=>(s.tipsList||[]).filter(r=>(r.tip_status||'draft')===st).length;
+    return Object.assign(out, {
+      tipsNote: s.tipsBusy ? 'Loading\u2026' : s.tipsErr ? s.tipsErr : !(s.tipsList||[]).length ? 'No tips yet. They are written by the local AI on the home PC (tools/write-memory-tips.js), then loaded here as drafts.' : 'Each tip was written by the local AI from its own question and checked for invented numbers. Catie only sees a tip once you approve it. Edit any wording first if you like.',
+      tipsTabs: [['draft','To check'],['approved','Approved'],['rejected','Rejected']].map(([k,l])=>({label: l+' ('+count(k)+')', pick: ()=>this.setState({tipsTab:k}), style: chip(tab===k)})),
+      tipsShownCount: Math.min(rows.length, 50),
+      tipsCanApproveAll: tab==='draft' && rows.length>0,
+      tipsApproveAll: ()=>{ const list = rows.slice(0,50); if(confirm('Approve these '+list.length+' tips as they stand? Catie will start seeing them.')) this.saveTips(list.map(r=>({qid:r.qid, tip:textOf(r)})), 'approved'); },
+      tipsRows: rows.slice(0,50).map(r=>{ const q = bank[r.qid]; return {qid:r.qid, question:q.question, answer:q.options[q.correctIndex], tip: textOf(r),
+        status: r.tip_status==='approved' ? 'Live for Catie' : r.tip_status==='rejected' ? 'Hidden' : 'Not shown yet',
+        approveLabel: r.tip_status==='approved' ? 'Save' : 'Approve',
+        edit: e=>this.setState({tipsEdits: Object.assign({}, s.tipsEdits, {[r.qid]: e.target.value})}),
+        approve: ()=>this.saveTips([{qid:r.qid, tip:textOf(r)}], 'approved'),
+        reject: ()=>this.saveTips([{qid:r.qid, tip:textOf(r)}], 'rejected')}; })
+    });
+  }
+  activityVals(chip){
+    const s = this.state, T = this.TOPICS, evs = s.actEvents || [];
+    const accts = s.actAccountsList || [];
+    const count = {}; evs.forEach(e=>{ if(e.kind==='answer') count[e.user_id] = (count[e.user_id]||0)+1; });
+    const ids = Object.keys(count).sort((a,b)=>count[b]-count[a]);
+    const pick = s.actUser && count[s.actUser] ? s.actUser : ids[0];
+    const mine = evs.filter(e=>e.user_id===pick);
+    const bank = {}; this.questions().forEach(q=>{ bank[q.id] = q; });
+    const A = window.TTCoach ? TTCoach.activity(mine, bank) : {totals:{}, days:[], missed:[], topicTime:[]};
+    const tt = A.totals, mins = x=>Math.round((x||0)/60);
+    const name = id=>{ const a = accts.find(x=>x.id===id); const l = mine.find(e=>e.learner); return (a && (a.name || a.email)) || (l && l.learner) || 'Account'; };
+    const opt = (q, i)=> (q && q.options && q.options[i]!=null) ? q.options[i] : '\u2014';
+    const say = e=>{
+      const q = e.qid && bank[e.qid], d = e.data||{}, qt = q ? ' \u201c'+q.question.slice(0,70)+(q.question.length>70?'\u2026':'')+'\u201d' : '';
+      switch(e.kind){
+        case 'answer': return (d.ok? 'Right' : 'Wrong') + (d.src==='test'?' (mock)':'') + (d.ms? ' in '+Math.round(d.ms/1000)+'s' : '') + ':' + qt + (d.ok||!q? '' : ' \u2014 picked \u201c'+opt(q,d.p)+'\u201d');
+        case 'answer_changed': return 'Changed a mock answer:' + qt;
+        case 'session_start': return 'Started ' + (d.label||'practice') + ' (' + d.n + ' questions)';
+        case 'session_end': return 'Finished ' + (d.label||'practice') + ': ' + d.correct + '/' + d.answered + ' right, ' + mins(d.secs) + ' min';
+        case 'session_left': return 'Left ' + (d.label||'practice') + ' at question ' + ((d.at||0)+1) + ' of ' + d.of;
+        case 'test_start': return 'Started a ' + (d.kind==='custom'?'custom test':'mock test') + ' (' + d.n + ' questions)';
+        case 'test_end': return 'Finished a ' + (d.kind==='custom'?'custom test':'mock') + ': ' + d.score + '/' + d.total + ', ' + mins(d.secs) + ' min';
+        case 'test_abandoned': return 'Left a ' + (d.kind==='custom'?'custom test':'mock') + ' after ' + d.answered + ' of ' + d.of;
+        case 'hint_used': return 'Used the 50:50 hint:' + qt;
+        case 'read_aloud': return 'Read aloud' + (qt||'');
+        case 'flag': return 'Flagged:' + qt;
+        case 'unflag': return 'Un-flagged:' + qt;
+        case 'more_like_this': return 'Asked for more like this (' + d.found + ' found)';
+        case 'screen': return 'Opened ' + (SCREEN[d.view] || d.view);
+        default: return e.kind.replace(/_/g,' ') + qt;
+      }
+    };
+    // Screen ids as a person would say them, for the "Latest" list.
+    const SCREEN = {home:'Home', login:'who\u2019s-here', auth:'sign in', learnSetup:'Practise', learnQ:'a practice question', learnDone:'session results',
+      testIntro:'Mock test', test:'the mock test', dash:'the Admin dashboard', settings:'Settings', answers:'My answers', flagged:'Flagged',
+      activity:'Activity', progress:'My Progress', signs:'Road signs', print:'Print', editor:'the question editor', payPreview:'plans', setup:'server settings'};
+    const dayLabel = k=>{ try { return new Date(k+'T12:00').toLocaleDateString('en-GB', {weekday:'short', day:'numeric', month:'short'}); } catch(e){ return k; } };
+    return {
+      vActivity: s.view==='activity',
+      goActivity: ()=>this.openActivity(), reloadActivity: ()=>this.openActivity(),
+      actNote: s.actBusy ? 'Loading\u2026' : s.actErr ? s.actErr : !mine.length ? 'Nothing recorded yet. Activity is saved from this version on, whenever she uses the app signed in.' : 'Last 60 days for ' + name(pick) + '. Everything she does is kept, newest first.',
+      actHas: !s.actBusy && !s.actErr && mine.length>0,
+      actManyAccounts: ids.length>1,
+      actAccounts: ids.map(id=>({label: name(id) + ' (' + count[id] + ')', pick: ()=>this.setState({actUser:id}), style: chip(id===pick)})),
+      actTiles: [
+        {label:'answered', value: String(tt.answered||0)},
+        {label:'right', value: tt.answered ? Math.round(100*tt.right/tt.answered)+'%' : '\u2014'},
+        {label:'minutes', value: String(mins(tt.secs))},
+        {label:'days used', value: String(A.days.filter(d=>d.answered>0||d.secs>0).length)},
+        {label:'hints used', value: String(tt.hints||0)},
+        {label:'read aloud', value: String(tt.readAloud||0)}
+      ],
+      actDays: A.days.filter(d=>d.answered||d.secs||d.mocks).slice(0,30).map(d=>({label: dayLabel(d.day),
+        detail: d.answered + ' answered' + (d.answered? ' \u00b7 ' + Math.round(100*d.right/d.answered) + '% right' : '') + ' \u00b7 ' + mins(d.secs) + ' min' + (d.sessions? ' \u00b7 ' + d.sessions + ' session' + (d.sessions>1?'s':'') : '') + (d.mocks? ' \u00b7 ' + d.mocks + ' mock' + (d.mocks>1?'s':'') : '') + (d.hints? ' \u00b7 ' + d.hints + ' hint' + (d.hints>1?'s':'') : '')})),
+      actMissed: A.missed.slice(0,20).map(m=>{ const q = bank[m.qid]; return {text: q.question, wrong: m.wrong, seen: m.seen, usual: m.usualPick===null ? '\u2014' : opt(q, m.usualPick), answer: opt(q, q.correctIndex)}; }),
+      actTopicTime: A.topicTime.map(t=>({name: T[t.topic-1] || ('Topic '+t.topic), detail: t.avgSecs + 's on average \u00b7 ' + t.n + (t.n===1?' answer':' answers')})),
+      actRecent: mine.filter(e=>e.kind!=='question_shown').slice(0,60).map(e=>({when: (()=>{ try { const d = new Date(e.at); return d.toLocaleDateString('en-GB',{day:'numeric',month:'short'}) + ' ' + d.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}); } catch(x){ return ''; } })(), text: say(e)}))
+    };
+  }
   renderVals(){
     const s = this.state, st = s.settings, T = this.TOPICS;
     const nav = v => () => this.setState({view:v, printPreview:false});
@@ -2160,6 +2507,8 @@ class Component extends DCLogic {
           const hidden = (sess.hint||[]).indexOf(i)>=0 && !answered;
           return {letter:'ABCD'[i], text, style: optStyle(i) + (hidden?';opacity:.22;pointer-events:none':''), letterStyle: letterStyle(i),
             pick: ()=>{ if(!hidden) this.answerLearn(i); },
+            key: e=>{ if((e.key==='Enter'||e.key===' ') && e.target===e.currentTarget){ e.preventDefault(); if(!hidden) this.answerLearn(i); } },
+            label: 'Answer ' + 'ABCD'[i] + ': ' + text,
             speak: e=>{ e.stopPropagation(); this.speak(text); }};
         }),
         hintReady: st.fiftyFifty!==false && !answered && !(sess.hint && sess.hint.length),
@@ -2170,11 +2519,12 @@ class Component extends DCLogic {
         explanation: q.explanation, ruleRef: q.ruleRef,
         speakQ: ()=>this.speakQFull(q),
         speakExp: ()=>this.speak(q.explanation + '. ' + q.ruleRef),
-        hasTip: answered && picked!==vq.correctIndex && !!this.tipAt(q.topic, sess.i),
-        tipText: this.tipAt(q.topic, sess.i),
+        hasTip: answered && picked!==vq.correctIndex && !!(q.memoryTip || this.tipAt(q.topic, sess.i)),
+        tipText: q.memoryTip || this.tipAt(q.topic, sess.i),
+        tipLabel: q.memoryTip ? 'Memory tip:' : 'Remember:',
         nextLabel: sess.i+1>=sess.ids.length ? 'Finish' : 'Next question',
         nextQ: ()=>this.nextLearn(),
-        qFlagLabel: s.revisionFlags[q.id] ? 'Saved' : 'Tricky?',
+        qFlagLabel: s.revisionFlags[q.id] ? 'Flagged' : 'Tricky?', qFlagPressed: s.revisionFlags[q.id] ? 'true' : 'false',
         qFlagStyle: 'flex:none;display:flex;align-items:center;gap:6px;height:44px;padding:0 12px;border-radius:12px;cursor:pointer;font-size:13.5px;font-weight:700;'+(s.revisionFlags[q.id]?'background:#F2A93B;color:#fff;border:none':'background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);color:var(--tt-fg-6e6a5e)'),
         toggleQFlag: ()=>this.toggleRevFlag(q.id),
         // "More like this" shows once answered; after a tap it says what it added.
@@ -2215,12 +2565,19 @@ class Component extends DCLogic {
         speakTQ: ()=>this.speakQFull(q),
         flagLabel: t.flags[t.i]? 'Flagged' : 'Flag',
         flagStyle: 'display:flex;align-items:center;gap:6px;padding:0 14px;height:44px;border-radius:12px;cursor:pointer;font-size:14.5px;font-weight:700;'+(t.flags[t.i]?'background:#F2A93B;color:#fff;border:none':'background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);color:var(--tt-fg-6e6a5e)'),
-        toggleFlag: ()=>{ const flags = Object.assign({}, t.flags); flags[t.i] = !flags[t.i]; this.set({test: Object.assign({}, t, {flags})}); },
+        toggleFlag: ()=>{
+          const flags = Object.assign({}, t.flags); flags[t.i] = !flags[t.i];
+          const id = t.ids[t.i], had = s.revisionFlags[id];
+          const rev = flags[t.i] ? (had ? {} : this.setRevFlag(id, true, 'test')) : (had && had.src==='test' ? this.setRevFlag(id, false) : {});
+          this.set(Object.assign({test: Object.assign({}, t, {flags})}, rev));
+        },
         tOpts: vq.options.map((text,i)=>({
           letter:'ABCD'[i], text,
           style: 'display:flex;align-items:center;gap:12px;padding:13px 15px;border-radius:16px;cursor:pointer;min-height:52px;'+(sel===i?'background:var(--tt-bg-e4f2ef);border:2px solid var(--tt-bd-0e7c6b)':'background:var(--tt-bg-fff);border:2px solid var(--tt-bd-e8e1d2)'),
           letterStyle: 'flex:none;width:36px;height:36px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-family:Nunito,sans-serif;font-weight:900;font-size:16px;'+(sel===i?'background:#0E7C6B;color:#fff':'background:var(--tt-bg-efe9dc);color:var(--tt-fg-6e6a5e)'),
           pick: ()=>this.answerTest(i),
+          key: e=>{ if((e.key==='Enter'||e.key===' ') && e.target===e.currentTarget){ e.preventDefault(); this.answerTest(i); } },
+          label: 'Answer ' + 'ABCD'[i] + ': ' + text,
           speak: e=>{ e.stopPropagation(); this.speak(text); }
         })),
         prevTQ: ()=>this.set({test: Object.assign({}, t, {i: Math.max(0, t.i-1)})}),
@@ -2299,8 +2656,10 @@ class Component extends DCLogic {
     const revRows = Object.keys(s.revisionFlags).map(id=>{
       const q = this.qById(id); if(!q) return null;
       const f = s.revisionFlags[id], r = this.rec(id);
-      return {text: q.question, meta: T[q.topic-1] + (f.src==='test'?' · from a test':'') + (r.seen? ' · '+r.correct+'/'+r.seen:''), unflag: ()=>this.toggleRevFlag(id)};
-    }).filter(Boolean);
+      const v = this.viewQ(q);
+      return {text: q.question, answer: v.options[v.correctIndex], t: f.t||0,
+        meta: T[q.topic-1] + (f.src==='test'?' · flagged in a mock':'') + (r.seen? ' · right '+r.correct+' of '+r.seen:''), unflag: ()=>this.toggleRevFlag(id)};
+    }).filter(Boolean).sort((a,b)=>b.t-a.t);
 
     // ----- my answers -----
     // One row per question she has answered (TTPicker.history), newest first.
@@ -2495,6 +2854,10 @@ class Component extends DCLogic {
       vTestResults: view==='test' && t && t.ended && s.testView==='results',
       vDash: view==='dash', vSettings: view==='settings', vEditor: view==='editor', vPrint: view==='print',
       vLogin: view==='login', vSigns: view==='signs',
+      ...this.activityVals(chip),
+      ...this.tipsVals(chip),
+      vFlagged: view==='flagged', goFlagged: ()=>this.setState({view:'flagged', printPreview:false}),
+      flaggedLine: revRows.length ? revRows.length + ' flagged \u2014 kept until you un-flag them' : 'Nothing flagged yet',
       vAnswers: view==='answers', ansNone: hist.length===0, ansSome: hist.length>0, answersDesc,
       goAnswers: ()=>this.setState({view:'answers', ansFilter:'all', ansShow:40, printPreview:false}),
       goAnswersWrong: ()=>this.setState({view:'answers', ansFilter:'wrong', ansShow:40}),
@@ -2653,6 +3016,15 @@ class Component extends DCLogic {
       levelUpLine: s.lastLevelUp? ('Level ' + s.lastLevelUp + ' \u2014 ' + this.levelInfo(s.xp||0).name) : '',
       hasLevelUp: !!s.lastLevelUp,
       startDailyLesson: ()=>this.startDailyLesson(),
+      // worked out only on Home, where the card shows (it reads her whole answer history)
+      dailyDesc: view!=='home' ? '' : (()=>{
+        const r = this.drillPlan().reasons, bits = [];
+        if(r.stuck) bits.push(r.stuck + ' you keep missing');
+        if(r.flagged) bits.push(r.flagged + ' flagged');
+        if(r.due) bits.push(r.due + ' due again');
+        if(r.weak + r.fresh) bits.push((r.weak + r.fresh) + ' new');
+        return bits.length ? 'Built from your answers: ' + bits.join(' \u00b7 ') : 'Built from your answers as you go';
+      })(),
       hasExamDate: !!st.examDate,
       examCountdown: (function(){ if(!st.examDate) return ''; const d = Math.ceil((new Date(st.examDate+'T09:00') - Date.now())/86400000); return d>1? (d + ' days until your theory test') : d===1? 'Your theory test is tomorrow!' : d===0? 'Test day \u2014 good luck!' : 'Your test date has passed \u2014 set the next one in Settings'; })(),
       examDate: st.examDate||'',

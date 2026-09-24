@@ -1,6 +1,8 @@
 # Theory Trainer — full requirements
 
 Master list. Everything asked for, plus the gaps a paid consumer app needs.
+
+**Standing rule (Darren, 2026-09-24): only questions and answers that are in the bank.** Nothing the app shows a learner may be a question, answer or fact it made up. The coach picks and orders bank questions; AI-written memory tips are drafted from their own question's text, machine-checked, and shown only after the admin approves them.
 States: ✅ built · 🟡 partly built, or built but only tested against a simulated server · ⛔ not built · 📋 your account/keys needed
 
 ---
@@ -13,7 +15,7 @@ States: ✅ built · 🟡 partly built, or built but only tested against a simul
 - ✅ Build-your-own test, surprise mix, focus drill
 - ✅ My answers: tick past questions (practice and mock) → practise them or make a test from exactly those
 - ✅ More like this: similar questions on demand (shared wording weighted by rarity, same topic, same sign)
-- ✅ Notes on any screen, question flagging, revision list
+- ✅ Notes on any screen, question flagging, revision list. Flags stay until the learner un-flags them (getting it right doesn't clear one); her own Flagged screen; flags merge per question across devices (2026-09-24)
 - ✅ Printable answer book, flashcards, test paper
 - ✅ Test-date countdown
 - ⛔ Hazard perception (the second half of the real test) — needs video clips
@@ -22,16 +24,16 @@ States: ✅ built · 🟡 partly built, or built but only tested against a simul
 
 ## 2. Clever / adaptive — the app should coach, not just quiz
 - ✅ Leitner spacing, per-topic traffic lights, readiness dial, 20 hardest questions
-- ✅ "Today's lesson" remix weighted to weak topics
-- ⛔ **Stuck detection**: spot a question or topic a learner keeps failing (3+ misses, or repeated misses across sessions) and change tactics instead of repeating the same card
-- ⛔ **Tailored micro-lessons**: when stuck, generate a short explainer for that exact concept, then easier scaffolding questions building up to the original, then re-test it
-- 🟡 **Tailored test generator**: build a test on demand from the learner's own error pattern (topic mix, difficulty, distractor types they fall for), not a fixed template. *Hand-picked version done (My answers); automatic version not built*
+- ✅ "Today's lesson" is a drill built from her own answers (`coach.js`): stuck, then flagged, then due by spacing (1/3/7/14/30 days), then new; topics interleaved; a missed question comes back 4 later, up to twice (2026-09-24)
+- ✅ **Stuck detection** (2026-09-24: 3+ misses, or misses on 2 different days, until right twice running; shown as "Keeps tripping you up" with her usual wrong pick, and drilled first): spot a question or topic a learner keeps failing (3+ misses, or repeated misses across sessions) and change tactics instead of repeating the same card
+- 🟡 **Tailored micro-lessons**: when stuck, a short explainer for that exact concept, then re-test it. *Built as an approved memory tip per question plus the drill's re-test. The "easier scaffolding questions" part is dropped: it would mean inventing questions, which the standing rule above forbids*
+- ✅ **Tailored test generator** (2026-09-24: Today's lesson, from `coach.js`; distractor types not used yet): build a test on demand from the learner's own error pattern (topic mix, difficulty, distractor types they fall for), not a fixed template. *Hand-picked version done (My answers); automatic version not built*
 - 🟡 **Distractor analysis**: record which wrong option was chosen, cluster the misconception, address that specifically. *The chosen option is now recorded on every answer; the analysis is not built*
 - ⛔ **Improvement suggestions on Home**: "You lose most marks on stopping distances — 10 minutes here would move your readiness 6%", ranked by predicted gain
 - ⛔ **Pass prediction**: estimate mock score and probability of passing, with what would raise it
 - ⛔ **Study plan to test date**: given the test date, a day-by-day plan that adapts when a day is missed
 - ⛔ **Explain-it-differently**: ask for another explanation of a question in plainer terms, or an analogy
-- ⛔ Optional AI layer for the above (Claude API) with a no-API fallback so everything still works offline
+- ✅ AI layer, decided 2026-09-24: **local** AI (Ollama on the home PC) drafts memory tips once, offline, for the admin to approve; the test-building runs as fixed rules on the phone, so everything works offline and costs nothing. No Claude API
 
 ## 3. Accounts and the login experience
 - ✅ Email + password sign-up, sign-in, password reset, email confirmation
@@ -112,7 +114,7 @@ Today's "admin" is device-local: it edits the local snapshot on that one phone. 
 - ⛔ "Not affiliated with DVSA" disclaimer, and accuracy/liability wording
 - ⛔ Support: contact route, FAQ, response expectation
 - ⛔ Error monitoring (Sentry or similar) and uptime alerting
-- ⛔ Product analytics: funnel, retention, feature use — privacy-respecting
+- 🟡 Product analytics: funnel, retention, feature use — privacy-respecting. *Per-learner activity is built (every answer, session, mock, hint, read-aloud, flag and screen, in the `events` table; Admin → Activity). Funnel and retention across learners are not*
 - ⛔ Database backups and a restore you've actually tested
 - ⛔ Rate limits on Edge Functions; abuse protection on the bank endpoint
 - ⛔ Accessibility audit against WCAG 2.2 AA (the controls exist; the audit doesn't)
@@ -143,8 +145,8 @@ These came out of going back through everything we've done. All are real, all ar
   testing, not for paying customers. Budget the paid plan.
 - ⛔ **Free-sample abuse**: nothing stops one person registering repeatedly for another
   20-question sample, or a whole class sharing one paid account. Needs seat and device limits.
-- ⛔ **Snapshot merge risk**: progress is one blob per account with newest-wins. Two devices
-  syncing out of order can overwrite a learner's day. A per-answer history table fixes it.
+- 🟡 **Snapshot merge risk**: progress is one blob per account with newest-wins. Two devices
+  syncing out of order can overwrite a learner's day. *Flags now merge per question, and every answer is also kept in the `events` table, so nothing is lost for good; the snapshot itself is still newest-wins*
 - ⛔ **Road signs are thin**: 20 signs, drawn as hints rather than real sign artwork. The
   real test covers far more. Open-licensed Highway Code sets exist; I can't generate images.
 - ⛔ **No diagrams** for junction-layout or road-marking questions.
@@ -157,4 +159,4 @@ These came out of going back through everything we've done. All are real, all ar
 ---
 
 ## Honest summary
-Everything in §1, and most of §3 and §6, is built. §2's clever coaching is partly built (spacing, weak-topic weighting) but the stuck-detection, micro-lessons and tailored generator are not. §4's real admin console does not exist — what's there is device-local. §5 works in code but has never seen a real card. §7 has the project but no native build. §8 is almost entirely outstanding, and it is what actually blocks charging the public.
+Everything in §1, and most of §3 and §6, is built. §2's clever coaching is mostly built (spacing, stuck detection, the tailored drill, approved memory tips); distractor analysis, pass prediction and the study plan are not. §4's real admin console does not exist — what's there is device-local. §5 works in code but has never seen a real card. §7 has the project but no native build. §8 is almost entirely outstanding, and it is what actually blocks charging the public.
