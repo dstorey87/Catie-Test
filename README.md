@@ -15,7 +15,12 @@ native sources live in folders and are not served.
   `manifest.json` — install metadata
 - `picker.js` — picks questions for **My answers** and **More like this** (pure logic;
   tests in `tests/`, run with `node --test "tests/*.test.js"` — Node 22, nothing to install)
-- `backend.js` — accounts, progress sync, billing checks, reminders (talks to Supabase)
+- `coach.js` — the coach: builds Today's lesson from her answers, spots what she keeps
+  missing, merges flags across devices, summarises Activity (pure logic, tested)
+- `backend.js` — accounts, progress sync, billing checks, reminders, the activity log
+  (`TTTrack`) and memory tips (talks to Supabase)
+- `tools/write-memory-tips.js` — run on the home PC: local AI drafts a memory tip per
+  question for the admin to approve (drafts land in `tools/out/`, never committed)
 - `config.js` — your Supabase URL and publishable key, Stripe payment links, push key.
   Safe to be public
 - `questions-free.json` — the 20-question free sample

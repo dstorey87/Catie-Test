@@ -165,3 +165,25 @@ test('the queue is capped so a long offline spell cannot fill the phone', async 
   assert.equal(q.length, cap);
   assert.equal(q[q.length - 1].data.i, cap + 4, 'the newest are kept');
 });
+
+// ---------- memory tips ----------
+test('a memory tip reaches the app only once the admin has approved it', async () => {
+  const rows = [
+    { qid: 'a', topic: 1, question: 'A?', options: ['x', 'y'], correct_index: 0, memory_tip: 'Approved tip', tip_status: 'approved' },
+    { qid: 'b', topic: 1, question: 'B?', options: ['x', 'y'], correct_index: 0, memory_tip: 'Draft tip', tip_status: 'draft' },
+    { qid: 'c', topic: 1, question: 'C?', options: ['x', 'y'], correct_index: 0, memory_tip: 'Rejected tip', tip_status: 'rejected' },
+  ];
+  const { win } = tracker(() => ({ status: 200, body: rows }), SIGNED_IN);
+  const got = await win.TTBank.load();
+  assert.equal(got.source, 'server');
+  assert.deepEqual(got.questions.map(q => q.memoryTip), ['Approved tip', undefined, undefined]);
+});
+
+test('saving a tip sends the text and status for that one question', async () => {
+  const { win, calls } = tracker(() => ({ status: 204, body: null }), SIGNED_IN);
+  await win.TTBank.saveTip('t01q02', 'Stop and rest.', 'approved');
+  const u = new URL(calls[0].url);
+  assert.equal(calls[0].opts.method, 'PATCH');
+  assert.equal(u.searchParams.get('qid'), 'eq.t01q02');
+  assert.deepEqual(JSON.parse(calls[0].opts.body), { memory_tip: 'Stop and rest.', tip_status: 'approved' });
+});

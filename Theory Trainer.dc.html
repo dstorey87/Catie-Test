@@ -339,6 +339,22 @@ input,select{font-family:inherit}
       <svg width="34" height="34" viewBox="0 0 24 24" style="flex:none"><circle cx="12" cy="12" r="9.4" fill="none" stroke="#F2A93B" stroke-width="2"/><path d="M10 8.2 L16 12 L10 15.8 Z" fill="#F2A93B"/></svg>
       <span><span style="display:block;font-family:'Nunito',sans-serif;font-weight:900;font-size:19px">Today's lesson</span><span style="display:block;font-size:14.5px;opacity:.8;margin-top:2px">{{ dailyDesc }}</span></span>
     </button>
+    <!-- Questions she keeps missing, with the answer she tends to pick and a way to remember -->
+    <sc-if value="{{ tripShow }}" hint-placeholder-val="{{ false }}">
+    <div style="grid-column:1/-1;background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);border-radius:20px;border:2px solid var(--tt-bd-e8b7b4);padding:16px 18px;text-align:left">
+      <div style="font-family:'Nunito',sans-serif;font-weight:900;font-size:18px">Keeps tripping you up</div>
+      <div style="font-size:13px;color:var(--tt-fg-6e6a5e);margin:2px 0 6px">{{ tripSub }}</div>
+      <sc-for list="{{ tripRows }}" as="t" hint-placeholder-count="2">
+        <div style="padding:10px 0;border-top:1px solid var(--tt-bd-f2ede1)">
+          <div style="font-size:15px;line-height:1.4;font-weight:700">{{ t.text }}</div>
+          <div style="font-size:14px;margin-top:4px;color:var(--tt-fg-b8433d)">You tend to pick: {{ t.usual }}</div>
+          <div style="font-size:14px;margin-top:2px;color:var(--tt-fg-1c6b3c)">Right answer: {{ t.answer }}</div>
+          <div style="font-size:14px;margin-top:4px;line-height:1.45"><b>{{ t.tipLabel }}</b> {{ t.tip }}</div>
+        </div>
+      </sc-for>
+      <button onClick="{{ tripDrill }}" style="width:100%;margin-top:8px;background:#0E7C6B;color:#fff;border:none;border-radius:14px;min-height:50px;font-family:'Nunito',sans-serif;font-weight:900;font-size:16px;cursor:pointer">Drill these ({{ tripCount }})</button>
+    </div>
+    </sc-if>
     <button onClick="{{ goLearn }}" style="grid-column:1/-1;display:flex;align-items:center;gap:16px;background:#0E7C6B;color:#fff;border:none;border-radius:22px;padding:22px 22px;cursor:pointer;text-align:left;min-height:96px">
       <svg width="40" height="40" viewBox="0 0 24 24" style="flex:none"><path d="M5 4.5 C8 3.2 10.5 3.4 12 4.6 C13.5 3.4 16 3.2 19 4.5 L19 19 C16 17.8 13.5 18 12 19.2 C10.5 18 8 17.8 5 19 Z" fill="none" stroke="#fff" stroke-width="2"/><path d="M12 4.6 L12 19.2" stroke="#fff" stroke-width="2"/></svg>
       <span><span style="display:block;font-family:'Nunito',sans-serif;font-weight:900;font-size:22px">Practise</span><span style="display:block;font-size:15px;opacity:.9;margin-top:2px">Friendly questions, read aloud</span></span>
@@ -472,7 +488,7 @@ input,select{font-family:inherit}
           <div style="font-size:17px;line-height:1.5;margin-top:6px">{{ explanation }}</div>
           <div style="font-size:14px;color:var(--tt-fg-6e6a5e);margin-top:8px">{{ ruleRef }}</div>
           <sc-if value="{{ hasTip }}" hint-placeholder-val="{{ false }}">
-            <div style="margin-top:10px;padding:10px 12px;background:rgba(255,255,255,.7);border-radius:12px;font-size:15px;line-height:1.5"><b>Remember:</b> {{ tipText }}</div>
+            <div style="margin-top:10px;padding:10px 12px;background:var(--tt-bg-fff);border-radius:12px;font-size:15px;line-height:1.5"><b>{{ tipLabel }}</b> {{ tipText }}</div>
           </sc-if>
         </div>
         <button onClick="{{ speakExp }}" aria-label="Read the explanation aloud" style="flex:none;width:48px;height:48px;border-radius:50%;background:rgba(255,255,255,.7);border:none;cursor:pointer;color:var(--tt-fg-2a2c33);display:flex;align-items:center;justify-content:center">
@@ -504,6 +520,23 @@ input,select{font-family:inherit}
       <span><span style="display:block;font-family:'Nunito',sans-serif;font-weight:900;font-size:17px">Levelled up</span><span style="display:block;font-size:14px;opacity:.9">{{ levelUpLine }}</span></span>
     </div>
   </sc-if>
+  <div style="max-width:420px;margin:20px auto 0">
+    <sc-if value="{{ tripShow }}" hint-placeholder-val="{{ false }}">
+    <div style="grid-column:1/-1;background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);border-radius:20px;border:2px solid var(--tt-bd-e8b7b4);padding:16px 18px;text-align:left">
+      <div style="font-family:'Nunito',sans-serif;font-weight:900;font-size:18px">Keeps tripping you up</div>
+      <div style="font-size:13px;color:var(--tt-fg-6e6a5e);margin:2px 0 6px">{{ tripSub }}</div>
+      <sc-for list="{{ tripRows }}" as="t" hint-placeholder-count="2">
+        <div style="padding:10px 0;border-top:1px solid var(--tt-bd-f2ede1)">
+          <div style="font-size:15px;line-height:1.4;font-weight:700">{{ t.text }}</div>
+          <div style="font-size:14px;margin-top:4px;color:var(--tt-fg-b8433d)">You tend to pick: {{ t.usual }}</div>
+          <div style="font-size:14px;margin-top:2px;color:var(--tt-fg-1c6b3c)">Right answer: {{ t.answer }}</div>
+          <div style="font-size:14px;margin-top:4px;line-height:1.45"><b>{{ t.tipLabel }}</b> {{ t.tip }}</div>
+        </div>
+      </sc-for>
+      <button onClick="{{ tripDrill }}" style="width:100%;margin-top:8px;background:#0E7C6B;color:#fff;border:none;border-radius:14px;min-height:50px;font-family:'Nunito',sans-serif;font-weight:900;font-size:16px;cursor:pointer">Drill these ({{ tripCount }})</button>
+    </div>
+    </sc-if>
+  </div>
   <sc-if value="{{ doneTipShow }}" hint-placeholder-val="{{ false }}">
     <div style="max-width:420px;margin:20px auto 0;background:var(--tt-bg-fbf1dc);border:1px solid var(--tt-bd-f0d9a8);border-radius:16px;padding:14px 16px;font-size:15.5px;text-align:left;line-height:1.5"><b>Remember:</b> {{ doneTip }}</div>
   </sc-if>
@@ -837,6 +870,39 @@ input,select{font-family:inherit}
 </div>
 </sc-if>
 
+<!-- ============ MEMORY TIPS (admin) ============ -->
+<!-- Local AI drafts a tip per question (tools/write-memory-tips.js); none reaches a learner
+     until it is approved here. -->
+<sc-if value="{{ vTips }}" hint-placeholder-val="{{ false }}">
+<div data-screen-label="Memory tips">
+  <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+    <button onClick="{{ goDash }}" aria-label="Back to the dashboard" style="background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);border-radius:12px;width:44px;height:44px;cursor:pointer;font-size:18px">←</button>
+    <div style="font-family:'Nunito',sans-serif;font-weight:900;font-size:24px;flex:1">Memory tips</div>
+  </div>
+  <div style="font-size:13px;color:var(--tt-fg-6e6a5e);line-height:1.5;margin-bottom:10px">{{ tipsNote }}</div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
+    <sc-for list="{{ tipsTabs }}" as="t" hint-placeholder-count="3"><button onClick="{{ t.pick }}" style="{{ t.style }}">{{ t.label }}</button></sc-for>
+  </div>
+  <sc-if value="{{ tipsCanApproveAll }}" hint-placeholder-val="{{ false }}">
+    <button onClick="{{ tipsApproveAll }}" style="width:100%;margin-bottom:12px;background:var(--tt-bg-fff);border:2px solid var(--tt-bd-0e7c6b);border-radius:14px;min-height:48px;font-size:15px;font-weight:700;color:var(--tt-fg-0a5d50);cursor:pointer">Approve all {{ tipsShownCount }} shown</button>
+  </sc-if>
+  <div style="background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);border-radius:20px;padding:4px 18px">
+    <sc-for list="{{ tipsRows }}" as="t" hint-placeholder-count="3">
+      <div style="padding:12px 0;border-bottom:1px solid var(--tt-bd-f2ede1)">
+        <div style="font-size:15px;line-height:1.4">{{ t.question }}</div>
+        <div style="font-size:13.5px;margin-top:3px;color:var(--tt-fg-1c6b3c)">Answer: {{ t.answer }}</div>
+        <textarea name="{{ t.qid }}" value="{{ t.tip }}" onChange="{{ t.edit }}" aria-label="Memory tip for this question" rows="2" style="display:block;width:100%;box-sizing:border-box;margin-top:8px;padding:10px;border:1px solid var(--tt-bd-e8e1d2);border-radius:10px;font:inherit;font-size:15px;background:var(--tt-bg-faf6ef);color:var(--tt-fg-2a2c33)"></textarea>
+        <div style="display:flex;gap:8px;margin-top:8px;align-items:center;flex-wrap:wrap">
+          <button onClick="{{ t.approve }}" style="background:#0E7C6B;color:#fff;border:none;border-radius:10px;padding:0 14px;min-height:40px;font-size:14px;font-weight:700;cursor:pointer">{{ t.approveLabel }}</button>
+          <button onClick="{{ t.reject }}" style="background:var(--tt-bg-fbeae9);color:var(--tt-fg-b8433d);border:none;border-radius:10px;padding:0 14px;min-height:40px;font-size:14px;font-weight:700;cursor:pointer">Reject</button>
+          <span style="font-size:13px;color:var(--tt-fg-6e6a5e)">{{ t.status }}</span>
+        </div>
+      </div>
+    </sc-for>
+  </div>
+</div>
+</sc-if>
+
 <!-- ============ FLAGGED ============ -->
 <!-- Questions she (or a mock) flagged. They stay until she un-flags them. -->
 <sc-if value="{{ vFlagged }}" hint-placeholder-val="{{ false }}">
@@ -1033,6 +1099,8 @@ input,select{font-family:inherit}
 
   <div style="font-family:'Nunito',sans-serif;font-weight:800;font-size:18px;margin:28px 0 10px">Everything she does</div>
   <button onClick="{{ goActivity }}" style="width:100%;background:var(--tt-bg-e4f2ef);border:1px solid var(--tt-bd-bfe0d8);border-radius:16px;min-height:52px;padding:12px 16px;font-size:15.5px;font-weight:700;color:var(--tt-fg-0a5d50);cursor:pointer;text-align:left">Activity: every answer, session and mock, day by day →</button>
+
+  <button onClick="{{ goTips }}" style="width:100%;margin-top:10px;background:var(--tt-bg-fbf1dc);border:1px solid var(--tt-bd-f0d9a8);border-radius:16px;min-height:52px;padding:12px 16px;font-size:15.5px;font-weight:700;color:var(--tt-fg-2a2c33);cursor:pointer;text-align:left">Memory tips: check the AI's tips before Catie sees them →</button>
 
   <div style="font-family:'Nunito',sans-serif;font-weight:800;font-size:18px;margin:28px 0 10px">Flagged for extra revision</div>
   <button onClick="{{ goFlagged }}" style="width:100%;background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);border-radius:16px;min-height:52px;padding:12px 16px;font-size:15.5px;font-weight:700;color:var(--tt-fg-2a2c33);cursor:pointer;text-align:left">{{ flaggedLine }} →</button>
@@ -1631,6 +1699,35 @@ class Component extends DCLogic {
     TTTrack.flush().then(()=>Promise.all([TTTrack.read(since), TTTrack.accounts()]))
       .then(([events, accounts])=>this.setState({actBusy:false, actEvents:events, actAccountsList:accounts}))
       .catch(e=>this.setState({actBusy:false, actErr:'Could not load activity: '+String(e.message||e)+'. Check the connection and press Refresh.'}));
+  }
+  // Admin → Memory tips: load every drafted tip; save one (approve, reject, or edit).
+  openTips(){
+    this.setState({view:'tips', tipsBusy:true, tipsErr:'', tipsEdits:{}});
+    if(!(window.TTBank && TTBank.tips && window.TTAuth && TTAuth.signedIn())){ this.setState({tipsBusy:false, tipsErr:'Sign in as the admin to review tips.'}); return; }
+    TTBank.tips().then(rows=>this.setState({tipsBusy:false, tipsList:rows}))
+      .catch(e=>this.setState({tipsBusy:false, tipsErr:'Could not load the tips: '+String(e.message||e)+'. Check the connection and open this screen again.'}));
+  }
+  saveTips(items, status){
+    // items: [{qid, tip}] — saved one by one; the list updates as each one lands
+    const next = (this.state.tipsList||[]).slice();
+    return items.reduce((p, it)=>p.then(()=>TTBank.saveTip(it.qid, it.tip, status).then(()=>{
+      const k = next.findIndex(r=>r.qid===it.qid); if(k>=0) next[k] = {qid:it.qid, memory_tip:it.tip, tip_status:status};
+      this.track('tip_'+status, it.qid);
+    })), Promise.resolve())
+      .then(()=>{ this.setState({tipsList:next, tipsErr:''}); this.loadBank(); })
+      .catch(e=>this.setState({tipsList:next, tipsErr:'Saving failed: '+String(e.message||e)+'. Nothing after that one was saved; try again.'}));
+  }
+  // Questions she keeps missing (coach.js "stuck"), worst first, with her usual wrong pick.
+  tripping(){
+    if(!window.TTCoach) return [];
+    const qs = this.questionsFor('learn'), prof = TTCoach.profile(this.state.attempts, {}, qs);
+    return Object.keys(prof).filter(id=>prof[id].stuck).sort((a,b)=>prof[b].wrong-prof[a].wrong).map(id=>{
+      const q = this.qById(id), picks = {};
+      this.state.attempts.forEach(a=>{ if(a.q===id && !a.ok && a.p!=null) picks[a.p] = (picks[a.p]||0)+1; });
+      const usual = Object.keys(picks).sort((x,y)=>picks[y]-picks[x])[0];
+      return {id, text:q.question, usual: usual!=null ? q.options[usual] : '\u2014', answer:q.options[q.correctIndex],
+        tip: q.memoryTip || q.explanation || '', tipLabel: q.memoryTip ? 'Memory tip:' : 'Why:'};
+    });
   }
   // ---------- activity log ----------
   // Everything she does becomes a small event (backend.js TTTrack queues and sends them).
@@ -2239,6 +2336,33 @@ class Component extends DCLogic {
   adaptive(){ return this.state.tests.length >= 2; }
   fmtDate(d){ try { return new Date(d+'T12:00').toLocaleDateString('en-GB', {day:'numeric', month:'short', year:'2-digit'}); } catch(e){ return d; } }
 
+  tipsVals(chip){
+    const s = this.state, view = s.view;
+    const out = {vTips: view==='tips', goTips: ()=>this.openTips()};
+    // "Keeps tripping you up" — worked out only where it shows
+    const trip = (view==='home' || view==='learnDone') ? this.tripping() : [];
+    Object.assign(out, {tripShow: trip.length>0, tripCount: trip.length, tripRows: trip.slice(0,3),
+      tripSub: trip.length>3 ? 'Your '+trip.length+' most-missed questions \u2014 here are the top 3.' : 'The questions you\u2019ve missed most. One more go makes them stick.',
+      tripDrill: ()=>this.buildSession(trip.map(t=>t.id), 'Tripping me up', {drill:true, repeats:{}})});
+    if(view!=='tips') return out;
+    const bank = {}; this.questions().forEach(q=>{ bank[q.id] = q; });
+    const tab = s.tipsTab || 'draft', rows = (s.tipsList||[]).filter(r=>(r.tip_status||'draft')===tab && bank[r.qid]);
+    const edits = s.tipsEdits || {}, textOf = r=>(edits[r.qid]!=null ? edits[r.qid] : r.memory_tip) || '';
+    const count = st=>(s.tipsList||[]).filter(r=>(r.tip_status||'draft')===st).length;
+    return Object.assign(out, {
+      tipsNote: s.tipsBusy ? 'Loading\u2026' : s.tipsErr ? s.tipsErr : !(s.tipsList||[]).length ? 'No tips yet. They are written by the local AI on the home PC (tools/write-memory-tips.js), then loaded here as drafts.' : 'Each tip was written by the local AI from its own question and checked for invented numbers. Catie only sees a tip once you approve it. Edit any wording first if you like.',
+      tipsTabs: [['draft','To check'],['approved','Approved'],['rejected','Rejected']].map(([k,l])=>({label: l+' ('+count(k)+')', pick: ()=>this.setState({tipsTab:k}), style: chip(tab===k)})),
+      tipsShownCount: Math.min(rows.length, 50),
+      tipsCanApproveAll: tab==='draft' && rows.length>0,
+      tipsApproveAll: ()=>{ const list = rows.slice(0,50); if(confirm('Approve these '+list.length+' tips as they stand? Catie will start seeing them.')) this.saveTips(list.map(r=>({qid:r.qid, tip:textOf(r)})), 'approved'); },
+      tipsRows: rows.slice(0,50).map(r=>{ const q = bank[r.qid]; return {qid:r.qid, question:q.question, answer:q.options[q.correctIndex], tip: textOf(r),
+        status: r.tip_status==='approved' ? 'Live for Catie' : r.tip_status==='rejected' ? 'Hidden' : 'Not shown yet',
+        approveLabel: r.tip_status==='approved' ? 'Save' : 'Approve',
+        edit: e=>this.setState({tipsEdits: Object.assign({}, s.tipsEdits, {[r.qid]: e.target.value})}),
+        approve: ()=>this.saveTips([{qid:r.qid, tip:textOf(r)}], 'approved'),
+        reject: ()=>this.saveTips([{qid:r.qid, tip:textOf(r)}], 'rejected')}; })
+    });
+  }
   activityVals(chip){
     const s = this.state, T = this.TOPICS, evs = s.actEvents || [];
     const accts = s.actAccountsList || [];
@@ -2395,8 +2519,9 @@ class Component extends DCLogic {
         explanation: q.explanation, ruleRef: q.ruleRef,
         speakQ: ()=>this.speakQFull(q),
         speakExp: ()=>this.speak(q.explanation + '. ' + q.ruleRef),
-        hasTip: answered && picked!==vq.correctIndex && !!this.tipAt(q.topic, sess.i),
-        tipText: this.tipAt(q.topic, sess.i),
+        hasTip: answered && picked!==vq.correctIndex && !!(q.memoryTip || this.tipAt(q.topic, sess.i)),
+        tipText: q.memoryTip || this.tipAt(q.topic, sess.i),
+        tipLabel: q.memoryTip ? 'Memory tip:' : 'Remember:',
         nextLabel: sess.i+1>=sess.ids.length ? 'Finish' : 'Next question',
         nextQ: ()=>this.nextLearn(),
         qFlagLabel: s.revisionFlags[q.id] ? 'Flagged' : 'Tricky?', qFlagPressed: s.revisionFlags[q.id] ? 'true' : 'false',
@@ -2730,6 +2855,7 @@ class Component extends DCLogic {
       vDash: view==='dash', vSettings: view==='settings', vEditor: view==='editor', vPrint: view==='print',
       vLogin: view==='login', vSigns: view==='signs',
       ...this.activityVals(chip),
+      ...this.tipsVals(chip),
       vFlagged: view==='flagged', goFlagged: ()=>this.setState({view:'flagged', printPreview:false}),
       flaggedLine: revRows.length ? revRows.length + ' flagged \u2014 kept until you un-flag them' : 'Nothing flagged yet',
       vAnswers: view==='answers', ansNone: hist.length===0, ansSome: hist.length>0, answersDesc,

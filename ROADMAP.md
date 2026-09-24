@@ -60,11 +60,11 @@ once they have.
 20. **Seat and device limits** — one account is currently shareable by a whole class. *Half a day.*
 
 ## Phase 3 — Retention and the reason to charge more.
-21. **Per-answer attempt history table.** Foundation for everything below; today only a
+21. ✅ *Done 2026-09-24 as the `events` table (every answer and much more).* **Per-answer attempt history table.** Foundation for everything below; today only a
     progress snapshot is stored. Also fixes a real risk: the newest-wins snapshot merge can
     overwrite a learner's day if two devices sync out of order. *1 day.*
-22. **Stuck detection + tailored micro-lessons + re-test.** *3–4 days.*
-23. **Tailored test generator** from the learner's own error pattern. *2 days.*
+22. ✅ *Done 2026-09-24 (micro-lessons as approved memory tips; no invented scaffold questions).* **Stuck detection + tailored micro-lessons + re-test.** *3–4 days.*
+23. ✅ *Done 2026-09-24: Today's lesson.* **Tailored test generator** from the learner's own error pattern. *2 days.*
 24. **Distractor analysis** — which wrong answer they pick, and the misconception behind it. *2 days.*
 25. **Improvement suggestions on Home, ranked by predicted gain, and pass prediction.** *2 days.*
 26. **Study plan to test date** that adapts when a day is missed. *2 days.*
