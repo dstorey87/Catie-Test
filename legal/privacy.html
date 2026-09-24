@@ -31,15 +31,17 @@
       <p class="lede">What Theory Trainer keeps about you, where it is kept, who can see it, and what you can ask for.</p>
     </div>
 
-    <!-- The draft banner stays until Darren has filled every bracket and had it checked. -->
+    <!-- Sample banner: identical on every legal page (tests/help-pages.test.js checks). It comes
+         off only when every "(mock)" value is replaced with a real one — the test ties the two. -->
     <div class="draft" role="note">
-      <p><strong>Draft — not yet in force.</strong> This notice describes what the app does today, taken from its code and database set-up. It has not been reviewed by a lawyer. Everything marked <span class="fill">[to be filled in by Darren]</span> must be completed before the app is offered to the public.</p>
+      <p><strong>Sample policy with mock details.</strong> Theory Trainer is a family project, not a registered business. The operator's name, address, email and registration numbers are mock values, highlighted and marked <span class="fill">(mock)</span>: they are not real and reach no one. Replace them with real details, and have the policy checked, before charging anyone. Everything else describes what the app really does, from its code and database set-up; promises such as reply times and refund rules are sensible defaults to confirm. Not reviewed by a lawyer.</p>
     </div>
 
     <section aria-labelledby="h-who">
       <h2 id="h-who">Who is responsible for your data</h2>
-      <p>The data controller is <span class="fill">[business name — to be filled in by Darren]</span>, <span class="fill">[postal address — to be filled in by Darren]</span>.</p>
-      <p>Contact for anything about your data: <span class="fill">[contact email — to be filled in by Darren]</span>.</p>
+      <p>The data controller is <span class="fill">Theory Trainer (mock operator — not a registered business)</span>, <span class="fill">0 Sample Road, Mocktown, England (mock)</span>.</p>
+      <p>Registered with the Information Commissioner's Office as <span class="fill">ZA000000 (mock)</span>. Company number <span class="fill">00000000 (mock)</span>.</p>
+      <p>Contact for anything about your data: <span class="fill">support@example.com (mock)</span>. While these details are mock, ask the admin instead: the adult who gave you access to the app.</p>
       <p>Theory Trainer is not affiliated with the DVSA or any government body.</p>
     </section>
 
@@ -78,7 +80,12 @@
         <li><strong>Access and payments</strong> — to know whether the account may read the full question bank.</li>
         <li><strong>Reminders</strong> — to nudge you only on days you haven't practised, at the time you chose.</li>
       </ul>
-      <p>Lawful basis for each of these under UK GDPR: <span class="fill">[to be filled in by Darren]</span>.</p>
+      <p>The lawful basis for each, under UK GDPR Article 6(1):</p>
+      <ul>
+        <li><strong>Your account, progress, the coach, and access and payments</strong> — contract (6(1)(b)): they are the service you signed up for.</li>
+        <li><strong>The admin seeing learners' activity</strong> — legitimate interests (6(1)(f)): so the adult helping a learner can see what they have practised and what they find hard.</li>
+        <li><strong>Reminders</strong> — consent (6(1)(a)): nothing is kept until you switch them on, and you can switch them off at any time.</li>
+      </ul>
     </section>
 
     <section aria-labelledby="h-see">
@@ -86,7 +93,7 @@
       <ul>
         <li><strong>You</strong> — each account can read only its own rows. This is enforced by the database itself (row-level security), not just by the app.</li>
         <li><strong>The admin</strong> — the admin account can read every account's activity log and profile (that is how the Activity screen works), and edit the question bank.</li>
-        <li><strong>The operator</strong> — whoever runs the Supabase project can see everything in the database from Supabase's dashboard: <span class="fill">[to be filled in by Darren]</span>.</li>
+        <li><strong>The operator</strong> — whoever runs the Supabase project can see everything in the database from Supabase's dashboard. That is the operator named at the top of this notice, who looks only to answer your requests, fix problems and keep the app running.</li>
         <li><strong>The services below</strong>, only as far as they need to do their job.</li>
       </ul>
     </section>
@@ -94,25 +101,28 @@
     <section aria-labelledby="h-processors">
       <h2 id="h-processors">Services that handle data for the app</h2>
       <dl class="pairs">
-        <div><dt>Supabase<br><span class="meta">supabase.co</span></dt><dd>Accounts, the database above, the confirmation and password-reset emails, and the server functions for reminders and payments. Where the data is stored: <span class="fill">[region — to be filled in by Darren]</span>. <a href="https://supabase.com/privacy">Supabase's privacy policy</a>.</dd></div>
+        <div><dt>Supabase<br><span class="meta">supabase.co</span></dt><dd>Accounts, the database above, the confirmation and password-reset emails, and the server functions for reminders and payments. Where the data is stored: Supabase's Frankfurt region (<code>eu-central-1</code>), in Germany. <a href="https://supabase.com/privacy">Supabase's privacy policy</a>.</dd></div>
         <div><dt>GitHub Pages<br><span class="meta">github.io</span></dt><dd>Hosts the app's files. Like any web host it receives your IP address and browser details when the app loads. <a href="https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement">GitHub's privacy statement</a>.</dd></div>
         <div><dt>unpkg.com</dt><dd>Serves three code libraries the app runs on (React, React DOM and Babel). Your browser downloads them from there, so that service receives your IP address and browser details.</dd></div>
         <div><dt>Google Fonts<br><span class="meta">fonts.googleapis.com and fonts.gstatic.com</span></dt><dd>Serves the app's fonts. Your browser downloads them from Google, which receives your IP address and browser details. <a href="https://developers.google.com/fonts/faq/privacy">Google Fonts privacy</a>.</dd></div>
         <div><dt>Stripe</dt><dd>Only once card payments are live: takes payments on its own page and tells the app's server whether a subscription is active. <a href="https://stripe.com/privacy">Stripe's privacy policy</a>.</dd></div>
         <div><dt>Your browser's notification service</dt><dd>Only if server reminders are set up and you switch reminders on: the company that makes your browser or phone delivers the nudge.</dd></div>
       </dl>
-      <p>Transfers outside the UK and the safeguards used: <span class="fill">[to be filled in by Darren]</span>.</p>
+      <h3>Outside the UK</h3>
+      <p>The database is in Germany. UK law treats every EU country as giving adequate protection, so no extra safeguard is needed for it (<a href="https://ico.org.uk/for-organisations/uk-gdpr-guidance-and-resources/international-transfers/adequacy-regulations/is-the-restricted-transfer-covered-by-adequacy-regulations/">ICO: adequacy regulations</a>).</p>
+      <p>The other services above may handle what they receive outside the UK, for example in the United States. Each one's privacy policy, linked above, sets out the safeguards it relies on; those have not been checked one by one for this sample.</p>
     </section>
 
     <section aria-labelledby="h-keep">
       <h2 id="h-keep">How long it is kept</h2>
       <ul>
-        <li>There is no automatic deletion today: everything above is kept until it is deleted.</li>
+        <li>Everything above is kept for as long as the account exists. Nothing is deleted automatically before then.</li>
         <li>The progress copy (<code>snapshots</code>) is replaced each time it syncs, so it only ever holds the latest version.</li>
         <li>The activity log grows: rows are added, never changed.</li>
         <li>Deleting an account removes its rows from every table above, because each one is linked to the account and set to be deleted with it.</li>
+        <li>What the app saves on your device stays there until you clear it (see the <a href="cookies.html">cookies and storage page</a>).</li>
+        <li>Records the services below keep for themselves, such as Supabase's sign-in records and Stripe's payment records, follow their own policies.</li>
       </ul>
-      <p>Retention periods: <span class="fill">[to be decided and filled in by Darren]</span>.</p>
     </section>
 
     <section id="your-data" aria-labelledby="h-rights">
@@ -128,7 +138,7 @@
       </ul>
       <p>Until the button exists, ask using the contact above, and the operator will delete just the activity history, or the whole account.</p>
       <p><span class="path">Settings → Reset all progress</span> in the app clears a learner's answers, memory boxes and mock scores, but not the activity log on the server.</p>
-      <p>How quickly requests are answered: <span class="fill">[to be filled in by Darren]</span>.</p>
+      <p>Requests are answered within one month, the time UK data protection law usually allows (<a href="https://ico.org.uk/for-the-public/getting-copies-of-your-information-subject-access-request/">ICO</a>).</p>
       <h3>Your rights</h3>
       <p>Under UK data protection law you can ask to see, correct, delete or move your data, and object to or limit how it is used. If you are unhappy with how your data is handled you can complain to the Information Commissioner's Office (<a href="https://ico.org.uk/make-a-complaint/">ico.org.uk</a>).</p>
     </section>
@@ -136,12 +146,12 @@
     <section aria-labelledby="h-children">
       <h2 id="h-children">Young learners</h2>
       <p>Learners may be under 18. The app's rule is that a learner who may be younger than <span data-config="age.guardianUnder">16</span> needs a parent's or guardian's agreement. The server can record a learner's year of birth, whether that agreement was given, and the parent's or guardian's email, but the app does not ask for them yet.</p>
-      <p>How younger learners are handled until it does: <span class="fill">[to be filled in by Darren]</span>.</p>
+      <p>Until it does: a learner younger than <span data-config="age.guardianUnder">16</span> should ask a parent or guardian before signing up. Full access is given by the admin by hand, and the admin checks that a parent or guardian has agreed before giving it to a learner that young. A parent or guardian who finds an account they did not agree to can ask for it to be deleted, using the contact above.</p>
     </section>
 
     <section aria-labelledby="h-changes">
       <h2 id="h-changes">Changes to this notice</h2>
-      <p>Version: draft. Last changed: <span class="fill">[date — to be filled in by Darren]</span>.</p>
+      <p>Version: sample. Last changed: 24 September 2026.</p>
     </section>
   </main>
 
