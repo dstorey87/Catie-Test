@@ -1062,13 +1062,16 @@ input,select{font-family:inherit}
   <div style="background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);border-radius:20px;padding:8px 18px">
     <sc-for list="{{ progTopics }}" as="t" hint-placeholder-count="6">
       <div style="padding:10px 0;border-bottom:1px solid var(--tt-bd-f2ede1)">
-        <div style="display:flex;align-items:center;gap:12px">
+        <!-- The row wraps on a phone: the name keeps its line and the bar and status move under
+             it. A row that could not wrap pushed the page 35px past a 390px screen (issue #8),
+             and one that squeezed the name left it 18px wide at the default text size (#12 B). -->
+        <div style="display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px">
           <span style="{{ t.dotStyle }}"></span>
-          <!-- min-width:0 and a bar that can shrink: at 390px a long topic name pushed this
-               row 35px past the screen (found 2026-09-24, issue #8's browser check) -->
-          <span style="flex:1;min-width:0;overflow-wrap:break-word;font-size:15px;line-height:1.3">{{ t.name }}</span>
-          <span style="flex:0 1 110px;min-width:40px;height:10px;background:var(--tt-bg-efe9dc);border-radius:5px;overflow:hidden"><span style="{{ t.barStyle }}"></span></span>
-          <span style="{{ t.statusStyle }}">{{ t.status }}</span>
+          <span style="flex:1 1 150px;min-width:0;overflow-wrap:break-word;font-size:15px;line-height:1.3">{{ t.name }}</span>
+          <span style="flex:0 0 auto;margin-left:auto;display:flex;align-items:center;gap:12px">
+            <span style="width:110px;height:10px;background:var(--tt-bg-efe9dc);border-radius:5px;overflow:hidden"><span style="{{ t.barStyle }}"></span></span>
+            <span style="{{ t.statusStyle }}">{{ t.status }}</span>
+          </span>
         </div>
         <sc-if value="{{ t.showAdvice }}" hint-placeholder-val="{{ false }}">
           <div style="margin:7px 0 2px 24px;font-size:13.5px;color:var(--tt-fg-6e6a5e);line-height:1.5">{{ t.advice }}</div>
@@ -1543,10 +1546,14 @@ input,select{font-family:inherit}
   <div style="font-family:'Nunito',sans-serif;font-weight:800;font-size:18px;margin:6px 0 10px">Topics — weakest first</div>
   <div style="background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);border-radius:20px;padding:8px 18px">
     <sc-for list="{{ topicBars }}" as="t" hint-placeholder-count="6">
-      <div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--tt-bd-f2ede1)">
-        <span style="flex:1;font-size:15px;line-height:1.3">{{ t.name }}</span>
-        <span style="width:150px;height:10px;background:var(--tt-bg-efe9dc);border-radius:5px;overflow:hidden;flex:none"><span style="{{ t.barStyle }}"></span></span>
-        <span style="width:76px;text-align:right;font-size:14px;color:var(--tt-fg-6e6a5e);flex:none">{{ t.label }}</span>
+      <!-- Wraps on a phone like My Progress's rows: a fixed 150px bar made this 421px wide at
+           390px (#12 B). Bar + figure (218px) still fit the card at the largest text size. -->
+      <div style="display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px;padding:10px 0;border-bottom:1px solid var(--tt-bd-f2ede1)">
+        <span style="flex:1 1 150px;min-width:0;overflow-wrap:break-word;font-size:15px;line-height:1.3">{{ t.name }}</span>
+        <span style="flex:0 0 auto;margin-left:auto;display:flex;align-items:center;gap:12px">
+          <span style="width:130px;height:10px;background:var(--tt-bg-efe9dc);border-radius:5px;overflow:hidden;flex:none"><span style="{{ t.barStyle }}"></span></span>
+          <span style="width:76px;text-align:right;font-size:14px;color:var(--tt-fg-6e6a5e);flex:none">{{ t.label }}</span>
+        </span>
       </div>
     </sc-for>
   </div>
@@ -1622,10 +1629,12 @@ input,select{font-family:inherit}
   <sc-if value="{{ hasHard }}" hint-placeholder-val="{{ false }}">
     <div style="background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);border-radius:20px;padding:4px 18px">
       <sc-for list="{{ hardRows }}" as="h" hint-placeholder-count="5">
-        <div style="display:flex;gap:12px;align-items:baseline;padding:10px 0;border-bottom:1px solid var(--tt-bd-f2ede1)">
+        <!-- Wraps: at the largest text size the one-line figure ("0/2 · Incidents and
+             emergencies") pushed the dashboard 5px past a 390px screen (#12 B) -->
+        <div style="display:flex;flex-wrap:wrap;gap:2px 12px;align-items:baseline;padding:10px 0;border-bottom:1px solid var(--tt-bd-f2ede1)">
           <span style="flex:none;width:24px;font-family:'Nunito',sans-serif;font-weight:900;color:var(--tt-fg-b5ae9e);font-size:14px">{{ h.rank }}</span>
-          <span style="flex:1;font-size:14.5px;line-height:1.35">{{ h.text }}</span>
-          <span style="flex:none;font-size:12.5px;color:var(--tt-fg-6e6a5e);white-space:nowrap">{{ h.meta }}</span>
+          <span style="flex:1 1 150px;min-width:0;font-size:14.5px;line-height:1.35">{{ h.text }}</span>
+          <span style="flex:0 1 auto;margin-left:auto;font-size:12.5px;color:var(--tt-fg-6e6a5e)">{{ h.meta }}</span>
         </div>
       </sc-for>
     </div>

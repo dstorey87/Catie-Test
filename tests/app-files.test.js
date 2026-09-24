@@ -466,6 +466,10 @@ test('#12 B: topic rows on My Progress and the admin dashboard wrap on a phone i
     assert.match(name, /min-width:0/, 'the name can still shrink below its longest word on a tiny screen');
     assert.doesNotMatch(row, /width:150px/, 'no fixed 150px bar: it made the dashboard wider than a phone');
   }
+  // "20 hardest questions": its one-line figure was 5px too wide at the largest text size.
+  const hard = screen('DASHBOARD').match(/<sc-for list="\{\{ hardRows \}\}"[\s\S]*?<\/sc-for>/)[0];
+  assert.match(hard, /display:flex;flex-wrap:wrap/);
+  assert.doesNotMatch(hard, /white-space:nowrap/, 'the figure must be allowed to wrap');
 });
 
 test('#12 C: on question screens the notes button sits in the page, never floating over Next', () => {
