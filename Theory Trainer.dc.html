@@ -55,6 +55,90 @@ var TT_DARK = {
 })();
 </script>
 <script>
+// ---------- First run, What's new, help and legal links (window.TTWelcome) ----------
+// The rules and the words for: the quick setup on a learner's first open, the What's new
+// card on Home, and the Help / About / Privacy / Terms links. Plain data and pure
+// functions only (no page, no storage), so tests/app-files.test.js runs this very block
+// in node. It lives in the real head, not <helmet>, for the camelCase reason noted below.
+window.TTWelcome = (function(){
+  var W = {};
+
+  // The What's new card's words, and the sw.js VERSION they describe. A test fails when
+  // sw.js VERSION moves on and these don't, so every promotion rewrites them: the newest
+  // features, in plain words, written to the learner ("you"). No markdown.
+  W.NEWS = {
+    version: 'v10-2026-09-24',
+    items: [
+      'Tap “Tricky?” on a question and it stays in Flagged, on Home, until you un-flag it.',
+      'Today’s lesson is built from your own answers — the questions you keep missing come first.',
+      'After a wrong answer you may see a memory tip written for that exact question.',
+      'The “Keeps tripping you up” card shows the questions you keep missing, the answer you tend to pick, and the right one.',
+      'You can answer with a keyboard: Tab to an answer, then press Enter or Space.'
+    ]
+  };
+
+  // sw.js names its cache CACHE_PREFIX + VERSION (a test checks the two files agree).
+  W.CACHE_PREFIX = 'theory-trainer-';
+
+  // Help and legal pages, in the order they're listed (sign-in screens and Settings).
+  // Each file sits next to this page; a test checks that every one exists.
+  W.LINKS = [
+    {id:'help', label:'Help', href:'help.html'},
+    {id:'about', label:'About', href:'about.html'},
+    {id:'privacy', label:'Privacy', href:'legal/privacy.html'},
+    {id:'terms', label:'Terms', href:'legal/terms.html'}
+  ];
+  W.DVSA = 'Theory Trainer is not affiliated with or endorsed by the DVSA (Driver and Vehicle Standards Agency).';
+
+  // The choices for the daily goal and the reminder time — Settings and the quick setup
+  // both offer exactly these.
+  W.GOALS = [10, 20, 30];
+  W.REMIND_TIMES = [{h:8, label:'8am'}, {h:12, label:'Midday'}, {h:17, label:'5pm'}, {h:20, label:'8pm'}];
+
+  // A learner who has never answered a question or sat a mock.
+  W.isNewLearner = function(attempts, tests){
+    return !(attempts && attempts.length) && !(tests && tests.length);
+  };
+
+  // The quick setup opens by itself on a learner's first open: never finished or skipped,
+  // and nothing answered yet. dataReady is false until this account's saved copy has come
+  // down from the server — until then an empty device can't be told from a new learner,
+  // and saving her choices would make the empty copy look newer than her real progress.
+  // Never for the admin view.
+  W.onboardingDue = function(o){
+    if(o.isParent || !o.dataReady) return false;
+    return !(o.settings || {}).onboardedAt && W.isNewLearner(o.attempts, o.tests);
+  };
+
+  // What's new shows once per app version, to a learner who was here before it.
+  // Not when the version is unknown (offline, first load), not when these notes describe
+  // another version (never show stale words), not to a brand-new learner (it's all new),
+  // and not in the admin view (dismissing it would hide it from the learner).
+  W.newsDue = function(o){
+    if(!o.version || o.isParent) return false;
+    if(o.version !== W.NEWS.version) return false;
+    if(W.isNewLearner(o.attempts, o.tests)) return false;
+    return (o.settings || {}).seenVersion !== o.version;
+  };
+
+  // The VERSION line of sw.js's text, or '' if it isn't there.
+  W.versionFromSw = function(text){
+    var m = /const VERSION = '([^']+)'/.exec(String(text || ''));
+    return m ? m[1] : '';
+  };
+
+  // The version from the offline cache's name (used when sw.js can't be fetched). Only
+  // when exactly one app cache exists — during an update there are two, and which one
+  // this page came from can't be known.
+  W.versionFromCacheKeys = function(keys){
+    var ours = (keys || []).filter(function(k){ return String(k).indexOf(W.CACHE_PREFIX) === 0; });
+    return ours.length === 1 ? ours[0].slice(W.CACHE_PREFIX.length) : '';
+  };
+
+  return W;
+})();
+</script>
+<script>
 // Lives in the real head, NOT in <helmet>: the dc compiler rewrites camelCase
 // tokens inside helmet content (its attribute-preservation pass), which
 // corrupts inline scripts there. Real-head scripts run once, untouched.
@@ -153,6 +237,11 @@ input,select{font-family:inherit}
       <div style="font-size:12.5px;color:var(--tt-fg-b5ae9e);padding:2px 6px">{{ accountLine }}</div>
     </sc-if>
   </div>
+  <!-- Help, About, Privacy, Terms (TTWelcome.LINKS) and the DVSA line: same on both sign-in screens -->
+  <nav aria-label="Help and legal" style="display:flex;flex-wrap:wrap;gap:0 18px;justify-content:center;margin-top:14px">
+    <sc-for list="{{ infoLinks }}" as="l" hint-placeholder-count="4"><a href="{{ l.href }}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;min-height:44px;padding:0 2px;font-size:14px;font-weight:700">{{ l.label }}</a></sc-for>
+  </nav>
+  <div style="font-size:12.5px;color:var(--tt-fg-6e6a5e);line-height:1.5;max-width:340px">{{ dvsaLine }}</div>
 </div>
 </sc-if>
 
@@ -204,6 +293,11 @@ input,select{font-family:inherit}
     <button onClick="{{ showPayScreen }}" style="background:none;border:none;color:var(--tt-fg-b5ae9e);font-size:12.5px;cursor:pointer;padding:8px;min-height:44px;text-decoration:underline">See subscription plans</button>
     <button onClick="{{ goSetupScreen }}" style="background:none;border:none;color:var(--tt-fg-b5ae9e);font-size:12.5px;cursor:pointer;padding:8px;min-height:44px;text-decoration:underline">Server settings</button>
   </div>
+  <!-- Help, About, Privacy, Terms (TTWelcome.LINKS) and the DVSA line: same on both sign-in screens -->
+  <nav aria-label="Help and legal" style="display:flex;flex-wrap:wrap;gap:0 18px;justify-content:center;margin-top:6px">
+    <sc-for list="{{ infoLinks }}" as="l" hint-placeholder-count="4"><a href="{{ l.href }}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;min-height:44px;padding:0 2px;font-size:14px;font-weight:700">{{ l.label }}</a></sc-for>
+  </nav>
+  <div style="font-size:12.5px;color:var(--tt-fg-6e6a5e);line-height:1.5;text-align:center;margin-top:4px">{{ dvsaLine }}</div>
 </div>
 </sc-if>
 
@@ -289,6 +383,51 @@ input,select{font-family:inherit}
 </div>
 </sc-if>
 
+<!-- ============ ONBOARDING ============ -->
+<!-- Quick setup on a learner's first open (TTWelcome.onboardingDue), and from Settings:
+     test date, daily goal, reminder time, one question a step. Every answer goes straight
+     into her normal settings (the same ones Settings changes), so skipping part-way keeps
+     what she picked. Skip or Done both count as done, so it never nags. -->
+<sc-if value="{{ vOnboard }}" hint-placeholder-val="{{ false }}">
+<div data-screen-label="Quick setup" style="max-width:460px;margin:0 auto;padding-top:8px">
+  <div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
+    <div style="font-size:14px;font-weight:700;color:var(--tt-fg-6e6a5e)">{{ onbStepLabel }}</div>
+    <button onClick="{{ onbSkip }}" aria-label="Skip the quick setup" style="background:none;border:none;color:var(--tt-fg-6e6a5e);font-size:15px;font-weight:700;cursor:pointer;padding:0 6px;min-height:44px;text-decoration:underline">Skip</button>
+  </div>
+  <div aria-hidden="true" style="display:flex;gap:6px;margin:6px 0 24px">
+    <sc-for list="{{ onbDots }}" as="d" hint-placeholder-count="3"><span style="{{ d.style }}"></span></sc-for>
+  </div>
+  <div style="font-family:'Nunito',sans-serif;font-weight:900;font-size:27px;line-height:1.2">{{ onbTitle }}</div>
+  <div style="font-size:16px;color:var(--tt-fg-6e6a5e);margin:8px 0 20px;line-height:1.5">{{ onbSub }}</div>
+  <!-- step 1: test date (Settings' own date field and handler) -->
+  <sc-if value="{{ onbStepDate }}" hint-placeholder-val="{{ true }}">
+    <label style="display:block;font-size:14px;font-weight:700;color:var(--tt-fg-6e6a5e)">Theory test date<input type="date" value="{{ examDate }}" onChange="{{ examDateChange }}" style="display:block;width:100%;box-sizing:border-box;margin-top:6px;padding:12px 14px;min-height:54px;border:2px solid var(--tt-bd-e8e1d2);border-radius:14px;font-size:17px;background:var(--tt-bg-fff);color:var(--tt-fg-2a2c33)"></label>
+    <sc-if value="{{ hasExamDate }}" hint-placeholder-val="{{ false }}">
+      <div style="margin-top:12px;background:var(--tt-bg-e4f2ef);border:1px solid var(--tt-bd-bfe0d8);border-radius:14px;padding:11px 14px;font-size:15px;font-weight:700;color:var(--tt-fg-0a5d50)">{{ examCountdown }}</div>
+    </sc-if>
+  </sc-if>
+  <!-- step 2: daily goal -->
+  <sc-if value="{{ onbStepGoal }}" hint-placeholder-val="{{ false }}">
+    <div role="group" aria-label="Questions a day" style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px">
+      <sc-for list="{{ onbGoals }}" as="g" hint-placeholder-count="3"><button onClick="{{ g.pick }}" aria-pressed="{{ g.on }}" style="{{ g.style }}">{{ g.label }}</button></sc-for>
+    </div>
+  </sc-if>
+  <!-- step 3: reminder time (one tap picks the time and switches the nudge on) -->
+  <sc-if value="{{ onbStepRemind }}" hint-placeholder-val="{{ false }}">
+    <div role="group" aria-label="Reminder time" style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <sc-for list="{{ onbTimes }}" as="r" hint-placeholder-count="5"><button onClick="{{ r.pick }}" aria-pressed="{{ r.on }}" style="{{ r.style }}">{{ r.label }}</button></sc-for>
+    </div>
+    <div role="status" style="font-size:14px;color:var(--tt-fg-6e6a5e);margin-top:12px;line-height:1.5">{{ remindStatus }}</div>
+  </sc-if>
+  <div style="display:flex;gap:10px;margin-top:28px">
+    <sc-if value="{{ onbCanBack }}" hint-placeholder-val="{{ false }}">
+      <button onClick="{{ onbBack }}" style="flex:none;background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);border-radius:18px;min-height:56px;padding:0 22px;font-size:16px;font-weight:700;color:var(--tt-fg-6e6a5e);cursor:pointer">Back</button>
+    </sc-if>
+    <button onClick="{{ onbNext }}" style="flex:1;background:#0E7C6B;color:#fff;border:none;border-radius:18px;min-height:56px;font-family:'Nunito',sans-serif;font-weight:900;font-size:18px;cursor:pointer">{{ onbNextLabel }}</button>
+  </div>
+</div>
+</sc-if>
+
 <!-- ============ HOME ============ -->
 <sc-if value="{{ vHome }}" hint-placeholder-val="{{ true }}">
 <div data-screen-label="Home">
@@ -306,6 +445,16 @@ input,select{font-family:inherit}
   </div>
   <div style="font-family:'Nunito',sans-serif;font-weight:900;font-size:30px;margin:22px 0 4px">{{ greeting }}</div>
   <div style="font-size:17px;color:var(--tt-fg-6e6a5e);margin-bottom:16px">{{ homeSub }}</div>
+  <!-- What's new: once per app version, for a learner who was here before it (TTWelcome.newsDue) -->
+  <sc-if value="{{ newsShow }}" hint-placeholder-val="{{ false }}">
+    <section aria-label="What's new" style="background:var(--tt-bg-e4f2ef);border:1px solid var(--tt-bd-bfe0d8);border-radius:18px;padding:14px 16px;margin-bottom:14px">
+      <div style="font-family:'Nunito',sans-serif;font-weight:900;font-size:17px;color:var(--tt-fg-0a5d50)">What's new</div>
+      <ul style="margin:8px 0 0;padding-left:20px;display:flex;flex-direction:column;gap:6px">
+        <sc-for list="{{ newsItems }}" as="n" hint-placeholder-count="3"><li style="font-size:14.5px;line-height:1.45;color:var(--tt-fg-2a2c33)">{{ n.text }}</li></sc-for>
+      </ul>
+      <button onClick="{{ newsDismiss }}" style="margin-top:12px;background:#0E7C6B;color:#fff;border:none;border-radius:12px;min-height:44px;padding:0 20px;font-size:15px;font-weight:700;cursor:pointer">Got it</button>
+    </section>
+  </sc-if>
   <div style="display:flex;gap:10px;margin-bottom:14px">
     <div style="flex:1;background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);border-radius:16px;padding:12px 6px;display:flex;flex-direction:column;align-items:center;gap:3px">
       <svg width="22" height="22" viewBox="0 0 24 24"><path d="M12 2 Q14 7 17.5 9.5 Q21 12 20 16 Q19 20.5 12 22 Q5 20.5 4 16 Q3 12 6.5 9.5 Q10 7 12 2 Z" fill="{{ streakFlame }}"/><path d="M12 11 Q13 13 14.6 14.3 Q16.2 15.7 15.4 17.5 Q14.5 19.6 12 20.1 Q9.5 19.6 8.6 17.5 Q7.8 15.7 9.4 14.3 Q11 13 12 11 Z" fill="#fff" opacity=".8"/></svg>
@@ -396,6 +545,8 @@ input,select{font-family:inherit}
   </div>
   <div style="display:flex;gap:12px;margin-top:18px">
     <button onClick="{{ goSettings }}" style="flex:1;background:none;border:1px solid var(--tt-bd-e8e1d2);border-radius:14px;padding:12px;cursor:pointer;font-size:15px;color:var(--tt-fg-6e6a5e)">Settings</button>
+    <!-- Help opens in its own tab, so whatever she was in the middle of stays put -->
+    <a href="{{ helpHref }}" target="_blank" rel="noopener" style="flex:1;display:flex;align-items:center;justify-content:center;box-sizing:border-box;border:1px solid var(--tt-bd-e8e1d2);border-radius:14px;padding:12px;font-size:15px;color:var(--tt-fg-6e6a5e);text-decoration:none">Help</a>
   </div>
 </div>
 </sc-if>
@@ -1299,7 +1450,7 @@ input,select{font-family:inherit}
     </sc-for>
     <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 0;border-bottom:1px solid var(--tt-bd-f2ede1)">
       <span style="font-size:16.5px;flex:none">Voice</span>
-      <select value="{{ voiceSel }}" onChange="{{ setVoice }}" style="flex:1;max-width:250px;padding:10px;border:1px solid var(--tt-bd-e8e1d2);border-radius:10px;font-size:14px;background:var(--tt-bg-fff)">
+      <select value="{{ voiceSel }}" onChange="{{ setVoice }}" style="flex:1;min-width:0;max-width:250px;padding:10px;border:1px solid var(--tt-bd-e8e1d2);border-radius:10px;font-size:14px;background:var(--tt-bg-fff)">
         <sc-for list="{{ voiceOpts }}" as="v" hint-placeholder-count="2"><option value="{{ v.v }}">{{ v.label }}</option></sc-for>
       </select>
     </div>
@@ -1348,6 +1499,11 @@ input,select{font-family:inherit}
         <sc-for list="{{ remindHourChoices }}" as="r" hint-placeholder-count="4"><button onClick="{{ r.pick }}" style="{{ r.style }}">{{ r.label }}</button></sc-for>
       </div>
     </div>
+    <!-- The first-run quick setup again: same three settings, one step at a time -->
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 0;border-top:1px solid var(--tt-bd-f2ede1)">
+      <span style="font-size:16.5px;flex:1">Quick setup<span style="display:block;font-size:13px;color:var(--tt-fg-6e6a5e);margin-top:2px">test date, daily goal and reminder, one at a time</span></span>
+      <button onClick="{{ redoOnboarding }}" style="flex:none;background:var(--tt-bg-e4f2ef);color:var(--tt-fg-0a5d50);border:none;border-radius:12px;min-height:44px;padding:0 16px;font-size:14.5px;font-weight:700;cursor:pointer">Run it again</button>
+    </div>
   </div>
   <div style="font-family:'Nunito',sans-serif;font-weight:800;font-size:18px;margin:24px 0 10px">Profiles</div>
   <div style="background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);border-radius:20px;padding:18px;display:flex;gap:12px">
@@ -1356,6 +1512,12 @@ input,select{font-family:inherit}
   </div>
   <button onClick="{{ addLearner }}" style="width:100%;margin-top:12px;background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);border-radius:14px;min-height:50px;font-size:15px;cursor:pointer;color:var(--tt-fg-0e7c6b);font-weight:700">+ Add another learner</button>
   <button onClick="{{ resetProgress }}" style="width:100%;margin-top:24px;background:none;border:1px solid #D14B45;color:var(--tt-fg-b8433d);border-radius:14px;min-height:50px;font-size:15px;cursor:pointer">Reset all progress…</button>
+  <!-- Help and legal pages (TTWelcome.LINKS), each in its own tab, and the DVSA line -->
+  <div style="font-family:'Nunito',sans-serif;font-weight:800;font-size:18px;margin:24px 0 10px">Help and legal</div>
+  <nav aria-label="Help and legal" style="background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);border-radius:20px;padding:4px 18px;display:flex;flex-direction:column">
+    <sc-for list="{{ infoLinks }}" as="l" hint-placeholder-count="4"><a href="{{ l.href }}" target="_blank" rel="noopener" style="{{ l.rowStyle }}"><span>{{ l.label }}</span><span aria-hidden="true" style="color:var(--tt-fg-b5ae9e)">›</span></a></sc-for>
+  </nav>
+  <div style="font-size:13px;color:var(--tt-fg-6e6a5e);line-height:1.5;margin-top:10px">{{ dvsaLine }}</div>
 </div>
 </sc-if>
 
@@ -1570,13 +1732,16 @@ class Component extends DCLogic {
       range: 'all', openTest: -1, showLogForm: false,
       logDate: new Date().toISOString().slice(0,10), logScore: '', logPT: {},
       edTopic: 1, edId: null, edDraft: null,
-      printFormat: 'cards', printScope: 'all', printPreview: false, printData: null, printRendered: 0
+      printFormat: 'cards', printScope: 'all', printPreview: false, printData: null, printRendered: 0,
+      // appVersion: sw.js VERSION once read (loadVersion) · cloudPulled: this account's saved
+      // copy has come down (pullCloud) · onbStep: which quick-setup question is showing
+      appVersion: '', cloudPulled: false, onbStep: 0
     };
     const au = users.find(x=>x.id===activeId) || users[0];
     if(!saved.settings || !saved.settings.learnerName || saved.settings.learnerName==='Learner') this.state.settings.learnerName = au.name;
     if(this.state.settings.parentName==='Parent') this.state.settings.parentName = 'Admin';
   }
-  NOTESN = {home:'Home', learnSetup:'Practise setup', learnQ:'Practising', learnDone:'Session results', testIntro:'Test setup', test:'Mock test', dash:'Admin', settings:'Settings', progress:'My progress', signs:'Road signs', editor:'Questions', print:'Print', answers:'My answers'};
+  NOTESN = {home:'Home', onboard:'Quick setup', learnSetup:'Practise setup', learnQ:'Practising', learnDone:'Session results', testIntro:'Test setup', test:'Mock test', dash:'Admin', settings:'Settings', progress:'My progress', signs:'Road signs', editor:'Questions', print:'Print', answers:'My answers'};
   award(qCount, correctCount, bonus){
     const today = new Date().toISOString().slice(0,10);
     const stk = Object.assign({count:0, last:'', todayDate:'', todayN:0}, this.state.streak);
@@ -1639,21 +1804,58 @@ class Component extends DCLogic {
     TTPush.showLocal('Ten questions?', 'A short go now keeps your streak alive.');
   }
   toggleReminders(){
-    const st = this.state.settings||{}, on = !st.remindOn;
-    if(!on){
+    const st = this.state.settings||{};
+    if(st.remindOn){
       if(window.TTPush) TTPush.disable();
       this.set({settings: Object.assign({}, st, {remindOn:false})});
       this.setState({remindMsg:'Reminders are off.'});
       return;
     }
+    this.remindAt(st.remindHour||18);
+  }
+  // Switch the daily nudge on at hour h, or just move it there if it's already on.
+  // Settings' Daily reminder switch and the quick setup's time buttons both come here.
+  remindAt(h){
+    const st = this.state.settings||{};
+    if(st.remindOn){ this.setRemindHour(h); return; }
+    // The time is her choice even when this device can't show reminders, so keep it.
+    if(st.remindHour!==h) this.set({settings: Object.assign({}, st, {remindHour:h})});
     if(!(window.TTPush && TTPush.supported())){
       this.setState({remindMsg:'This browser can\u2019t show reminders. On iPhone: Share \u2192 Add to Home Screen, open the app from the icon, then switch this on.'});
       return;
     }
-    TTPush.enable(st.remindHour||18).then(()=>{
-      this.set({settings: Object.assign({}, st, {remindOn:true})});
+    this.setState({remindMsg:'Asking this device to allow reminders\u2026'});
+    TTPush.enable(h).then(()=>{
+      // Settings are read again here: others may have changed while the prompt was up.
+      this.set({settings: Object.assign({}, this.state.settings, {remindOn:true, remindHour:h})});
       this.setState({remindMsg: TTPush.canServerPush()? 'On \u2014 a nudge arrives at the time below on any day you haven\u2019t practised.' : 'On for this device only. Reminders while the app is closed need the push key (SETUP.md \u00a75).'});
     }).catch(e=>this.setState({remindMsg:String(e.message||e)}));
+  }
+  // End the quick setup (Done or Skip). Either way it counts as done, so it never opens by
+  // itself again; Settings → Quick setup runs it on purpose. A brand-new learner starts on
+  // this app version, so it's marked seen: What's new is for learners who were here before.
+  finishOnboarding(skipped, step){
+    const s = this.state, st = s.settings||{};
+    const patch = {onboardedAt: st.onboardedAt || new Date().toISOString().slice(0,10)};
+    if(s.appVersion && TTWelcome.isNewLearner(s.attempts, s.tests)) patch.seenVersion = s.appVersion;
+    this.track('onboarding', null, {skipped: !!skipped, step: step});
+    this.set({settings: Object.assign({}, st, patch), view:'home', onbStep:0, remindMsg:''});
+  }
+  // The app's version is sw.js's VERSION, the one place it is kept. Read the file (fresh
+  // when online); offline, read it from the app cache's name. Unknown means no What's new
+  // card this time: nothing for the learner to do, so it's only noted in the console.
+  loadVersion(){
+    const TW = window.TTWelcome;
+    fetch('./sw.js', {cache:'no-cache'})
+      .then(r=>{ if(!r.ok) throw new Error('HTTP ' + r.status); return r.text(); })
+      .then(TW.versionFromSw)
+      .catch(()=>'')                                        // offline or missing: try the cache below
+      .then(v=>v || (window.caches ? caches.keys().then(TW.versionFromCacheKeys) : ''))
+      .then(v=>{
+        if(v) this.setState({appVersion:v});
+        else console.warn('What\u2019s new: no app version in sw.js or the offline cache \u2014 the card is skipped until the next open.');
+      })
+      .catch(e=>console.warn('What\u2019s new: reading the app version failed (' + String(e.message||e) + ') \u2014 the card is skipped until the next open.'));
   }
   setRemindHour(h){
     const st = this.state.settings||{};
@@ -1676,6 +1878,7 @@ class Component extends DCLogic {
   }
   componentDidMount(){
     this.loadBank();
+    this.loadVersion();
     this.refreshAccess();
     this.arriveFromEmailLink();
     if(/[?&]paid=1/.test(location.search)){
@@ -1898,7 +2101,7 @@ class Component extends DCLogic {
   }
   doSignOut(){
     if(!window.TTAuth) return;
-    TTAuth.signOut().then(()=>this.setState({view:'auth', access:null, isAdminAccount:false, authPw:'', authMsg:'', bank:[], bankSource:'', loaded:false}, ()=>this.loadBank()));
+    TTAuth.signOut().then(()=>this.setState({view:'auth', access:null, isAdminAccount:false, authPw:'', authMsg:'', bank:[], bankSource:'', loaded:false, cloudPulled:false}, ()=>this.loadBank()));
   }
   saveServerConfig(){
     const u = (this.state.cfgUrl||'').trim(), k = (this.state.cfgKey||'').trim();
@@ -1967,6 +2170,9 @@ class Component extends DCLogic {
     if(!(window.TTSync && TTSync.configured())) return;
     TTSync.pull().then(snap=>{
       if(snap && snap.blob) this.mergeSnapshot(snap.blob); else this._dirty = true;
+      // Her saved copy is in: only now can a learner with no answers be told apart from an
+      // empty new device, so the quick setup waits for this (TTWelcome.onboardingDue).
+      this.setState({cloudPulled:true});
       if(this._dirty) this.flushCloud(); else this.setState({cloudMsg:'Up to date'});
     }).catch(e=>this.setState({cloudMsg:'Sync problem: ' + String(e.message||e)}));
   }
@@ -2454,6 +2660,47 @@ class Component extends DCLogic {
     const forceAuth = backendOn && !signedIn;
     const view = forceAuth ? (s.view==='setup' ? 'setup' : s.view==='login' ? 'login' : 'auth') : (s.printPreview ? 'printPreview' : s.view);
 
+    // ----- quick setup and What's new (the rules are TTWelcome's, in the page head) -----
+    // Home turns into the quick setup while it's due, whichever way she got to Home.
+    const TW = window.TTWelcome;
+    const learnerNow = {settings: st, attempts: s.attempts, tests: s.tests, isParent};
+    const dataReady = !(window.TTSync && TTSync.configured()) || !!s.cloudPulled;
+    const onbShow = view==='onboard' || (view==='home' && !locked && TW.onboardingDue(Object.assign({dataReady}, learnerNow)));
+    const newsShow = view==='home' && !locked && !onbShow && TW.newsDue(Object.assign({version: s.appVersion}, learnerNow));
+    const onbStep = Math.max(0, Math.min(2, s.onbStep||0));
+    const setGoal = g => this.set({settings: Object.assign({}, st, {dailyGoal:g})});
+    // Big, 60px-tall choice buttons for the quick setup; chosen = filled green.
+    const bigPick = on => 'min-height:60px;border-radius:16px;cursor:pointer;font-family:Nunito,sans-serif;font-weight:900;font-size:19px;'
+      + (on ? 'background:#0E7C6B;color:#fff;border:2px solid #0E7C6B' : 'background:var(--tt-bg-fff);color:var(--tt-fg-2a2c33);border:2px solid var(--tt-bd-e8e1d2)');
+    const ONB = [
+      {title: 'Hi ' + st.learnerName + '! When is your theory test?', sub: 'Home will count down the days. Not booked yet? Leave it blank and add it later in Settings.'},
+      {title: 'How many questions a day?', sub: 'Reach it and your streak grows by a day. You can change it any time in Settings.'},
+      {title: 'When should we remind you?', sub: 'A nudge only on days you haven’t practised. Your phone may ask to allow notifications.'}
+    ];
+    const welcomeVals = {
+      vOnboard: onbShow,
+      onbStepDate: onbStep===0, onbStepGoal: onbStep===1, onbStepRemind: onbStep===2,
+      onbStepLabel: 'Quick setup · ' + (onbStep+1) + ' of ' + ONB.length,
+      onbDots: ONB.map((_,i)=>({style:'flex:1;height:6px;border-radius:99px;background:' + (i<=onbStep ? '#0E7C6B' : 'var(--tt-bg-efe9dc)')})),
+      onbTitle: ONB[onbStep].title, onbSub: ONB[onbStep].sub,
+      onbGoals: TW.GOALS.map(g=>{ const on = (st.dailyGoal||20)===g; return {label:String(g), on:String(on), style:bigPick(on), pick:()=>setGoal(g)}; }),
+      onbTimes: TW.REMIND_TIMES.map(o=>{ const on = !!st.remindOn && (st.remindHour||18)===o.h; return {label:o.label, on:String(on), style:bigPick(on), pick:()=>this.remindAt(o.h)}; })
+        .concat([{label:'No reminders', on:String(!st.remindOn), style:bigPick(!st.remindOn) + ';grid-column:1/-1', pick:()=>{ if(st.remindOn) this.toggleReminders(); }}]),
+      onbCanBack: onbStep>0,
+      onbBack: ()=>this.setState({onbStep: onbStep-1}),
+      onbNext: ()=>{ if(onbStep < ONB.length-1) this.setState({onbStep: onbStep+1}); else this.finishOnboarding(false, onbStep); },
+      onbNextLabel: onbStep < ONB.length-1 ? 'Next' : 'Done — let’s go',
+      onbSkip: ()=>this.finishOnboarding(true, onbStep),
+      redoOnboarding: ()=>this.setState({view:'onboard', onbStep:0, remindMsg:''}),
+      newsShow, newsItems: TW.NEWS.items.map(t=>({text:t})),
+      newsDismiss: ()=>{ this.track('whats_new_seen', null, {version: s.appVersion}); this.set({settings: Object.assign({}, st, {seenVersion: s.appVersion})}); },
+      // Help and legal links: rows in Settings, a wrapped line on the sign-in screens
+      infoLinks: TW.LINKS.map((l,i)=>({label:l.label, href:l.href,
+        rowStyle:'display:flex;align-items:center;justify-content:space-between;min-height:50px;font-size:16.5px;text-decoration:none;color:var(--tt-fg-2a2c33);' + (i < TW.LINKS.length-1 ? 'border-bottom:1px solid var(--tt-bd-f2ede1)' : '')})),
+      helpHref: (TW.LINKS.find(l=>l.id==='help')||{}).href,
+      dvsaLine: TW.DVSA
+    };
+
     // ----- home -----
     const stAll = this.topicStats('all');
     const totalSeen = stAll.reduce((a,x)=>a+x.n,0);
@@ -2847,7 +3094,7 @@ class Component extends DCLogic {
 
     return Object.assign({
       dynStyle: dyn,
-      vHome: view==='home' && !locked, vPaywall: (view==='home' && locked) || view==='payPreview', vLearnSetup: view==='learnSetup', vLearnQ: view==='learnQ', vLearnDone: view==='learnDone',
+      vHome: view==='home' && !locked && !onbShow, vPaywall: (view==='home' && locked) || view==='payPreview', vLearnSetup: view==='learnSetup', vLearnQ: view==='learnQ', vLearnDone: view==='learnDone',
       vTestIntro: view==='test' && (!t || t.ended && s.testView!=='results') ? false : (view==='testIntro'),
       vTestRun: view==='test' && t && !t.ended && s.testView==='run',
       vTestReview: view==='test' && t && !t.ended && s.testView==='review',
@@ -3011,7 +3258,7 @@ class Component extends DCLogic {
       remindOn: !!st.remindOn,
       remindTrackStyle: miniTrack(!!st.remindOn), remindKnobStyle: miniKnob(!!st.remindOn),
       remindToggle: ()=>this.toggleReminders(),
-      remindHourChoices: [{h:8, label:'8am'}, {h:12, label:'Midday'}, {h:17, label:'5pm'}, {h:20, label:'8pm'}].map(o=>({label:o.label, style: chip((st.remindHour||18)===o.h), pick: ()=>this.setRemindHour(o.h)})),
+      remindHourChoices: TW.REMIND_TIMES.map(o=>({label:o.label, style: chip((st.remindHour||18)===o.h), pick: ()=>this.setRemindHour(o.h)})),
       remindStatus: s.remindMsg || (st.remindOn? ((window.TTPush && TTPush.canServerPush())? 'On \u2014 a nudge arrives at the time below on any day you haven\u2019t practised.' : 'On for this device. Reminders while the app is closed need the push key (SETUP.md \u00a75).') : 'Off \u2014 no reminders are sent.'),
       levelUpLine: s.lastLevelUp? ('Level ' + s.lastLevelUp + ' \u2014 ' + this.levelInfo(s.xp||0).name) : '',
       hasLevelUp: !!s.lastLevelUp,
@@ -3029,12 +3276,14 @@ class Component extends DCLogic {
       examCountdown: (function(){ if(!st.examDate) return ''; const d = Math.ceil((new Date(st.examDate+'T09:00') - Date.now())/86400000); return d>1? (d + ' days until your theory test') : d===1? 'Your theory test is tomorrow!' : d===0? 'Test day \u2014 good luck!' : 'Your test date has passed \u2014 set the next one in Settings'; })(),
       examDate: st.examDate||'',
       examDateChange: e=>this.set({settings: Object.assign({}, st, {examDate: e.target.value})}),
-      goalChoices: [10,20,30].map(g=>({label:String(g), style: chip((st.dailyGoal||20)===g), pick: ()=>this.set({settings: Object.assign({}, st, {dailyGoal:g})})})),
+      goalChoices: TW.GOALS.map(g=>({label:String(g), style: chip((st.dailyGoal||20)===g), pick: ()=>setGoal(g)})),
       hasAvatar: !!s.avatar, noAvatar: !s.avatar, avatarSrc: s.avatar||'', learnerInitial: (st.learnerName||'?')[0].toUpperCase(),
       avatarUpload: e=>{ const f = e.target.files && e.target.files[0]; if(!f) return; const rd = new FileReader(); rd.onload = ()=>{ const img = new Image(); img.onload = ()=>{ const c = document.createElement('canvas'); const S = 128; c.width = S; c.height = S; const x = c.getContext('2d'); const m = Math.min(img.width, img.height); x.drawImage(img, (img.width-m)/2, (img.height-m)/2, m, m, 0, 0, S, S); this.set({avatar: c.toDataURL('image/jpeg', .82)}); }; img.src = rd.result; }; rd.readAsDataURL(f); e.target.value = ''; },
       avatarRemove: ()=>this.set({avatar:''}),
       // Hidden while the My answers action bar is up — it sits where the bar's buttons are.
-      notesAvail: view!=='login' && view!=='cloudLogin' && !s.printPreview && !s.notesOpen && !ansVals.ansAnyTicked,
+      // Not on the sign-in screens (login, auth, setup; 'cloudLogin' is v2's old cloud sign-in
+      // screen), where it covered the DVSA line; not in the quick setup either.
+      notesAvail: view!=='login' && view!=='cloudLogin' && view!=='auth' && view!=='setup' && !onbShow && !s.printPreview && !s.notesOpen && !ansVals.ansAnyTicked,
       notesOpen: !!s.notesOpen,
       toggleNotes: ()=>this.setState({notesOpen: !s.notesOpen, notesKey: s.view}),
       notesFabStyle: 'position:fixed;right:18px;bottom:calc(18px + env(safe-area-inset-bottom));width:56px;height:56px;border-radius:50%;background:var(--tt-bg-2a2c33);color:#fff;border:none;cursor:pointer;box-shadow:0 6px 18px rgba(0,0,0,.22);z-index:60;display:flex;align-items:center;justify-content:center',
@@ -3095,7 +3344,7 @@ class Component extends DCLogic {
         rd.readAsText(f);
         e.target.value = '';
       }
-    }, learnVals, testVals, resultVals, ansVals, edVals, printVals, settingsVals, logVals);
+    }, learnVals, testVals, resultVals, ansVals, edVals, printVals, settingsVals, logVals, welcomeVals);
   }
 }
 </script>
