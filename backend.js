@@ -170,8 +170,13 @@
       try { await call('/auth/v1/logout', { method: 'POST' }); } catch (e) {}
       sess = null; drop(SESSKEY); drop(BANKKEY);
     },
+    // This account's own profile row. It must be asked for BY ID: the admin may read
+    // every profile (Activity screen), and an unfiltered "limit=1" returns whichever row
+    // the database stores first — someone else's, once the admin's own row is written.
     profile: async function () {
-      var rows = await rest('/profiles?select=id,email,name,role&limit=1');
+      var uid = sess && sess.user && sess.user.id;
+      if (!uid) return null; // signed out: there is no "own" row to ask for
+      var rows = await rest('/profiles?select=id,email,name,role&id=eq.' + encodeURIComponent(uid) + '&limit=1');
       return (rows && rows[0]) || null;
     },
     isAdmin: async function () {
