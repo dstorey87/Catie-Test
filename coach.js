@@ -79,7 +79,113 @@
     };
   }
 
-  var api = { mergeFlags: mergeFlags, activity: activity };
+  // ---------- Drill me ----------
+  // Fixed rules from the learning research the app already follows (spaced retrieval
+  // practice, interleaving, re-testing what was missed). No randomness, so the same
+  // history always gives the same drill — and every question comes from the bank.
+  var DRILL = {
+    n: 20,               // questions in a drill (a stuck question's repeat is extra)
+    newMax: 4,           // at most this many never-seen questions per drill
+    gapDays: [0, 1, 3, 7, 14, 30],   // wait after 0, 1, 2, 3, 4, 5+ right answers in a row
+    stuckMisses: 3,      // this many misses in all = stuck …
+    stuckDays: 2,        // … or misses on this many different days
+    unstuckRun: 2,       // … until she gets it right this many times running
+    weakAcc: 0.7,        // a topic under 70% right is weak …
+    weakMin: 5,          // … once it has at least 5 answers
+    requeueGap: 3,       // a question missed in a drill comes back after 3 others
+    requeueMax: 2        // … at most twice in the same drill
+  };
+
+  // One line per question: how she's done on it, and whether it's stuck or due.
+  // attempts: [{q, t, ok}] oldest first (the app's own list); flags: {id: …}.
+  function profile(attempts, flags, bank, now, opts) {
+    var o = Object.assign({}, DRILL, opts || {}), Q = byId(bank), per = {}, topic = {};
+    now = now || Date.now(); flags = flags || {};
+    (attempts || []).forEach(function (a) {
+      var q = Q[a.q]; if (!q) return;
+      var r = per[a.q] || (per[a.q] = { id: a.q, topic: q.topic, seen: 0, wrong: 0, run: 0, last: 0, missDays: {} });
+      r.seen++; r.last = Math.max(r.last, a.t || 0);
+      if (a.ok) r.run++; else { r.wrong++; r.run = 0; r.missDays[localDay(a.t)] = true; }
+      var tp = topic[q.topic] || (topic[q.topic] = { n: 0, ok: 0 });
+      tp.n++; if (a.ok) tp.ok++;
+    });
+    var out = {};
+    Object.keys(Q).forEach(function (id) {
+      var q = Q[id], r = per[id], tp = topic[q.topic];
+      var weakTopic = !!(tp && tp.n >= o.weakMin && tp.ok / tp.n < o.weakAcc);
+      if (!r) { out[id] = { id: id, topic: q.topic, seen: 0, wrong: 0, run: 0, stuck: false, due: false, fresh: true, flagged: !!flags[id], weakTopic: weakTopic }; return; }
+      var days = Object.keys(r.missDays).length;
+      var stuck = (r.wrong >= o.stuckMisses || days >= o.stuckDays) && r.run < o.unstuckRun;
+      var wait = o.gapDays[Math.min(r.run, o.gapDays.length - 1)] * 86400000;
+      out[id] = { id: id, topic: q.topic, seen: r.seen, wrong: r.wrong, run: r.run, last: r.last,
+        stuck: stuck, due: now - r.last >= wait, fresh: false, flagged: !!flags[id], weakTopic: weakTopic };
+    });
+    return out;
+  }
+
+  // Why each question earns its place, most urgent first.
+  function reasonOf(p) {
+    if (p.stuck) return 'stuck';
+    if (p.flagged) return 'flagged';
+    if (p.seen && p.due) return 'due';
+    if (p.fresh && p.weakTopic) return 'weak';
+    if (p.fresh) return 'fresh';
+    return null;
+  }
+  var RANK = { stuck: 0, flagged: 1, due: 2, weak: 3, fresh: 4 };
+
+  // Reorder so the same topic doesn't come twice in a row when another topic is left.
+  function interleave(items) {
+    var left = items.slice(), out = [];
+    while (left.length) {
+      var prev = out.length ? out[out.length - 1].topic : null, k = 0;
+      while (k < left.length && left[k].topic === prev) k++;
+      if (k === left.length) k = 0;
+      out.push(left.splice(k, 1)[0]);
+    }
+    return out;
+  }
+
+  // The drill: {ids, reasons:{stuck, flagged, due, weak, fresh}}.
+  function buildDrill(prof, bank, opts) {
+    var o = Object.assign({}, DRILL, opts || {}), Q = byId(bank);
+    var cands = Object.keys(prof).filter(function (id) { return Q[id]; }).map(function (id) {
+      return Object.assign({ why: reasonOf(prof[id]) }, prof[id]);
+    }).filter(function (p) { return p.why; });
+    cands.sort(function (a, b) {
+      return RANK[a.why] - RANK[b.why] || b.wrong - a.wrong || (a.last || 0) - (b.last || 0) || (a.id < b.id ? -1 : 1);
+    });
+    var picked = [], fresh = 0, reasons = { stuck: 0, flagged: 0, due: 0, weak: 0, fresh: 0 };
+    // New questions are capped at newMax only when there's more reviewing than room;
+    // with little to review, the drill fills up with new ones instead of coming out short.
+    var reviews = cands.filter(function (c) { return c.why !== 'weak' && c.why !== 'fresh'; }).length;
+    var newCap = Math.max(o.newMax, o.n - reviews);
+    for (var i = 0; i < cands.length && picked.length < o.n; i++) {
+      var c = cands[i];
+      if ((c.why === 'weak' || c.why === 'fresh') && fresh >= newCap) continue;
+      if (c.why === 'weak' || c.why === 'fresh') fresh++;
+      picked.push(c); reasons[c.why]++;
+    }
+    var ids = interleave(picked).map(function (p) { return p.id; });
+    // Each stuck question comes round again a few questions later.
+    picked.filter(function (p) { return p.why === 'stuck'; }).forEach(function (p) {
+      var at = ids.indexOf(p.id);
+      ids.splice(Math.min(at + 1 + o.requeueGap, ids.length), 0, p.id);
+    });
+    return { ids: ids, reasons: reasons };
+  }
+
+  // She got ids[i] wrong in a drill: put it back a few questions later (not endlessly).
+  function requeue(ids, i, repeats, opts) {
+    var o = Object.assign({}, DRILL, opts || {}), id = ids[i], reps = Object.assign({}, repeats);
+    if (id == null || (reps[id] || 0) >= o.requeueMax) return { ids: ids, repeats: reps };
+    reps[id] = (reps[id] || 0) + 1;
+    var next = ids.slice();
+    next.splice(Math.min(i + 1 + o.requeueGap, next.length), 0, id);
+    return { ids: next, repeats: reps };
+  }
+
+  var api = { mergeFlags: mergeFlags, activity: activity, profile: profile, buildDrill: buildDrill, requeue: requeue, drillDefaults: DRILL };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.TTCoach = api;
 })(this);
