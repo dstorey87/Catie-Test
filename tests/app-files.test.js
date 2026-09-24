@@ -136,7 +136,7 @@ for (const l of W.LINKS) {
 test('the notes button stays off the sign-in screens, where it covered the DVSA line', () => {
   // Found 2026-09-24 in the browser check: at 390px the floating notes button sat on top of
   // the Sign in screen's DVSA line. The sign-in views are login, auth and setup.
-  const line = app.match(/notesAvail: ([^\n]+)/)[1];
+  const line = app.match(/const notesShown = ([^\n]+)/)[1];
   for (const v of ['login', 'auth', 'setup']) assert.match(line, new RegExp("view!=='" + v + "'"), 'notes button shows on ' + v);
 });
 
@@ -476,11 +476,11 @@ test('#12 C: on question screens the notes button sits in the page, never floati
   // Found 2026-09-24: at 390x844 the floating notes button covered "Next →" on a long mock question.
   assert.ok(TS, 'no window.TTScreen block in the page head');
   assert.deepEqual(plain(TS.INLINE_NOTES).sort(), ['learnQ', 'test']);
-  const line = app.match(/notesAvail: ([^\n]+)/)[1];
+  const line = app.match(/const notesAvail = ([^\n]+)/)[1];
   assert.match(line, /!notesInline/, 'the floating button must not show where the in-page one does');
   for (const name of ['LEARN QUESTION', 'TEST RUNNING', 'TEST REVIEW']) {
     const s = screen(name);
-    assert.match(s, /<sc-if value="\{\{ notesInline \}\}"[^>]*>\s*<button onClick="\{\{ toggleNotes \}\}"/, name + ' has no in-page notes button');
+    assert.match(s, /<sc-if value="\{\{ notesInline \}\}"[^>]*>\s*<div[^>]*><button onClick="\{\{ toggleNotes \}\}"/, name + ' has no in-page notes button');
     const next = name === 'TEST REVIEW' ? '{{ endTest }}' : name === 'TEST RUNNING' ? '{{ nextTQ }}' : '{{ nextQ }}';
     assert.ok(s.indexOf('{{ notesInline }}') > s.indexOf(next), name + ': the notes button must come after the ' + next + ' row');
   }
