@@ -1,0 +1,184 @@
+/* Theory Trainer — about page styles (about.html).
+   The colours are the app's own: each token's light value is the same hex the app uses, and
+   its dark value is the app's TT_DARK entry for that hex (Theory Trainer.dc.html). The app
+   keeps that map inline in its own file, so it cannot be shared from here yet; if one of
+   these drifts from the app, change the value here to the app's. */
+
+/* ---------- colour tokens: light (default) ---------- */
+:root {
+  --bg: #FAF6EF;          /* page background             app bg-faf6ef */
+  --card: #FFFFFF;        /* cards                       app bg-fff    */
+  --card-2: #FFFDF8;      /* soft cards                  app bg-fffdf8 */
+  --chip: #EFE9DC;        /* chips, quiet panels         app bg-efe9dc */
+  --ink: #2A2C33;         /* main text                   app fg-2a2c33 */
+  --muted: #6E6A5E;       /* secondary text              app fg-6e6a5e */
+  --line: #E8E1D2;        /* borders                     app bd-e8e1d2 */
+  --brand: #0E7C6B;       /* the green of every main button (stays green in dark) */
+  --brand-text: #0E7C6B;  /* green words and links       app fg-0e7c6b */
+  --brand-deep: #0A5D50;  /* strong green headings       app fg-0a5d50 */
+  --mint: #E4F2EF;        /* the coach's panel           app bg-e4f2ef */
+  --mint-line: #BFE0D8;   /*                             app bd-bfe0d8 */
+  --amber: #FBF1DC;       /* the Focus Drill panel       app bg-fbf1dc */
+  --amber-line: #F0D9A8;  /*                             app bd-f0d9a8 */
+  --amber-text: #8A5A0B;  /*                             app fg-8a5a0b */
+  --dark-panel: #2A2C33;  /* the "Today's lesson" card   app bg-2a2c33 */
+  --on-brand: #FFFFFF;    /* text on green / dark panels */
+  --shadow: 0 10px 30px rgba(42, 44, 51, .10);
+  color-scheme: light;
+}
+
+/* ---------- colour tokens: dark ----------
+   Twice, on purpose: once for "follow the device" (no saved choice, or 'auto'), once for a
+   saved choice of dark. A saved choice of light (data-theme="light") skips the first block. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #121411; --card: #1C1F1C; --card-2: #191B18; --chip: #2A2C28;
+    --ink: #ECE8DF; --muted: #AAA596; --line: #363833;
+    --brand-text: #46C7AE; --brand-deep: #6FD8C3;
+    --mint: #163631; --mint-line: #23514A; --amber: #3A2F17; --amber-line: #5E4A24; --amber-text: #EAB45E;
+    --dark-panel: #3A3D45; --shadow: 0 10px 30px rgba(0, 0, 0, .45);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #121411; --card: #1C1F1C; --card-2: #191B18; --chip: #2A2C28;
+  --ink: #ECE8DF; --muted: #AAA596; --line: #363833;
+  --brand-text: #46C7AE; --brand-deep: #6FD8C3;
+  --mint: #163631; --mint-line: #23514A; --amber: #3A2F17; --amber-line: #5E4A24; --amber-text: #EAB45E;
+  --dark-panel: #3A3D45; --shadow: 0 10px 30px rgba(0, 0, 0, .45);
+  color-scheme: dark;
+}
+
+/* ---------- screenshots: show the picture that matches the theme ----------
+   Each screenshot exists in light and dark. Both <img> tags are in the page; CSS shows one.
+   The hidden one is loading="lazy" and display:none, so browsers do not download it.
+   ":root" is there on purpose: it makes the hide rule outrank ".phone img { display: block }"
+   and the other layout rules below (a bare ".shot-dark" loses to them and both pictures show). */
+:root .shot-dark { display: none; }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .shot-dark { display: block; }
+  :root:not([data-theme="light"]) .shot-light { display: none; }
+}
+:root[data-theme="dark"] .shot-dark { display: block; }
+:root[data-theme="dark"] .shot-light { display: none; }
+
+/* ---------- base ---------- */
+*, *::before, *::after { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font: 400 17px/1.6 'Atkinson Hyperlegible', system-ui, sans-serif;  /* the app's body font */
+  overflow-wrap: anywhere;
+}
+h1, h2, h3, .btn, .brand-name, .eyebrow, .price-big {
+  font-family: 'Nunito', sans-serif;                                    /* the app's heading font */
+}
+h1 { font-weight: 900; font-size: clamp(34px, 6vw, 54px); line-height: 1.08; margin: 0 0 16px; letter-spacing: -0.01em; }
+h2 { font-weight: 900; font-size: clamp(26px, 4vw, 36px); line-height: 1.15; margin: 0 0 12px; }
+h3 { font-weight: 800; font-size: 19px; line-height: 1.3; margin: 0 0 6px; }
+p { margin: 0 0 12px; }
+a { color: var(--brand-text); text-underline-offset: 3px; }
+a:focus-visible, .btn:focus-visible { outline: 3px solid var(--brand-text); outline-offset: 3px; border-radius: 12px; }
+img { max-width: 100%; height: auto; }
+.wrap { max-width: 1120px; margin: 0 auto; padding: 0 16px; }
+.muted { color: var(--muted); }
+.skip { position: absolute; left: -9999px; top: 8px; }
+.skip:focus { left: 16px; z-index: 10; background: var(--card); padding: 8px 12px; border-radius: 10px; }
+@media (prefers-reduced-motion: no-preference) { html { scroll-behavior: smooth; } }
+
+/* ---------- buttons (the app's: green, rounded, bold) ---------- */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  min-height: 52px; padding: 0 24px; border-radius: 16px;
+  font-weight: 800; font-size: 17px; text-decoration: none; white-space: nowrap;
+}
+.btn-primary { background: var(--brand); color: var(--on-brand); }
+.btn-primary:hover { filter: brightness(1.08); }
+.btn-quiet { background: var(--card); color: var(--brand-text); border: 1.5px solid var(--line); }
+.btn-small { min-height: 42px; padding: 0 16px; font-size: 15px; border-radius: 12px; }
+
+/* ---------- header ---------- */
+.top { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding-block: 16px; }
+.brand { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--ink); }
+.brand img { width: 40px; height: 40px; border-radius: 11px; }
+.brand-name { font-weight: 900; font-size: 20px; }
+.top nav { display: flex; align-items: center; gap: 14px; }
+.top nav .link { font-weight: 700; }
+@media (max-width: 480px) { .top nav .link { display: none; } }  /* the hero has the same link */
+
+/* ---------- hero ---------- */
+.hero { display: grid; gap: 28px; padding-block: 20px 48px; align-items: center; }
+.eyebrow { display: inline-block; background: var(--mint); color: var(--brand-deep); border: 1px solid var(--mint-line);
+  font-weight: 800; font-size: 14px; padding: 4px 12px; border-radius: 999px; margin-bottom: 14px; }
+.lead { font-size: 19px; color: var(--muted); max-width: 36em; }
+.actions { display: flex; flex-wrap: wrap; gap: 12px; margin: 22px 0 14px; }
+.fine { font-size: 15px; color: var(--muted); }
+.phone {
+  justify-self: center; width: min(300px, 82vw);
+  border: 8px solid var(--dark-panel); border-radius: 34px; overflow: hidden;
+  background: var(--bg); box-shadow: var(--shadow);
+}
+.phone img { display: block; width: 100%; }
+@media (min-width: 900px) {
+  .hero { grid-template-columns: 1.15fr .85fr; padding-block: 40px 72px; }
+  .phone { width: 320px; }
+}
+
+/* ---------- sections ---------- */
+section { padding-block: 44px; }
+.section-lead { color: var(--muted); max-width: 40em; margin-bottom: 24px; }
+.cards { display: grid; gap: 14px; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); }
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 22px; padding: 20px; }
+.card p { margin: 0; color: var(--muted); font-size: 16px; }
+.card .icon { width: 30px; height: 30px; color: var(--brand-text); margin-bottom: 8px; }
+.who { display: grid; gap: 14px; }
+@media (min-width: 760px) { .who { grid-template-columns: 1fr 1fr; } }
+
+/* ---------- how the coaching works ---------- */
+.coach { display: grid; gap: 28px; align-items: start; }
+.steps { list-style: none; margin: 0; padding: 0; counter-reset: step; display: grid; gap: 14px; }
+.steps li { counter-increment: step; display: grid; grid-template-columns: 40px 1fr; gap: 12px;
+  background: var(--card); border: 1px solid var(--line); border-radius: 18px; padding: 16px; }
+.steps li::before { content: counter(step); display: grid; place-items: center; width: 40px; height: 40px;
+  border-radius: 12px; background: var(--mint); color: var(--brand-deep); font: 900 18px 'Nunito', sans-serif; }
+.steps p { margin: 0; color: var(--muted); font-size: 16px; }
+.coach-shots { display: grid; gap: 14px; justify-items: center; }
+.coach-shots figure { margin: 0; width: min(100%, 346px); }
+.coach-shots img { border-radius: 16px; box-shadow: var(--shadow); display: block; }
+@media (min-width: 900px) { .coach { grid-template-columns: 1.2fr .8fr; } }
+
+/* ---------- screenshot gallery ----------
+   Phone: one row that scrolls sideways inside itself (the page itself never scrolls sideways).
+   Wide screens: all four side by side. */
+.gallery { display: grid; grid-auto-flow: column; grid-auto-columns: min(250px, 72vw); gap: 16px;
+  overflow-x: auto; scroll-snap-type: x mandatory; padding: 4px 4px 16px; margin: 0 -4px; }
+.gallery figure { margin: 0; scroll-snap-align: start; }
+.gallery img { display: block; border-radius: 22px; border: 1px solid var(--line); box-shadow: var(--shadow); }
+figcaption { font-size: 15px; color: var(--muted); margin-top: 10px; }
+figcaption b { color: var(--ink); display: block; font-family: 'Nunito', sans-serif; font-size: 16px; }
+@media (min-width: 1040px) { .gallery { grid-auto-flow: row; grid-template-columns: repeat(4, 1fr); overflow: visible; } }
+
+/* ---------- prices ---------- */
+.price { display: grid; gap: 14px; }
+@media (min-width: 760px) { .price { grid-template-columns: 1fr 1fr; } }
+.price .card { padding: 24px; }
+.card .price-big { font-weight: 900; font-size: 26px; line-height: 1.2; margin: 4px 0 8px; color: var(--ink); }  /* ".card" so it outranks ".card p" */
+.price .paid { border: 2px solid var(--brand); }
+.ticks { margin: 12px 0 0; padding-left: 1.2em; color: var(--muted); font-size: 16px; }
+
+/* ---------- install ---------- */
+.install .cards { grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); }  /* three cards fill the row */
+.install ol { margin: 8px 0 0; padding-left: 1.2em; color: var(--muted); font-size: 16px; }
+.install li { margin-bottom: 4px; }
+
+/* ---------- honest notes and footer ---------- */
+.note { background: var(--amber); border: 1px solid var(--amber-line); border-radius: 22px; padding: 20px 22px; }
+.note h2 { font-size: 22px; color: var(--amber-text); }
+.note p:last-child { margin-bottom: 0; }
+.cta-band { background: var(--dark-panel); color: var(--on-brand); border-radius: 28px; padding: 32px 24px; text-align: center; }
+.cta-band h2 { color: var(--on-brand); }
+.cta-band p { opacity: .85; }
+footer { padding-block: 32px 48px; color: var(--muted); font-size: 15px; }
+footer nav { display: flex; flex-wrap: wrap; gap: 8px 20px; margin-bottom: 12px; }
