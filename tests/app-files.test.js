@@ -140,6 +140,15 @@ test('the notes button stays off the sign-in screens, where it covered the DVSA 
   for (const v of ['login', 'auth', 'setup']) assert.match(line, new RegExp("view!=='" + v + "'"), 'notes button shows on ' + v);
 });
 
+test('the Settings Voice speed buttons wrap instead of running off a phone at the largest text size', () => {
+  // Found 2026-09-24 (issue #9's browser check): at 390px and the largest text size, "Faster"
+  // ended 6px past the screen. The row and its buttons may now wrap onto a second line.
+  const set = screen('SETTINGS');
+  const row = set.slice(set.lastIndexOf('<div', set.indexOf('>Voice speed<')), set.indexOf('{{ speedChoices }}'));
+  assert.match(row, /^<div style="display:flex;flex-wrap:wrap;/, 'the Voice speed row must be allowed to wrap');
+  assert.match(row, /<div style="display:flex;flex-wrap:wrap;gap:6px"/, 'its buttons must be allowed to wrap');
+});
+
 test('the Settings Voice list can shrink to fit its card on a phone', () => {
   // Found 2026-09-24: a long voice name ("Microsoft George - English (United Kingdom)")
   // pushed the list 13px past its card at 390px. A flex item needs min-width:0 to shrink.

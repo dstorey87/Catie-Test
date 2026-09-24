@@ -1977,9 +1977,10 @@ input,select{font-family:inherit}
         <sc-for list="{{ voiceOpts }}" as="v" hint-placeholder-count="2"><option value="{{ v.v }}">{{ v.label }}</option></sc-for>
       </select>
     </div>
-    <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 0;border-bottom:1px solid var(--tt-bd-f2ede1)">
+    <!-- wraps: at the largest text size "Faster" ran 6px past a 390px screen -->
+    <div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;padding:14px 0;border-bottom:1px solid var(--tt-bd-f2ede1)">
       <span style="font-size:16.5px">Voice speed</span>
-      <div style="display:flex;gap:6px">
+      <div style="display:flex;flex-wrap:wrap;gap:6px">
         <sc-for list="{{ speedChoices }}" as="s" hint-placeholder-count="3"><button onClick="{{ s.pick }}" style="{{ s.style }}">{{ s.label }}</button></sc-for>
       </div>
     </div>
