@@ -2,10 +2,15 @@
 // BUMP VERSION in every deploy that changes any file in CORE — the cache name is
 // the only update signal existing installs get. Merging without a bump ships a
 // stale shell to every install that is currently offline.
-const VERSION = 'v12-2026-09-25';
+const VERSION = 'v13-2026-09-25';
 const C = 'theory-trainer-' + VERSION;
+// CORE is all-or-nothing: the install fails unless every file arrives, so nothing here can
+// be half-cached. The last line is the Adventure page's own files; it also needs config.js,
+// backend.js, coach.js and signs.js above. Without its script the page is dead, so it is here,
+// not in EXTRAS (tests/adventure-page.test.js checks every file the page loads is listed).
 const CORE = ['./', './index.html', './Theory%20Trainer.dc.html', './support.js', './signs.js',
-  './config.js', './backend.js', './picker.js', './coach.js', './manifest.json', './questions-free.json'];
+  './config.js', './backend.js', './picker.js', './coach.js', './manifest.json', './questions-free.json',
+  './adventure.html', './adventure/adventure.js', './adventure/adventure.css'];
 const EXTRAS = ['./icon-180.png', './icon-192.png', './icon-512.png', './icon.png'];
 
 // The paid bank must never enter this cache: once the public files are removed

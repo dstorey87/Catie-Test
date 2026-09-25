@@ -1,7 +1,7 @@
 // The Adventure page (adventure.html + adventure/): its pure helpers, and checks on its HTML
 // that don't need a browser. Run with:  node --test
 // (The page itself - map, play, results, 390px and 1280px, light and dark - is checked in a
-// real browser with tests/browser/harness.js; see changes/section-adventure-page.md.)
+// real browser with tests/browser/harness.js; see STATUS.md, "How to test".)
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
@@ -32,6 +32,18 @@ test('page: loads config.js, backend.js and coach.js (in that order) and its own
   for (const f of ['config.js', 'backend.js', 'coach.js', 'adventure/adventure.js']) assert.ok(src.includes(f), f + ' is loaded');
   assert.ok(src.indexOf('config.js') < src.indexOf('backend.js') && src.indexOf('backend.js') < src.indexOf('coach.js'), 'config before backend before coach');
   assert.ok(!src.includes('support.js'), 'no React runtime: it is a plain page');
+});
+
+test('v13 offline: the page and every script and stylesheet it loads from this site are in sw.js CORE', () => {
+  // CORE is installed all-or-nothing, so the page can't be cached without its script. A file
+  // missing from CORE would open offline as a page that does nothing, with no message.
+  const core = read('sw.js').match(/const CORE = \[([\s\S]*?)\];/)[1];
+  const scripts = [...html.matchAll(/<script src="([^"]+)"/g)].map(m => m[1]);
+  const styles = [...html.matchAll(/<link rel="stylesheet" href="([^"]+)"/g)].map(m => m[1]);
+  // Only this site's own files: the Google Fonts stylesheet is another site, never cached.
+  const own = ['adventure.html', ...scripts, ...styles].filter(f => !/^https?:/.test(f));
+  assert.ok(own.includes('adventure/adventure.js') && own.includes('adventure/adventure.css'), 'the page\'s own files were found');
+  for (const f of own) assert.ok(core.includes("'./" + f + "'"), f + ' is not in sw.js CORE');
 });
 
 test('#32 page: the car on the "Open the app first" message stays on the screen (no sideways scroll)', () => {
