@@ -487,18 +487,21 @@ test('#12 C: on question screens the notes button sits in the page, never floati
   assert.deepEqual(plain(TS.INLINE_NOTES).sort(), ['learnQ', 'test']);
   const line = app.match(/const notesAvail = ([^\n]+)/)[1];
   assert.match(line, /!notesInline/, 'the floating button must not show where the in-page one does');
+  // On a question screen it is in the page at any width. Since #32 it is one button after every
+  // screen (not a copy in each), so it comes after each question screen's Next / End test row.
+  assert.match(app, /const notesInline = notesShown && \(onQuestion \|\| /);
+  const at = tpl.indexOf('data-tt-notes-btn="1"');
   for (const name of ['LEARN QUESTION', 'TEST RUNNING', 'TEST REVIEW']) {
-    const s = screen(name);
-    assert.match(s, /<sc-if value="\{\{ notesInline \}\}"[^>]*>\s*<div[^>]*><button onClick="\{\{ toggleNotes \}\}"/, name + ' has no in-page notes button');
     const next = name === 'TEST REVIEW' ? '{{ endTest }}' : name === 'TEST RUNNING' ? '{{ nextTQ }}' : '{{ nextQ }}';
-    assert.ok(s.indexOf('{{ notesInline }}') > s.indexOf(next), name + ': the notes button must come after the ' + next + ' row');
+    assert.ok(screen(name).includes(next), name + ' has no ' + next + ' row');
+    assert.ok(at > tpl.indexOf(next), name + ': the notes button must come after the ' + next + ' row');
   }
-  // Every other page leaves room under its last line, so it can be scrolled clear of the button.
+  // Floating (a wide screen), each page also leaves room under its last line.
   assert.ok(TS.bottomPad(true) >= TS.NOTES.edge + TS.NOTES.size, 'the padding must clear the floating button');
   assert.ok(TS.bottomPad(false) < TS.bottomPad(true));
   assert.match(app, /<div style="\{\{ pageStyle \}\}">/, 'the page container takes its padding from TTScreen');
   assert.match(app, /pageStyle: [^\n]*TTScreen\.bottomPad\(notesAvail\)/);
-  assert.match(app, /notesFabStyle: [^\n]*N\.size/, 'the floating button takes its size from TTScreen.NOTES');
+  assert.match(app, /const notesFab = [^\n]*N\.size/, 'the floating button takes its size from TTScreen.NOTES');
 });
 
 test('#12 D: no {{ value }} inside SVG text, so the readiness number is drawn', () => {
@@ -907,7 +910,8 @@ test('#10: the notes sheet is a dialog: focus in, Tab kept in, Escape out, focus
   assert.match(app, /else if\(!e\.shiftKey && document\.activeElement===last\)\{ e\.preventDefault\(\); first\.focus\(\); \}/);
   assert.match(app, /if\(!prev\.notesOpen && s\.notesOpen\)\{ const box = document\.querySelector\('\[data-tt-notes\] textarea'\); if\(box\) box\.focus\(\); return; \}/);
   assert.match(app, /const back = \(was && document\.contains\(was\)\) \? was : document\.querySelector\('\[data-tt-notes-btn\]'\);/);
-  assert.equal((tpl.match(/<button onClick="\{\{ toggleNotes \}\}" data-tt-notes-btn="1"/g) || []).length, 4, 'every notes button can take focus back');
+  // Since #32 there is one notes button (in the page or floating), and it can take focus back.
+  assert.equal((tpl.match(/<button onClick="\{\{ toggleNotes \}\}" data-tt-notes-btn="1"/g) || []).length, 1, 'the notes button can take focus back');
 });
 
 test('#10: focus always shows, and motion stops when the device asks (WCAG 2.4.7, 2.3.3)', () => {
@@ -1162,18 +1166,27 @@ test('#32 item 3: the notes button floats only where it fits beside the page; an
   // Settings opened, Start the test, a Practise topic, a My answers row and Home's cards. The #12
   // padding only let the LAST line scroll clear of it; whatever sat under it was still covered.
   assert.ok(TS && TS.PAGE && typeof TS.floatMin === 'function', 'TTScreen.PAGE and TTScreen.floatMin');
-  const W = TS.floatMin(), N = TS.NOTES, P = TS.PAGE;
-  // At the narrowest window where it floats, it sits wholly right of the centred page column.
-  const columnRight = (W + P.max + 2 * P.side) / 2;
-  assert.ok(W - N.edge - N.size >= columnRight, 'at ' + W + 'px the button overlaps the page column');
-  assert.ok(W > 430, 'every phone (430px wide at most) gets the button in the page');
+  const N = TS.NOTES, P = TS.PAGE;
+  // The text size setting zooms the whole page (the column AND the button) by 1, 1.12 or 1.25.
+  const zooms = [...app.match(/const zoom = \[([\d., ]+)\]\[st\.textSize\]/)[1].split(',').map(Number)];
+  assert.deepEqual(zooms, [1, 1.12, 1.25]);
+  for (const z of zooms) {
+    // At the narrowest window where it floats, it sits wholly right of the centred page column.
+    const W = TS.floatMin(z), columnRight = (W + z * (P.max + 2 * P.side)) / 2;
+    assert.ok(W - z * (N.edge + N.size) >= columnRight, 'text zoom ' + z + ': at ' + W + 'px the button overlaps the page column');
+    assert.ok(W > 430, 'every phone (430px wide at most) gets the button in the page');
+  }
+  assert.ok(TS.floatMin(1.25) > TS.floatMin(1), 'bigger text needs a wider window');
   // The page column takes its width and side padding from TTScreen.PAGE: one number for both.
   assert.match(app, /pageStyle: 'max-width:' \+ TTScreen\.PAGE\.max \+ 'px;margin:0 auto;padding:20px ' \+ TTScreen\.PAGE\.side \+ 'px calc\(' \+ TTScreen\.bottomPad\(notesAvail\)/);
-  // In the page on a question screen (#12 C) and whenever the window is narrower than floatMin.
-  assert.match(app, /const notesInline = notesShown && \(onQuestion \|\| !this\.wideScreen\(\)\);/);
-  assert.match(app, /wideScreen\(\)\{[\s\S]{0,400}?window\.matchMedia\('\(min-width: ' \+ TTScreen\.floatMin\(\) \+ 'px\)'\)/);
-  // Turning a tablet or resizing a window across that width moves the button straight away.
-  assert.match(app, /addEventListener\('change', \(\)=>this\.forceUpdate\(\)\)/);
+  // In the page on a question screen (#12 C) and whenever the window is narrower than floatMin
+  // at her text size. The browser answers (matchMedia) for that size's width.
+  assert.match(app, /const notesInline = notesShown && \(onQuestion \|\| !this\.wideScreen\(zoom\)\);/);
+  assert.match(app, /wideScreen\(zoom\)\{[\s\S]{0,300}?const q = '\(min-width: ' \+ TTScreen\.floatMin\(zoom\) \+ 'px\)';/);
+  // Turning a tablet, resizing a window or changing the text size across that width moves the
+  // button straight away: a change of the browser's answer redraws.
+  assert.match(app, /this\._wideMq\.addEventListener\('change', this\._wideRedraw\)/);
+  assert.match(app, /this\._wideRedraw = \(\)=>this\.forceUpdate\(\)/);
   // One notes button for every screen, after the last screen in the page, so in the page it is
   // always below everything else: after Next, Start the test, the last setting and the last row.
   const btns = tpl.match(/<button onClick="\{\{ toggleNotes \}\}" data-tt-notes-btn="1"/g) || [];
@@ -1218,7 +1231,7 @@ test('#32 item 5: the mock chart starts a little under her lowest score and says
   assert.match(app, /const py = v => Y0 \+ \(1 - \(v - lo\)\/\(50 - lo\)\)\*H;/);
   assert.match(app, /chartScale: TTScreen\.chartScale\(lo\),/);
   // Both charts (My Progress and the dashboard) say their scale under the drawing.
-  const charts = [...tpl.matchAll(/<svg viewBox="0 0 340 130"[\s\S]*?<\/svg>\s*<div[^>]*>\{\{ chartScale \}\}<\/div>/g)];
+  const charts = [...tpl.matchAll(/<svg viewBox="0 0 340 130"[\s\S]*?<\/svg>\s*(?:<!--[\s\S]*?-->\s*)?<div[^>]*>\{\{ chartScale \}\}<\/div>/g)];
   assert.equal(charts.length, 2, 'both charts need their scale in words');
 });
 

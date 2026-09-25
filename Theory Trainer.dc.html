@@ -386,6 +386,56 @@ window.TTScreen = (function(){
   // A page's bottom padding: with the floating button showing, enough to scroll the last line
   // clear of it.
   S.bottomPad = function(floating){ return floating ? S.NOTES.edge + S.NOTES.size + S.NOTES.gap : S.PAD; };
+  // The page column (px): its widest, and the padding on each side of it. The page's style
+  // (pageStyle) is built from these, so the sum below always matches what is drawn.
+  S.PAGE = {max: 680, side: 20};
+  // The narrowest window where the floating notes button fits in the empty space to the right of
+  // the centred page column, so it can never cover anything in the page (issue #32: on a phone
+  // it covered Reduce motion, Start the test, a Practise topic and more). Narrower than this, the
+  // button sits in the page instead, after the screen's last line. zoom: the text size setting's
+  // zoom (1, 1.12 or 1.25), which makes the column and the button bigger together.
+  S.floatMin = function(zoom){ return Math.ceil((zoom || 1) * (S.PAGE.max + 2*S.PAGE.side + 2*(S.NOTES.edge + S.NOTES.size))); };
+
+  // ----- Mock test words (issue #32) -----
+  // The pass mark for a mock of `total` questions: 43 of 50, and the same 86% of a shorter one
+  // (Build your own, a test from My answers), rounded up. The one rule for scoring and for words.
+  S.passMark = function(total){ return Math.ceil(total*0.86); };
+  // My Progress's line about her last mock, from her own saved score, the size of that mock and
+  // whether it was a pass. e.g. "Last mock: 42/50. The pass mark is 43, so 1 more right answer
+  // gets you there." (v12 said "1 more right answers", and "/50" after a 20-question mock.)
+  S.lastMockSay = function(score, total, pass){
+    if(pass) return 'Last mock: ' + score + '/' + total + ' — a PASS. One more pass in a row and it is time to book the real thing.';
+    var need = S.passMark(total) - score;
+    return 'Last mock: ' + score + '/' + total + '. The pass mark is ' + S.passMark(total) + ', so ' + need +
+      (need === 1 ? ' more right answer gets' : ' more right answers get') + ' you there.';
+  };
+  // The mock chart's lowest line. It was always 0, which squeezed real scores (mostly 35 to 50)
+  // into the top fifth. Now: a margin under her lowest score (or the pass mark, so its line always
+  // shows), rounded down to a whole ten, never under 0. Scores are counted out of 50, as the chart
+  // draws a shorter mock (score / total * 50).
+  S.CHART = {top: 50, margin: 5, step: 10};
+  S.chartFloor = function(tests, pass){
+    var low = (tests || []).reduce(function(m, r){ return Math.min(m, r.score / (r.total || S.CHART.top) * S.CHART.top); }, pass);
+    return Math.max(0, Math.floor((low - S.CHART.margin) / S.CHART.step) * S.CHART.step);
+  };
+  // The chart's scale in words, under the drawing (it has no axis numbers), so a line starting
+  // at 30 is not read as starting at 0.
+  S.chartScale = function(lo){ return 'The chart runs from ' + lo + ' to ' + S.CHART.top + '.'; };
+
+  // The line under Home's Today's lesson: what is in it, from coach.js's reasons (counts of
+  // questions she keeps missing, flagged, due again, and new). answered: she has answered at least
+  // one question. Before that nothing is built from her answers yet, so it says so plainly (v12
+  // told a brand-new learner "Built from your answers: 20 new").
+  S.lessonDesc = function(r, answered){
+    r = r || {};
+    var fresh = (r.weak || 0) + (r.fresh || 0), total = (r.stuck || 0) + (r.flagged || 0) + (r.due || 0) + fresh, bits = [];
+    if(!answered && total) return 'Your first ' + total + (total === 1 ? ' question' : ' questions') + ', to get you started';
+    if(r.stuck) bits.push(r.stuck + ' you keep missing');
+    if(r.flagged) bits.push(r.flagged + ' flagged');
+    if(r.due) bits.push(r.due + ' due again');
+    if(fresh) bits.push(fresh + ' new');
+    return bits.length ? 'Built from your answers: ' + bits.join(' · ') : 'Built from your answers as you go';
+  };
 
   // ----- Accessibility words (issue #10, WCAG 2.2 AA) -----
   // The browser tab's title for the screen showing (2.4.2 Page titled). label is the
@@ -652,7 +702,7 @@ html{scroll-padding-bottom:160px}
 <main style="{{ dynStyle }}">
 
 <div class="app-chrome">
-<!-- pageStyle: the bottom padding leaves room for the floating notes button (TTScreen.bottomPad) -->
+<!-- pageStyle: the page column (TTScreen.PAGE); its bottom padding leaves room for the floating notes button (TTScreen.bottomPad) -->
 <div style="{{ pageStyle }}">
 
 <!-- ============ LOGIN ============ -->
@@ -1219,24 +1269,26 @@ html{scroll-padding-bottom:160px}
           <div style="font-family:'Nunito',sans-serif;font-weight:900;font-size:19px">{{ microTitle }}</div>
           <div style="font-size:17px;line-height:1.5;margin-top:6px">{{ explanation }}</div>
           <div style="font-size:14px;color:var(--tt-fg-6e6a5e);margin-top:8px">{{ ruleRef }}</div>
-          <sc-if value="{{ hasTip }}" hint-placeholder-val="{{ false }}">
-            <div style="margin-top:10px;padding:10px 12px;background:var(--tt-bg-fff);border-radius:12px;font-size:15px;line-height:1.5"><b>{{ tipLabel }}</b> {{ tipText }}</div>
-          </sc-if>
-          <!-- Explain it differently (issue #9): after a wrong answer, a plainer re-wording of the
-               same explanation. Only one the admin approved reaches here (backend.js passes
-               q.plainExplanation only when its status is 'approved'). -->
-          <sc-if value="{{ plainShow }}" hint-placeholder-val="{{ false }}">
-            <button onClick="{{ plainToggle }}" aria-expanded="{{ plainExpanded }}" aria-controls="tt-plain" style="margin-top:10px;display:inline-flex;align-items:center;min-height:44px;padding:0 14px;border-radius:12px;background:var(--tt-bg-fff);border:1px solid var(--tt-bd-0e7c6b);color:var(--tt-fg-0a5d50);font-size:15px;font-weight:700;cursor:pointer">{{ plainBtnLabel }}</button>
-            <sc-if value="{{ plainOpen }}" hint-placeholder-val="{{ false }}">
-              <div id="tt-plain" style="margin-top:8px;padding:10px 12px;background:var(--tt-bg-fff);border-radius:12px;font-size:16px;line-height:1.5"><b>In other words:</b> {{ plainText }}</div>
-            </sc-if>
-          </sc-if>
         </div>
         <!-- A card-coloured circle in both themes: see-through white hid the dark theme's light icon (WCAG 1.4.11). -->
         <button onClick="{{ speakExp }}" aria-label="Read the explanation aloud" style="flex:none;width:48px;height:48px;border-radius:50%;background:var(--tt-bg-fff);border:none;cursor:pointer;color:var(--tt-fg-2a2c33);display:flex;align-items:center;justify-content:center">
           <svg width="22" height="22" viewBox="0 0 24 24"><path d="M4 9 L8 9 L13 4 L13 20 L8 15 L4 15 Z" fill="currentColor"/><path d="M16.5 8.5 Q19.5 12 16.5 15.5" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/></svg>
         </button>
       </div>
+      <!-- The memory tip and "Explain it differently" sit under the text-and-speaker row, so they use
+           the card's full width (issue #32: beside the speaker they were a narrow strip at 390px). -->
+      <sc-if value="{{ hasTip }}" hint-placeholder-val="{{ false }}">
+        <div style="margin-top:10px;padding:10px 12px;background:var(--tt-bg-fff);border-radius:12px;font-size:15px;line-height:1.5"><b>{{ tipLabel }}</b> {{ tipText }}</div>
+      </sc-if>
+      <!-- Explain it differently (issue #9): after a wrong answer, a plainer re-wording of the
+           same explanation. Only one the admin approved reaches here (backend.js passes
+           q.plainExplanation only when its status is 'approved'). -->
+      <sc-if value="{{ plainShow }}" hint-placeholder-val="{{ false }}">
+        <button onClick="{{ plainToggle }}" aria-expanded="{{ plainExpanded }}" aria-controls="tt-plain" style="margin-top:10px;display:inline-flex;align-items:center;min-height:44px;padding:0 14px;border-radius:12px;background:var(--tt-bg-fff);border:1px solid var(--tt-bd-0e7c6b);color:var(--tt-fg-0a5d50);font-size:15px;font-weight:700;cursor:pointer">{{ plainBtnLabel }}</button>
+        <sc-if value="{{ plainOpen }}" hint-placeholder-val="{{ false }}">
+          <div id="tt-plain" style="margin-top:8px;padding:10px 12px;background:var(--tt-bg-fff);border-radius:12px;font-size:16px;line-height:1.5"><b>In other words:</b> {{ plainText }}</div>
+        </sc-if>
+      </sc-if>
     </div>
     <!-- "More like this": slots similar questions in straight after this one -->
     <sc-if value="{{ moreShow }}" hint-placeholder-val="{{ true }}">
@@ -1246,10 +1298,6 @@ html{scroll-padding-bottom:160px}
       <div role="status" style="margin-top:12px;background:var(--tt-bg-e4f2ef);border:1px solid var(--tt-bd-bfe0d8);border-radius:14px;padding:12px 14px;font-size:15px;color:var(--tt-fg-0a5d50);font-weight:700;text-align:center">{{ moreMsg }}</div>
     </sc-if>
     <button onClick="{{ nextQ }}" style="width:100%;margin-top:14px;background:#0E7C6B;color:#fff;border:none;border-radius:18px;min-height:60px;font-family:'Nunito',sans-serif;font-weight:900;font-size:20px;cursor:pointer">{{ nextLabel }}</button>
-  </sc-if>
-  <!-- Notes: in the page on question screens, after Next, so it can never cover it (#12 C) -->
-  <sc-if value="{{ notesInline }}" hint-placeholder-val="{{ false }}">
-    <div style="display:flex;justify-content:flex-end;margin-top:16px"><button onClick="{{ toggleNotes }}" data-tt-notes-btn="1" style="{{ notesInlineStyle }}"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24"><path d="M5 4 L16 4 L20 8 L20 20 L5 20 Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M8.5 10.5 L16.5 10.5 M8.5 14 L14.5 14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>My notes</button></div>
   </sc-if>
 </div>
 </sc-if>
@@ -1407,6 +1455,8 @@ html{scroll-padding-bottom:160px}
           <circle cx="{{ d.x }}" cy="{{ d.y }}" r="4" fill="{{ d.fill }}"></circle>
         </sc-for>
       </svg>
+      <!-- The chart starts near her lowest score, not 0 (TTScreen.chartFloor), so it says its scale -->
+      <div style="font-size:13px;color:var(--tt-fg-6e6a5e);margin-top:6px;text-align:right">{{ chartScale }}</div>
     </div>
   </sc-if>
   <h2 style="font-family:'Nunito',sans-serif;font-weight:800;font-size:18px;margin:26px 0 10px">Worth remembering</h2>
@@ -1575,10 +1625,6 @@ html{scroll-padding-bottom:160px}
     <button onClick="{{ goReview }}" style="flex:1;background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);border-radius:16px;min-height:54px;font-family:'Nunito',sans-serif;font-weight:800;font-size:17px;cursor:pointer">Review</button>
     <button onClick="{{ nextTQ }}" style="flex:1;background:#0E7C6B;color:#fff;border:none;border-radius:16px;min-height:54px;font-family:'Nunito',sans-serif;font-weight:800;font-size:17px;cursor:pointer">Next →</button>
   </div>
-  <!-- Notes: in the page, after the Back / Review / Next row, so it can never cover Next (#12 C) -->
-  <sc-if value="{{ notesInline }}" hint-placeholder-val="{{ false }}">
-    <div style="display:flex;justify-content:flex-end;margin-top:16px"><button onClick="{{ toggleNotes }}" data-tt-notes-btn="1" style="{{ notesInlineStyle }}"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24"><path d="M5 4 L16 4 L20 8 L20 20 L5 20 Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M8.5 10.5 L16.5 10.5 M8.5 14 L14.5 14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>My notes</button></div>
-  </sc-if>
 </div>
 </sc-if>
 
@@ -1607,10 +1653,6 @@ html{scroll-padding-bottom:160px}
     <button onClick="{{ backToTest }}" style="flex:1;background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);border-radius:16px;min-height:56px;font-family:'Nunito',sans-serif;font-weight:800;font-size:17px;cursor:pointer">Keep going</button>
     <button onClick="{{ endTest }}" style="flex:1;background:#B8433D;color:#fff;border:none;border-radius:16px;min-height:56px;font-family:'Nunito',sans-serif;font-weight:800;font-size:17px;cursor:pointer">End test</button>
   </div>
-  <!-- Notes: in the page, after Keep going / End test, so it can never cover them (#12 C) -->
-  <sc-if value="{{ notesInline }}" hint-placeholder-val="{{ false }}">
-    <div style="display:flex;justify-content:flex-end;margin-top:16px"><button onClick="{{ toggleNotes }}" data-tt-notes-btn="1" style="{{ notesInlineStyle }}"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24"><path d="M5 4 L16 4 L20 8 L20 20 L5 20 Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M8.5 10.5 L16.5 10.5 M8.5 14 L14.5 14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>My notes</button></div>
-  </sc-if>
 </div>
 </sc-if>
 
@@ -1917,6 +1959,8 @@ html{scroll-padding-bottom:160px}
           <circle cx="{{ d.x }}" cy="{{ d.y }}" r="4" fill="{{ d.fill }}"></circle>
         </sc-for>
       </svg>
+      <!-- The chart starts near her lowest score, not 0 (TTScreen.chartFloor), so it says its scale -->
+      <div style="font-size:13px;color:var(--tt-fg-6e6a5e);margin-top:6px;text-align:right">{{ chartScale }}</div>
     </div>
     <div style="background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);border-radius:20px;padding:4px 18px;margin-top:12px">
       <sc-for list="{{ historyRows }}" as="h" hint-placeholder-count="3">
@@ -2296,10 +2340,14 @@ html{scroll-padding-bottom:160px}
 </div>
 </sc-if>
 
-<sc-if value="{{ notesAvail }}" hint-placeholder-val="{{ false }}">
-  <button onClick="{{ toggleNotes }}" data-tt-notes-btn="1" aria-label="My notes" style="{{ notesFabStyle }}">
-    <svg width="24" height="24" viewBox="0 0 24 24"><path d="M5 4 L16 4 L20 8 L20 20 L5 20 Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M8.5 10.5 L16.5 10.5 M8.5 14 L14.5 14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-  </button>
+<!-- The notes button: one for every screen, after the last one, so in the page it is always the
+     screen's last line. It sits there (a card-style "My notes" button) on question screens (#12 C:
+     floating, it covered Next) and on any window narrower than TTScreen.floatMin, which is every
+     phone (#32: floating, it covered Reduce motion, Start the test, a Practise topic, a My answers
+     row). Only on a wide screen does it float, round and dark, in the empty space right of the page,
+     where there is nothing to cover. Floating, its words are for screen readers only (tt-sr). -->
+<sc-if value="{{ notesShown }}" hint-placeholder-val="{{ false }}">
+  <div style="{{ notesWrapStyle }}"><button onClick="{{ toggleNotes }}" data-tt-notes-btn="1" style="{{ notesBtnStyle }}"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24"><path d="M5 4 L16 4 L20 8 L20 20 L5 20 Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M8.5 10.5 L16.5 10.5 M8.5 14 L14.5 14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg><span class="{{ notesWordClass }}">My notes</span></button></div>
 </sc-if>
 <sc-if value="{{ notesOpen }}" hint-placeholder-val="{{ false }}">
   <!-- The dimmed page behind the sheet: a tap closes the notes (a keyboard uses Close or Escape). -->
@@ -2720,9 +2768,25 @@ class Component extends DCLogic {
     // (answers, XP, flags) is not saved over by this page's older copy.
     window.addEventListener('pageshow', e=>{ if(e.persisted && this.state.userId) this.loadUser(this.state.userId, true); });
     setTimeout(()=>this.pullCloud(), 800);
-    this.syncA11y(null);                                  // the tab's title for the first screen
+    this.syncA11y(null);                                 // the tab's title for the first screen
   }
   componentWillUnmount(){ clearInterval(this.tick); }
+  // Is the window at least TTScreen.floatMin wide at her text size (zoom), so the notes button can
+  // float beside the page without covering it (issue #32)? The browser answers (matchMedia), and
+  // tells us when the answer changes (turning a tablet, resizing a window), which redraws. A new
+  // text size asks a new question, so the old one stops listening. No matchMedia (a very old
+  // browser): not wide, so the button stays in the page, where it can never cover anything.
+  wideScreen(zoom){
+    const q = '(min-width: ' + TTScreen.floatMin(zoom) + 'px)';
+    if(this._wideQ !== q){
+      if(!this._wideRedraw) this._wideRedraw = ()=>this.forceUpdate();
+      if(this._wideMq && this._wideMq.removeEventListener) this._wideMq.removeEventListener('change', this._wideRedraw);
+      this._wideQ = q;
+      this._wideMq = window.matchMedia ? window.matchMedia(q) : null;
+      if(this._wideMq && this._wideMq.addEventListener) this._wideMq.addEventListener('change', this._wideRedraw);
+    }
+    return !!(this._wideMq && this._wideMq.matches);
+  }
   // Admin → Activity: send anything queued on this device, then read the last 60 days.
   openActivity(){
     this.setState({view:'activity', actBusy:true, actErr:''});
@@ -3352,8 +3416,8 @@ class Component extends DCLogic {
     if(!mocks.length){
       out.push('Do a first mock test when you feel ready \u2014 it unlocks the smart practice mix and a proper readiness score.');
     } else {
-      if(last.pass) out.push('Last mock: ' + last.score + '/50 \u2014 a PASS. One more pass in a row and it is time to book the real thing.');
-      else out.push('Last mock: ' + last.score + '/50. The pass mark is 43, so ' + (43-last.score) + ' more right answers gets you there.');
+      // Her last mock in words, out of that mock's own size (TTScreen.lastMockSay, issue #32).
+      out.push(TTScreen.lastMockSay(last.score, last.total || 50, last.pass));
       if(last.perTopic && !last.pass){
         const lost = Object.keys(last.perTopic).map(k=>({k, l: last.perTopic[k].n - last.perTopic[k].c})).filter(x=>x.l>0).sort((a,b)=>b.l-a.l).slice(0,2);
         if(lost.length){
@@ -3468,7 +3532,7 @@ class Component extends DCLogic {
       pt[q.topic] = pt[q.topic] || {c:0,n:0}; pt[q.topic].n++;
       if(t.answers[idx]===this.viewQ(q).correctIndex){ score++; pt[q.topic].c++; }
     });
-    const total = t.ids.length, passMark = Math.ceil(total*0.86);
+    const total = t.ids.length, passMark = TTScreen.passMark(total);
     const rec = {date: new Date().toISOString().slice(0,10), score, total, pass: score>=passMark, perTopic: pt, source:'app'};
     const rf = Object.assign({}, this.state.revisionFlags);
     Object.keys(t.flags).forEach(k=>{ if(t.flags[k] && t.ids[k] && !rf[t.ids[k]]) rf[t.ids[k]] = {t: Date.now(), src:'test'}; });
@@ -3824,7 +3888,7 @@ class Component extends DCLogic {
     const smartOn = s.tests.length>=2;
     const effSel = (smartOn && s.learnTopic==='weak') ? 'smart' : s.learnTopic;
     const topicChoices = [
-      smartOn ? {name:'Coach\u2019s smart mix', sub:'shaped by her mock results \u2014 weak topics come up more', v:'smart'}
+      smartOn ? {name:'Coach\u2019s smart mix', sub:'shaped by your mock results \u2014 weak topics come up more', v:'smart'}
               : {name:'My weakest topics', sub: totalSeen? (T[weak[0]-1]+', '+T[weak[1]-1]) : 'a smart mix', v:'weak'},
       {name:'A bit of everything', sub:'all 14 topics mixed', v:'all'},
       {name:'Build my own mix', sub:'choose how many from each topic', v:'mix'}
@@ -4030,12 +4094,14 @@ class Component extends DCLogic {
     const tests = s.tests;
     const W=316, H=110, X0=12, Y0=10;
     const px = i => tests.length<2 ? X0+W/2 : X0 + i*(W/(tests.length-1));
-    const py = v => Y0 + (1 - v/50)*H;
-    const chartPts = tests.map((r,i)=>px(i)+','+py(r.score/(r.total||50)*50)).join(' ');
-    const chartDots = tests.map((r,i)=>({x:px(i), y:py(r.score/(r.total||50)*50), fill: r.pass?'#2E9E5B':'#D14B45'}));
     // The dashed pass line on the chart (out of 50; its label "pass 43" is written in the SVG,
     // where a {{ value }} would not draw). chartSay is the same chart in words.
     const chartPass = 43;
+    // The chart's lowest line: a little under her lowest score, not 0 (TTScreen.chartFloor, #32).
+    const lo = TTScreen.chartFloor(tests, chartPass);
+    const py = v => Y0 + (1 - (v - lo)/(50 - lo))*H;
+    const chartPts = tests.map((r,i)=>px(i)+','+py(r.score/(r.total||50)*50)).join(' ');
+    const chartDots = tests.map((r,i)=>({x:px(i), y:py(r.score/(r.total||50)*50), fill: r.pass?'#2E9E5B':'#D14B45'}));
     const chartSay = TTScreen.chartSay(tests, chartPass);
     const historyRows = tests.map((r,i)=>({
       date: this.fmtDate(r.date), score: r.score+'/'+(r.total||50),
@@ -4226,7 +4292,7 @@ class Component extends DCLogic {
       testVoice: ()=>this.speak('Hello '+st.learnerName+'! This is how I will read your questions.'),
       voiceOpts: this.voices().slice().sort((a,b)=>this.scoreVoice(b)-this.scoreVoice(a)).map(v=>({v:v.name, label: v.name + (this.scoreVoice(v)>=2.5?' \u2605':'')})),
       voiceSel: st.voiceName || (this.bestVoice() ? this.bestVoice().name : ''),
-      voiceNotice: (()=>{ const vs = this.voices(); if(!vs.length) return 'This browser has no speech voices at all. On her iPad or iPhone the app will use Apple\u2019s built-in voices instead.'; const b = this.bestVoice(); return this.scoreVoice(b) < 2.5 ? 'This browser only offers basic voices, so it sounds robotic here. On an iPad or iPhone the app uses Apple\u2019s own voices \u2014 download an Enhanced one (tip below) and it will sound natural.' : ''; })(),
+      voiceNotice: (()=>{ const vs = this.voices(); if(!vs.length) return 'This browser has no speech voices at all. On an iPad or iPhone the app will use Apple\u2019s built-in voices instead.'; const b = this.bestVoice(); return this.scoreVoice(b) < 2.5 ? 'This browser only offers basic voices, so it sounds robotic here. On an iPad or iPhone the app uses Apple\u2019s own voices \u2014 download an Enhanced one (tip below) and it will sound natural.' : ''; })(),
       hasVoiceNotice: (()=>{ const vs = this.voices(); if(!vs.length) return true; return this.scoreVoice(this.bestVoice()) < 2.5; })(),
       setVoice: e=>{ setSetting('voiceName', e.target.value); setTimeout(()=>this.speak('Hello! I am the new voice.'), 200); },
       speedChoices: [['Slower',0.85],['Normal',0.95],['Faster',1.1]].map(p=>({label:p[0], pick:()=>setSetting('voiceRate',p[1]),
@@ -4305,11 +4371,16 @@ class Component extends DCLogic {
     // screen), where it covered the DVSA line; not in the quick setup; hidden while the My
     // answers action bar is up (it sits where the bar's buttons are) or the notes are open.
     const notesShown = view!=='login' && view!=='cloudLogin' && view!=='auth' && view!=='setup' && view!=='age' && !ageAuto && !onbShow && !s.printPreview && !s.notesOpen && !ansVals.ansAnyTicked;
-    // On a question screen it sits in the page after the answer row, elsewhere it floats
-    // (TTScreen.INLINE_NOTES, issue #12 C: floating, it covered "Next →"). A finished mock's
-    // results page floats it as usual.
-    const notesInline = notesShown && TTScreen.INLINE_NOTES.indexOf(view) >= 0 && !(view==='test' && (!t || t.ended));
+    // It sits in the page, after the screen's last line, on a question screen (TTScreen.INLINE_NOTES,
+    // issue #12 C: floating, it covered "Next →"; a finished mock's results page is not one) and on
+    // any window too narrow for it to float beside the page (issue #32: on a phone it covered
+    // controls). Only on a wide screen does it float (notesAvail), in the space right of the page.
+    const onQuestion = TTScreen.INLINE_NOTES.indexOf(view) >= 0 && !(view==='test' && (!t || t.ended));
+    const notesInline = notesShown && (onQuestion || !this.wideScreen(zoom));
     const notesAvail = notesShown && !notesInline, N = TTScreen.NOTES;
+    // Its two looks: a card-style button in the page, or the round dark one floating.
+    const notesInPage = 'display:flex;align-items:center;gap:8px;background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);border-radius:14px;min-height:48px;padding:0 16px;font-size:15px;font-weight:700;color:var(--tt-fg-6e6a5e);cursor:pointer';
+    const notesFab = 'position:fixed;right:' + N.edge + 'px;bottom:calc(' + N.edge + 'px + env(safe-area-inset-bottom));width:' + N.size + 'px;height:' + N.size + 'px;border-radius:50%;background:var(--tt-bg-2a2c33);color:#fff;border:none;cursor:pointer;box-shadow:0 6px 18px rgba(0,0,0,.22);z-index:60;display:flex;align-items:center;justify-content:center';
 
     return Object.assign({
       dynStyle: dyn,
@@ -4333,7 +4404,7 @@ class Component extends DCLogic {
       goProgress: nav('progress'),
       readyPct: rdy, readyDash: (rdy*3.64).toFixed(0)+' 365', readyColor: rdyColor, readyText: TTScreen.textTone(rdyColor),
       readyLabel: rdy>=90?'Ready to book!':rdy>=75?'Nearly ready':rdy>=50?'Getting there':'Keep practising',
-      readySub: s.tests.length ? 'Based on her mocks, practice answers and memory boxes.' : 'Do a mock test to make this score properly accurate.',
+      readySub: s.tests.length ? 'Based on your mocks, practice answers and memory boxes.' : 'Do a mock test to make this score properly accurate.',
       coachLines: this.advise().map(t=>({text:t})),
       progTopics: this.combinedTopicAcc().slice().sort((a,b)=>(a.acc===null?-0.01:a.acc)-(b.acc===null?-0.01:b.acc)).map(x=>{
         const pct = x.acc===null? 0 : Math.round(x.acc*100);
@@ -4479,15 +4550,10 @@ class Component extends DCLogic {
       levelUpLine: s.lastLevelUp? ('Level ' + s.lastLevelUp + ' \u2014 ' + this.levelInfo(s.xp||0).name) : '',
       hasLevelUp: !!s.lastLevelUp,
       startDailyLesson: ()=>this.startDailyLesson(),
-      // worked out only on Home, where the card shows (it reads her whole answer history)
-      dailyDesc: view!=='home' ? '' : (()=>{
-        const r = this.drillPlan().reasons, bits = [];
-        if(r.stuck) bits.push(r.stuck + ' you keep missing');
-        if(r.flagged) bits.push(r.flagged + ' flagged');
-        if(r.due) bits.push(r.due + ' due again');
-        if(r.weak + r.fresh) bits.push((r.weak + r.fresh) + ' new');
-        return bits.length ? 'Built from your answers: ' + bits.join(' \u00b7 ') : 'Built from your answers as you go';
-      })(),
+      // The line under Today's lesson, worked out only on Home, where the card shows (it reads her
+      // whole answer history): "Your first 20 questions..." before she has answered any, then what
+      // the lesson is built from (TTScreen.lessonDesc, issue #32).
+      dailyDesc: view!=='home' ? '' : TTScreen.lessonDesc(this.drillPlan().reasons, s.attempts.length > 0),
       hasExamDate: !!st.examDate,
       examCountdown: (function(){ if(!st.examDate) return ''; const d = Math.ceil((new Date(st.examDate+'T09:00') - Date.now())/86400000); return d>1? (d + ' days until your theory test') : d===1? 'Your theory test is tomorrow!' : d===0? 'Test day \u2014 good luck!' : 'Your test date has passed \u2014 set the next one in Settings'; })(),
       examDate: st.examDate||'',
@@ -4497,10 +4563,14 @@ class Component extends DCLogic {
       hasAvatar: !!s.avatar, noAvatar: !s.avatar, avatarSrc: s.avatar||'', learnerInitial: (st.learnerName||'?')[0].toUpperCase(),
       avatarUpload: e=>{ const f = e.target.files && e.target.files[0]; if(!f) return; const rd = new FileReader(); rd.onload = ()=>{ const img = new Image(); img.onload = ()=>{ const c = document.createElement('canvas'); const S = 128; c.width = S; c.height = S; const x = c.getContext('2d'); const m = Math.min(img.width, img.height); x.drawImage(img, (img.width-m)/2, (img.height-m)/2, m, m, 0, 0, S, S); this.set({avatar: c.toDataURL('image/jpeg', .82)}); }; img.src = rd.result; }; rd.readAsDataURL(f); e.target.value = ''; },
       avatarRemove: ()=>this.set({avatar:''}),
-      // The notes button: floating (notesAvail) or in the page on question screens (notesInline).
-      notesAvail: notesAvail, notesInline: notesInline,
-      notesInlineStyle: 'display:flex;align-items:center;gap:8px;background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);border-radius:14px;min-height:48px;padding:0 16px;font-size:15px;font-weight:700;color:var(--tt-fg-6e6a5e);cursor:pointer',
-      pageStyle: 'max-width:680px;margin:0 auto;padding:20px 20px calc(' + TTScreen.bottomPad(notesAvail) + 'px + env(safe-area-inset-bottom))',
+      // The notes button (see notesInline above): shown at all, then its look and wrapper for where it is.
+      notesShown: notesShown, notesAvail: notesAvail,
+      notesBtnStyle: notesAvail ? notesFab : notesInPage,
+      notesWrapStyle: notesAvail ? '' : 'display:flex;justify-content:flex-end;margin-top:16px',
+      notesWordClass: notesAvail ? 'tt-sr' : '',
+      // The page column, its width and sides from TTScreen.PAGE; the bottom padding leaves room for
+      // the floating notes button (TTScreen.bottomPad).
+      pageStyle: 'max-width:' + TTScreen.PAGE.max + 'px;margin:0 auto;padding:20px ' + TTScreen.PAGE.side + 'px calc(' + TTScreen.bottomPad(notesAvail) + 'px + env(safe-area-inset-bottom))',
       notesOpen: !!s.notesOpen,
       // Opening remembers which button opened the notes, so closing can put focus back there.
       toggleNotes: ()=>{ if(!s.notesOpen) this._notesFrom = document.activeElement; this.setState({notesOpen: !s.notesOpen, notesKey: s.view}); },
@@ -4515,7 +4585,6 @@ class Component extends DCLogic {
         if(e.shiftKey && document.activeElement===first){ e.preventDefault(); last.focus(); }
         else if(!e.shiftKey && document.activeElement===last){ e.preventDefault(); first.focus(); }
       },
-      notesFabStyle: 'position:fixed;right:' + N.edge + 'px;bottom:calc(' + N.edge + 'px + env(safe-area-inset-bottom));width:' + N.size + 'px;height:' + N.size + 'px;border-radius:50%;background:var(--tt-bg-2a2c33);color:#fff;border:none;cursor:pointer;box-shadow:0 6px 18px rgba(0,0,0,.22);z-index:60;display:flex;align-items:center;justify-content:center',
       notesScreenName: this.NOTESN[s.notesKey||s.view] || 'This screen',
       notesText: (s.notes||{})[s.notesKey||s.view] || '',
       notesChange: e=>{ const n = Object.assign({}, s.notes); const k = s.notesKey||s.view; if(e.target.value) n[k] = e.target.value; else delete n[k]; this.set({notes:n}); },
@@ -4558,7 +4627,7 @@ class Component extends DCLogic {
       toggleRange: ()=>this.setState({range: s.range==='all'?'7d':'all'}),
       topicBars,
       hasTests: tests.length>0, noTests: tests.length===0,
-      chartPts, chartDots, chartSay, passLineY: py(chartPass), passLabelY: py(chartPass)-5,
+      chartPts, chartDots, chartSay, chartScale: TTScreen.chartScale(lo), passLineY: py(chartPass), passLabelY: py(chartPass)-5,
       historyRows,
       hasHard: hardRows.length>0, noHard: hardRows.length===0, hardRows,
       exportData: ()=>this.download('theory-trainer-backup.json', {settings:st, leitner:s.leitner, attempts:s.attempts, tests:s.tests, overrides:s.overrides, custom:s.custom, deleted:s.deleted}),
