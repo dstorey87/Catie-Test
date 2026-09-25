@@ -509,8 +509,10 @@ test('#12 D: no {{ value }} inside SVG text, so the readiness number is drawn', 
   // and SVG does not draw an HTML <span>: only "%" showed.
   const markup = app.replace(/<!--[\s\S]*?-->/g, '');          // comments may name <text> freely
   const texts = [...markup.matchAll(/<text\b[^>]*>([\s\S]*?)<\/text>/g)].map(m => m[1]);
-  assert.ok(texts.length >= 2, 'expected the chart labels');
   for (const t of texts) assert.doesNotMatch(t, /\{\{/, 'a value inside SVG <text> is never drawn: ' + t);
+  // The chart labels ("pass 43") are made by TTScreen.chartMarks since #38: plain words, no {{ }}.
+  const label = TS.chartMarks([], 30, 43).find(m => m.tag === 'text');
+  assert.equal(label.text, 'pass 43');
   const dial = screen('MY PROGRESS (learner)').match(/<div data-tt-dial[\s\S]*?<\/div>\s*<\/div>/);
   assert.ok(dial, 'My Progress has no HTML readiness label over the dial');
   assert.match(dial[0], /\{\{ readyPct \}\}%/);
@@ -977,7 +979,9 @@ test('#10 contrast: controls and states can be seen, 3:1 against what is next to
   // A flagged mock square's border, and the chart's pass line, against the white square/card.
   assert.match(app, /if\(fl\) sty \+= 'background:var\(--tt-bg-fff\);border:2\.5px solid #C77E14;/);
   assert.ok(contrast('#C77E14', '#ffffff') >= 3);
-  assert.equal((tpl.match(/stroke="#C77E14" stroke-width="1\.5" stroke-dasharray="5 4"/g) || []).length, 2);
+  const passLine = TS.chartMarks([], 30, 43)[0];                 // drawn by TTScreen.chartMarks (#38)
+  assert.deepEqual([passLine.tag, passLine.attrs.stroke, passLine.attrs['stroke-width'], passLine.attrs['stroke-dasharray']], ['line', '#C77E14', 1.5, '5 4']);
+  assert.equal((tpl.match(/\{\{ chartMarks \}\}/g) || []).length, 2, 'both charts draw it');
 });
 
 test('#10 reflow: rows that ran off a 320px screen now wrap or shrink (WCAG 1.4.10)', () => {
@@ -1001,17 +1005,20 @@ function method(start, next) {
   assert.ok(a >= 0 && b > a, 'method not found in the page: ' + start);
   return app.slice(a, b);
 }
-// A stand-in for the app: its real persist() and loadUser() over a fake localStorage (store).
+// A stand-in for the app: its real persist(), loadUser() and mergeSnapshot() (the cloud sync's
+// merge, with the real coach.js as TTCoach) over a fake localStorage (store).
 function fakeApp(store) {
   const localStorage = { getItem: k => (k in store ? store[k] : null), setItem: (k, v) => { store[k] = String(v); } };
-  const ctx = { window: {}, localStorage, JSON, Date, Object };
+  const ctx = { window: {}, localStorage, JSON, Date, Object, TTCoach: coach };
   vm.runInNewContext(advSrc, ctx);
   ctx.TTAdv = ctx.window.TTAdv;
-  vm.runInNewContext('var me = {' + method('persist(extra){', 'set(patch){') + ',' + method('loadUser(id, keepSession){', 'addLearner(){') + '};', ctx);
+  vm.runInNewContext('var me = {' + method('persist(extra){', 'set(patch){') + ',' + method('loadUser(id, keepSession){', 'addLearner(){') +
+    ',' + method('mergeSnapshot(b){', 'pullCloud(){') + '};', ctx);
   return Object.assign(ctx.me, {
     BASE: 'theoryTrainer', users: [{ id: 'u1', name: 'Catie' }],
     state: { userId: 'u1', settings: {}, overrides: {}, custom: [], deleted: [], packNames: {}, packLearn: {}, packTest: {}, sub: {} },
-    setState(patch, cb) { Object.assign(this.state, patch); if (cb) cb(); }
+    setState(patch, cb) { Object.assign(this.state, patch); if (cb) cb(); },
+    forceUpdate() {}
   });
 }
 // What adventure.html leaves in her record after one stage (the shape adventure.js writes).
@@ -1065,6 +1072,63 @@ test('adventure: a learner who never played gets no adventure entry, and junk is
   assert.deepEqual(plain(out), { attempts: ['new'], adventure: { stages: {} } });
   assert.deepEqual(next, { attempts: ['new'] }, 'next is not changed');
   for (const junk of [null, undefined, 'text', 5]) assert.deepEqual(plain(ADV.keep(junk, next)), { attempts: ['new'] });
+});
+
+// ---------- Issue #38 item 1: Adventure progress lost across devices ----------
+// mergeSnapshot() is the cloud sync's merge. It took the newer copy of each learner's whole
+// record and merged only flags question by question. A device that had never played Adventure
+// saved a newer record with no 'adventure', and the sync then replaced the stars on this device.
+// These tests run the app's real mergeSnapshot() (lifted out of the page, as above).
+// The other device's copy of her record as the server hands it over: newer than this device's
+// (whose persist() stamps the time now) unless extra gives an older updatedAt.
+const otherDevice = (id, extra) => ({ users: [{ id: 'u1', name: 'Catie' }, { id: 'u2', name: 'Sam' }],
+  data: { [id]: Object.assign({ settings: { learnerName: 'Catie' }, xp: 90, updatedAt: Date.now() + 3600000, attempts: [], revisionFlags: {}, flagCleared: {} }, extra) } });
+
+test('#38 item 1: a newer record from a device that never played Adventure keeps her stars', () => {
+  const store = { 'theoryTrainer.d.u1': JSON.stringify(pageSaved()) };      // this device: w1s1, 3 stars
+  const me = fakeApp(store);
+  me.loadUser('u1');
+  me.mergeSnapshot(otherDevice('u1'));                                       // newer, with no 'adventure'
+  const saved = JSON.parse(store['theoryTrainer.d.u1']);
+  assert.deepEqual(saved.adventure, pageSaved().adventure, 'the sync wiped her Adventure progress');
+  assert.deepEqual(plain(me.state.adventure), pageSaved().adventure, 'the app shows it after the sync');
+  assert.equal(saved.xp, 90, 'the rest of the newer record still wins');
+});
+
+test('#38 item 1: stages played on each device are joined stage by stage, whichever record is newer', () => {
+  const w1s2 = { best: 6 / 7, stars: 1, passed: true, plays: 1, lastAt: 4 };
+  // The other device is newer and played lesson 2; this one played lesson 1.
+  let store = { 'theoryTrainer.d.u1': JSON.stringify(pageSaved()) };
+  let me = fakeApp(store);
+  me.loadUser('u1');
+  me.mergeSnapshot(otherDevice('u1', { adventure: { stages: { w1s2 } } }));
+  assert.deepEqual(Object.keys(JSON.parse(store['theoryTrainer.d.u1']).adventure.stages).sort(), ['w1s1', 'w1s2']);
+  // This device is newer: the other device's lesson 2 still comes in (before, nothing was written).
+  store = { 'theoryTrainer.d.u1': JSON.stringify(pageSaved()) };
+  me = fakeApp(store);
+  me.loadUser('u1');
+  me.mergeSnapshot(otherDevice('u1', { updatedAt: 5, adventure: { stages: { w1s2 } } }));
+  const saved = JSON.parse(store['theoryTrainer.d.u1']);
+  assert.deepEqual(Object.keys(saved.adventure.stages).sort(), ['w1s1', 'w1s2']);
+  assert.equal(saved.xp, 70, 'this newer record keeps its own XP');
+});
+
+test('#38 item 1: progress the server lacks is sent back; a learner who never played gets no entry', () => {
+  // Sam (u2) is not the learner on screen, so nothing reloads: only the merge can ask to send.
+  const sams = { settings: { learnerName: 'Sam' }, updatedAt: 1, adventure: { stages: { w1s1: { best: 1, stars: 3, passed: true, plays: 1, lastAt: 1 } } } };
+  const store = { 'theoryTrainer.d.u2': JSON.stringify(sams) };
+  const me = fakeApp(store);
+  me.users.push({ id: 'u2', name: 'Sam' });
+  me._dirty = false;
+  me.mergeSnapshot(otherDevice('u2'));
+  assert.deepEqual(JSON.parse(store['theoryTrainer.d.u2']).adventure, sams.adventure);
+  assert.equal(me._dirty, true, 'the server\'s copy has no stars: this device must push its merged copy back');
+  // Neither copy has Adventure progress: none is made up.
+  const store2 = { 'theoryTrainer.d.u2': JSON.stringify({ updatedAt: 1 }) };
+  const me2 = fakeApp(store2);
+  me2.mergeSnapshot(otherDevice('u2'));
+  assert.equal(JSON.parse(store2['theoryTrainer.d.u2']).adventure, undefined);
+  assert.match(method('mergeSnapshot(b){', 'pullCloud(){'), /TTCoach\.mergeAdventure\(loc\.adventure, ?remote\.adventure\)/, 'uses the one coach.js rule');
 });
 
 test('adventure: the Home card says the world she is on and her stars, counted from coach.js', () => {
@@ -1228,7 +1292,9 @@ test('#32 item 5: the mock chart starts a little under her lowest score and says
   assert.equal(TS.chartFloor([{ score: 9, total: 20 }], 43), 10, 'a short mock is drawn out of 50, like the chart line (9/20 is 22.5)');
   assert.equal(TS.chartScale(30), 'The chart runs from 30 to 50.');
   assert.match(app, /const lo = TTScreen\.chartFloor\(tests, chartPass\);/);
-  assert.match(app, /const py = v => Y0 \+ \(1 - \(v - lo\)\/\(50 - lo\)\)\*H;/);
+  // The drawing (TTScreen.chartMarks since #38) puts a score of lo at the bottom and 50 at the top.
+  const dots = TS.chartMarks([{ score: 30, pass: false }, { score: 50, pass: true }], 30, 43).filter(m => m.tag === 'circle');
+  assert.deepEqual(plain(dots.map(d => d.attrs.cy)), [TS.CHART.BOX.y + TS.CHART.BOX.h, TS.CHART.BOX.y]);
   assert.match(app, /chartScale: TTScreen\.chartScale\(lo\),/);
   // Both charts (My Progress and the dashboard) say their scale under the drawing.
   const charts = [...tpl.matchAll(/<svg viewBox="0 0 340 130"[\s\S]*?<\/svg>\s*(?:<!--[\s\S]*?-->\s*)?<div[^>]*>\{\{ chartScale \}\}<\/div>/g)];
@@ -1254,4 +1320,43 @@ test('#32 item 5: the memory tip and plain-words boxes use the card\'s full widt
     assert.ok(learn.indexOf(v) > speak, v + ' must come after the read-aloud button, below the text column');
     assert.ok(learn.indexOf(v) < learn.indexOf('{{ nextQ }}'), v + ' must stay in the answer card, before Next');
   }
+});
+
+// ---------- Issue #38 item 5: console errors on every app load ----------
+test('#38 item 5: no {{ value }} in an SVG attribute the browser reads as a number or length', () => {
+  // v13: every load logged 12 console errors, such as <line> attribute y1: Expected length,
+  // "{{ passLineY }}" (both mock charts: y1, y2, y, points, cx and cy). The browser reads the page
+  // before the app fills its values in, so it parsed the raw template text as numbers.
+  const GEOMETRY = ['x', 'y', 'x1', 'y1', 'x2', 'y2', 'cx', 'cy', 'r', 'rx', 'ry', 'width', 'height', 'points', 'd', 'transform', 'viewbox', 'dx', 'dy'];
+  const markup = tpl.replace(/<!--[\s\S]*?-->/g, '');
+  const svgs = [...markup.matchAll(/<svg\b[\s\S]*?<\/svg>/g)].map(m => m[0]);
+  assert.ok(svgs.length >= 2, 'expected the mock charts');
+  for (const s of svgs) for (const [tag] of s.matchAll(/<[a-z][^>]*>/gi)) {
+    for (const [, name, value] of tag.matchAll(/\s([a-zA-Z0-9-]+)="([^"]*)"/g)) {
+      assert.ok(!(GEOMETRY.includes(name.toLowerCase()) && value.includes('{{')), 'a template value in an SVG ' + name + ': ' + tag);
+    }
+  }
+  // Both charts draw their moving parts from TTScreen.chartMarks, as elements the app makes.
+  const charts = [...markup.matchAll(/<svg viewBox="0 0 340 130"[^>]*>([\s\S]*?)<\/svg>/g)].map(m => m[1].trim());
+  assert.deepEqual(charts, ['{{ chartMarks }}', '{{ chartMarks }}']);
+  assert.match(app, /chartMarks: TTScreen\.chartMarks\(tests, lo, chartPass\)\.map\(\(m, ?i\)=>React\.createElement\(m\.tag, Object\.assign\(\{key:i\}, m\.attrs\), m\.text\)\)/);
+});
+
+test('#38 item 5: the mock chart draws the pass line, her scores and a dot for each mock, as before', () => {
+  assert.ok(TS && typeof TS.chartMarks === 'function', 'TTScreen.chartMarks');
+  const tests = [{ score: 38, total: 50, pass: false }, { score: 44, total: 50, pass: true }, { score: 18, total: 20, pass: true }];
+  const lo = TS.chartFloor(tests, 43);
+  assert.equal(lo, 30);
+  const marks = plain(TS.chartMarks(tests, lo, 43));
+  const y = v => 10 + (1 - (v - lo) / (50 - lo)) * 110;       // the chart's box: 110 high from y=10
+  // The dashed pass line across the chart, and its label just above its right end.
+  assert.deepEqual(marks[0], { tag: 'line', attrs: { x1: 12, y1: y(43), x2: 328, y2: y(43), stroke: '#C77E14', 'stroke-width': 1.5, 'stroke-dasharray': '5 4' } });
+  assert.deepEqual(marks[1], { tag: 'text', attrs: { x: 328, y: y(43) - 5, 'text-anchor': 'end', 'font-size': 9, 'font-family': 'sans-serif', style: { fill: 'var(--tt-fg-8a5a0b)' } }, text: 'pass 43' });
+  // Her scores left to right across the 316-wide box from x=12, a 20-question mock drawn out of 50.
+  assert.deepEqual(marks[2], { tag: 'polyline', attrs: { points: '12,' + y(38) + ' 170,' + y(44) + ' 328,' + y(45), fill: 'none', stroke: '#0E7C6B', 'stroke-width': 2.5, 'stroke-linejoin': 'round' } });
+  assert.deepEqual(marks.slice(3).map(m => [m.tag, m.attrs.cx, m.attrs.cy, m.attrs.r, m.attrs.fill]),
+    [['circle', 12, y(38), 4, '#D14B45'], ['circle', 170, y(44), 4, '#2E9E5B'], ['circle', 328, y(45), 4, '#2E9E5B']]);
+  // One mock sits in the middle; no mocks draws only the pass line and its label.
+  assert.equal(plain(TS.chartMarks([{ score: 40, pass: false }], 30, 43))[3].attrs.cx, 170);
+  assert.deepEqual(plain(TS.chartMarks([], 30, 43)).map(m => m.tag), ['line', 'text', 'polyline']);
 });
