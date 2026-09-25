@@ -3,6 +3,26 @@
 Newest first. The version is the service-worker `VERSION` in `sw.js` — it changes on every
 deploy that touches the app's cached files. Earlier history: `git log`.
 
+## v17-2026-09-25
+Every road sign on the test, by category, with quizzes and Adventure sign worlds (#48, PR #54). 436 tests.
+- **Road Signs has every sign, road marking, light signal and vehicle marking in The Highway Code**:
+  205 official pictures with the Highway Code's own caption word for word, under the pages' own
+  headings (Signs giving orders 47, Warning signs 50, Direction signs 21, Information signs 24, Road
+  work signs 11, Road markings 28, Light signals controlling traffic 14, Vehicle markings 10), plus 7
+  DfT signs with no Highway Code twin. Category buttons at the top jump to each section.
+- **Quiz me on all signs** and **Quiz me on this category**: the official picture, its caption as the
+  right answer, and three other official captions from the same category as the wrong ones — nothing
+  written by us. Sign answers count toward the daily goal, streak and XP; the bank's coach (Today's
+  lesson, stuck questions, My answers, readiness) never sees them.
+- **Adventure: 8 sign worlds** (15–22, one per category, 37 stages) on their own road, open from the
+  start; same pass mark, stars and replays. Saved topic-world progress is untouched.
+- 212 pictures in `signs/` (3.8 MB); only the 30 that bank questions use are downloaded on install,
+  the rest the first time they're seen. One credit line (Crown copyright, OGL v3.0) on Road Signs,
+  About and Help.
+- Left out, each with its reason in `tests/data/highway-code-catalogue.json`: 2 pictures the official
+  page gets wrong, 2 logos (not covered by the licence), 26 photographs of people (the arm-signal
+  pages; not decided), and 26 whose caption is not a meaning.
+
 ## v16-2026-09-25
 Official road sign pictures (#44, PR #50) and Adventure counting like practice (#47, PR #49). 422 tests.
 - **Road signs are the real ones now.** Every sign picture is official Great Britain artwork from
