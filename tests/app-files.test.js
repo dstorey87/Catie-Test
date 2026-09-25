@@ -713,13 +713,8 @@ function divBlock(at) {
   for (let m; (m = re.exec(tpl));) { depth += m[0] === '</div>' ? -1 : 1; if (depth === 0) return tpl.slice(at, m.index); i = m.index; }
   return tpl.slice(at);
 }
-// WCAG 2 contrast ratio between two #rrggbb (or #rgb) colours.
-function contrast(a, b) {
-  const lum = h => { h = h.replace('#', ''); if (h.length === 3) h = h.split('').map(c => c + c).join('');
-    return [0, 2, 4].map(i => parseInt(h.slice(i, i + 2), 16) / 255).map(v => v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4))
-      .reduce((s, v, i) => s + v * [0.2126, 0.7152, 0.0722][i], 0); };
-  const x = lum(a), y = lum(b); return (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05);
-}
+// WCAG 2 contrast ratio between two #rrggbb (or #rgb) colours (one copy, in tests/contrast.js).
+const { contrast } = require('./contrast.js');
 // The palette map: a token's light colour is in its name, its dark colour is the value.
 const PALETTE = (() => {
   const map = app.slice(app.indexOf('var TT_DARK = {'), app.indexOf('};', app.indexOf('var TT_DARK = {')));
@@ -1136,4 +1131,114 @@ test('adventure: the How-to guide explains it with the numbers coach.js really u
     '1 star at ' + pct(A.stars[0]) + ', 2 at ' + pct(A.stars[1]) + ' and 3 at ' + pct(A.stars[2])
   ]) assert.ok(sec.includes(e), 'coach.js changed: help.html #adventure should say "' + e + '"');
   assert.ok(guide.includes('<a href="#adventure">Adventure mode</a>'), 'the contents has no Adventure mode link');
+});
+
+// ---------- Issue #32: the v12 live browser check (388 checks at 390/1280, light and dark).
+// Every test below failed on v12. Items 1 and 2 were already fixed on develop by #10 (checked in
+// the browser again for #32); their tests pin the fix. The rest failed on develop before #32. ----------
+
+test('#32 item 1: the explanation\'s read-aloud button is a solid circle in theme colours, its icon 3:1 in both themes', () => {
+  // v12: background:rgba(255,255,255,.7), see-through white that stayed white in dark mode, under
+  // the dark theme's light icon: 1.47:1 (WCAG 1.4.11 asks 3:1 of an icon).
+  const tag = screen('LEARN QUESTION').match(/<button onClick="\{\{ speakExp \}\}"[^>]*>/);
+  assert.ok(tag, 'no read-aloud button on the explanation');
+  const bg = tag[0].match(/background:var\(--tt-(bg-[0-9a-f]+)\)/), fg = tag[0].match(/;color:var\(--tt-(fg-[0-9a-f]+)\)/);
+  assert.ok(bg && fg, 'its background and icon must both be theme colours (a fixed white does not change with the theme)');
+  for (const theme of ['light', 'dark']) {
+    const r = contrast(PALETTE[fg[1]][theme], PALETTE[bg[1]][theme]);
+    assert.ok(r >= 3, theme + ': icon on its circle is ' + r.toFixed(2) + ':1');
+  }
+});
+
+test('#32 item 2: Settings\' Voice list and "My theory test date" have names a screen reader says', () => {
+  // v12: both had none (the same date field in Study plan and the quick setup did).
+  const set = screen('SETTINGS');
+  assert.match(set, /<select value="\{\{ voiceSel \}\}"[^>]*aria-label="Voice"/);
+  assert.match(set, /<input type="date" value="\{\{ examDate \}\}"[^>]*aria-label="My theory test date"/);
+});
+
+test('#32 item 3: the notes button floats only where it fits beside the page; anywhere narrower it is in the page', () => {
+  // v12 at 390px: floating over the bottom-right of every screen, it covered Reduce motion as
+  // Settings opened, Start the test, a Practise topic, a My answers row and Home's cards. The #12
+  // padding only let the LAST line scroll clear of it; whatever sat under it was still covered.
+  assert.ok(TS && TS.PAGE && typeof TS.floatMin === 'function', 'TTScreen.PAGE and TTScreen.floatMin');
+  const W = TS.floatMin(), N = TS.NOTES, P = TS.PAGE;
+  // At the narrowest window where it floats, it sits wholly right of the centred page column.
+  const columnRight = (W + P.max + 2 * P.side) / 2;
+  assert.ok(W - N.edge - N.size >= columnRight, 'at ' + W + 'px the button overlaps the page column');
+  assert.ok(W > 430, 'every phone (430px wide at most) gets the button in the page');
+  // The page column takes its width and side padding from TTScreen.PAGE: one number for both.
+  assert.match(app, /pageStyle: 'max-width:' \+ TTScreen\.PAGE\.max \+ 'px;margin:0 auto;padding:20px ' \+ TTScreen\.PAGE\.side \+ 'px calc\(' \+ TTScreen\.bottomPad\(notesAvail\)/);
+  // In the page on a question screen (#12 C) and whenever the window is narrower than floatMin.
+  assert.match(app, /const notesInline = notesShown && \(onQuestion \|\| !this\.wideScreen\(\)\);/);
+  assert.match(app, /wideScreen\(\)\{[\s\S]{0,400}?window\.matchMedia\('\(min-width: ' \+ TTScreen\.floatMin\(\) \+ 'px\)'\)/);
+  // Turning a tablet or resizing a window across that width moves the button straight away.
+  assert.match(app, /addEventListener\('change', \(\)=>this\.forceUpdate\(\)\)/);
+  // One notes button for every screen, after the last screen in the page, so in the page it is
+  // always below everything else: after Next, Start the test, the last setting and the last row.
+  const btns = tpl.match(/<button onClick="\{\{ toggleNotes \}\}" data-tt-notes-btn="1"/g) || [];
+  assert.equal(btns.length, 1, 'one notes button, not a copy per screen');
+  const at = tpl.indexOf('data-tt-notes-btn="1"'), printArea = tpl.indexOf('<!-- ============ PRINT AREA');
+  assert.ok(at > tpl.lastIndexOf('data-screen-label', printArea) && at < printArea, 'the notes button must come after every screen in the page');
+  // Its look follows where it is: a card-style button in the page, the round dark one floating.
+  assert.match(app, /notesBtnStyle: notesAvail \? notesFab : notesInPage,/);
+  assert.match(app, /notesWordClass: notesAvail \? 'tt-sr' : '',/, 'floating, the words are for screen readers only');
+});
+
+test('#32 item 4: My Progress says "1 more right answer", counts from the mock she sat, and speaks to her as "your"', () => {
+  assert.ok(TS && typeof TS.passMark === 'function' && typeof TS.lastMockSay === 'function', 'TTScreen.passMark and TTScreen.lastMockSay');
+  // One pass-mark rule: 43 of 50, and the same 86% of a shorter mock (Build your own, My answers).
+  assert.equal(TS.passMark(50), 43);
+  assert.equal(TS.passMark(20), 18);
+  assert.equal(TS.passMark(10), 9);
+  assert.match(app, /const total = t\.ids\.length, passMark = TTScreen\.passMark\(total\);/, 'endTest uses the same rule');
+  // v12: "so 1 more right answers gets you there".
+  assert.equal(TS.lastMockSay(42, 50, false), 'Last mock: 42/50. The pass mark is 43, so 1 more right answer gets you there.');
+  assert.equal(TS.lastMockSay(40, 50, false), 'Last mock: 40/50. The pass mark is 43, so 3 more right answers get you there.');
+  // v12 also said "/50" and "43" after a 20-question mock: "12/50 … so 31 more right answers".
+  assert.equal(TS.lastMockSay(12, 20, false), 'Last mock: 12/20. The pass mark is 18, so 6 more right answers get you there.');
+  assert.equal(TS.lastMockSay(45, 50, true), 'Last mock: 45/50 — a PASS. One more pass in a row and it is time to book the real thing.');
+  assert.equal(TS.lastMockSay(19, 20, true), 'Last mock: 19/20 — a PASS. One more pass in a row and it is time to book the real thing.');
+  assert.match(app, /out\.push\(TTScreen\.lastMockSay\(last\.score, last\.total \|\| 50, last\.pass\)\);/);
+  // v12: the dial said "Based on her mocks…" on her own screen. The same slip in two more places.
+  assert.match(app, /readySub: s\.tests\.length \? 'Based on your mocks, practice answers and memory boxes\.'/);
+  assert.match(app, /sub:'shaped by your mock results \\u2014 weak topics come up more'/);
+  assert.doesNotMatch(app, /Based on her mocks|shaped by her mock results|On her iPad/);
+});
+
+test('#32 item 5: the mock chart starts a little under her lowest score and says its scale', () => {
+  // v12: always 0 to 50, so real scores (mostly 35-50) were squeezed into the top fifth.
+  assert.ok(TS && typeof TS.chartFloor === 'function', 'TTScreen.chartFloor');
+  assert.equal(TS.chartFloor([{ score: 38 }, { score: 46 }], 43), 30, 'lowest 38: a margin under it, down to a round 10');
+  assert.equal(TS.chartFloor([{ score: 48 }, { score: 49 }], 43), 30, 'the pass line always shows');
+  assert.equal(TS.chartFloor([{ score: 12 }], 43), 0, 'never below 0');
+  assert.equal(TS.chartFloor([{ score: 9, total: 20 }], 43), 10, 'a short mock is drawn out of 50, like the chart line (9/20 is 22.5)');
+  assert.equal(TS.chartScale(30), 'The chart runs from 30 to 50.');
+  assert.match(app, /const lo = TTScreen\.chartFloor\(tests, chartPass\);/);
+  assert.match(app, /const py = v => Y0 \+ \(1 - \(v - lo\)\/\(50 - lo\)\)\*H;/);
+  assert.match(app, /chartScale: TTScreen\.chartScale\(lo\),/);
+  // Both charts (My Progress and the dashboard) say their scale under the drawing.
+  const charts = [...tpl.matchAll(/<svg viewBox="0 0 340 130"[\s\S]*?<\/svg>\s*<div[^>]*>\{\{ chartScale \}\}<\/div>/g)];
+  assert.equal(charts.length, 2, 'both charts need their scale in words');
+});
+
+test('#32 item 5: a brand-new learner\'s Today\'s lesson says "Your first 20 questions", not "Built from your answers: 20 new"', () => {
+  assert.ok(TS && typeof TS.lessonDesc === 'function', 'TTScreen.lessonDesc');
+  assert.equal(TS.lessonDesc({ stuck: 0, flagged: 0, due: 0, weak: 0, fresh: 20 }, false), 'Your first 20 questions, to get you started');
+  assert.equal(TS.lessonDesc({ stuck: 3, flagged: 4, due: 13, weak: 0, fresh: 0 }, true), 'Built from your answers: 3 you keep missing · 4 flagged · 13 due again');
+  assert.equal(TS.lessonDesc({ due: 7, weak: 1, fresh: 3 }, true), 'Built from your answers: 7 due again · 4 new');
+  assert.equal(TS.lessonDesc({}, true), 'Built from your answers as you go');
+  assert.equal(TS.lessonDesc({}, false), 'Built from your answers as you go', 'no bank yet: nothing to count');
+  assert.match(app, /dailyDesc: view!=='home' \? '' : TTScreen\.lessonDesc\(this\.drillPlan\(\)\.reasons, s\.attempts\.length > 0\),/);
+});
+
+test('#32 item 5: the memory tip and plain-words boxes use the card\'s full width, not the column beside the read-aloud button', () => {
+  // v12 at 390px: they sat in the text column next to the 48px speaker button, a narrow strip.
+  const learn = screen('LEARN QUESTION');
+  const speak = learn.indexOf('onClick="{{ speakExp }}"');
+  assert.ok(speak > 0);
+  for (const v of ['{{ tipText }}', '{{ plainBtnLabel }}', '{{ plainText }}']) {
+    assert.ok(learn.indexOf(v) > speak, v + ' must come after the read-aloud button, below the text column');
+    assert.ok(learn.indexOf(v) < learn.indexOf('{{ nextQ }}'), v + ' must stay in the answer card, before Next');
+  }
 });
