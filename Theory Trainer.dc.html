@@ -9,6 +9,17 @@
 <script src="./picker.js"></script>
 <!-- The coach: flag merging, drills and "keeps getting wrong" (window.TTCoach). -->
 <script src="./coach.js"></script>
+<!-- An older coach.js than this page (issue #51)? For one open after an update the page can be the
+     new one while coach.js still comes from the old offline copy (sw.js fetches the page first but
+     scripts from its cache). Without the rules the app now shares with Adventure it counts as not
+     loaded that once: every screen copes with no coach.js, and the next open has the new one. -->
+<script>
+if(window.TTCoach && ['dailyGoal', 'streakAward', 'readingStyle', 'pickVoice', 'voiceScore', 'sayQuestion', 'sayAnswer', 'sayExplanation', 'mergeFlags', 'mergeAdventure']
+  .some(function(f){ return typeof window.TTCoach[f] !== 'function'; })){
+  console.warn('coach.js is older than the app (an update is still arriving): coaching is off until the app is opened again.');
+  window.TTCoach = undefined;
+}
+</script>
 <!-- Road-sign pictures (window.TTSigns: the one map of official images; window.SignImage draws
      one). Loaded here, not by an x-import `from`, because the Road Signs screen builds its tiles
      from TTSigns before any picture has been drawn (issue #44). -->
@@ -173,7 +184,6 @@ window.TTInsights = (function(){
     nudgeMinProgress: 0.7,  // "close to a badge" once she is 70% of the way (5 of a 7-day streak)
     planDaysShown: 14,      // the study plan lists this many days, then "and N more days"
     weekStartsOn: 1,        // the family board's week starts on Monday (0 would be Sunday)
-    goalDaysKept: 400,      // goal days remembered per learner (a year and a bit)
     chanceBands: [0.7, 0.4] // pass chance shown green from 70%, amber from 40%, red below
   };
 
@@ -210,15 +220,8 @@ window.TTInsights = (function(){
   };
 
   // ---- streak ----
-  // Once her answers today reach her daily goal, today goes on her list of goal days. The
-  // list is what the streak is worked out from, so raising the goal later never takes a day
-  // back. Returns a new list (sorted, no repeats, the newest goalDaysKept only), or the same
-  // list untouched when today doesn't count or is already on it.
-  I.recordGoalDay = function(days, today, countToday, goal){
-    var list = Array.isArray(days) ? days : [];
-    if(!(goal > 0) || !(countToday >= goal) || dayNum(today) === null || list.indexOf(today) >= 0) return list;
-    return list.concat([today]).sort().slice(-I.CFG.goalDaysKept);
-  };
+  // A day goes on her list of goal days once her answers that day reach her goal: coach.js
+  // recordGoalDay (inside streakAward, the rule the app and Adventure share, issue #51).
   // Every day her goal was met: the days recorded at the time, plus any day whose answers
   // reach today's goal (her history from before days were recorded).
   //   counts: coach.js dayCounts(attempts), {'YYYY-MM-DD': answers}
@@ -624,29 +627,114 @@ try{
 }catch(e){}
 </script>
 <script>
-// ---------- Adventure mode on Home, and keeping its progress (window.TTAdv, issue #27) ----------
-// adventure.html (its own page) saves her progress in the learner's own data,
-// theoryTrainer.d.<learnerId>, under 'adventure'. The app never changes that progress, but
-// persist() writes the learner's whole record from the app's state, so it must carry the
-// page's part over (keep) or opening the app would wipe her Adventure. card() turns coach.js's
-// route and status into the words on Home's Adventure card. Plain data and pure functions only
-// (no page, no storage), so tests/app-files.test.js runs this very block in node.
+// ---------- Adventure mode on Home, and saving her record safely beside it (window.TTAdv, #27, #51) ----------
+// adventure.html (its own page) saves into the learner's own record, theoryTrainer.d.<learnerId>:
+// answers, XP, flags, her streak and, under 'adventure', her stages and stars. The app saves
+// the same record, and an app tab can be open while she plays Adventure in another tab. So each
+// app save is joined with the copy in storage (join), never written whole over it, and nothing
+// the other page saved is lost. card() turns coach.js's route and status into the words on
+// Home's Adventure card. Plain data and pure functions only (no page, no storage), so
+// tests/app-files.test.js runs this very block in node.
 // Real head, not <helmet> (see the note above).
 window.TTAdv = (function(){
   var A = {};
 
-  // Parts of the learner's record that another page owns. persist() keeps each one exactly as
-  // it is saved, because the app itself never changes them.
-  A.KEEP = ['adventure'];
+  // How many answers her record keeps: the newest 3000. A practice answer, a finished test and a
+  // join all keep this many (adventure.js keeps the same number: a test checks they match).
+  A.ATTEMPTS_KEPT = 3000;
+  // The parts of her record join() works out from both copies. persist() shows these on screen
+  // once saved, so what the other tab added appears here too.
+  A.JOINED = ['attempts', 'revisionFlags', 'flagCleared', 'adventure', 'xp', 'streak'];
 
-  // keep(saved, next) -> a NEW record: next, plus each KEEP part from the saved copy.
-  //   saved: the learner's record as it is in storage right now (may be missing or junk)
-  //   next:  the record persist() is about to write from the app's state
-  A.keep = function(saved, next){
-    var out = Object.assign({}, next);
-    if(saved && typeof saved === 'object'){
-      A.KEEP.forEach(function(k){ if(saved[k] !== undefined && out[k] === undefined) out[k] = saved[k]; });
+  // A plain object, or an empty one for anything else (missing, text, a list, null).
+  function obj(v){ return v && typeof v === 'object' && !Array.isArray(v) ? v : {}; }
+
+  // Every answer in either list, once (the same question at the same moment is one answer), oldest
+  // first (a stable sort keeps answers from the same moment in the order they were in), the
+  // newest ATTEMPTS_KEPT kept. A sign answer ('sign:<key>', issue #48) joins like any other.
+  function joinAttempts(a, b){
+    var seen = {}, all = [];
+    (Array.isArray(a) ? a : []).concat(Array.isArray(b) ? b : []).forEach(function(x){
+      if(!x || typeof x !== 'object') return;                 // junk in a list is left out
+      var key = x.q + '@' + x.t;
+      if(seen[key]) return;
+      seen[key] = true; all.push({x: x, i: all.length});
+    });
+    return all.sort(function(p, q){ return ((+p.x.t || 0) - (+q.x.t || 0)) || (p.i - q.i); })
+      .map(function(p){ return p.x; }).slice(-A.ATTEMPTS_KEPT);
+  }
+
+  // One question's flag and un-flag from one copy, in coach.mergeFlags' shape, or null when that
+  // copy has neither.
+  function flagOf(flags, cleared, id){
+    if(!(id in flags) && !(id in cleared)) return null;
+    var e = {flags: {}, cleared: {}};
+    if(id in flags) e.flags[id] = flags[id];
+    if(id in cleared) e.cleared[id] = cleared[id];
+    return e;
+  }
+  // Flags, question by question. Where only one copy has the question, or both have it alike, it
+  // is kept exactly as it is (even a flag with no time, which mergeFlags could not date). Where
+  // they disagree, the later flag or un-flag wins: coach.mergeFlags, the rule syncing uses.
+  function joinFlags(s, n, coach){
+    var sf = obj(s.revisionFlags), sc = obj(s.flagCleared), nf = obj(n.revisionFlags), nc = obj(n.flagCleared);
+    var out = {flags: {}, cleared: {}}, ids = {};
+    // this tab's questions first, so the result keeps its order (and redraws nothing when alike)
+    [nf, nc, sf, sc].forEach(function(m){ Object.keys(m).forEach(function(id){ ids[id] = true; }); });
+    Object.keys(ids).forEach(function(id){
+      var a = flagOf(sf, sc, id), b = flagOf(nf, nc, id);
+      var j = !a ? b : (!b || JSON.stringify(a) === JSON.stringify(b)) ? a : coach.mergeFlags(a, b);
+      if(!(id in j.flags) && !(id in j.cleared)) j = b;       // two copies mergeFlags can't date: the app's
+      if(id in j.flags) out.flags[id] = j.flags[id];
+      if(id in j.cleared) out.cleared[id] = j.cleared[id];
+    });
+    return out;
+  }
+
+  // Her streak record: the copy whose day counter is further on (the later day, or more answers
+  // on the same day), with the goal days of both, sorted, the newest `kept` only.
+  function joinStreak(a, b, kept){
+    var da = a.todayDate || '', db = b.todayDate || '';
+    var out = Object.assign({}, (da > db || (da === db && (+a.todayN || 0) > (+b.todayN || 0))) ? a : b);
+    if(a.goalDays || b.goalDays){
+      var days = {};
+      [].concat(Array.isArray(a.goalDays) ? a.goalDays : [], Array.isArray(b.goalDays) ? b.goalDays : [])
+        .forEach(function(d){ days[d] = true; });
+      out.goalDays = Object.keys(days).sort().slice(-kept);
     }
+    return out;
+  }
+
+  // join(saved, next, coach, o) -> the record persist() writes: a NEW object (neither input changes).
+  //   saved: her record as it is in storage now. Another tab (Adventure, or the app open twice) may
+  //          have added to it since this tab last read it. May be missing or junk.
+  //   next:  the record built from this tab's state
+  //   coach: TTCoach (the flag and Adventure rules live there: one copy for syncing and this)
+  //   o.xpSeen:  the XP her record had when this tab last read or saved it
+  //   o.replace: true when she replaced her answers on purpose (Reset progress, Import backup)
+  // Nothing either copy holds is lost:
+  //   attempts  every answer in either copy, once (joinAttempts). With o.replace, next's only.
+  //             An EMPTY saved list means her answers were wiped on purpose in another tab (Reset
+  //             progress saves an empty list; adventure.js reads it the same way), so only answers
+  //             this tab gave after that save come across, and the wiped ones never come back.
+  //   flags     question by question (joinFlags)
+  //   adventure stage by stage, the best of each (coach.mergeAdventure), when either copy has some
+  //   xp        the saved XP plus what this tab earned since it last read or saved (next - xpSeen)
+  //   streak    the further-on day counter, with the goal days of both (joinStreak)
+  // Every other part is next's: only the app changes them (settings, notes, tests, memory boxes).
+  A.join = function(saved, next, coach, o){
+    var s = obj(saved), n = obj(next), opt = o || {}, out = Object.assign({}, n);
+    var mine = Array.isArray(n.attempts) ? n.attempts : [];
+    if(opt.replace) out.attempts = mine;
+    else if(Array.isArray(s.attempts) && !s.attempts.length && s.updatedAt)
+      out.attempts = joinAttempts([], mine.filter(function(x){ return x && +x.t > +s.updatedAt; }));
+    else out.attempts = joinAttempts(s.attempts, mine);
+    var f = joinFlags(s, n, coach);
+    out.revisionFlags = f.flags; out.flagCleared = f.cleared;
+    if(s.adventure !== undefined || n.adventure !== undefined) out.adventure = coach.mergeAdventure(s.adventure, n.adventure);
+    var seen = typeof opt.xpSeen === 'number' ? opt.xpSeen : (+s.xp || 0);
+    out.xp = Math.max(0, (+s.xp || 0) + (+n.xp || 0) - seen);
+    if(s.streak || n.streak) out.streak = joinStreak(obj(s.streak), obj(n.streak), coach.coachDefaults.goalDaysKept);
     return out;
   };
 
@@ -681,6 +769,116 @@ window.TTAdv = (function(){
   };
 
   return A;
+})();
+</script>
+<script>
+// ---------- The Settings and Print choices, and what she did in words (window.TTChoices, issue #57) ----------
+// Each list below is drawn by its screen AND read by Admin → Activity to say what she changed or
+// printed, so both say it in the same words (one copy). TRACKED names every setting whose change
+// is an event (the app's trackSettings); her name and the admin's are not in it, so they are
+// never sent. Plain data and pure functions only (no page, no storage), so
+// tests/app-files.test.js runs this very block in node. Real head, not <helmet> (see above).
+window.TTChoices = (function(){
+  var C = {};
+
+  // Settings → the switches: [setting, its name, what it does]. Off unless she turns one on.
+  C.SWITCHES = [
+    ['autoRead','Read questions aloud automatically','The voice reads each question and answer as it appears'],
+    ['fiftyFifty','Hint button (50:50)','Adds a button that takes away two wrong answers'],
+    ['autoAdvance','Move on by itself','After a correct answer, goes to the next question automatically'],
+    ['dyslexiaFont','Easy-reading font','Switches to a font that is easier to read'],
+    ['highContrast','High contrast','Stronger colours and darker text'],
+    ['reducedMotion','Reduce motion','Turns off little animations'],
+    // Off unless she switches it on; only learners who switch it on appear on the board.
+    ['familyBoard','Family board','Home compares your streak and this week’s questions with the other learners on this account who switch it on. Worked out on this device; nothing extra is sent anywhere.']
+  ];
+  // Settings → Text size, Voice speed and Appearance: [the words on the button, the value saved].
+  // Text size is settings.textSize; Appearance is this device's own (tt.theme), not hers.
+  C.TEXT_SIZES = [['Normal text size', 0], ['Bigger text', 1], ['Biggest text', 2]];
+  C.VOICE_SPEEDS = [['Slower', 0.85], ['Normal', 0.95], ['Faster', 1.1]];
+  C.THEMES = [['Match device', 'auto'], ['Light', 'light'], ['Dark', 'dark']];
+  // Print → what to print: v is the value saved (printFormat), then its name and what it is.
+  C.PRINT_FORMATS = [
+    {v:'cards', name:'Flashcards', sub:'4 per page · questions left, answers right · fold down the middle'},
+    {v:'paper', name:'Test paper', sub:'50 numbered questions, answer key on the last page'},
+    {v:'book', name:'Full answer book', sub:'every question in the bank with its correct answer, explanation and rule'}
+  ];
+
+  // Every setting whose change is an event: [its name on the Settings screen, the words for its
+  // values]. The words are a [words, value] list, or a function of the value; none: the value as
+  // it is. The switches are added from SWITCHES just below, so a new switch is tracked by itself.
+  var ON_OFF = [['off', false], ['on', true]];
+  C.TRACKED = {
+    textSize: ['Text size', C.TEXT_SIZES],
+    theme: ['Appearance', C.THEMES],
+    voiceName: ['Voice'],
+    voiceRate: ['Voice speed', C.VOICE_SPEEDS],
+    dailyGoal: ['Daily goal'],
+    examDate: ['My theory test date'],
+    remindOn: ['Daily reminder', ON_OFF],
+    // The quick setup's reminder times by their words ('5pm'); any other hour as '18:00'.
+    remindHour: ['Reminder time', function(h){
+      var t = ((window.TTWelcome || {}).REMIND_TIMES || []).filter(function(o){ return o.h === h; })[0];
+      return t ? t.label : h + ':00';
+    }]
+  };
+  C.SWITCHES.forEach(function(s){ C.TRACKED[s[0]] = [s[1], ON_OFF]; });
+
+  // A value missing from a record (never set) is null in an event.
+  function val(v){ return v === undefined ? null : v; }
+
+  // changes(before, after) -> [{setting, from, to}], one for each tracked setting that differs
+  // between two copies of her settings. Anything not in TRACKED (her name, bookkeeping such as
+  // seenVersion) is never in the list.
+  C.changes = function(before, after){
+    var b = before || {}, a = after || {}, out = [];
+    Object.keys(C.TRACKED).forEach(function(k){
+      var from = val(b[k]), to = val(a[k]);
+      if(JSON.stringify(from) !== JSON.stringify(to)) out.push({setting: k, from: from, to: to});
+    });
+    return out;
+  };
+
+  // One value in words: from its [words, value] list (a switch never set counts as off), its
+  // function, or as it is. Nothing at all: 'not set'.
+  function words(how, v){
+    if(typeof how === 'function') return v == null ? 'not set' : String(how(v));
+    var hit = (how || []).filter(function(p){ return p[1] === v || (typeof p[1] === 'boolean' && p[1] === !!v); })[0];
+    return hit ? hit[0] : (v == null || v === '' ? 'not set' : String(v));
+  }
+  // sayChange({setting, from, to}) -> "Changed Text size: Bigger text → Biggest text"
+  C.sayChange = function(d){
+    var t = C.TRACKED[d.setting] || [d.setting];
+    return 'Changed ' + t[0] + ': ' + words(t[1], d.from) + ' → ' + words(t[1], d.to);
+  };
+
+  // sayPrint({format, n, scope, screen}, topicNames, screenName) -> "Printed Flashcards: 12 questions,
+  // wrong answers only". topicNames: the app's TOPICS (topic 1 = [0]). A print with no format was
+  // the browser's own Print on another screen (screenName).
+  C.sayPrint = function(d, topicNames, screenName){
+    var f = C.PRINT_FORMATS.filter(function(p){ return p.v === d.format; })[0];
+    if(!f) return 'Printed ' + (screenName || 'a screen');
+    var sc = d.scope, which = sc === 'wrong' ? ', wrong answers only'
+      : (sc && sc !== 'all') ? ', topic ' + sc + ' (' + ((topicNames || [])[Number(sc) - 1] || 'topic ' + sc) + ')' : '';
+    return 'Printed ' + f.name + ': ' + d.n + (d.n === 1 ? ' question' : ' questions') + which;
+  };
+
+  // noteKind(before, after) -> which change she made to one note, or null for none: added (empty
+  // before), deleted (empty after) or edited (different words). Only spaces counts as empty.
+  C.noteKind = function(before, after){
+    var b = String(before || ''), a = String(after || ''), hadB = !!b.trim(), hadA = !!a.trim();
+    if(!hadB && hadA) return 'note_added';
+    if(hadB && !hadA) return 'note_deleted';
+    return hadB && a !== b ? 'note_edited' : null;
+  };
+  // sayNote(kind, {chars}, where) -> "Added a note on Practising (7 characters)". Never her words.
+  var NOTE_WORDS = {note_added: 'Added a note', note_edited: 'Changed a note', note_deleted: 'Deleted a note'};
+  C.sayNote = function(kind, d, where){
+    var n = (d && d.chars) || 0;
+    return NOTE_WORDS[kind] + ' on ' + where + (kind === 'note_deleted' ? '' : ' (' + n + (n === 1 ? ' character)' : ' characters)'));
+  };
+
+  return C;
 })();
 </script>
 </head>
@@ -2666,24 +2864,13 @@ class Component extends DCLogic {
   }
   NOTESN = {home:'Home', onboard:'Quick setup', learnSetup:'Practise setup', learnQ:'Practising', learnDone:'Session results', testIntro:'Test setup', test:'Mock test', dash:'Admin', settings:'Settings', progress:'My progress', signs:'Road signs', editor:'Questions', print:'Print', answers:'My answers', plan:'Study plan'};
   award(qCount, correctCount, bonus){
-    const today = new Date().toISOString().slice(0,10);
-    const stk = Object.assign({count:0, last:'', todayDate:'', todayN:0}, this.state.streak);
-    if(stk.todayDate!==today){ stk.todayDate = today; stk.todayN = 0; }
-    stk.todayN += qCount;
-    const goal = this.state.settings.dailyGoal || 20;
-    if(stk.todayN >= goal && stk.last !== today){
-      const y = new Date(Date.now()-86400000).toISOString().slice(0,10);
-      stk.count = (stk.last===y) ? (stk.count||0)+1 : 1;
-      stk.last = today;
-    }
-    // The streak on screen is worked out from the local days her goal was met (streakFor).
-    // Today goes on that list the moment her answers today (these qCount included — they
-    // aren't in attempts yet) reach her goal, so raising the goal later never undoes a day.
-    if(window.TTCoach && window.TTInsights){
-      const I = window.TTInsights, localToday = I.localDay(Date.now());
-      const doneToday = (TTCoach.dayCounts(this.state.attempts)[localToday] || 0) + qCount;
-      stk.goalDays = I.recordGoalDay(stk.goalDays, localToday, doneToday, goal);
-    }
+    // Her streak record after these qCount answers: coach.js streakAward, the one rule the app
+    // and Adventure share (issue #51). It counts today's answers (these included — they aren't
+    // in attempts yet) and puts today on her list of goal days once they reach her daily goal
+    // (coach.js dailyGoal), so raising the goal later never undoes a day. The streak on screen
+    // is worked out from that list (streakFor). No coach.js (it failed to load): the streak
+    // record is left as it was, and the answer still counts everywhere else.
+    const stk = window.TTCoach ? TTCoach.streakAward(this.state.streak, this.state.attempts, qCount, TTCoach.dailyGoal(this.state.settings), Date.now()) : this.state.streak;
     const before = this.levelInfo(this.state.xp||0).level;
     const xp = (this.state.xp||0) + correctCount*10 + (bonus||0);
     const after = this.levelInfo(xp).level;
@@ -2736,7 +2923,7 @@ class Component extends DCLogic {
   streakFor(d){
     const C = window.TTCoach, I = window.TTInsights;
     if(!C || !I) return {count:0, freezes:0, frozen:[], today:false, nextFreezeIn:null};
-    const today = I.localDay(Date.now()), goal = ((d.settings||{}).dailyGoal) || C.coachDefaults.planGoal;
+    const today = I.localDay(Date.now()), goal = C.dailyGoal(d.settings);
     const rec = (d.streak||{}).goalDays, memo = this._streakMemo || (this._streakMemo = new Map());
     const hit = memo.get(d.attempts);
     if(hit && hit.goal===goal && hit.rec===rec && hit.today===today) return hit.val;
@@ -2824,7 +3011,7 @@ class Component extends DCLogic {
   drillPlan(){
     const qs = this.questionsFor('learn');
     if(!window.TTCoach || !qs.length) return {ids:[], reasons:{stuck:0, flagged:0, due:0, weak:0, fresh:0}};
-    const n = Math.max(10, Math.min(20, this.state.settings.dailyGoal||20));
+    const n = Math.max(10, Math.min(20, TTCoach.dailyGoal(this.state.settings)));
     return TTCoach.buildDrill(TTCoach.profile(this.state.attempts, this.state.revisionFlags, qs), qs, {n});
   }
   startDailyLesson(){
@@ -2857,6 +3044,11 @@ class Component extends DCLogic {
     // page as it was, without reloading it. Re-read her record then, so what the other page saved
     // (answers, XP, flags) is not saved over by this page's older copy.
     window.addEventListener('pageshow', e=>{ if(e.persisted && this.state.userId) this.loadUser(this.state.userId, true); });
+    // Another tab saved (issue #51): Adventure, or this app open twice. The browser tells every
+    // other tab; heardSave shows her record as it is now (goal ring, streak, XP, flags, stars).
+    window.addEventListener('storage', e=>this.heardSave(e));
+    // Printing (issue #57): the Print button and the browser's own Print both fire this, once.
+    window.addEventListener('beforeprint', ()=>this.trackPrint());
     setTimeout(()=>this.pullCloud(), 800);
     this.syncA11y(null);                                 // the tab's title for the first screen
   }
@@ -2972,6 +3164,40 @@ class Component extends DCLogic {
     if(s.view==='test' && s.test && !s.test.ended) return s.test.ids[s.test.i] || null;
     return null;
   }
+  // Her Settings changes (issue #57): one 'setting_changed' event per setting that differs between
+  // before and after, with its old and new value. Only the settings TTChoices.TRACKED names, so
+  // her name and the admin's are never sent. set() calls this for every Settings change the app
+  // saves; the Appearance buttons call it too (Appearance is this device's, not in her settings).
+  // Another tab's save (heardSave) never comes here: she didn't change anything in this tab.
+  trackSettings(before, after){
+    TTChoices.changes(before, after).forEach(c=>this.track('setting_changed', null, c));
+  }
+  // Her notes (issue #57), from componentDidUpdate (prev: the state before, s: the state now).
+  // Notes save on every key press, so one event per key press would be noise: instead the note is
+  // remembered as it was when the sheet opened on it (this._noteWas), and compared when she has
+  // finished with it (the sheet closes, or she moves to another screen's note under Other notes).
+  // The event says added, changed or deleted (TTChoices.noteKind), on which screen and at which
+  // question, and how long the note is now - never its words.
+  trackNote(prev, s){
+    const on = st => st.notesOpen ? (st.notesKey || st.view) : null;   // the note on the sheet, if open
+    const was = on(prev), now = on(s);
+    if(was === now) return;
+    const before = this._noteWas;
+    if(was && before && before.key === was){
+      const text = (s.notes || {})[was] || '', kind = TTChoices.noteKind(before.text, text);
+      if(kind) this.track(kind, before.qid, {screen: was, chars: text.length});
+    }
+    this._noteWas = now ? {key: now, text: (s.notes || {})[now] || '', qid: this.currentQid()} : null;
+  }
+  // Printing (issue #57), from the browser's 'beforeprint' (the Print button and the browser's own
+  // Print both fire it, once). On the print preview: which format, how many questions and, for
+  // flashcards, which ones. Anywhere else: which screen she printed.
+  trackPrint(){
+    const s = this.state, d = s.printData;
+    if(!(s.printPreview && d)){ this.track('printed', null, {format: null, screen: s.view}); return; }
+    const n = d.pages ? d.pages.reduce((k, p)=>k + p.length, 0) : d.paper ? d.paper.length : d.book ? d.book.reduce((k, t)=>k + t.qs.length, 0) : 0;
+    this.track('printed', null, {format: s.printFormat, n, scope: s.printFormat==='cards' ? s.printScope : null});
+  }
   // This app's framework (support.js) passes only the previous PROPS here, never the
   // previous state, so the last state seen is kept in this._seen and compared by hand.
   // ---------- accessibility after each redraw (issue #10, WCAG 2.2 AA) ----------
@@ -3017,6 +3243,8 @@ class Component extends DCLogic {
     // A different learner (or a sync reloading this one) isn't something she did:
     // compare sessions and tests only within the same learner.
     if(s.userId !== prev.userId){ this.track('learner_opened', null, {}); return; }
+    // her notes: one event when she has finished with a note (issue #57)
+    this.trackNote(prev, s);
     // practice sessions
     const ps = prev.session, cs = s.session;
     if(cs && (!ps || ps.startedAt !== cs.startedAt)) this.track('session_start', null, {label: cs.label||'', n: cs.ids.length});
@@ -3062,30 +3290,85 @@ class Component extends DCLogic {
       this.refreshAccess(); this.loadBank(); this.pullCloud();
     }).catch(e=>this.setState({view:'auth', authOk:false, authMsg:'Could not read the email link: '+String(e.message||e)}));
   }
-  persist(extra){
+  // Saves her record and the question content on this device (and to her account soon after,
+  // when syncing is on). replace: true when she replaced her answers on purpose (Reset progress,
+  // Import backup): her answers are saved as they are, not joined with the saved copy.
+  persist(replace){
     const s = this.state;
-    const user = {settings:s.settings, plan:s.plan, leitner:s.leitner, attempts:s.attempts, tests:s.tests, revisionFlags:s.revisionFlags, flagCleared:s.flagCleared||{}, xp:s.xp, streak:s.streak, notes:s.notes, avatar:s.avatar, updatedAt: Date.now(), testInProgress: (s.test && !s.test.ended) ? s.test : null};
+    // Her record from this tab's state. adventure: the app never changes it, so it is only sent
+    // to the join when there is some (a learner who never played gets no entry).
+    const user = {settings:s.settings, plan:s.plan, leitner:s.leitner, attempts:s.attempts, tests:s.tests, revisionFlags:s.revisionFlags, flagCleared:s.flagCleared||{}, xp:s.xp, streak:s.streak, notes:s.notes, avatar:s.avatar, adventure: Object.keys(s.adventure||{}).length ? s.adventure : undefined, updatedAt: Date.now(), testInProgress: (s.test && !s.test.ended) ? s.test : null};
     const content = {overrides:s.overrides, custom:s.custom, deleted:s.deleted, packNames:s.packNames, packLearn:s.packLearn, packTest:s.packTest, sub:s.sub, updatedAt: Date.now()};
-    Object.assign(user, extra||{});
     const u = this.users.find(x=>x.id===s.userId);
     if(u && s.settings.learnerName && u.name!==s.settings.learnerName){ u.name = s.settings.learnerName; try{ localStorage.setItem(this.BASE+'.users', JSON.stringify(this.users)); }catch(e){} }
     if(u && (u.avatar||'')!==(s.avatar||'')){ u.avatar = s.avatar||''; try{ localStorage.setItem(this.BASE+'.users', JSON.stringify(this.users)); }catch(e){} }
-    // Keep what other pages save in her record (Adventure progress: TTAdv.KEEP). The stored copy
-    // is read just before writing, so the page's latest save is carried over, never a stale one.
-    let stored = null;
-    try { stored = JSON.parse(localStorage.getItem(this.BASE+'.d.'+s.userId)); } catch(e) { stored = null; /* unreadable: nothing to keep */ }
-    try { localStorage.setItem(this.BASE+'.d.'+s.userId, JSON.stringify(TTAdv.keep(stored, user))); localStorage.setItem(this.BASE+'.content', JSON.stringify(content)); } catch(e) {}
+    // Her record as saved now, read just before writing. The usual case: it is exactly the copy
+    // this tab last read or saved (this._rawSeen), so nobody else has saved since and this tab's
+    // state already holds all of it: it is saved as it is (as quick as a save has always been).
+    // Otherwise another tab (Adventure, or the app open twice) saved in between - perhaps a save
+    // this tab has not heard yet (heardSave) - so the two are joined (TTAdv.join, issue #51) and
+    // nothing it saved is lost.
+    const key = this.BASE+'.d.'+s.userId;
+    let raw = null, rec = user;
+    try { raw = localStorage.getItem(key); } catch(e) { raw = null; /* storage blocked: nothing to join */ }
+    // (No coach.js, which holds the joining rules: saved whole, as before issue #51.)
+    if(raw !== this._rawSeen && window.TTCoach){
+      let stored = null;
+      try { stored = JSON.parse(raw); } catch(e) { stored = null; /* unreadable: nothing to join; this tab's copy is saved whole */ }
+      rec = TTAdv.join(stored, user, TTCoach, {xpSeen: this._xpSeen, replace: !!replace});
+    }
+    const text = JSON.stringify(rec);
+    try { localStorage.setItem(key, text); localStorage.setItem(this.BASE+'.content', JSON.stringify(content)); }
+    catch(e) { console.warn('Saving on this device failed (' + String(e.message||e) + '): storage is full or blocked. What is on screen is kept and goes to her account when syncing is on; free some space (or leave private browsing) and it saves again with her next answer.'); }
+    this._rawSeen = text; this._xpSeen = rec.xp;       // the copy this tab now holds, for the next save
+    // Show what the join brought in from the other tab (answers, XP, flags, stars, goal days), so
+    // the screen matches what is saved and this tab's next save starts from it.
+    if(rec !== user){
+      const got = {};
+      TTAdv.JOINED.forEach(k=>{ if(rec[k] !== undefined && JSON.stringify(rec[k]) !== JSON.stringify(user[k])) got[k] = rec[k]; });
+      if(Object.keys(got).length) this.setState(got);
+    }
     this._dirty = true;
     if(window.TTSync && TTSync.configured()){ clearTimeout(this._pushT); this._pushT = setTimeout(()=>this.flushCloud(), 2500); }
   }
-  set(patch){ this.setState(patch, ()=>this.persist()); }
+  // Change her state and save it: every change she makes goes through here. A change to her
+  // Settings is also an event for Admin → Activity (trackSettings, issue #57). replace: see persist.
+  set(patch, replace){
+    if(patch.settings) this.trackSettings(this.state.settings, patch.settings);
+    this.setState(patch, ()=>this.persist(replace));
+  }
+  // Opens learner id: her saved record on screen, then saved again (so a new learner has one).
+  // keepSession: carry on with the practice session on screen (back from Adventure, a sync).
   loadUser(id, keepSession){
-    let blob = {}; try { blob = JSON.parse(localStorage.getItem(this.BASE+'.d.'+id)) || {}; } catch(e) {}
+    let raw = null, blob = {};
+    try { raw = localStorage.getItem(this.BASE+'.d.'+id); blob = JSON.parse(raw) || {}; } catch(e) { /* none yet, or unreadable: a fresh record */ }
     try { localStorage.setItem(this.BASE+'.active', id); } catch(e) {}
+    this._rawSeen = raw; this._xpSeen = blob.xp || 0;   // the copy about to be on screen, for persist
+    this.setState(Object.assign(this.recordState(id, blob), {userId:id, notesOpen:false, test:blob.testInProgress||null, session: keepSession ? this.state.session : null, openTest:-1}), ()=>this.persist());
+  }
+  // The parts of the app's state that come from learner id's saved record (blob), her settings
+  // filled in from the defaults. loadUser and heardSave both use it.
+  recordState(id, blob){
     const u = this.users.find(x=>x.id===id);
     const st = Object.assign({textSize:1, dyslexiaFont:false, highContrast:false, autoRead:false, reducedMotion:false, learnerName:(u&&u.name)||'Learner', parentName:'Admin', voiceName:'', voiceRate:0.95, fiftyFifty:true, autoAdvance:false}, blob.settings);
     if(!blob.settings || !blob.settings.learnerName) st.learnerName = (u&&u.name)||st.learnerName;
-    this.setState({userId:id, settings:st, plan: blob.plan||'', leitner:blob.leitner||{}, attempts:blob.attempts||[], tests:blob.tests||[], revisionFlags:blob.revisionFlags||{}, flagCleared:blob.flagCleared||{}, xp:blob.xp||0, streak:blob.streak||{count:0, last:'', todayDate:'', todayN:0}, notes:blob.notes||{}, avatar:blob.avatar||'', adventure:blob.adventure||{}, notesOpen:false, test:blob.testInProgress||null, session: keepSession ? this.state.session : null, openTest:-1}, ()=>this.persist());
+    return {settings:st, plan: blob.plan||'', leitner:blob.leitner||{}, attempts:blob.attempts||[], tests:blob.tests||[], revisionFlags:blob.revisionFlags||{}, flagCleared:blob.flagCleared||{}, xp:blob.xp||0, streak:blob.streak||{count:0, last:'', todayDate:'', todayN:0}, notes:blob.notes||{}, avatar:blob.avatar||'', adventure:blob.adventure||{}};
+  }
+  // Another tab saved (the browser's 'storage' event, issue #51): Adventure, or the app open twice.
+  // When it is the record of the learner on screen, her record as it is saved now goes on screen:
+  // her answers (Home's goal ring), streak, XP, flags, stars and settings, so this tab never shows
+  // old numbers. What she is in the middle of here (a practice session, a test, the notes sheet)
+  // stays as it is. Nothing is saved here: a save answering a save is how two open tabs would keep
+  // waking each other forever. This tab's next save is joined with the saved copy anyway (persist).
+  heardSave(e){
+    const key = this.BASE+'.d.'+this.state.userId;
+    if(!e || e.key !== key || e.newValue == null) return;     // another learner, another key, or removed
+    let raw = null, blob = null;
+    try { raw = localStorage.getItem(key); blob = JSON.parse(raw); }
+    catch(err){ console.warn('Another tab saved her progress, but this tab could not read it (' + String(err.message||err) + '). This tab keeps what it shows, and its next save still joins with the saved copy; reload the app to see the other tab’s answers.'); return; }
+    if(!blob || typeof blob !== 'object') return;
+    this._rawSeen = raw; this._xpSeen = blob.xp || 0;   // the copy about to be on screen, for persist
+    this.setState(this.recordState(this.state.userId, blob));
   }
   addLearner(){
     const name = prompt('New learner\u2019s name?'); if(!name || !name.trim()) return;
@@ -3365,11 +3648,13 @@ class Component extends DCLogic {
     speechSynthesis.cancel();
     this.track('read_aloud', this.currentQid(), {chars: text.length});
     const u = new SpeechSynthesisUtterance(text);
-    u.voice = this.bestVoice();
+    u.voice = this.bestVoice();                           // null: the browser's own voice
     u.rate = this.state.settings.voiceRate || this.props.speechRate || 0.95;
     speechSynthesis.speak(u);
   }
-  speakQFull(q){ const v = this.viewQ(q); this.speak(q.question + '. Option A: ' + v.options[0] + '. Option B: ' + v.options[1] + '. Option C: ' + v.options[2] + '. Option D: ' + v.options[3]); }
+  // The question and its options in the order they are on screen: the words coach.js sayQuestion
+  // gives Adventure too (issue #51).
+  speakQFull(q){ const v = this.viewQ(q); if(window.TTCoach) this.speak(TTCoach.sayQuestion(q.question, v.options)); }
   // ---------- learn ----------
   buildSession(ids, label, extra){
     if(!ids.length) return;
@@ -3435,18 +3720,9 @@ class Component extends DCLogic {
     this.set({custom: this.state.custom.filter(q=>q.pack!==id), packNames: names});
   }
   voices(){ return window.speechSynthesis ? speechSynthesis.getVoices().filter(v=>/^en/i.test(v.lang)) : []; }
-  scoreVoice(v){
-    let sc = 0; const n = v.name.toLowerCase();
-    if(/premium/.test(n)) sc += 3; if(/enhanced/.test(n)) sc += 2.5; if(/natural|neural/.test(n)) sc += 2;
-    if(v.lang==='en-GB') sc += 1.5; if(/kate|serena|sonia|martha|stephanie|daniel/.test(n)) sc += 1;
-    if(/google uk english/.test(n)) sc += 1.2; if(/compact/.test(n)) sc -= 2;
-    return sc;
-  }
-  bestVoice(){
-    const vs = this.voices(); if(!vs.length) return null;
-    const chosen = vs.find(v=>v.name===this.state.settings.voiceName);
-    return chosen || vs.slice().sort((a,b)=>this.scoreVoice(b)-this.scoreVoice(a))[0];
-  }
+  // The voice she hears: the one she chose in Settings, else the clearest English voice here, else
+  // null (the browser's own). coach.js pickVoice scores the voices, the rule Adventure uses (#51).
+  bestVoice(){ return window.TTCoach ? TTCoach.pickVoice(this.voices(), this.state.settings.voiceName) : null; }
   drawPool(topic){
     let pool = this.questionsFor('learn');
     const sh = a => a.map(x=>[Math.random(),x]).sort((p,q)=>p[0]-q[0]).map(p=>p[1]);
@@ -3490,11 +3766,12 @@ class Component extends DCLogic {
     // p = the option she picked, as its index in the question's own order (the
     // screen shuffles options), so "My answers" can show what she said.
     const attempt = isSign ? {q:q.id, t:Date.now(), ok, p:this.seedPerm(q.id)[i], src:'signs'} : {q:q.id, t:Date.now(), ok, topic:q.topic, p:this.seedPerm(q.id)[i]};
-    const attempts = this.state.attempts.concat([attempt]).slice(-3000);
+    const attempts = this.state.attempts.concat([attempt]).slice(-TTAdv.ATTEMPTS_KEPT);
     const again = (!ok && s.drill && window.TTCoach) ? TTCoach.requeue(s.ids, s.i, s.repeats) : null;
     this.setState(Object.assign({session: Object.assign({}, s, again ? {ids: again.ids, repeats: again.repeats} : {}, {picked:i, correct: s.correct + (ok?1:0), wrongTopics: (ok || isSign) ? (s.wrongTopics||[]) : (s.wrongTopics||[]).concat([q.topic]), log:(s.log||[]).concat([{t: isSign ? null : q.topic, ok, q:q.id}])}), leitner, attempts}, this.award(1, ok?1:0)), ()=>{
       this.persist();
-      if(this.state.settings.autoRead) this.speak((ok?'Correct. ':'The answer is ' + 'ABCD'[vq.correctIndex] + ', ' + vq.options[vq.correctIndex] + '. ') + q.explanation);
+      // Read aloud automatically: right, or the right answer, then why (coach.js sayAnswer, as Adventure).
+      if(this.state.settings.autoRead && window.TTCoach) this.speak(TTCoach.sayAnswer(ok, 'ABCD'[vq.correctIndex], vq.options[vq.correctIndex], q.explanation || ''));
       if(ok && this.state.settings.autoAdvance){
         clearTimeout(this._adv);
         const at = s.i;
@@ -3682,7 +3959,7 @@ class Component extends DCLogic {
       const q = this.qById(id), a = t.answers[idx]; if(!q || a===undefined) return;
       logged.push({q:id, t:now, ok: a===this.viewQ(q).correctIndex, topic:q.topic, p:this.seedPerm(id)[a], src:'test'});
     });
-    const attempts = this.state.attempts.concat(logged).slice(-3000);
+    const attempts = this.state.attempts.concat(logged).slice(-TTAdv.ATTEMPTS_KEPT);
     this.setState(Object.assign({test: Object.assign({}, t, {ended:true, score, perTopic:pt}), tests: this.state.tests.concat([rec]), revisionFlags: rf, attempts, testView:'results'}, this.award(Object.keys(t.answers).length, score, rec.pass?50:0)), ()=>this.persist());
   }
   // ---------- export / import ----------
@@ -3769,7 +4046,7 @@ class Component extends DCLogic {
   planNow(list){
     const C = TTCoach, s = this.state, st = s.settings, seen = new Set(s.attempts.map(a=>a.q));
     return C.studyPlan(st.examDate || '', TTInsights.localDay(Date.now()), {
-      goal: st.dailyGoal || C.coachDefaults.planGoal, start: st.planStart, practised: C.dayCounts(s.attempts),
+      goal: C.dailyGoal(st), start: st.planStart, practised: C.dayCounts(s.attempts),
       topics: list.length ? list.map(x=>x.topic) : this.TOPICS.map((_, i)=>i + 1),
       unseen: this.questionsFor('learn').filter(q=>!seen.has(q.id)).length});
   }
@@ -3792,7 +4069,7 @@ class Component extends DCLogic {
     const out = {vPlan: view==='plan'};
     if(!C || !I) return out;                                // coach.js missing: the cards just don't show
     const today = I.localDay(Date.now()), counts = C.dayCounts(s.attempts);
-    const goal = st.dailyGoal || C.coachDefaults.planGoal, doneToday = counts[today] || 0;
+    const goal = C.dailyGoal(st), doneToday = counts[today] || 0;
     const bar = pct => 'display:block;height:100%;border-radius:99px;background:#0E7C6B;width:' + pct + '%';
     const needCoach = view==='home' || view==='progress' || view==='plan';
     const cn = needCoach ? this.coachNow() : {pred: null, list: []};
@@ -3909,6 +4186,10 @@ class Component extends DCLogic {
         case 'more_like_this': return 'Asked for more like this (' + d.found + ' found)';
         case 'plain_shown': return 'Asked for it explained differently:' + qt;
         case 'screen': return 'Opened ' + (SCREEN[d.view] || d.view);
+        // issue #57: notes, Settings changes and printing, in TTChoices' words (never a note's words)
+        case 'note_added': case 'note_edited': case 'note_deleted': return TTChoices.sayNote(e.kind, d, this.NOTESN[d.screen] || d.screen) + (qt ? ':' + qt : '');
+        case 'setting_changed': return TTChoices.sayChange(d);
+        case 'printed': return TTChoices.sayPrint(d, T, SCREEN[d.screen] || d.screen);
         default: return e.kind.replace(/_/g,' ') + qt;
       }
     };
@@ -3945,11 +4226,12 @@ class Component extends DCLogic {
     const chip = on => 'padding:9px 14px;border-radius:12px;border:none;cursor:pointer;font-size:14px;font-weight:700;' + (on ? 'background:#0E7C6B;color:#fff' : 'background:var(--tt-bg-efe9dc);color:var(--tt-fg-686458)');
     const miniTrack = on => 'flex:none;width:46px;height:27px;border-radius:14px;border:none;cursor:pointer;position:relative;transition:background .2s;background:'+(on?'#0E7C6B':'var(--tt-bg-8c8779)');
     const miniKnob = on => 'position:absolute;top:3px;width:21px;height:21px;border-radius:50%;background:#fff;transition:left .2s;left:'+(on?'22px':'3px');
-    const zoom = [1, 1.12, 1.25][st.textSize] || 1;
-    const dyn = {};
-    if(zoom!==1) dyn.zoom = zoom;
-    if(st.dyslexiaFont) dyn.fontFamily = "'Lexend', sans-serif";
-    if(st.highContrast) dyn.filter = 'contrast(1.3) saturate(1.15)';
+    // Her reading settings on the page (text size, easy-reading font, high contrast): coach.js
+    // readingStyle, the rule Adventure uses too (issue #51). zoom also sizes the notes button.
+    // No coach.js (it failed to load): the page draws at its normal size rather than not at all.
+    const dyn = window.TTCoach ? TTCoach.readingStyle(st) : {}, zoom = dyn.zoom || 1;
+    // Her daily goal (coach.js dailyGoal: hers, or the default), for the goal buttons.
+    const myGoal = window.TTCoach ? TTCoach.dailyGoal(st) : st.dailyGoal;
     const anim = st.reducedMotion ? '' : 'animation:ttpop .25s ease;';
     const isParent = s.profile==='parent';
     const subCfg = s.sub || {};
@@ -4006,7 +4288,7 @@ class Component extends DCLogic {
       onbStepLabel: 'Quick setup · ' + (onbStep+1) + ' of ' + ONB.length,
       onbDots: ONB.map((_,i)=>({style:'flex:1;height:6px;border-radius:99px;background:' + (i<=onbStep ? '#0E7C6B' : 'var(--tt-bg-efe9dc)')})),
       onbTitle: ONB[onbStep].title, onbSub: ONB[onbStep].sub,
-      onbGoals: TW.GOALS.map(g=>{ const on = (st.dailyGoal||20)===g; return {label:String(g), on:String(on), style:bigPick(on), pick:()=>setGoal(g)}; }),
+      onbGoals: TW.GOALS.map(g=>{ const on = myGoal===g; return {label:String(g), on:String(on), style:bigPick(on), pick:()=>setGoal(g)}; }),
       onbTimes: TW.REMIND_TIMES.map(o=>{ const on = !!st.remindOn && (st.remindHour||18)===o.h; return {label:o.label, on:String(on), style:bigPick(on), pick:()=>this.remindAt(o.h)}; })
         .concat([{label:'No reminders', on:String(!st.remindOn), style:bigPick(!st.remindOn) + ';grid-column:1/-1', pick:()=>{ if(st.remindOn) this.toggleReminders(); }}]),
       onbCanBack: onbStep>0,
@@ -4111,7 +4393,8 @@ class Component extends DCLogic {
         explanation: q.explanation, ruleRef: q.ruleRef,
         speakQ: ()=>this.speakQFull(q),
         // Reads the plain re-wording too while it is open.
-        speakExp: ()=>this.speak(q.explanation + '. ' + (plainOpen ? q.plainExplanation + '. ' : '') + q.ruleRef),
+        // why, the plain re-wording when open, and the rule; a missing part is left out, never read as "undefined"
+        speakExp: ()=>window.TTCoach && this.speak(TTCoach.sayExplanation(q.explanation, q.ruleRef, plainOpen ? q.plainExplanation : '')),
         // "Explain it differently": after a wrong answer, when the admin approved a plain
         // re-wording for this question. Opened per question (session.plainFor), so the next
         // question starts closed.
@@ -4381,11 +4664,8 @@ class Component extends DCLogic {
 
     // ----- print -----
     const pd = s.printData || {};
-    const printFormatChoices = [
-      {v:'cards', name:'Flashcards', sub:'4 per page · questions left, answers right · fold down the middle'},
-      {v:'paper', name:'Test paper', sub:'50 numbered questions, answer key on the last page'},
-      {v:'book', name:'Full answer book', sub:'every question in the bank with its correct answer, explanation and rule'}
-    ].map(f=>({name:f.name, sub:f.sub, on: TTScreen.pressed(s.printFormat===f.v), style:'text-align:left;padding:15px 16px;border-radius:16px;cursor:pointer;'+(s.printFormat===f.v?'background:var(--tt-bg-e4f2ef);border:2px solid var(--tt-bd-0e7c6b)':'background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2)'), pick:()=>this.setState({printFormat:f.v})}));
+    // What to print: TTChoices' list (issue #57), so Admin → Activity names a print the same way.
+    const printFormatChoices = TTChoices.PRINT_FORMATS.map(f=>({name:f.name, sub:f.sub, on: TTScreen.pressed(s.printFormat===f.v), style:'text-align:left;padding:15px 16px;border-radius:16px;cursor:pointer;'+(s.printFormat===f.v?'background:var(--tt-bg-e4f2ef);border:2px solid var(--tt-bd-0e7c6b)':'background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2)'), pick:()=>this.setState({printFormat:f.v})}));
     const wrongCount = this.questions().filter(q=>(this.rec(q.id).wrong||0)>0).length;
     const printTotal = pd.pages ? pd.pages.length : (pd.book ? pd.book.length : 0);
     const printReady = s.printFormat==='paper' || (s.printRendered||0) >= printTotal;
@@ -4418,39 +4698,35 @@ class Component extends DCLogic {
     };
 
     // ----- settings -----
-    const toggles = [
-      ['autoRead','Read questions aloud automatically','The voice reads each question and answer as it appears'],
-      ['fiftyFifty','Hint button (50:50)','Adds a button that takes away two wrong answers'],
-      ['autoAdvance','Move on by itself','After a correct answer, goes to the next question automatically'],
-      ['dyslexiaFont','Easy-reading font','Switches to a font that is easier to read'],
-      ['highContrast','High contrast','Stronger colours and darker text'],
-      ['reducedMotion','Reduce motion','Turns off little animations'],
-      // Off unless she switches it on; only learners who switch it on appear on the board.
-      ['familyBoard','Family board','Home compares your streak and this week’s questions with the other learners on this account who switch it on. Worked out on this device; nothing extra is sent anywhere.']
-    ];
+    // The switches, and the other choices below, are TTChoices' lists (issue #57): Admin → Activity
+    // names a change to them in the same words.
+    const toggles = TTChoices.SWITCHES;
     const setSetting = (k,v) => this.set({settings: Object.assign({}, st, {[k]:v})});
+    // How clear a voice sounds (coach.js voiceScore, the rule Adventure uses; 0 with no coach.js).
+    const vScore = v => window.TTCoach ? TTCoach.voiceScore(v) : 0;
     const choiceStyle = on => 'padding:9px 13px;border-radius:11px;cursor:pointer;font-size:13.5px;font-weight:700;'+(on?'background:#0E7C6B;color:#fff;border:none':'background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);color:var(--tt-fg-6e6a5e)');
     // Appearance is per device, not per learner: it lives in localStorage (tt.theme) and the
     // page head applies it before first paint. 'auto' follows the phone's own dark mode.
     const theme = s.theme || 'auto';
     const settingsVals = {
-      sizeChoices: [0,1,2].map(i=>({label:'A', name: ['Normal text size', 'Bigger text', 'Biggest text'][i], on: TTScreen.pressed(st.textSize===i), pick:()=>setSetting('textSize',i),
+      sizeChoices: TTChoices.TEXT_SIZES.map(([name, i])=>({label:'A', name, on: TTScreen.pressed(st.textSize===i), pick:()=>setSetting('textSize',i),
         style:'width:'+(38+i*8)+'px;height:'+(38+i*8)+'px;border-radius:12px;cursor:pointer;font-weight:900;font-size:'+(14+i*4)+'px;'+(st.textSize===i?'background:#0E7C6B;color:#fff;border:none':'background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);color:var(--tt-fg-6e6a5e)')})),
       toggleRows: toggles.map(([k,name,sub])=>({name, sub, on: TTScreen.pressed(!!st[k]), flip:()=>setSetting(k,!st[k]),
         trackStyle:'flex:none;width:56px;height:32px;border-radius:16px;border:none;cursor:pointer;position:relative;transition:background .2s;background:'+(st[k]?'#0E7C6B':'var(--tt-bg-8c8779)'),
         knobStyle:'position:absolute;top:3px;width:26px;height:26px;border-radius:50%;background:#fff;transition:left .2s;left:'+(st[k]?'27px':'3px')})),
       testVoice: ()=>this.speak('Hello '+st.learnerName+'! This is how I will read your questions.'),
-      voiceOpts: this.voices().slice().sort((a,b)=>this.scoreVoice(b)-this.scoreVoice(a)).map(v=>({v:v.name, label: v.name + (this.scoreVoice(v)>=2.5?' \u2605':'')})),
+      voiceOpts: this.voices().slice().sort((a,b)=>vScore(b)-vScore(a)).map(v=>({v:v.name, label: v.name + (vScore(v)>=2.5?' \u2605':'')})),
       voiceSel: st.voiceName || (this.bestVoice() ? this.bestVoice().name : ''),
-      voiceNotice: (()=>{ const vs = this.voices(); if(!vs.length) return 'This browser has no speech voices at all. On an iPad or iPhone the app will use Apple\u2019s built-in voices instead.'; const b = this.bestVoice(); return this.scoreVoice(b) < 2.5 ? 'This browser only offers basic voices, so it sounds robotic here. On an iPad or iPhone the app uses Apple\u2019s own voices \u2014 download an Enhanced one (tip below) and it will sound natural.' : ''; })(),
-      hasVoiceNotice: (()=>{ const vs = this.voices(); if(!vs.length) return true; return this.scoreVoice(this.bestVoice()) < 2.5; })(),
+      voiceNotice: (()=>{ const vs = this.voices(); if(!vs.length) return 'This browser has no speech voices at all. On an iPad or iPhone the app will use Apple\u2019s built-in voices instead.'; const b = this.bestVoice(); return vScore(b) < 2.5 ? 'This browser only offers basic voices, so it sounds robotic here. On an iPad or iPhone the app uses Apple\u2019s own voices \u2014 download an Enhanced one (tip below) and it will sound natural.' : ''; })(),
+      hasVoiceNotice: (()=>{ const vs = this.voices(); if(!vs.length) return true; return vScore(this.bestVoice()) < 2.5; })(),
       setVoice: e=>{ setSetting('voiceName', e.target.value); setTimeout(()=>this.speak('Hello! I am the new voice.'), 200); },
-      speedChoices: [['Slower',0.85],['Normal',0.95],['Faster',1.1]].map(p=>({label:p[0], pick:()=>setSetting('voiceRate',p[1]),
+      speedChoices: TTChoices.VOICE_SPEEDS.map(p=>({label:p[0], pick:()=>setSetting('voiceRate',p[1]),
         on: TTScreen.pressed(Math.abs((st.voiceRate||0.95)-p[1])<0.01), style:choiceStyle(Math.abs((st.voiceRate||0.95)-p[1])<0.01)})),
-      themeChoices: [['Match device','auto'],['Light','light'],['Dark','dark']].map(([label,v])=>({label, pick:()=>{ window.ttApplyTheme && window.ttApplyTheme(v); this.setState({theme:v}); },
+      themeChoices: TTChoices.THEMES.map(([label,v])=>({label, pick:()=>{ this.trackSettings({theme}, {theme:v}); window.ttApplyTheme && window.ttApplyTheme(v); this.setState({theme:v}); },
         on: TTScreen.pressed(theme===v), style:choiceStyle(theme===v)})),
       nameChange: e=>setSetting(e.target.name==='learner'?'learnerName':'parentName', e.target.value),
-      resetProgress: ()=>{ if(confirm('Really wipe all progress, scores and history? Questions you added are kept.')) this.set({leitner:{}, attempts:[], tests:[], openTest:-1}); }
+      // true: her answers are replaced (wiped), not joined with the saved copy (persist, issue #51)
+      resetProgress: ()=>{ if(confirm('Really wipe all progress, scores and history? Questions you added are kept.')) this.set({leitner:{}, attempts:[], tests:[], openTest:-1}, true); }
     };
 
     // ----- log external mock -----
@@ -4766,7 +5042,7 @@ class Component extends DCLogic {
       examDate: st.examDate||'',
       // A new test date also restarts the study plan from today (settings.planStart).
       examDateChange: e=>this.set({settings: Object.assign({}, st, {examDate: e.target.value, planStart: e.target.value ? window.TTInsights.localDay(Date.now()) : ''})}),
-      goalChoices: TW.GOALS.map(g=>({label:String(g), on: TTScreen.pressed((st.dailyGoal||20)===g), style: chip((st.dailyGoal||20)===g), pick: ()=>setGoal(g)})),
+      goalChoices: TW.GOALS.map(g=>({label:String(g), on: TTScreen.pressed(myGoal===g), style: chip(myGoal===g), pick: ()=>setGoal(g)})),
       hasAvatar: !!s.avatar, noAvatar: !s.avatar, avatarSrc: s.avatar||'', learnerInitial: (st.learnerName||'?')[0].toUpperCase(),
       avatarUpload: e=>{ const f = e.target.files && e.target.files[0]; if(!f) return; const rd = new FileReader(); rd.onload = ()=>{ const img = new Image(); img.onload = ()=>{ const c = document.createElement('canvas'); const S = 128; c.width = S; c.height = S; const x = c.getContext('2d'); const m = Math.min(img.width, img.height); x.drawImage(img, (img.width-m)/2, (img.height-m)/2, m, m, 0, 0, S, S); this.set({avatar: c.toDataURL('image/jpeg', .82)}); }; img.src = rd.result; }; rd.readAsDataURL(f); e.target.value = ''; },
       avatarRemove: ()=>this.set({avatar:''}),
@@ -4846,7 +5122,8 @@ class Component extends DCLogic {
         const rd = new FileReader();
         rd.onload = ()=>{ try {
           const d = JSON.parse(rd.result);
-          this.set({settings: Object.assign({}, st, d.settings||{}), leitner:d.leitner||{}, attempts:d.attempts||[], tests:d.tests||[], overrides:d.overrides||{}, custom:d.custom||[], deleted:d.deleted||[]});
+          // true: the backup's answers replace hers, as they always have (not joined, issue #51)
+          this.set({settings: Object.assign({}, st, d.settings||{}), leitner:d.leitner||{}, attempts:d.attempts||[], tests:d.tests||[], overrides:d.overrides||{}, custom:d.custom||[], deleted:d.deleted||[]}, true);
           alert('Backup loaded!');
         } catch(err){ alert('That file did not look like a Theory Trainer backup.'); } };
         rd.readAsText(f);

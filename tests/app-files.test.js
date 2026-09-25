@@ -222,16 +222,10 @@ test('insights: dates are her local days, weeks start on Monday, day names read 
 });
 
 test('insights: a goal day is recorded once she reaches her goal, and raising the goal never takes it back', () => {
-  const none = [];
-  assert.equal(I.recordGoalDay(none, '2026-09-24', 9, 10), none, 'short of the goal: list untouched');
-  const one = I.recordGoalDay(none, '2026-09-24', 10, 10);
-  assert.deepEqual(plain(one), ['2026-09-24']);
-  assert.equal(I.recordGoalDay(one, '2026-09-24', 30, 10), one, 'already recorded: untouched');
-  assert.deepEqual(plain(I.recordGoalDay(['2026-09-25'], '2026-09-24', 10, 10)), ['2026-09-24', '2026-09-25'], 'kept sorted');
-  const long = Array.from({ length: I.CFG.goalDaysKept }, (_, i) => new Date(Date.UTC(2025, 0, 1) + i * DAYMS).toISOString().slice(0, 10));
-  const kept = I.recordGoalDay(long, '2027-06-01', 10, 10);
-  assert.equal(kept.length, I.CFG.goalDaysKept, 'only the newest are kept');
-  assert.equal(kept[kept.length - 1], '2027-06-01');
+  // Recording a goal day is coach.js recordGoalDay (#51: one copy for the app and Adventure,
+  // tested in tests/coach.test.js); the app keeps no rule of its own.
+  assert.equal(I.recordGoalDay, undefined, 'TTInsights has no goal-day rule of its own');
+  assert.equal(I.CFG.goalDaysKept, undefined, 'nor its own copy of how many are kept');
   // Recorded days count whatever the goal is now; unrecorded history counts when it meets today's goal.
   assert.deepEqual(plain(I.goalDays(['2026-09-20'], { '2026-09-20': 12, '2026-09-21': 25, '2026-09-22': 5 }, 20)), ['2026-09-20', '2026-09-21']);
   // Her 3-day streak at a goal of 10 survives her raising the goal to 30.
@@ -432,7 +426,7 @@ test('insights: the numbers on screen come from coach.js, not copies', () => {
   assert.match(app, /C\.mockMix\(this\.questionsFor\('test'\), C\.coachDefaults\.mockSize\)/, 'the mock mix');
   // A new test date restarts the plan; a goal met today is recorded for the streak.
   assert.match(app, /examDateChange: e=>this\.set\(\{settings: Object\.assign\(\{\}, st, \{examDate: e\.target\.value, planStart:/);
-  assert.match(app, /stk\.goalDays = I\.recordGoalDay\(stk\.goalDays, localToday, doneToday, goal\)/);
+  assert.match(app, /TTCoach\.streakAward\(this\.state\.streak, this\.state\.attempts, qCount, TTCoach\.dailyGoal\(this\.state\.settings\), Date\.now\(\)\)/, 'award(): streak and goal day by coach.js');
   // The streak tile, badges and family board share one streak (streakFor).
   assert.match(app, /streak: this\.streakFor\(s\)\.count/);
   assert.match(app, /streak: this\.streakFor\(d\)\.count/);
@@ -886,7 +880,8 @@ test('#10: switches say on or off, and choices say which one is picked (WCAG 4.1
     assert.match(tpl, new RegExp('aria-pressed="\\{\\{ ' + b.replace('.', '\\.') + ' \\}\\}"'), b);
   }
   // The three text sizes all show "A": each has its own name.
-  assert.match(app, /name: \['Normal text size', 'Bigger text', 'Biggest text'\]\[i\]/);
+  assert.match(app, /sizeChoices: TTChoices\.TEXT_SIZES\.map\(\(\[name, i\]\)=>\(\{label:'A', name,/);
+  assert.equal(new Set(CH.TEXT_SIZES.map(x => x[0])).size, 3, 'three different names');
 });
 
 test('#10: a practice answer shows right and wrong with a tick and a cross, and says it (WCAG 1.4.1, 4.1.3)', () => {
@@ -1022,20 +1017,44 @@ function method(start, next) {
   assert.ok(a >= 0 && b > a, 'method not found in the page: ' + start);
   return app.slice(a, b);
 }
-// A stand-in for the app: its real persist(), loadUser() and mergeSnapshot() (the cloud sync's
-// merge, with the real coach.js as TTCoach) over a fake localStorage (store).
-function fakeApp(store) {
-  const localStorage = { getItem: k => (k in store ? store[k] : null), setItem: (k, v) => { store[k] = String(v); } };
-  const ctx = { window: {}, localStorage, JSON, Date, Object, TTCoach: coach };
+// One method of the app's component by its name: from the name to its own closing brace (found
+// by counting braces), so a method can be lifted wherever it sits in the class.
+function methodNamed(name) {
+  const at = app.indexOf('\n  ' + name + '(');
+  assert.ok(at > 0, 'the app has no ' + name + '() method');
+  let i = app.indexOf('{', at), depth = 0;
+  for (; i < app.length; i++) {
+    if (app[i] === '{') depth++;
+    else if (app[i] === '}' && --depth === 0) break;
+  }
+  return app.slice(at + 3, i + 1);
+}
+// The page's TTChoices block (#57: the Settings and Print choices, and her changes in words), run
+// in node with TTWelcome beside it (its reminder times name a reminder change).
+const welcomeAndChoices = [...app.matchAll(/<script>([\s\S]*?)<\/script>/g)].map(m => m[1])
+  .filter(s => s.includes('window.TTWelcome =') || s.includes('window.TTChoices ='));
+const CH = (() => { const ctx = { window: {} }; welcomeAndChoices.forEach(s => vm.runInNewContext(s, ctx)); return ctx.window.TTChoices; })();
+// A stand-in for the app: its real persist(), set(), loadUser(), heardSave() and mergeSnapshot()
+// (the cloud sync's merge), with the real coach.js as TTCoach, over a fake localStorage (store).
+// ls: a localStorage to use instead (the two-tab tests pass one that tells the other tabs).
+// Every write is kept in me.writes ([key, value]) and every event in me.events.
+function fakeApp(store, ls) {
+  const writes = [];
+  const localStorage = ls || { getItem: k => (k in store ? store[k] : null), setItem: (k, v) => { store[k] = String(v); writes.push([k, String(v)]); } };
+  const ctx = { window: { TTCoach: coach }, localStorage, JSON, Date, Object, TTCoach: coach, console };
   vm.runInNewContext(advSrc, ctx);
   ctx.TTAdv = ctx.window.TTAdv;
-  vm.runInNewContext('var me = {' + method('persist(extra){', 'set(patch){') + ',' + method('loadUser(id, keepSession){', 'addLearner(){') +
-    ',' + method('mergeSnapshot(b){', 'pullCloud(){') + '};', ctx);
+  welcomeAndChoices.forEach(s => vm.runInNewContext(s, ctx));
+  ctx.TTChoices = ctx.window.TTChoices;
+  vm.runInNewContext('var me = {' + ['persist', 'set', 'loadUser', 'recordState', 'heardSave', 'mergeSnapshot', 'trackSettings']
+    .map(methodNamed).join(',\n') + '};', ctx);
   return Object.assign(ctx.me, {
-    BASE: 'theoryTrainer', users: [{ id: 'u1', name: 'Catie' }],
+    BASE: 'theoryTrainer', users: [{ id: 'u1', name: 'Catie' }], writes, events: [],
     state: { userId: 'u1', settings: {}, overrides: {}, custom: [], deleted: [], packNames: {}, packLearn: {}, packTest: {}, sub: {} },
     setState(patch, cb) { Object.assign(this.state, patch); if (cb) cb(); },
-    forceUpdate() {}
+    forceUpdate() {},
+    track(kind, qid, data) { this.events.push({ kind, qid, data }); },
+    ctx                                                       // its sandbox, to watch TTAdv.join
   });
 }
 // What adventure.html leaves in her record after one stage (the shape adventure.js writes).
@@ -1083,12 +1102,276 @@ test('adventure: a learner who never played gets no adventure entry, and junk is
   const store = {};
   fakeApp(store).loadUser('u1');
   assert.equal(JSON.parse(store['theoryTrainer.d.u1']).adventure, undefined);
-  // TTAdv.keep on its own: only the KEEP parts come across, the inputs are not changed.
-  const saved = { adventure: { stages: {} }, attempts: ['old'], other: 1 }, next = { attempts: ['new'] };
-  const out = ADV.keep(saved, next);
-  assert.deepEqual(plain(out), { attempts: ['new'], adventure: { stages: {} } });
-  assert.deepEqual(next, { attempts: ['new'] }, 'next is not changed');
-  for (const junk of [null, undefined, 'text', 5]) assert.deepEqual(plain(ADV.keep(junk, next)), { attempts: ['new'] });
+  // TTAdv.join on its own: the saved copy's Adventure progress comes across, parts only the app
+  // changes are the app's, junk is survived, and the inputs are not changed.
+  const saved = { adventure: { stages: {} }, notes: { home: 'old' }, other: 1 }, next = { notes: { home: 'new' } };
+  const out = plain(ADV.join(saved, next, coach, {}));
+  assert.deepEqual(out.adventure, { stages: {} });
+  assert.deepEqual(out.notes, { home: 'new' }, 'the app\'s own parts are the app\'s');
+  assert.equal(out.other, undefined, 'a part no page owns is not carried along');
+  assert.deepEqual(next, { notes: { home: 'new' } }, 'next is not changed');
+  for (const junk of [null, undefined, 'text', 5]) {
+    const j = plain(ADV.join(junk, next, coach, {}));
+    assert.deepEqual([j.notes, j.adventure, j.attempts], [{ home: 'new' }, undefined, []]);
+  }
+});
+
+// ---------- Issue #51: the app's half of two-tab safety ----------
+// Adventure (adventure.html) and the app save the same record, theoryTrainer.d.<id>. An app tab
+// left open while she played Adventure saved its older copy whole, dropping Adventure's answers,
+// XP and flags. Now (1) the app hears another tab's save and shows it (heardSave), and (2) every
+// app save is joined with the copy in storage (TTAdv.join), so even a save made before the app
+// heard is safe. These run the app's real methods and adventure.js's real saving helpers.
+const advPage = require('../adventure/adventure.js');
+const noon25 = new Date(2026, 8, 25, 12).getTime();   // midday local time: no time zone moves the day
+const KEY1 = 'theoryTrainer.d.u1';
+// Her record before either tab does anything: two old practice answers, one flag, a stage passed.
+const startRecord = () => ({ settings: { learnerName: 'Catie', dailyGoal: 4 }, xp: 20, updatedAt: noon25 - 60000,
+  attempts: [{ q: 'p1', t: noon25 - 9000, ok: true, topic: 1, p: 0 }, { q: 'p2', t: noon25 - 8000, ok: true, topic: 2, p: 1 }],
+  revisionFlags: { p2: { t: noon25 - 7000, src: 'learn' } }, flagCleared: {}, streak: { count: 0, last: '', todayDate: '', todayN: 0, goalDays: ['2026-09-24'] },
+  adventure: { stages: { w1s1: { best: 1, stars: 3, passed: true, plays: 1, lastAt: noon25 - 50000 } } } });
+
+// Tabs sharing one localStorage, as a browser runs them: a write that changes a value is heard by
+// every OTHER tab (the 'storage' event), never by the tab that wrote it. deliver() hands the events
+// over until none are left, and fails if the tabs are still answering each other after `max`.
+function browser(record) {
+  const store = { [KEY1]: JSON.stringify(record) }, log = [], tabs = [];
+  const storage = tab => ({
+    getItem: k => (k in store ? store[k] : null),
+    setItem: (k, v) => {
+      if (store[k] === String(v)) return;                      // the same value: no event (as browsers do)
+      store[k] = String(v); log.push({ by: tab.name, key: k });
+      tabs.filter(t => t !== tab).forEach(t => t.inbox.push({ key: k, newValue: String(v) }));
+    } });
+  const b = { store, log, tabs, rec: () => JSON.parse(store[KEY1]),
+    // The app, open in a tab: loads her record the way it opens (loadUser), then listens.
+    app(name) {
+      const tab = { name, inbox: [] }; tabs.push(tab);
+      tab.me = fakeApp(store, storage(tab));
+      tab.me.loadUser('u1');
+      tab.inbox.length = 0;                                     // what it heard before it opened: nothing
+      tab.hear = e => tab.me.heardSave(e);
+      return tab.me;
+    },
+    // adventure.html in a tab, doing what adventure.js does: every save starts from the copy in
+    // storage with its own answers put back (blob), and its storage listener heals a save that
+    // dropped them (forgetWiped + healRecord).
+    adventure(name) {
+      const tab = { name, inbox: [], mine: { attempts: [], flags: {} } }; tabs.push(tab);
+      const st = storage(tab), read = () => JSON.parse(st.getItem(KEY1) || '{}');
+      const blob = now => advPage.healRecord(read(), tab.mine, coach, now) || read();
+      tab.answer = (q, ok, now, extra) => {
+        const rec = advPage.withAnswer(blob(now), Object.assign({ q, ok, topic: 3, p: 0 }, extra), now, coach);
+        tab.mine.attempts.push(rec.attempts[rec.attempts.length - 1]);
+        st.setItem(KEY1, JSON.stringify(rec));
+      };
+      tab.flag = (q, on, now) => { st.setItem(KEY1, JSON.stringify(advPage.withFlag(blob(now), q, on, now))); tab.mine.flags[q] = { on, t: now }; };
+      tab.stage = (id, result, now) => st.setItem(KEY1, JSON.stringify(advPage.withStage(blob(now), coach, id, result, now)));
+      tab.hear = e => {
+        if (e.key !== KEY1) return;
+        const stored = JSON.parse(e.newValue);
+        advPage.forgetWiped(tab.mine, stored);
+        const healed = advPage.healRecord(stored, tab.mine, coach, Date.now());
+        if (healed) st.setItem(KEY1, JSON.stringify(healed));
+      };
+      return tab;
+    },
+    deliver(max) {
+      for (let round = 0; round < (max || 20); round++) {
+        const busy = tabs.filter(t => t.inbox.length);
+        if (!busy.length) return round;
+        busy.forEach(t => { const evs = t.inbox.splice(0); evs.forEach(t.hear); });
+      }
+      assert.fail('the tabs are still answering each other\'s saves after ' + (max || 20) + ' rounds: ' + JSON.stringify(log));
+    } };
+  return b;
+}
+// One practice answer in the app, as answerLearn records it: the attempt, 10 XP when right, and
+// her streak through the shared rule (coach.streakAward). Saved with set(), as every app change is.
+function appAnswer(me, q, ok, now) {
+  const s = me.state;
+  me.set({ attempts: s.attempts.concat([{ q, t: now, ok, topic: 1, p: 0 }]), xp: s.xp + (ok ? 10 : 0),
+    streak: coach.streakAward(s.streak, s.attempts, 1, coach.dailyGoal(s.settings), now) });
+}
+
+test('#51 item 1: the app hears Adventure save and shows her new answers, XP, flags and stars at once, without saving', () => {
+  const b = browser(startRecord()), me = b.app('app'), adv = b.adventure('adventure');
+  adv.answer('t03q01', true, noon25 + 1000);
+  adv.answer('t03q02', false, noon25 + 2000);
+  adv.flag('t03q02', true, noon25 + 2500);
+  adv.stage('w1s2', { correct: 7, total: 7 }, noon25 + 3000);
+  const m = b.log.length;
+  const rounds = b.deliver();
+  assert.deepEqual(me.state.attempts.map(a => a.q), ['p1', 'p2', 't03q01', 't03q02'], 'Home counts her Adventure answers');
+  assert.equal(me.state.xp, 30, 'her XP shows the right Adventure answer');
+  assert.ok(me.state.revisionFlags.t03q02, 'the Adventure flag is on her Flagged list');
+  assert.ok(me.state.adventure.stages.w1s2, 'the new stage shows on the Home card');
+  assert.deepEqual(me.state.streak.goalDays, ['2026-09-24', '2026-09-25'], '4 answers today meet her goal of 4: the ring and streak show it');
+  assert.deepEqual(b.log.slice(m), [], 'hearing is not saving: nobody wrote anything back');
+  assert.equal(rounds, 1, 'one round and every tab is quiet');
+});
+
+test('#51 item 1: two open tabs settle after one round, whoever saves (no save answers a save)', () => {
+  const b = browser(startRecord()), me = b.app('app'), adv = b.adventure('adventure');
+  // Who wrote her record since mark m. (A save also rewrites the question content, another key
+  // that neither page listens for, so it can't wake a tab: deliver() would fail if it did.)
+  const since = m => b.log.slice(m).filter(w => w.key === KEY1).map(w => w.by);
+  // Adventure saves an answer: the app hears it (no write); Adventure hears nothing back.
+  let m = b.log.length;
+  adv.answer('t03q01', true, noon25 + 1000);
+  assert.equal(b.deliver(), 1);
+  assert.deepEqual(since(m), ['adventure']);
+  // The app saves an answer: Adventure hears it, finds nothing of its own missing, writes nothing.
+  m = b.log.length;
+  appAnswer(me, 'p3', true, noon25 + 2000);
+  assert.equal(b.deliver(), 1);
+  assert.deepEqual(since(m), ['app'], 'one write, nothing answered back');
+  // The app open twice as well. Opening saves once (loadUser, as the app always has); a save in
+  // either app tab is heard by the other and by Adventure, and nobody answers it.
+  const me2 = b.app('app2');
+  assert.equal(b.deliver(), 1);
+  m = b.log.length;
+  appAnswer(me2, 'p4', false, noon25 + 3000);
+  assert.equal(b.deliver(), 1);
+  assert.deepEqual(since(m), ['app2']);
+  assert.deepEqual(me.state.attempts.map(a => a.q), ['p1', 'p2', 't03q01', 'p3', 'p4'], 'the first app tab shows the second one\'s answer');
+  assert.deepEqual(b.rec().attempts.map(a => a.q), ['p1', 'p2', 't03q01', 'p3', 'p4'], 'every answer saved once');
+  assert.equal(b.rec().xp, 40, '20 + 10 (Adventure) + 10 (app): each right answer counted once');
+});
+
+test('#51 item 2: an app tab that never heard Adventure save still keeps everything Adventure saved', () => {
+  // The storage event can be missed (a frozen or suspended tab), or a save can come first. The
+  // join alone must keep Adventure's answers, flag, XP, stars, goal day and sign answers (#48).
+  const b = browser(startRecord()), me = b.app('app'), adv = b.adventure('adventure');
+  adv.answer('t03q01', true, noon25 + 1000);
+  adv.answer('sign:stop', true, noon25 + 1500, { topic: undefined });
+  adv.flag('t03q01', true, noon25 + 1600);
+  adv.stage('w1s2', { correct: 6, total: 7 }, noon25 + 1700);
+  b.tabs.find(t => t.name === 'app').inbox.length = 0;         // the app tab never hears any of it
+  const m = b.log.length;
+  appAnswer(me, 'p3', true, noon25 + 2000);                    // ... and saves its older copy
+  const rec = b.rec();
+  assert.deepEqual(rec.attempts.map(a => a.q), ['p1', 'p2', 't03q01', 'sign:stop', 'p3'], 'all answers, in the order she gave them');
+  assert.equal(rec.attempts.find(a => a.q === 'sign:stop').src, 'adventure', 'the sign answer keeps its source');
+  assert.equal(rec.xp, 50, '20 before + 20 in Adventure + 10 in the app: none lost, none twice');
+  assert.ok(rec.revisionFlags.t03q01 && rec.revisionFlags.p2, 'both pages\' flags');
+  assert.ok(rec.adventure.stages.w1s1 && rec.adventure.stages.w1s2, 'the stars from both stages');
+  assert.deepEqual(rec.streak.goalDays, ['2026-09-24', '2026-09-25'], 'the goal day Adventure recorded is kept');
+  // The app now shows the joined record too (so its next save starts from it) ...
+  assert.deepEqual(plain(me.state.attempts).map(a => a.q), rec.attempts.map(a => a.q));
+  assert.equal(me.state.xp, 50);
+  // ... and Adventure, hearing the app's save, has nothing to put back: no write.
+  b.deliver();
+  assert.deepEqual(b.log.slice(m).filter(w => w.key === KEY1).map(w => w.by), ['app'], 'the app\'s one save, and no healing write after it');
+});
+
+test('#51 item 2: flags join question by question; a later un-flag in either tab wins', () => {
+  const b = browser(startRecord()), me = b.app('app'), adv = b.adventure('adventure');
+  adv.flag('p2', false, noon25 + 1000);                        // un-flagged in Adventure ...
+  b.tabs.find(t => t.name === 'app').inbox.length = 0;
+  me.set({ revisionFlags: Object.assign({}, me.state.revisionFlags, { p1: { t: noon25 + 2000, src: 'learn' } }) });   // ... the stale app flags another
+  const rec = b.rec();
+  assert.equal('p2' in rec.revisionFlags, false, 'the Adventure un-flag stands');
+  assert.equal(rec.flagCleared.p2, noon25 + 1000);
+  assert.ok(rec.revisionFlags.p1, 'the app\'s new flag stands');
+  // A flag both copies hold alike stays exactly as it is, even one with no time on it.
+  const out = plain(ADV.join({ revisionFlags: { old: { src: 'learn' } } }, { revisionFlags: { old: { src: 'learn' } } }, coach, {}));
+  assert.deepEqual(out.revisionFlags, { old: { src: 'learn' } });
+});
+
+test('#51 item 2: "Reset progress" still wipes her answers, in this tab and the others', () => {
+  const b = browser(startRecord()), me = b.app('app'), adv = b.adventure('adventure');
+  adv.answer('t03q01', true, noon25 + 1000);
+  b.deliver();
+  // Settings -> Reset all progress: the app's own handler (renderVals resetProgress) saves her
+  // answers replaced, not joined.
+  const reset = app.match(/resetProgress: \(\)=>\{ if\(confirm\([^)]*\)\) (this\.set\([^\n]*?\)); \}/);
+  assert.ok(reset, 'the Reset progress handler was not found');
+  new Function('me', reset[1].replace(/^this\./, 'me.')).call(null, me);
+  assert.deepEqual(b.rec().attempts, [], 'wiped, although the stored copy had answers');
+  assert.equal(b.rec().xp, 30, 'XP, flags and streak are kept, as the confirm says');
+  b.deliver();
+  assert.deepEqual(adv.mine.attempts, [], 'Adventure heard the empty list and forgot its answers (its own reset rule)');
+  // Adventure plays on after the reset: only the new answer; the wiped ones never come back.
+  adv.answer('t03q09', true, noon25 + 5000);
+  b.deliver();
+  assert.deepEqual(me.state.attempts.map(a => a.q), ['t03q09']);
+  // A second app tab that missed the reset (loaded before it, never heard) saves later: its old
+  // answers stay wiped (an empty saved list means wiped, as adventure.js reads it); its new one joins.
+  const old = Object.assign(startRecord(), { attempts: [{ q: 'p1', t: 1000, ok: true, topic: 1, p: 0 }, { q: 'p2', t: 2000, ok: true, topic: 2, p: 1 }] });
+  const b2 = browser(old), stale = b2.app('stale'), resetter = b2.app('resetter');
+  new Function('me', reset[1].replace(/^this\./, 'me.')).call(null, resetter);
+  b2.tabs.find(t => t.name === 'stale').inbox.length = 0;
+  appAnswer(stale, 'p9', true, Date.now() + 1000);
+  assert.deepEqual(b2.rec().attempts.map(a => a.q), ['p9'], 'the stale tab did not bring the wiped answers back');
+  // Import backup replaces her answers with the backup's, as before (not joined).
+  const imp = app.match(/(this\.set\(\{settings: Object\.assign\(\{\}, st, d\.settings\|\|\{\}\)[^\n]*?\));\n/);
+  assert.ok(imp && /, true\)$/.test(imp[1]), 'Import backup saves its answers as they are (replace)');
+});
+
+test('#51 item 2: the join keeps the newest 3000 answers, the same limit as a practice answer', () => {
+  const many = Array.from({ length: ADV.ATTEMPTS_KEPT }, (_, i) => ({ q: 'o' + i, t: i + 1, ok: true, topic: 1 }));
+  const out = ADV.join({ attempts: many }, { attempts: [{ q: 'new', t: 1e12, ok: true, topic: 1 }] }, coach, {});
+  assert.equal(out.attempts.length, ADV.ATTEMPTS_KEPT);
+  assert.equal(out.attempts[out.attempts.length - 1].q, 'new');
+  assert.equal(ADV.ATTEMPTS_KEPT, advPage.APP.attemptsKeep, 'the app and Adventure keep the same number');
+  for (const m of ['answerLearn', 'endTest']) assert.match(methodNamed(m), /\.slice\(-TTAdv\.ATTEMPTS_KEPT\)/, m + ' uses the one limit');
+  // XP: the saved XP plus what this tab earned since it last read or saved (xpSeen).
+  assert.equal(ADV.join({ xp: 50 }, { xp: 30 }, coach, { xpSeen: 20 }).xp, 60);
+  assert.equal(ADV.join({ xp: 50 }, { xp: 30 }, coach, {}).xp, 30, 'no xpSeen: the app\'s own number, as before');
+});
+
+test('#51 item 2: a save joins only when another tab saved in between; otherwise it is saved as before', () => {
+  // Notes save on every key press: the usual save (nobody else saving) must stay as quick as it was.
+  const store = { [KEY1]: JSON.stringify(startRecord()) }, me = fakeApp(store);
+  let joins = 0;
+  const join = me.ctx.TTAdv.join;
+  me.ctx.TTAdv.join = function () { joins++; return join.apply(this, arguments); };
+  me.loadUser('u1');
+  appAnswer(me, 'p3', true, noon25 + 1000);
+  me.set({ notes: { home: 'Mirrors' } });
+  assert.equal(joins, 0, 'nobody else saved: saved as it is');
+  // Another tab saves (Adventure's XP here): the next save joins, once, and keeps it.
+  store[KEY1] = JSON.stringify(Object.assign(JSON.parse(store[KEY1]), { xp: 70, updatedAt: noon25 + 2000 }));
+  appAnswer(me, 'p4', true, noon25 + 3000);
+  assert.equal(joins, 1);
+  assert.equal(JSON.parse(store[KEY1]).xp, 80, 'the other tab\'s 40 XP and this answer\'s 10');
+  me.set({ notes: { home: 'Mirrors, signal' } });
+  assert.equal(joins, 1, 'and quick again after');
+});
+
+test('#51: an older coach.js (one open while an update arrives) counts as not loaded, so no screen breaks', () => {
+  // sw.js fetches the page first but scripts from its cache, so for one open after an update the
+  // new page can meet the old coach.js. The app now draws with coach.js rules (readingStyle,
+  // dailyGoal, pickVoice ...); an older copy without them would stop the page drawing at all.
+  const src = [...app.matchAll(/<script>([\s\S]*?)<\/script>/g)].map(m => m[1]).find(x => x.includes("typeof window.TTCoach[f] !== 'function'"));
+  assert.ok(src, 'the check after coach.js was not found');
+  const at = app.indexOf(src);
+  assert.ok(at > app.indexOf('<script src="./coach.js">') && at < app.indexOf('<script src="./signs.js">'), 'it runs right after coach.js loads');
+  const run = c => { const w = { TTCoach: c }; vm.runInNewContext(src, { window: w, console: { warn() {} } }); return w.TTCoach; };
+  assert.equal(run(coach), coach, 'the current coach.js is used');
+  const old = Object.assign({}, coach); delete old.readingStyle;
+  assert.equal(run(old), undefined, 'one without the shared rules is not');
+  assert.equal(run(undefined), undefined);
+  // and every new call on the way to drawing a screen or saving an answer copes without it
+  assert.match(app, /const dyn = window\.TTCoach \? TTCoach\.readingStyle\(st\) : \{\}/);
+  assert.match(app, /const myGoal = window\.TTCoach \? TTCoach\.dailyGoal\(st\) : st\.dailyGoal;/);
+  assert.match(methodNamed('award'), /const stk = window\.TTCoach \? TTCoach\.streakAward\(/);
+  assert.match(methodNamed('persist'), /if\(raw !== this\._rawSeen && window\.TTCoach\)\{/);
+});
+
+test('#51 item 1: the app listens for other tabs\' saves, and the storage event only reads', () => {
+  assert.match(app, /window\.addEventListener\('storage', e=>this\.heardSave\(e\)\);/);
+  // heardSave writes nothing: a save answering a save is how two tabs would loop forever.
+  assert.doesNotMatch(methodNamed('heardSave'), /setItem|persist\(|this\.set\(/);
+  // Another learner's record, a removed key, or junk: nothing changes.
+  const me = fakeApp({ [KEY1]: JSON.stringify(startRecord()), 'theoryTrainer.d.u2': '{"xp":5}' });
+  me.loadUser('u1');
+  const before = JSON.stringify(me.state);
+  me.heardSave({ key: 'theoryTrainer.d.u2', newValue: '{"xp":5}' });
+  me.heardSave({ key: 'tt.theme', newValue: 'dark' });
+  me.heardSave({ key: KEY1, newValue: null });
+  assert.equal(JSON.stringify(me.state), before);
 });
 
 // ---------- Issue #38 item 1: Adventure progress lost across devices ----------
@@ -1257,8 +1540,10 @@ test('#32 item 3: the notes button floats only where it fits beside the page; an
   assert.ok(TS && TS.PAGE && typeof TS.floatMin === 'function', 'TTScreen.PAGE and TTScreen.floatMin');
   const N = TS.NOTES, P = TS.PAGE;
   // The text size setting zooms the whole page (the column AND the button) by 1, 1.12 or 1.25.
-  const zooms = [...app.match(/const zoom = \[([\d., ]+)\]\[st\.textSize\]/)[1].split(',').map(Number)];
+  // (coach.js READING.zoom, through readingStyle: the rule the app and Adventure share, #51)
+  const zooms = coach.READING.zoom.slice();
   assert.deepEqual(zooms, [1, 1.12, 1.25]);
+  assert.match(app, /const dyn = window\.TTCoach \? TTCoach\.readingStyle\(st\) : \{\}, zoom = dyn\.zoom \|\| 1;/);
   for (const z of zooms) {
     // At the narrowest window where it floats, it sits wholly right of the centred page column.
     const W = TS.floatMin(z), columnRight = (W + z * (P.max + 2 * P.side)) / 2;
@@ -1411,4 +1696,140 @@ test('#42: the admin\'s Account card shows no subscription buttons, and Accounts
   assert.match(app, /acctPayVisible: payOn && !s\.isAdminAccount,/);
   assert.ok(dash.includes('<sc-if value="{{ acctsVisible }}"') && dash.includes('{{ reloadAccounts }}') && dash.includes('{{ a.giveFree }}'));
   assert.match(app, /if\(s\.view==='dash' && s\.isAdminAccount && \(prev\.view!=='dash' \|\| !prev\.isAdminAccount\)\) this\.loadAccounts\(\);/);
+});
+
+// ---------- Issue #57: notes, Settings changes and printing are tracked ----------
+// Darren (2026-09-25 audit): "It needs to track ALL the things, everything she does". Notes,
+// Settings changes and printing were not events; only the screen visit was. The words and the
+// choices live in the TTChoices block in the page head (CH here), run in node.
+
+test('#57: the TTChoices block sits in the real head, not <helmet> (the camelCase rewrite would break it)', () => {
+  const at = app.indexOf('window.TTChoices =');
+  assert.ok(at > 0 && at < app.indexOf('\n</head>') && at < app.indexOf('\n<helmet>\n'));
+});
+
+test('#57 settings: each change is one event with the setting and its old and new value; never a name', () => {
+  const before = { textSize: 1, autoRead: false, voiceRate: 0.95, learnerName: 'Catie', parentName: 'Dad', dailyGoal: 20 };
+  const after = Object.assign({}, before, { textSize: 2, autoRead: true, learnerName: 'Cat', parentName: 'Darren', dailyGoal: 30, seenVersion: 'v18' });
+  const got = plain(CH.changes(before, after));
+  assert.deepEqual(got.map(c => c.setting).sort(), ['autoRead', 'dailyGoal', 'textSize'], 'names and bookkeeping (seenVersion) are not settings she changed');
+  assert.deepEqual(got.find(c => c.setting === 'textSize'), { setting: 'textSize', from: 1, to: 2 });
+  assert.ok(!/Cat|Dad|Darren/.test(JSON.stringify(got)), 'no name ever goes in an event');
+  for (const k of ['learnerName', 'parentName']) assert.ok(!(k in CH.TRACKED), k + ' must not be tracked');
+  assert.deepEqual(plain(CH.changes(before, Object.assign({}, before))), [], 'nothing changed: no events');
+  assert.deepEqual(plain(CH.changes({}, { familyBoard: true })), [{ setting: 'familyBoard', from: null, to: true }], 'never set before: from null');
+  // Every switch on the Settings screen, and each of its other choices, is tracked.
+  for (const [k] of CH.SWITCHES) assert.ok(k in CH.TRACKED, k);
+  for (const k of ['textSize', 'theme', 'voiceName', 'voiceRate', 'dailyGoal', 'examDate', 'remindOn', 'remindHour']) assert.ok(k in CH.TRACKED, k);
+});
+
+test('#57 settings: Admin → Activity says a change in the Settings screen\'s own words', () => {
+  const say = d => CH.sayChange(d);
+  assert.equal(say({ setting: 'textSize', from: 1, to: 2 }), 'Changed Text size: Bigger text → Biggest text');
+  assert.equal(say({ setting: 'autoRead', from: false, to: true }), 'Changed Read questions aloud automatically: off → on');
+  assert.equal(say({ setting: 'familyBoard', from: null, to: true }), 'Changed Family board: off → on');
+  assert.equal(say({ setting: 'voiceRate', from: 0.95, to: 1.1 }), 'Changed Voice speed: Normal → Faster');
+  assert.equal(say({ setting: 'theme', from: 'auto', to: 'dark' }), 'Changed Appearance: Match device → Dark');
+  assert.equal(say({ setting: 'remindHour', from: 17, to: 20 }), 'Changed Reminder time: 5pm → 8pm');
+  assert.equal(say({ setting: 'remindHour', from: null, to: 18 }), 'Changed Reminder time: not set → 18:00', 'an hour with no button of its own');
+  assert.equal(say({ setting: 'examDate', from: null, to: '2026-11-02' }), 'Changed My theory test date: not set → 2026-11-02');
+  assert.equal(say({ setting: 'dailyGoal', from: 20, to: 30 }), 'Changed Daily goal: 20 → 30');
+  assert.equal(say({ setting: 'somethingNew', from: 1, to: 2 }), 'Changed somethingNew: 1 → 2', 'an unknown setting (an older app): its own name');
+});
+
+test('#57 settings: every Settings change the app saves is tracked (set), and Appearance too', () => {
+  const me = fakeApp({ [KEY1]: JSON.stringify(startRecord()) });
+  me.loadUser('u1');
+  assert.deepEqual(me.events, [], 'opening a learner is not a Settings change');
+  me.set({ settings: Object.assign({}, me.state.settings, { textSize: 2, learnerName: 'Cat' }) });
+  assert.deepEqual(plain(me.events), [{ kind: 'setting_changed', qid: null, data: { setting: 'textSize', from: 1, to: 2 } }]);
+  me.events.length = 0;
+  me.set({ attempts: [] });
+  assert.deepEqual(me.events, [], 'a save that changes no setting: no event');
+  // Another tab's save shows new settings here too, but she did not change them in this tab: no event.
+  const rec = JSON.parse(me.writes.filter(w => w[0] === KEY1).pop()[1]);
+  rec.settings.highContrast = true;
+  me.writes.length = 0;
+  me.heardSave({ key: KEY1, newValue: JSON.stringify(rec) });
+  assert.deepEqual(me.events, []);
+  // Appearance is this device's (tt.theme), not in her settings: its buttons track it the same way.
+  assert.match(app, /pick:\(\)=>\{ this\.trackSettings\(\{theme\}, \{theme:v\}\); /);
+});
+
+test('#57 notes: finishing with a note is one event (added, changed or deleted) with its length, never its words', () => {
+  assert.equal(CH.noteKind('', 'Mirrors first'), 'note_added');
+  assert.equal(CH.noteKind('Mirrors first', 'Mirrors, signal'), 'note_edited');
+  assert.equal(CH.noteKind('Mirrors first', ''), 'note_deleted');
+  assert.equal(CH.noteKind('   ', ''), null, 'only spaces is no note');
+  assert.equal(CH.noteKind('Same', 'Same'), null);
+  assert.equal(CH.noteKind(undefined, undefined), null);
+  // The app's trackNote, run as componentDidUpdate runs it (prev state, new state): the note as the
+  // sheet opened is kept, and compared when the sheet closes or moves to another screen's note.
+  const events = [];
+  const me = vm.runInNewContext('({' + methodNamed('trackNote') + '})', { TTChoices: CH });
+  Object.assign(me, { track: (kind, qid, data) => events.push({ kind, qid, data }), currentQid: () => 't01q01' });
+  const st = (open, notes, key) => ({ notesOpen: open, notes, notesKey: key, view: 'learnQ' });
+  me.trackNote(st(false, {}, ''), st(true, {}, 'learnQ'));                                 // opens
+  me.trackNote(st(true, {}, 'learnQ'), st(true, { learnQ: 'M' }, 'learnQ'));              // types ...
+  me.trackNote(st(true, { learnQ: 'M' }, 'learnQ'), st(true, { learnQ: 'Mirrors' }, 'learnQ'));
+  assert.deepEqual(events, [], 'no event for each key she presses');
+  me.trackNote(st(true, { learnQ: 'Mirrors' }, 'learnQ'), st(false, { learnQ: 'Mirrors' }, 'learnQ'));   // closes
+  assert.deepEqual(plain(events), [{ kind: 'note_added', qid: 't01q01', data: { screen: 'learnQ', chars: 7 } }]);
+  assert.ok(!JSON.stringify(events).includes('Mirrors'), 'the words of her note are never sent');
+  // Open again, move to Home's note (Other notes) and delete it: the first note is unchanged (no
+  // event), Home's is deleted.
+  events.length = 0;
+  const notes = { learnQ: 'Mirrors', home: 'Book the test' };
+  me.trackNote(st(false, notes, 'learnQ'), st(true, notes, 'learnQ'));
+  me.trackNote(st(true, notes, 'learnQ'), st(true, notes, 'home'));
+  me.trackNote(st(true, notes, 'home'), st(true, { learnQ: 'Mirrors' }, 'home'));
+  me.trackNote(st(true, { learnQ: 'Mirrors' }, 'home'), st(false, { learnQ: 'Mirrors' }, 'home'));
+  assert.deepEqual(plain(events), [{ kind: 'note_deleted', qid: 't01q01', data: { screen: 'home', chars: 0 } }]);
+  assert.match(app, /this\.trackNote\(prev, s\);/, 'componentDidUpdate runs it');
+});
+
+test('#57 print: printing is one event with the format, how many questions and which', () => {
+  const events = [];
+  const me = vm.runInNewContext('({' + methodNamed('trackPrint') + '})', {});
+  me.track = (kind, qid, data) => events.push({ kind, qid, data });
+  const q = n => ({ id: 'q' + n });
+  const printing = st => { me.state = st; me.trackPrint(); };
+  printing({ printPreview: true, printFormat: 'cards', printScope: 'wrong', printData: { pages: [[q(1), q(2), q(3), q(4)], [q(5)]] } });
+  printing({ printPreview: true, printFormat: 'paper', printScope: 'all', printData: { paper: Array.from({ length: 50 }, (_, i) => q(i)) } });
+  printing({ printPreview: true, printFormat: 'book', printScope: 'all', printData: { book: [{ qs: [q(1), q(2)] }, { qs: [q(3)] }] } });
+  printing({ printPreview: false, printFormat: 'cards', printScope: 'all', printData: null, view: 'progress' });   // the browser's own Print, on My Progress
+  assert.deepEqual(plain(events), [
+    { kind: 'printed', qid: null, data: { format: 'cards', n: 5, scope: 'wrong' } },
+    { kind: 'printed', qid: null, data: { format: 'paper', n: 50, scope: null } },
+    { kind: 'printed', qid: null, data: { format: 'book', n: 3, scope: null } },
+    { kind: 'printed', qid: null, data: { format: null, screen: 'progress' } }]);
+  // The Print button and the browser's own Print both fire 'beforeprint': one listener, one event.
+  assert.match(app, /window\.addEventListener\('beforeprint', \(\)=>this\.trackPrint\(\)\);/);
+  // In words, for Admin → Activity.
+  assert.equal(CH.sayPrint({ format: 'cards', n: 5, scope: 'wrong' }, TOPIC_NAMES), 'Printed Flashcards: 5 questions, wrong answers only');
+  assert.equal(CH.sayPrint({ format: 'cards', n: 12, scope: '3' }, TOPIC_NAMES), 'Printed Flashcards: 12 questions, topic 3 (' + TOPIC_NAMES[2] + ')');
+  assert.equal(CH.sayPrint({ format: 'cards', n: 60, scope: 'all' }, TOPIC_NAMES), 'Printed Flashcards: 60 questions');
+  assert.equal(CH.sayPrint({ format: 'paper', n: 50, scope: null }, TOPIC_NAMES), 'Printed Test paper: 50 questions');
+  assert.equal(CH.sayPrint({ format: 'book', n: 1, scope: null }, TOPIC_NAMES), 'Printed Full answer book: 1 question');
+  assert.equal(CH.sayPrint({ format: null, screen: 'progress' }, TOPIC_NAMES, 'My Progress'), 'Printed My Progress');
+});
+
+test('#57 Admin → Activity: notes, Settings changes and printing in plain words', () => {
+  assert.equal(CH.sayNote('note_added', { chars: 7 }, 'Practising'), 'Added a note on Practising (7 characters)');
+  assert.equal(CH.sayNote('note_edited', { chars: 1 }, 'Home'), 'Changed a note on Home (1 character)');
+  assert.equal(CH.sayNote('note_deleted', { chars: 0 }, 'Home'), 'Deleted a note on Home');
+  const act = methodNamed('activityVals');
+  assert.match(act, /case 'setting_changed': return TTChoices\.sayChange\(d\);/);
+  assert.match(act, /case 'printed': return TTChoices\.sayPrint\(d, T, SCREEN\[d\.screen\] \|\| d\.screen\);/);
+  assert.match(act, /case 'note_added': case 'note_edited': case 'note_deleted': return TTChoices\.sayNote\(e\.kind, d, this\.NOTESN\[d\.screen\] \|\| d\.screen\) \+ \(qt \? ':' \+ qt : ''\);/);
+});
+
+test('#57: the Settings and Print screens draw their choices from TTChoices (one copy of the words)', () => {
+  assert.match(app, /const toggles = TTChoices\.SWITCHES;/);
+  assert.match(app, /sizeChoices: TTChoices\.TEXT_SIZES\.map\(/);
+  assert.match(app, /speedChoices: TTChoices\.VOICE_SPEEDS\.map\(/);
+  assert.match(app, /themeChoices: TTChoices\.THEMES\.map\(/);
+  assert.match(app, /const printFormatChoices = TTChoices\.PRINT_FORMATS\.map\(/);
+  assert.deepEqual(plain(CH.TEXT_SIZES.map(x => x[1])), [0, 1, 2], 'text sizes 0, 1, 2 as settings.textSize saves them');
+  assert.deepEqual(plain(CH.THEMES.map(x => x[1])), ['auto', 'light', 'dark']);
 });
