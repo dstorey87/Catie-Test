@@ -58,6 +58,65 @@ test('#32 page: the car on the "Open the app first" message stays on the screen 
   assert.match(rule[1], /width: 100%;/, 'as wide as its 120px box, no wider');
 });
 
+// ---------- the page's CSS, read as numbers ----------
+const css = read('adventure/adventure.css');
+// The wide-screen block: from "@media (min-width: Npx) {" to its closing "}" at the start of a line.
+const wideAt = css.indexOf('@media (min-width: ');
+const wideMin = +css.slice(wideAt).match(/^@media \(min-width: (\d+)px\)/)[1];
+const wideCss = css.slice(wideAt, css.indexOf('\n}', wideAt));
+// The declarations of the last rule for a selector in some CSS (a later rule overrides an earlier).
+function cssRule(src, sel) {
+  const esc = sel.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const all = [...src.matchAll(new RegExp('(?:^|[\\n}])\\s*' + esc + '\\s*\\{([^}]*)\\}', 'g'))];
+  return all.length ? all[all.length - 1][1] : '';
+}
+// A property's pixel numbers ("padding: 16px 8px 10px" -> [16, 8, 10]): the wide block's own
+// value if it sets one, otherwise the page's base value.
+function widePx(sel, prop) {
+  const re = new RegExp('(?:^|;)\\s*' + prop + ':\\s*([^;]+)');
+  const m = cssRule(wideCss, sel).match(re) || cssRule(css.slice(0, wideAt), sel).match(re);
+  assert.ok(m, sel + ' has no ' + prop);
+  return m[1].trim().split(/\s+/).map(v => parseFloat(v));
+}
+
+test('#38 item 2: on a wide screen every world tab fits on one row, so none is left alone over the road', () => {
+  // v13 at 768px and 1280px: the 14 tabs wrapped 13 + 1, and tab 14 sat on its own above the
+  // road like a locked stage. From the wide breakpoint up the page column is its widest, so the
+  // row must fit there: tabs, the gaps between them and the row's side padding.
+  const worlds = coach.adventureRoute(bank).length;
+  const column = Math.min(widePx('main, .top', 'max-width')[0], wideMin) - 2 * widePx('main', 'padding')[1];
+  const [tab] = widePx('.wtab', 'width'), [gap] = widePx('.worlds', 'gap'), pad = widePx('.worlds', 'padding')[1];
+  const row = worlds * tab + (worlds - 1) * gap + 2 * pad;
+  assert.equal(worlds, 14);
+  assert.ok(row <= column, worlds + ' tabs need ' + row + 'px, the column has ' + column + 'px: the last tab wraps');
+  assert.ok(tab >= 44, 'each tab stays a 44px target');
+});
+
+test('#38 item 3: the top bar keeps "Theory Trainer" on one line and makes room for her name on a phone', () => {
+  // v13 at 390px with double-digit stars: "Theory Trainer" wrapped onto two lines; at 360px her
+  // name was cut to "Cat…". (Checked in a real browser before and after: see changes/.)
+  const back = cssRule(css, '.back');
+  assert.match(back, /white-space: nowrap;/, 'the back link\'s words must not wrap');
+  assert.match(back, /flex: none;/, 'the back link keeps its width; the name gives way last');
+  // On a phone the star pill shows only the stars she has; "/ 210" is still there for screen readers.
+  assert.match(js, /'<\/b><span class="of"> \/ ' \+ all\.available \+ '<\/span>/, 'the total is its own part of the pill');
+  const phone = css.match(/@media \(max-width: (\d+)px\) \{([\s\S]*?)\n\}/);
+  assert.ok(phone && +phone[1] >= 430, 'a phone-width block covering every phone (430px wide at most)');
+  const of = cssRule(phone[2], '.stat .of');
+  for (const d of ['position: absolute;', 'width: 1px;', 'height: 1px;', 'overflow: hidden;', 'clip: rect(0 0 0 0);'])
+    assert.ok(of.includes(d), 'on a phone the total is hidden from sight only (screen readers still say it): ' + d);
+});
+
+test('#38 item 3: the world header has no "·" left dangling at the end of a line', () => {
+  // v13 at 390px: "3 of 7 stages passed ·" then the stars on the next line. The two parts now sit
+  // side by side, or one under the other, with a gap and no separator character.
+  assert.doesNotMatch(js, /stages passed<\/span> <span class="dot">/);
+  const sub = cssRule(css, '.world-head .sub');
+  assert.match(sub, /display: flex;/);
+  assert.match(sub, /flex-wrap: wrap;/);
+  assert.match(sub, /justify-content: center;/);
+});
+
 test('page: links back to the app with the load-bearing %20 in its name', () => {
   assert.match(html, /href="Theory%20Trainer\.dc\.html"/);
   assert.match(js, /href="Theory%20Trainer\.dc\.html"/);   // the messages' "Open Theory Trainer" buttons too
@@ -203,6 +262,28 @@ test('play: combo counts right answers in a row; XP adds up like the app', () =>
   assert.equal(p.combo, 1);
   assert.equal(p.bestCombo, 2);
   assert.equal(p.xp, 3 * adv.APP.xpPerRight);
+});
+
+test('#38 item 6: the best run counts first tries only, so it never beats "right first time"', () => {
+  // v13: a stage missed first time and answered right on every second chance showed
+  // "0 / 7 right first time" next to "Best run: 7 in a row" (the run counted second chances).
+  const qids = ['a', 'b', 'c', 'd', 'e', 'f', 'g'];
+  let p = adv.newPlay({ id: 's', kind: 'lesson', qids }, () => 0.5);
+  qids.forEach(() => { p = adv.answerStep(p, p.queue[p.i], false); p.i++; });        // every first try wrong
+  while (p.i < p.queue.length) { p = adv.answerStep(p, p.queue[p.i], true); p.i++; }  // every second chance right
+  assert.deepEqual(adv.tally(p), { correct: 0, total: 7 });
+  assert.equal(p.bestCombo, 0, 'second chances are not part of the run');
+  assert.equal(p.combo, 0, 'nor of the counter on screen');
+  assert.equal(p.xp, 7 * adv.APP.xpPerRight, 'a right second chance still earns its XP, as in the app');
+  // Any mix of answers: the best run is never more than the first tries she got right.
+  const rnd = seeded(38);
+  for (let n = 0; n < 300; n++) {
+    let q = adv.newPlay({ id: 's', kind: 'lesson', qids }, rnd);
+    while (q.i < q.queue.length) { q = adv.answerStep(q, q.queue[q.i], rnd() < 0.6); q.i++; }
+    assert.ok(q.bestCombo <= adv.tally(q).correct, 'best run ' + q.bestCombo + ' but only ' + adv.tally(q).correct + ' right first time');
+  }
+  // The results name a run only when there is one: 2 or more, as the counter shows.
+  assert.match(js, /\(p\.bestCombo >= 2 \? '<li>Best run: ' \+ p\.bestCombo \+ ' in a row<\/li>' : ''\)/);
 });
 
 test('play: right answers needed to pass come from the pass mark', () => {

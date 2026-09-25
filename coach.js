@@ -687,12 +687,48 @@
     return next;
   }
 
+  // mergeAdventure(a, b) -> a NEW progress: two devices' copies of her Adventure progress,
+  // joined stage by stage (issue #38). Syncing used to keep the newer copy of her whole record,
+  // so a device that had never played Adventure saved a newer record with no stars, and the
+  // sync wiped the stars from the device that had them. Now, for a stage on both devices:
+  //   best   = the higher score           stars  = the most stars
+  //   passed = passed on either device    plays  = the higher count (after a sync the same
+  //            plays are on both copies, so adding them would count them twice)
+  //   lastAt = the later time
+  // Any other keys on that stage come from the copy played last. A stage on one device only
+  // comes across as it is. Missing or junk progress counts as none. Other keys in the progress
+  // itself are kept (b's over a's). Neither input is changed.
+  function mergeAdventure(a, b) {
+    // A plain object, or nothing: text, numbers, lists and null are junk.
+    var obj = function (v) { return v && typeof v === 'object' && !Array.isArray(v) ? v : {}; };
+    var pa = obj(a), pb = obj(b), sa = obj(pa.stages), sb = obj(pb.stages);
+    // A deep copy, so changing the result never changes an input.
+    var out = JSON.parse(JSON.stringify(Object.assign({}, pa, pb, { stages: {} })));
+    var ids = {};
+    Object.keys(sa).concat(Object.keys(sb)).forEach(function (id) { ids[id] = true; });
+    Object.keys(ids).forEach(function (id) {
+      if (!(id in sb)) { out.stages[id] = JSON.parse(JSON.stringify(sa[id])); return; }   // one device only
+      if (!(id in sa)) { out.stages[id] = JSON.parse(JSON.stringify(sb[id])); return; }
+      // On both: start from the copy played last (it keeps any other keys), then take the best.
+      var ra = stageRecord(pa, id), rb = stageRecord(pb, id);
+      var ta = +obj(sa[id]).lastAt || 0, tb = +obj(sb[id]).lastAt || 0;
+      out.stages[id] = Object.assign(JSON.parse(JSON.stringify(obj(tb > ta ? sb[id] : sa[id]))), {
+        best: Math.max(ra.best, rb.best),
+        stars: Math.max(ra.stars, rb.stars),
+        passed: ra.passed || rb.passed,
+        plays: Math.max(ra.plays, rb.plays),
+        lastAt: Math.max(ta, tb)
+      });
+    });
+    return out;
+  }
+
   var api = { mergeFlags: mergeFlags, activity: activity, profile: profile, buildDrill: buildDrill, requeue: requeue, drillDefaults: DRILL,
     passPrediction: passPrediction, improvements: improvements, studyPlan: studyPlan, misconceptions: misconceptions,
     badgeCloseness: badgeCloseness, streakWithFreeze: streakWithFreeze, mockMix: mockMix, dayCounts: dayCounts,
     coachDefaults: COACH,
     TOPIC_NAMES: TOPIC_NAMES, ADVENTURE: ADVENTURE, adventureRoute: adventureRoute, adventureStatus: adventureStatus,
-    adventureScore: adventureScore, adventureRecord: adventureRecord };
+    adventureScore: adventureScore, adventureRecord: adventureRecord, mergeAdventure: mergeAdventure };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.TTCoach = api;
 })(this);
