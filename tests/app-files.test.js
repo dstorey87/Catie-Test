@@ -1824,6 +1824,18 @@ test('#57 Admin → Activity: notes, Settings changes and printing in plain word
   assert.match(act, /case 'note_added': case 'note_edited': case 'note_deleted': return TTChoices\.sayNote\(e\.kind, d, this\.NOTESN\[d\.screen\] \|\| d\.screen\) \+ \(qt \? ':' \+ qt : ''\);/);
 });
 
+test('#57 Admin → Activity: Adventure\'s stages in plain words too (they showed as "adventure stage end")', () => {
+  // The say() cases for Adventure's own events (adventure.js), run with the data adventure.js sends.
+  const act = methodNamed('activityVals');
+  const line = kind => { const m = act.match(new RegExp("case '" + kind + "': return ([^\n]*(?:\n {10}[^\n]*)?);")); assert.ok(m, kind + ' has no words'); return new Function('d', 'return ' + m[1]); };
+  assert.equal(line('adventure_stage_start')({ stage: 'w1s1', world: 1, kind: 'lesson', n: 7 }), 'Started an Adventure lesson in world 1 (7 questions)');
+  assert.equal(line('adventure_stage_start')({ stage: 'w1c', world: 1, kind: 'checkpoint', n: 10 }), 'Started an Adventure checkpoint in world 1 (10 questions)');
+  const end = line('adventure_stage_end');
+  assert.equal(end({ world: 2, correct: 6, total: 7, stars: 1, passed: true }), 'Finished an Adventure stage in world 2: 6/7 right, 1 star');
+  assert.equal(end({ world: 2, correct: 3, total: 7, stars: 0, passed: false }), 'Finished an Adventure stage in world 2: 3/7 right, 0 stars (not passed yet)');
+  assert.equal(end({ world: 3, quit: true, answered: 4 }), 'Left an Adventure stage in world 3 after 4 answers');
+});
+
 test('#57: the Settings and Print screens draw their choices from TTChoices (one copy of the words)', () => {
   assert.match(app, /const toggles = TTChoices\.SWITCHES;/);
   assert.match(app, /sizeChoices: TTChoices\.TEXT_SIZES\.map\(/);

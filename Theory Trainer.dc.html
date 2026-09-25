@@ -4190,6 +4190,10 @@ class Component extends DCLogic {
         case 'note_added': case 'note_edited': case 'note_deleted': return TTChoices.sayNote(e.kind, d, this.NOTESN[d.screen] || d.screen) + (qt ? ':' + qt : '');
         case 'setting_changed': return TTChoices.sayChange(d);
         case 'printed': return TTChoices.sayPrint(d, T, SCREEN[d.screen] || d.screen);
+        // Adventure's own stages (adventure.js): started, finished (right, stars) or left part-way
+        case 'adventure_stage_start': return 'Started an Adventure ' + (d.kind==='checkpoint' ? 'checkpoint' : 'lesson') + ' in world ' + d.world + ' (' + d.n + ' questions)';
+        case 'adventure_stage_end': return d.quit ? 'Left an Adventure stage in world ' + d.world + ' after ' + d.answered + ' answers'
+          : 'Finished an Adventure stage in world ' + d.world + ': ' + d.correct + '/' + d.total + ' right, ' + d.stars + (d.stars===1 ? ' star' : ' stars') + (d.passed ? '' : ' (not passed yet)');
         default: return e.kind.replace(/_/g,' ') + qt;
       }
     };
