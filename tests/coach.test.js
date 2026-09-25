@@ -659,6 +659,85 @@ test('adventure route: the real bank makes 14 worlds, every question used, names
   });
 });
 
+// ---------- Adventure: the sign worlds (issue #48) ----------
+// signs.js hands the route one world per Highway Code category, its questions in page order:
+// [{id, name, qids: ['sign:<key>', ...]}] (TTSigns.worlds()). Made-up ones here, sizes by id.
+const signWorlds = (sizes) => Object.keys(sizes).map((id) => ({ id, name: 'Name ' + id,
+  qids: Array.from({ length: sizes[id] }, (_, i) => 'sign:' + id + '-' + (i + 1)) }));
+// The real ones, from signs.js run as the browser runs it.
+const realSignWorlds = () => {
+  const vm = require('node:vm'), ctx = { window: {}, React: {} };
+  vm.runInNewContext(fs.readFileSync(path.join(__dirname, '..', 'signs.js'), 'utf8'), ctx);
+  return JSON.parse(JSON.stringify(ctx.window.TTSigns.worlds()));
+};
+
+test('#48 adventure route: sign worlds come after the topic worlds, their lessons in page order', () => {
+  const bank = advBank({ 1: 14, 2: 7 });
+  const route = coach.adventureRoute(bank, { signs: signWorlds({ orders: 46, vehicles: 10, empty: 0 }) });
+  // The topic worlds are exactly what they were; then one world per sign category, numbered on
+  // from the 14 topics, on their own road (track 'signs'). A category with no questions has none.
+  assert.deepEqual(route.slice(0, 2), coach.adventureRoute(bank));
+  assert.deepEqual(route.map((w) => [w.world, w.track || 'topics']), [[1, 'topics'], [2, 'topics'], [15, 'signs'], [16, 'signs']]);
+  assert.deepEqual(route.slice(2).map((w) => w.name), ['Name orders', 'Name vehicles']);
+  const orders = route[2].stages;
+  assert.deepEqual(orders.map((s) => s.id), ['signs-orders-s1', 'signs-orders-s2', 'signs-orders-s3', 'signs-orders-s4',
+    'signs-orders-s5', 'signs-orders-s6', 'signs-orders-s7', 'signs-orders-c']);
+  // The same lesson size and short-lesson rule as a topic world: 46 = 6 x 7 + 4.
+  assert.deepEqual(orders.filter((s) => s.kind === 'lesson').map((s) => s.qids.length), [7, 7, 7, 7, 7, 7, 4]);
+  // In the order signs.js gives (the page's), not sorted: 'orders-10' is not before 'orders-2'.
+  assert.deepEqual(orders[1].qids, ['sign:orders-8', 'sign:orders-9', 'sign:orders-10', 'sign:orders-11', 'sign:orders-12', 'sign:orders-13', 'sign:orders-14']);
+  // The checkpoint: 10 spread across the whole world, as in a topic world.
+  assert.equal(orders[7].kind, 'checkpoint');
+  assert.equal(orders[7].qids.length, 10);
+  assert.deepEqual(route[3].stages.map((s) => [s.id, s.qids.length]), [['signs-vehicles-s1', 10], ['signs-vehicles-c', 10]]);
+  // No sign worlds asked for: none made.
+  assert.deepEqual(coach.adventureRoute(bank, {}), coach.adventureRoute(bank));
+});
+
+test('#48 adventure status: the sign worlds are their own road, open from the start', () => {
+  const route = coach.adventureRoute(advBank({ 1: 14 }), { signs: signWorlds({ orders: 14, warning: 7 }) });
+  // A new learner: her topic road is current, and the sign road's first stage is open too.
+  let st = coach.adventureStatus(route, {});
+  assert.equal(st.current, 'w1s1');
+  assert.equal(st.stages['signs-orders-s1'].unlocked, true);
+  assert.equal(st.stages['signs-orders-s2'].unlocked, false);
+  assert.equal(st.stages['signs-warning-s1'].unlocked, false);
+  // Along the sign road, each stage opens when the one before is passed, as on the topic road.
+  st = coach.adventureStatus(route, passedAll(['signs-orders-s1', 'signs-orders-s2', 'signs-orders-c']));
+  assert.equal(st.stages['signs-warning-s1'].unlocked, true);
+  assert.equal(st.worldsDone, 1);
+  assert.equal(st.current, 'w1s1', 'the topic road stays current while it has a stage to pass');
+  // Every topic stage passed: the sign road's first open stage is current.
+  st = coach.adventureStatus(route, passedAll(['w1s1', 'w1s2', 'w1c']));
+  assert.equal(st.current, 'signs-orders-s1');
+});
+
+test('#48 adventure: progress saved before the sign worlds (v16) reads exactly the same, and sign stages never touch it', () => {
+  const root = path.join(__dirname, '..');
+  const bank = fs.readdirSync(root).filter((f) => /^questions-.*\.json$/.test(f)).flatMap((f) => JSON.parse(fs.readFileSync(path.join(root, f), 'utf8')));
+  // Her Adventure record as v16 saved it: two lessons passed, one tried.
+  const v16 = { stages: {
+    w1s1: { best: 1, stars: 3, passed: true, plays: 2, lastAt: 1727280000000 },
+    w1s2: { best: 0.8571428571428571, stars: 1, passed: true, plays: 1, lastAt: 1727281000000 },
+    w1s3: { best: 0.5714285714285714, stars: 0, passed: false, plays: 3, lastAt: 1727282000000 } } };
+  const saved = JSON.parse(JSON.stringify(v16));
+  const before = coach.adventureRoute(bank), after = coach.adventureRoute(bank, { signs: realSignWorlds() });
+  assert.deepEqual(after.slice(0, before.length), before, 'the 14 topic worlds are unchanged');
+  assert.equal(after.length, before.length + 8, 'one sign world per category');
+  const a = coach.adventureStatus(before, v16), b = coach.adventureStatus(after, v16);
+  for (const id of Object.keys(a.stages)) assert.deepEqual(b.stages[id], a.stages[id], id + ' reads differently');
+  assert.equal(b.current, a.current);
+  assert.equal(b.worldsDone, a.worldsDone);
+  // Playing a sign stage records it under its own id; every topic stage stays exactly as saved.
+  const played = coach.adventureRecord(v16, 'signs-orders-s1', { correct: 7, total: 7 }, 5);
+  for (const id of Object.keys(saved.stages)) assert.deepEqual(played.stages[id], saved.stages[id]);
+  assert.deepEqual(v16, saved, 'the saved record itself is not changed');
+  const ids = allStages(after).map((s) => s.id);
+  assert.equal(new Set(ids).size, ids.length, 'no sign stage shares an id with a topic stage');
+  // The sign worlds' stage counts (lessons + checkpoint), for the report and help.html.
+  assert.deepEqual(after.slice(before.length).map((w) => w.stages.length), [8, 8, 4, 4, 3, 5, 3, 2]);
+});
+
 test('adventure status: a new learner has only the first stage open, and it is current', () => {
   const route = coach.adventureRoute(advBank({ 1: 14, 2: 14 }));
   for (const p of [{}, undefined, null, { stages: {} }]) {

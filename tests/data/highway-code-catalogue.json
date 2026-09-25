@@ -1,0 +1,3102 @@
+{
+ "about": "The Highway Code pictures and captions on GOV.UK (traffic signs, road markings, light signals controlling traffic, vehicle markings, signals to other road users, signals by authorised persons), in page order, as researched for issue #48. Crown copyright, Open Government Licence v3.0. n is the entry number in page order (from 0); leftOut says why an entry is not in signs.js.",
+ "entries": [
+  {
+   "n": 0,
+   "id": "sign-giving-order-entry-20-zone",
+   "page": "Traffic signs",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/traffic-signs",
+   "category": "Signs giving orders",
+   "subcategory": null,
+   "caption": "Entry to 20 mph zone",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55b9f29740f0b6151f000013/sign-giving-order-entry-20-zone.jpg",
+   "multi": false
+  },
+  {
+   "n": 1,
+   "id": "sign-giving-order-end-20-zonev2",
+   "page": "Traffic signs",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/traffic-signs",
+   "category": "Signs giving orders",
+   "subcategory": null,
+   "caption": "End of 20 mph zone",
+   "imageUrl": "https://assets.publishing.service.gov.uk/media/57f76285e5274a0eb7000029/sign-giving-order-end-20-zonev2.jpg",
+   "multi": false
+  },
+  {
+   "n": 2,
+   "id": "sign-giving-order-maximum-speed",
+   "page": "Traffic signs",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/traffic-signs",
+   "category": "Signs giving orders",
+   "subcategory": null,
+   "caption": "Maximum speed",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55b9f2dd40f0b6151f000015/sign-giving-order-maximum-speed.jpg",
+   "multi": false
+  },
+  {
+   "n": 3,
+   "id": "sign-giving-order-national-speed-limit",
+   "page": "Traffic signs",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/traffic-signs",
+   "category": "Signs giving orders",
+   "subcategory": null,
+   "caption": "National speed limit applies",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55b9f2f740f0b6151c00001d/sign-giving-order-national-speed-limit.jpg",
+   "multi": false
+  },
+  {
+   "n": 4,
+   "id": "sign-giving-order-school-crossing-patrol",
+   "page": "Traffic signs",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/traffic-signs",
+   "category": "Signs giving orders",
+   "subcategory": null,
+   "caption": "School crossing patrol",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55b9f31040f0b6151f000017/sign-giving-order-school-crossing-patrol.jpg",
+   "multi": false
+  },
+  {
+   "n": 5,
+   "id": "sign-giving-order-stop-give-way",
+   "page": "Traffic signs",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/traffic-signs",
+   "category": "Signs giving orders",
+   "subcategory": null,
+   "caption": "Stop and give way",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55b9f330e5274a151e000022/sign-giving-order-stop-give-way.jpg",
+   "multi": false
+  },
+  {
+   "n": 6,
+   "id": "sign-giving-order-give-way",
+   "page": "Traffic signs",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/traffic-signs",
+   "category": "Signs giving orders",
+   "subcategory": null,
+   "caption": "Give way to traffic on major road",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55b9f373ed915d155f00001e/sign-giving-order-give-way.jpg",
+   "multi": false
+  },
+  {
+   "n": 7,
+   "id": "sign-giving-order-manually-stop",
+   "page": "Traffic signs",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/traffic-signs",
+   "category": "Signs giving orders",
+   "subcategory": null,
+   "caption": "Manually operated temporary STOP and GO signs",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55b9f3d040f0b6151c00001f/sign-giving-order-manually-stop.jpg",
+   "multi": false
+  },
+  {
+   "n": 8,
+   "id": "sign-giving-order-manually-go",
+   "page": "Traffic signs",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/traffic-signs",
+   "category": "Signs giving orders",
+   "subcategory": null,
+   "caption": "Manually operated temporary STOP and GO signs",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55b9f3f1e5274a152100001f/sign-giving-order-manually-go.jpg",
+   "multi": false
+  },
+  {
+   "n": 9,
+   "id": "sign-giving-order-no-entry-vehicular-traffic",
+   "page": "Traffic signs",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/traffic-signs",
+   "category": "Signs giving orders",
+   "subcategory": null,
+   "caption": "No entry for vehicular traffic",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55b9f41b40f0b6151f000019/sign-giving-order-no-entry-vehicular-traffic.jpg",
+   "multi": false
+  },
+  {
+   "n": 10,
+   "id": "sign-giving-order-no-vehicles",
+   "page": "Traffic signs",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/traffic-signs",
+   "category": "Signs giving orders",
+   "subcategory": null,
+   "caption": "No vehicles except bicycles being pushed",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55b9f489e5274a151e000024/sign-giving-order-no-vehicles.jpg",
+   "multi": false
+  },
+  {
+   "n": 11,
+   "id": "sign-giving-order-no-cycling",
+   "page": "Traffic signs",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/traffic-signs",
+   "category": "Signs giving orders",
+   "subcategory": null,
+   "caption": "No cycling",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55b9f4a5ed915d155c00000f/sign-giving-order-no-cycling.jpg",
+   "multi": false
+  },
+  {
+   "n": 12,
+   "id": "sign-giving-order-no-motor-vehicles",
+   "page": "Traffic signs",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/traffic-signs",
+   "category": "Signs giving orders",
+   "subcategory": null,
+   "caption": "No motor vehicles",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55b9f4d840f0b6151f00001b/sign-giving-order-no-motor-vehicles.jpg",
+   "multi": false
+  },
+  {
+   "n": 13,
+   "id": "sign-giving-order-no-buses",
+   "page": "Traffic signs",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/traffic-signs",
+   "category": "Signs giving orders",
+   "subcategory": null,
+   "caption": "No buses (over 8 passenger seats)",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55b9f4f0ed915d155f000020/sign-giving-order-no-buses.jpg",
+   "multi": false
+  },
+  {
+   "n": 14,
+   "id": "sign-giving-order-no-overtaking",
+   "page": "Traffic signs",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/traffic-signs",
+   "category": "Signs giving orders",
+   "subcategory": null,
+   "caption": "No overtaking",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55b9f50240f0b6151c000021/sign-giving-order-no-overtaking.jpg",
+   "multi": false
+  },
+  {
+   "n": 15,
+   "id": "sign-giving-order-no-towed-caravans",
+   "page": "Traffic signs",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/traffic-signs",
+   "category": "Signs giving orders",
+   "subcategory": null,
+   "caption": "No towed caravans",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55b9f52540f0b6151c000023/sign-giving-order-no-towed-caravans.jpg",
+   "multi": false
+  },
+  {
+   "n": 16,
+   "id": "sign-giving-order-no-vehicles-carry-explosives",
+   "page": "Traffic signs",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/traffic-signs",
+   "category": "Signs giving orders",
+   "subcategory": null,
+   "caption": "No vehicles carrying explosives",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55b9f562e5274a1521000021/sign-giving-order-no-vehicles-carry-explosives.jpg",
+   "multi": false
+  },
+  {
+   "n": 17,
+   "id": "sign-giving-order-no-vehicle-combination-length",
+   "page": "Traffic signs",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/traffic-signs",
+   "category": "Signs giving orders",
+   "subcategory": null,
+   "caption": "No vehicle or combination of vehicles over length shown",
+   "imageUrl": "https://assets.publishing.service.gov.uk/media/58171318e5274a03bd000004/sign-giving-order-no-vehicle-combination-length.jpg",
+   "multi": true
+  },
+  {
+   "n": 18,
+   "id": "sign-giving-order-no-vehicles-over-height",
+   "page": "Traffic signs",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/traffic-signs",
+   "category": "Signs giving orders",
+   "subcategory": null,
+   "caption": "No vehicles over height shown",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55b9f5dc40f0b6151c000025/sign-giving-order-no-vehicles-over-height.jpg",
+   "multi": false
+  },
+  {
+   "n": 19,
+   "id": "sign-giving-order-no-vehicle-width",
+   "page": "Traffic signs",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/traffic-signs",
+   "category": "Signs giving orders",
+   "subcategory": null,
+   "caption": "No vehicles over width shown",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55b9f60aed915d155f000022/sign-giving-order-no-vehicle-width.jpg",
+   "multi": false
+  },
+  {
+   "n": 20,
+   "id": "sign-giving-order-give-priority-vehicles",
+   "page": "Traffic signs",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/traffic-signs",
+   "category": "Signs giving orders",
+   "subcategory": null,
+   "caption": "Give priority to vehicles from opposite direction",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55b9f637e5274a151e000026/sign-giving-order-give-priority-vehicles.jpg",
+   "multi": false
+  },
+  {
+   "n": 21,
+   "id": "sign-giving-order-no-right-turn",
+   "page": "Traffic signs",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/traffic-signs",
+   "category": "Signs giving orders",
+   "subcategory": null,
+   "caption": "No right turn",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55b9f66fe5274a151e000028/sign-giving-order-no-right-turn.jpg",
+   "multi": false
+  },
+  {
+   "n": 22,
+   "id": "sign-giving-order-no-left-turn",
+   "page": "Traffic signs",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/traffic-signs",
+   "category": "Signs giving orders",
+   "subcategory": null,
+   "caption": "No left turn",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55b9f68740f0b6151f000021/sign-giving-order-no-left-turn.jpg",
+   "multi": false
+  },
+  {
+   "n": 23,
+   "id": "sign-giving-order-no-u-turn",
+   "page": "Traffic signs",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/traffic-signs",
+   "category": "Signs giving orders",
+   "subcategory": null,
+   "caption": "No U-turns",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55b9f6aded915d155f000024/sign-giving-order-no-u-turn.jpg",
+   "multi": false
+  },
+  {
+   "n": 24,
+   "id": "sign-giving-order-no-goods-vehicle-over-weight",
+   "page": "Traffic signs",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/traffic-signs",
+   "category": "Signs giving orders",
+   "subcategory": null,
+   "caption": "No goods vehicles over maximum gross weight shown (in tonnes) except for loading and unloading",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55b9f6d8e5274a151e00002a/sign-giving-order-no-goods-vehicle-over-weight.jpg",
+   "multi": false
+  },
+  {
+   "n": 25,
+   "id": "sign-giving-order-no-vehicles-max-gross-weight",
+   "page": "Traffic signs",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/traffic-signs",
+   "category": "Signs giving orders",
+   "subcategory": null,
+   "caption": "No vehicles over maximum gross weight shown (in tonnes)",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55b9ffe8e5274a151e00002c/sign-giving-order-no-vehicles-max-gross-weight.jpg",
+   "multi": false
+  },
+  {
+   "n": 26,
+   "id": "sign-giving-order-park-restrict-permit-holders",
+   "page": "Traffic signs",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/traffic-signs",
+   "category": "Signs giving orders",
+   "subcategory": null,
+   "caption": "Parking restricted to permit holders",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55ba0058ed915d155c000011/sign-giving-order-park-restrict-permit-holders.jpg",
+   "multi": false
+  },
+  {
+   "n": 27,
+   "id": "sign-giving-order-red-route",
+   "page": "Traffic signs",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/traffic-signs",
+   "category": "Signs giving orders",
+   "subcategory": null,
+   "caption": "No stopping during period indicated except for buses",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55ba0070e5274a151e00002e/sign-giving-order-red-route.jpg",
+   "multi": false
+  },
+  {
+   "n": 28,
+   "id": "sign-giving-order-no-stopping-times",
+   "page": "Traffic signs",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/traffic-signs",
+   "category": "Signs giving orders",
+   "subcategory": null,
+   "caption": "No stopping during times shown except for as long as necessary to set down or pick up passengers",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55ba008eed915d155f000028/sign-giving-order-no-stopping-times.jpg",
+   "multi": false
+  },
+  {
+   "n": 29,
+   "id": "sign-giving-order-no-waiting",
+   "page": "Traffic signs",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/traffic-signs",
+   "category": "Signs giving orders",
+   "subcategory": null,
+   "caption": "No waiting",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55ba00a140f0b6151f000025/sign-giving-order-no-waiting.jpg",
+   "multi": false
+  },
+  {
+   "n": 30,
+   "id": "sign-giving-order-no-stopping",
+   "page": "Traffic signs",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/traffic-signs",
+   "category": "Signs giving orders",
+   "subcategory": null,
+   "caption": "No stopping (Clearway)",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55ba00b540f0b6151c000027/sign-giving-order-no-stopping.jpg",
+   "multi": false
+  },
+  {
+   "n": 31,
+   "id": "sign-giving-order-ahead-only",
+   "page": "Traffic signs",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/traffic-signs",
+   "category": "Signs giving orders",
+   "subcategory": "Signs with blue circles but no red border mostly give positive instruction.",
+   "caption": "Ahead only",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55cb16d9e5274a5473000021/sign-giving-order-ahead-only.jpg",
+   "multi": false
+  },
+  {
+   "n": 32,
+   "id": "sign-giving-order-turn-left-ahead",
+   "page": "Traffic signs",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/traffic-signs",
+   "category": "Signs giving orders",
+   "subcategory": "Signs with blue circles but no red border mostly give positive instruction.",
+   "caption": "Turn left ahead (right if symbol reversed)",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55ba11ffe5274a151e000030/sign-giving-order-turn-left-ahead.jpg",
+   "multi": false
+  },
+  {
+   "n": 33,
+   "id": "sign-giving-order-turn-left",
+   "page": "Traffic signs",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/traffic-signs",
+   "category": "Signs giving orders",
+   "subcategory": "Signs with blue circles but no red border mostly give positive instruction.",
+   "caption": "Turn left (right if symbol reversed)",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55ba1211ed915d155c000017/sign-giving-order-turn-left.jpg",
+   "multi": false
+  },
+  {
+   "n": 34,
+   "id": "sign-giving-order-keep-left",
+   "page": "Traffic signs",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/traffic-signs",
+   "category": "Signs giving orders",
+   "subcategory": "Signs with blue circles but no red border mostly give positive instruction.",
+   "caption": "Keep left (right if symbol reversed)",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55ba123bed915d155c000019/sign-giving-order-keep-left.jpg",
+   "multi": false
+  },
+  {
+   "n": 35,
+   "id": "sign-giving-order-vehicle-pass-either-side",
+   "page": "Traffic signs",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/traffic-signs",
+   "category": "Signs giving orders",
+   "subcategory": "Signs with blue circles but no red border mostly give positive instruction.",
+   "caption": "Vehicles may pass either side to reach same destination",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55ba124eed915d155c00001b/sign-giving-order-vehicle-pass-either-side.jpg",
+   "multi": false
+  },
+  {
+   "n": 36,
+   "id": "sign-giving-order-mini-roundabout",
+   "page": "Traffic signs",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/traffic-signs",
+   "category": "Signs giving orders",
+   "subcategory": "Signs with blue circles but no red border mostly give positive instruction.",
+   "caption": "Mini-roundabout (roundabout circulation - give way to vehicles from the immediate right)",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55ba126540f0b6151c00002b/sign-giving-order-mini-roundabout.jpg",
+   "multi": false
+  },
+  {
+   "n": 37,
+   "id": "sign-giving-order-route-pedal-cycles-only",
+   "page": "Traffic signs",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/traffic-signs",
+   "category": "Signs giving orders",
+   "subcategory": "Signs with blue circles but no red border mostly give positive instruction.",
+   "caption": "Route to be used by pedal cycles only",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55ba1284e5274a1521000023/sign-giving-order-route-pedal-cycles-only.jpg",
+   "multi": false
+  },
+  {
+   "n": 38,
+   "id": "sign-giving-order-segregated-cycle-pedestrian-route",
+   "page": "Traffic signs",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/traffic-signs",
+   "category": "Signs giving orders",
+   "subcategory": "Signs with blue circles but no red border mostly give positive instruction.",
+   "caption": "Segregated pedal cycle and pedestrian route",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55ba12b1ed915d155c00001d/sign-giving-order-segregated-cycle-pedestrian-route.jpg",
+   "multi": false
+  },
+  {
+   "n": 39,
+   "id": "sign-giving-order-minimum-speed",
+   "page": "Traffic signs",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/traffic-signs",
+   "category": "Signs giving orders",
+   "subcategory": "Signs with blue circles but no red border mostly give positive instruction.",
+   "caption": "Minimum speed",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55ba12c140f0b6151f000027/sign-giving-order-minimum-speed.jpg",
+   "multi": false
+  },
+  {
+   "n": 40,
+   "id": "sign-giving-order-minimum-speed-end",
+   "page": "Traffic signs",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/traffic-signs",
+   "category": "Signs giving orders",
+   "subcategory": "Signs with blue circles but no red border mostly give positive instruction.",
+   "caption": "End of minimum speed",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55ba12d3e5274a151e000032/sign-giving-order-minimum-speed-end.jpg",
+   "multi": false
+  },
+  {
+   "n": 41,
+   "id": "sign-giving-order-buses-cycles-only",
+   "page": "Traffic signs",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/traffic-signs",
+   "category": "Signs giving orders",
+   "subcategory": "Signs with blue circles but no red border mostly give positive instruction.",
+   "caption": "Buses and cycles only",
+   "imageUrl": "https://assets.publishing.service.gov.uk/media/68e3cbcc49e17d00a56ffe3c/sign-giving-order-buses-cycles-only.jpg",
+   "multi": false
+  },
+  {
+   "n": 42,
+   "id": "sign-giving-order-trams-only",
+   "page": "Traffic signs",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/traffic-signs",
+   "category": "Signs giving orders",
+   "subcategory": "Signs with blue circles but no red border mostly give positive instruction.",
+   "caption": "Trams only",
+   "imageUrl": "https://assets.publishing.service.gov.uk/media/68e3cbba8c1db6022d0ca152/sign-giving-order-trams-only.jpg",
+   "multi": false
+  },
+  {
+   "n": 43,
+   "id": "sign-giving-order-pedestrian-crossing-tramway",
+   "page": "Traffic signs",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/traffic-signs",
+   "category": "Signs giving orders",
+   "subcategory": "Signs with blue circles but no red border mostly give positive instruction.",
+   "caption": "Pedestrian crossing point over tramway",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55ba131840f0b6151c00002d/sign-giving-order-pedestrian-crossing-tramway.jpg",
+   "multi": false
+  },
+  {
+   "n": 44,
+   "id": "sign-giving-order-one-way-traffic",
+   "page": "Traffic signs",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/traffic-signs",
+   "category": "Signs giving orders",
+   "subcategory": "Signs with blue circles but no red border mostly give positive instruction.",
+   "caption": "One-way traffic (note: compare circular ‘Ahead only’ sign)",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55ba132ee5274a151e000036/sign-giving-order-one-way-traffic.jpg",
+   "multi": false
+  },
+  {
+   "n": 45,
+   "id": "sign-giving-order-with-flow-bus-cycle-lane",
+   "page": "Traffic signs",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/traffic-signs",
+   "category": "Signs giving orders",
+   "subcategory": "Signs with blue circles but no red border mostly give positive instruction.",
+   "caption": "With-flow bus and cycle lane",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55ba1353e5274a1521000027/sign-giving-order-with-flow-bus-cycle-lane.jpg",
+   "multi": false
+  },
+  {
+   "n": 46,
+   "id": "sign-giving-order-contra-flow-bus-lane",
+   "page": "Traffic signs",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/traffic-signs",
+   "category": "Signs giving orders",
+   "subcategory": "Signs with blue circles but no red border mostly give positive instruction.",
+   "caption": "Contra-flow bus lane",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55ba136ded915d155f00002a/sign-giving-order-contra-flow-bus-lane.jpg",
+   "multi": false
+  },
+  {
+   "n": 47,
+   "id": "sign-giving-order-with-flow-pedal-cycle-lane",
+   "page": "Traffic signs",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/traffic-signs",
+   "category": "Signs giving orders",
+   "subcategory": "Signs with blue circles but no red border mostly give positive instruction.",
+   "caption": "With-flow pedal cycle lane",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55ba1383ed915d155c00001f/sign-giving-order-with-flow-pedal-cycle-lane.jpg",
+   "multi": false
+  },
+  {
+   "n": 48,
+   "id": "warning-sign-distance-to-stop-line-ahead-100-yards",
+   "page": "Traffic signs",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/traffic-signs",
+   "category": "Warning signs",
+   "subcategory": "Mostly triangular",
+   "caption": "Distance to ‘STOP’ line ahead",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55b75e26ed915d07e2000007/warning-sign-distance-to-stop-line-ahead-100-yards.jpg",
+   "multi": false
+  },
+  {
+   "n": 49,
+   "id": "warning-sign-dual-carriageway-ends",
+   "page": "Traffic signs",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/traffic-signs",
+   "category": "Warning signs",
+   "subcategory": "Mostly triangular",
+   "caption": "Dual carriageway ends",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55b75e47e5274a215200000c/warning-sign-dual-carriageway-ends.jpg",
+   "multi": false
+  },
+  {
+   "n": 50,
+   "id": "warning-sign-road-narrow",
+   "page": "Traffic signs",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/traffic-signs",
+   "category": "Warning signs",
+   "subcategory": "Mostly triangular",
+   "caption": "Road narrows on right (left if symbol reversed)",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55b75eeded915d07fe000005/warning-sign-road-narrow.jpg",
+   "multi": false
+  },
+  {
+   "n": 51,
+   "id": "warning-sign-road-narrow-both-sides",
+   "page": "Traffic signs",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/traffic-signs",
+   "category": "Warning signs",
+   "subcategory": "Mostly triangular",
+   "caption": "Road narrows on both sides",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55b75f15ed915d07fe000007/warning-sign-road-narrow-both-sides.jpg",
+   "multi": false
+  },
+  {
+   "n": 52,
+   "id": "warning-sign-distance-to-stop-line-ahead-50-yards",
+   "page": "Traffic signs",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/traffic-signs",
+   "category": "Warning signs",
+   "subcategory": "Mostly triangular",
+   "caption": "Distance to ‘Give Way’ line ahead",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55b75f36e5274a215200000e/warning-sign-distance-to-stop-line-ahead-50-yards.jpg",
+   "multi": false
+  },
+  {
+   "n": 53,
+   "id": "warning-sign-crossroads",
+   "page": "Traffic signs",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/traffic-signs",
+   "category": "Warning signs",
+   "subcategory": "Mostly triangular",
+   "caption": "Crossroads",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55b7696640f0b6790f000011/warning-sign-crossroads.jpg",
+   "multi": false
+  },
+  {
+   "n": 54,
+   "id": "warning-sign-junction-on-bend-ahead",
+   "page": "Traffic signs",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/traffic-signs",
+   "category": "Warning signs",
+   "subcategory": "Mostly triangular",
+   "caption": "Junction on bend ahead",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55b7698540f0b6790f000013/warning-sign-junction-on-bend-ahead.jpg",
+   "multi": false
+  },
+  {
+   "n": 55,
+   "id": "warning-sign-t-junction-with-priority",
+   "page": "Traffic signs",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/traffic-signs",
+   "category": "Warning signs",
+   "subcategory": "Mostly triangular",
+   "caption": "T-junction with priority over vehicles from the right",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55b769b2ed915d07e200000b/warning-sign-t-junction-with-priority.jpg",
+   "multi": false
+  },
+  {
+   "n": 56,
+   "id": "warning-sign-staggered-junction",
+   "page": "Traffic signs",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/traffic-signs",
+   "category": "Warning signs",
+   "subcategory": "Mostly triangular",
+   "caption": "Staggered junction",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55b769e040f0b67aa300000d/warning-sign-staggered-junction.jpg",
+   "multi": false
+  },
+  {
+   "n": 57,
+   "id": "warning-sign-traffic-merging-left",
+   "page": "Traffic signs",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/traffic-signs",
+   "category": "Warning signs",
+   "subcategory": "Mostly triangular",
+   "caption": "Traffic merging from left ahead",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55b76a04ed915d07fe000009/warning-sign-traffic-merging-left.jpg",
+   "multi": false
+  },
+  {
+   "n": 58,
+   "id": "warning-sign-double-bend",
+   "page": "Traffic signs",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/traffic-signs",
+   "category": "Warning signs",
+   "subcategory": "Mostly triangular",
+   "caption": "Double bend first to left (symbol may be reversed)",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55b76a2d40f0b6790f000015/warning-sign-double-bend.jpg",
+   "multi": false
+  },
+  {
+   "n": 59,
+   "id": "warning-sign-bend-to-right",
+   "page": "Traffic signs",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/traffic-signs",
+   "category": "Warning signs",
+   "subcategory": "Mostly triangular",
+   "caption": "Bend to right (or left if symbol reversed)",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55b76a5d40f0b67aa300000f/warning-sign-bend-to-right.jpg",
+   "multi": false
+  },
+  {
+   "n": 60,
+   "id": "warning-sign-roundabout",
+   "page": "Traffic signs",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/traffic-signs",
+   "category": "Warning signs",
+   "subcategory": "Mostly triangular",
+   "caption": "Roundabout",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55b76a79ed915d07fe00000b/warning-sign-roundabout.jpg",
+   "multi": false
+  },
+  {
+   "n": 61,
+   "id": "warning-sign-uneven-road",
+   "page": "Traffic signs",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/traffic-signs",
+   "category": "Warning signs",
+   "subcategory": "Mostly triangular",
+   "caption": "Uneven road",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55b76a9240f0b6790f000017/warning-sign-uneven-road.jpg",
+   "multi": false
+  },
+  {
+   "n": 62,
+   "id": "warning-sign-plate-below-some-signs",
+   "page": "Traffic signs",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/traffic-signs",
+   "category": "Warning signs",
+   "subcategory": "Mostly triangular",
+   "caption": "Plate below some signs",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55b76ab240f0b67aa3000011/warning-sign-plate-below-some-signs.jpg",
+   "multi": false
+  },
+  {
+   "n": 63,
+   "id": "warning-sign-two-way-traffic-crosses-road",
+   "page": "Traffic signs",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/traffic-signs",
+   "category": "Warning signs",
+   "subcategory": "Mostly triangular",
+   "caption": "Two-way traffic crosses one-way road",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55b76af8ed915d07fe00000d/warning-sign-two-way-traffic-crosses-road.jpg",
+   "multi": false
+  },
+  {
+   "n": 64,
+   "id": "warning-sign-two-way-traffic-ahead",
+   "page": "Traffic signs",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/traffic-signs",
+   "category": "Warning signs",
+   "subcategory": "Mostly triangular",
+   "caption": "Two-way traffic straight ahead",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55b76b1e40f0b67aa3000013/warning-sign-two-way-traffic-ahead.jpg",
+   "multi": false
+  },
+  {
+   "n": 65,
+   "id": "warning-sign-swing-bridge",
+   "page": "Traffic signs",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/traffic-signs",
+   "category": "Warning signs",
+   "subcategory": "Mostly triangular",
+   "caption": "Opening or swing bridge ahead",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55b76b42e5274a21ec00000a/warning-sign-swing-bridge.jpg",
+   "multi": false
+  },
+  {
+   "n": 66,
+   "id": "warning-sign-aircraft",
+   "page": "Traffic signs",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/traffic-signs",
+   "category": "Warning signs",
+   "subcategory": "Mostly triangular",
+   "caption": "Low-flying aircraft or sudden aircraft noise",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55b76b6840f0b67aa3000015/warning-sign-aircraft.jpg",
+   "multi": false
+  },
+  {
+   "n": 67,
+   "id": "warning-sign-falling-rocks",
+   "page": "Traffic signs",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/traffic-signs",
+   "category": "Warning signs",
+   "subcategory": "Mostly triangular",
+   "caption": "Falling or fallen rocks",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55b76b81ed915d07fe00000f/warning-sign-falling-rocks.jpg",
+   "multi": false
+  },
+  {
+   "n": 68,
+   "id": "warning-sign-traffic-signals-not-in-use",
+   "page": "Traffic signs",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/traffic-signs",
+   "category": "Warning signs",
+   "subcategory": "Mostly triangular",
+   "caption": "Traffic signals not in use",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55b76bbbed915d07fe000011/warning-sign-traffic-signals-not-in-use.jpg",
+   "multi": false
+  },
+  {
+   "n": 69,
+   "id": "warning-sign-traffic-signals",
+   "page": "Traffic signs",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/traffic-signs",
+   "category": "Warning signs",
+   "subcategory": "Mostly triangular",
+   "caption": "Traffic signals",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55b76bd2e5274a21ec00000c/warning-sign-traffic-signals.jpg",
+   "multi": false
+  },
+  {
+   "n": 70,
+   "id": "warning-sign-slippery-road",
+   "page": "Traffic signs",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/traffic-signs",
+   "category": "Warning signs",
+   "subcategory": "Mostly triangular",
+   "caption": "Slippery road",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55b76bec40f0b6790f000019/warning-sign-slippery-road.jpg",
+   "multi": false
+  },
+  {
+   "n": 71,
+   "id": "warning-sign-steep-hill-downwards",
+   "page": "Traffic signs",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/traffic-signs",
+   "category": "Warning signs",
+   "subcategory": "Mostly triangular",
+   "caption": "Steep hill downwards",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55b76c11ed915d07fe000013/warning-sign-steep-hill-downwards.jpg",
+   "multi": false
+  },
+  {
+   "n": 72,
+   "id": "warning-sign-steep-hill-upwards",
+   "page": "Traffic signs",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/traffic-signs",
+   "category": "Warning signs",
+   "subcategory": "Mostly triangular",
+   "caption": "Steep hill upwards",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55b76c2de5274a21ec00000e/warning-sign-steep-hill-upwards.jpg",
+   "multi": false
+  },
+  {
+   "n": 73,
+   "id": "warning-sign-tunnel-ahead",
+   "page": "Traffic signs",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/traffic-signs",
+   "category": "Warning signs",
+   "subcategory": "Mostly triangular",
+   "caption": "Tunnel ahead",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55b76c51e5274a21ec000010/warning-sign-tunnel-ahead.jpg",
+   "multi": false
+  },
+  {
+   "n": 74,
+   "id": "warning-sign-trams-crossing-ahead",
+   "page": "Traffic signs",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/traffic-signs",
+   "category": "Warning signs",
+   "subcategory": "Mostly triangular",
+   "caption": "Trams crossing ahead",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55b76c82ed915d07fe000015/warning-sign-trams-crossing-ahead.jpg",
+   "multi": false
+  },
+  {
+   "n": 75,
+   "id": "warning-sign-level-crossing-ahead-barrier-or-gate",
+   "page": "Traffic signs",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/traffic-signs",
+   "category": "Warning signs",
+   "subcategory": "Mostly triangular",
+   "caption": "Level crossing with barrier or gate ahead",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55b76ca6e5274a2152000010/warning-sign-level-crossing-ahead-barrier-or-gate.jpg",
+   "multi": false
+  },
+  {
+   "n": 76,
+   "id": "warning-sign-level-crossing-ahead-without-barrier",
+   "page": "Traffic signs",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/traffic-signs",
+   "category": "Warning signs",
+   "subcategory": "Mostly triangular",
+   "caption": "Level crossing without barrier or gate ahead",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55b76cf940f0b67aa3000017/warning-sign-level-crossing-ahead-without-barrier.jpg",
+   "multi": false
+  },
+  {
+   "n": 77,
+   "id": "warning-sign-level-crossing-without-barrier-ahead",
+   "page": "Traffic signs",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/traffic-signs",
+   "category": "Warning signs",
+   "subcategory": "Mostly triangular",
+   "caption": "Level crossing without barrier",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55b76d18ed915d07e200000d/warning-sign-level-crossing-without-barrier-ahead.jpg",
+   "multi": false
+  },
+  {
+   "n": 78,
+   "id": "warning-sign-school-crossing-patrol-ahead",
+   "page": "Traffic signs",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/traffic-signs",
+   "category": "Warning signs",
+   "subcategory": "Mostly triangular",
+   "caption": "School crossing patrol ahead (some signs have amber lights which flash when crossings are in use)",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55b76da940f0b67aa3000019/warning-sign-school-crossing-patrol-ahead.jpg",
+   "multi": false
+  },
+  {
+   "n": 79,
+   "id": "warning-sign-frail-pedestrians-cross-road-ahead",
+   "page": "Traffic signs",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/traffic-signs",
+   "category": "Warning signs",
+   "subcategory": "Mostly triangular",
+   "caption": "Frail (or blind or disabled if shown) pedestrians likely to cross road ahead",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55b76ddc40f0b6790f00001b/warning-sign-frail-pedestrians-cross-road-ahead.jpg",
+   "multi": false
+  },
+  {
+   "n": 80,
+   "id": "warning-sign-pedestrians-in-road-ahead",
+   "page": "Traffic signs",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/traffic-signs",
+   "category": "Warning signs",
+   "subcategory": "Mostly triangular",
+   "caption": "Pedestrians in road ahead",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55b76dfbed915d07fe000017/warning-sign-pedestrians-in-road-ahead.jpg",
+   "multi": false
+  },
+  {
+   "n": 81,
+   "id": "warning-sign-zebra-crossing",
+   "page": "Traffic signs",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/traffic-signs",
+   "category": "Warning signs",
+   "subcategory": "Mostly triangular",
+   "caption": "Zebra crossing",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55b76e1040f0b6790f00001d/warning-sign-zebra-crossing.jpg",
+   "multi": false
+  },
+  {
+   "n": 82,
+   "id": "warning-sign-overhead-electric-cables",
+   "page": "Traffic signs",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/traffic-signs",
+   "category": "Warning signs",
+   "subcategory": "Mostly triangular",
+   "caption": "Overhead electric cable; plate indicates maximum height of vehicles which can pass safely",
+   "imageUrl": "https://assets.publishing.service.gov.uk/media/5817085d40f0b64c34000000/warning-sign-overhead-electric-cables.jpg",
+   "multi": false
+  },
+  {
+   "n": 83,
+   "id": "warning-sign-available-width-head-room",
+   "page": "Traffic signs",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/traffic-signs",
+   "category": "Warning signs",
+   "subcategory": "Mostly triangular",
+   "caption": "Available width of headroom indicated",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55b76e75e5274a2152000012/warning-sign-available-width-head-room.jpg",
+   "multi": true
+  },
+  {
+   "n": 84,
+   "id": "warning-sign-sharp-deviation-of-route",
+   "page": "Traffic signs",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/traffic-signs",
+   "category": "Warning signs",
+   "subcategory": "Mostly triangular",
+   "caption": "Sharp deviation of route to left (or right if chevrons reversed)",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55b76ecae5274a21ec000014/warning-sign-sharp-deviation-of-route.jpg",
+   "multi": false
+  },
+  {
+   "n": 85,
+   "id": "warning-sign-light-signals-ahead",
+   "page": "Traffic signs",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/traffic-signs",
+   "category": "Warning signs",
+   "subcategory": "Mostly triangular",
+   "caption": "Light signals ahead at level crossing, airfield or bridge",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55b76ef9e5274a21ec000016/warning-sign-light-signals-ahead.jpg",
+   "multi": false
+  },
+  {
+   "n": 86,
+   "id": "warning-sign-level-crossing-minature",
+   "page": "Traffic signs",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/traffic-signs",
+   "category": "Warning signs",
+   "subcategory": "Mostly triangular",
+   "caption": "Miniature warning lights at level crossings",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55b76f4440f0b6790f00001f/warning-sign-level-crossing-minature.jpg",
+   "multi": false
+  },
+  {
+   "n": 87,
+   "id": "warning-sign-cattle",
+   "page": "Traffic signs",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/traffic-signs",
+   "category": "Warning signs",
+   "subcategory": "Mostly triangular",
+   "caption": "Cattle",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55b76f56e5274a21ec000018/warning-sign-cattle.jpg",
+   "multi": false
+  },
+  {
+   "n": 88,
+   "id": "warning-sign-wild-animals",
+   "page": "Traffic signs",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/traffic-signs",
+   "category": "Warning signs",
+   "subcategory": "Mostly triangular",
+   "caption": "Wild animals",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55b76f70e5274a21ec00001a/warning-sign-wild-animals.jpg",
+   "multi": false
+  },
+  {
+   "n": 89,
+   "id": "warning-sign-wild-horses",
+   "page": "Traffic signs",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/traffic-signs",
+   "category": "Warning signs",
+   "subcategory": "Mostly triangular",
+   "caption": "Wild horses or ponies",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55b76f87ed915d07fe000019/warning-sign-wild-horses.jpg",
+   "multi": false
+  },
+  {
+   "n": 90,
+   "id": "warning-sign-accompanied-horses",
+   "page": "Traffic signs",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/traffic-signs",
+   "category": "Warning signs",
+   "subcategory": "Mostly triangular",
+   "caption": "Accompanied horses or ponies",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55b76fa6ed915d07fe00001b/warning-sign-accompanied-horses.jpg",
+   "multi": false
+  },
+  {
+   "n": 91,
+   "id": "warning-sign-cycle-route-ahead",
+   "page": "Traffic signs",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/traffic-signs",
+   "category": "Warning signs",
+   "subcategory": "Mostly triangular",
+   "caption": "Cycle route ahead",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55b76fbced915d07e200000f/warning-sign-cycle-route-ahead.jpg",
+   "multi": false
+  },
+  {
+   "n": 92,
+   "id": "warning-sign-risk-of-ice",
+   "page": "Traffic signs",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/traffic-signs",
+   "category": "Warning signs",
+   "subcategory": "Mostly triangular",
+   "caption": "Risk of ice",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55b76fd9e5274a2152000014/warning-sign-risk-of-ice.jpg",
+   "multi": false
+  },
+  {
+   "n": 93,
+   "id": "warning-sign-traffic-queues",
+   "page": "Traffic signs",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/traffic-signs",
+   "category": "Warning signs",
+   "subcategory": "Mostly triangular",
+   "caption": "Traffic queues likely ahead",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55b76ffa40f0b6790f000021/warning-sign-traffic-queues.jpg",
+   "multi": false
+  },
+  {
+   "n": 94,
+   "id": "warning-sign-distance-humps-extend",
+   "page": "Traffic signs",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/traffic-signs",
+   "category": "Warning signs",
+   "subcategory": "Mostly triangular",
+   "caption": "Distance over which road humps extend",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55b7701940f0b6790f000023/warning-sign-distance-humps-extend.jpg",
+   "multi": false
+  },
+  {
+   "n": 95,
+   "id": "warning-sign-other-danger",
+   "page": "Traffic signs",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/traffic-signs",
+   "category": "Warning signs",
+   "subcategory": "Mostly triangular",
+   "caption": "Other danger; plate indicates nature of danger",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55b7703fe5274a21ec00001c/warning-sign-other-danger.jpg",
+   "multi": false
+  },
+  {
+   "n": 96,
+   "id": "warning-sign-soft-verges",
+   "page": "Traffic signs",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/traffic-signs",
+   "category": "Warning signs",
+   "subcategory": "Mostly triangular",
+   "caption": "Soft verges",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55b77056ed915d07fe00001d/warning-sign-soft-verges.jpg",
+   "multi": false
+  },
+  {
+   "n": 97,
+   "id": "warning-sign-side-winds",
+   "page": "Traffic signs",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/traffic-signs",
+   "category": "Warning signs",
+   "subcategory": "Mostly triangular",
+   "caption": "Side winds",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55b7706940f0b67aa300001b/warning-sign-side-winds.jpg",
+   "multi": false
+  },
+  {
+   "n": 98,
+   "id": "warning-sign-hump-bridge",
+   "page": "Traffic signs",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/traffic-signs",
+   "category": "Warning signs",
+   "subcategory": "Mostly triangular",
+   "caption": "Hump bridge",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55b7707ae5274a21ec00001e/warning-sign-hump-bridge.jpg",
+   "multi": false
+  },
+  {
+   "n": 99,
+   "id": "warning-sign-worded-sign-ford",
+   "page": "Traffic signs",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/traffic-signs",
+   "category": "Warning signs",
+   "subcategory": "Mostly triangular",
+   "caption": "Worded warning sign",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55b7708fed915d07fe00001f/warning-sign-worded-sign-ford.jpg",
+   "multi": false
+  },
+  {
+   "n": 100,
+   "id": "warning-sign-quayside-or-riverbank",
+   "page": "Traffic signs",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/traffic-signs",
+   "category": "Warning signs",
+   "subcategory": "Mostly triangular",
+   "caption": "Quayside or river bank",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55b770aaed915d07fe000021/warning-sign-quayside-or-riverbank.jpg",
+   "multi": false
+  },
+  {
+   "n": 101,
+   "id": "warning-sign-risk-of-grounding",
+   "page": "Traffic signs",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/traffic-signs",
+   "category": "Warning signs",
+   "subcategory": "Mostly triangular",
+   "caption": "Risk of grounding",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55b770c3ed915d07fe000023/warning-sign-risk-of-grounding.jpg",
+   "multi": false
+  },
+  {
+   "n": 102,
+   "id": "direction-sign-blue-junction-leading-to-motorway",
+   "page": "Traffic signs",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/traffic-signs",
+   "category": "Direction signs",
+   "subcategory": "Signs on motorways - blue backgrounds",
+   "caption": "At a junction leading directly into a motorway (junction number may be shown on a black background)",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55b8a448e5274a1521000001/direction-sign-blue-junction-leading-to-motorway.jpg",
+   "multi": false
+  },
+  {
+   "n": 103,
+   "id": "direction-sign-blue-approach-to-junction",
+   "page": "Traffic signs",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/traffic-signs",
+   "category": "Direction signs",
+   "subcategory": "Signs on motorways - blue backgrounds",
+   "caption": "On approaches to junctions (junction number on black background)",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55b8a47b40f0b6151c000001/direction-sign-blue-approach-to-junction.jpg",
+   "multi": false
+  },
+  {
+   "n": 104,
+   "id": "direction-sign-blue-route-sign",
+   "page": "Traffic signs",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/traffic-signs",
+   "category": "Direction signs",
+   "subcategory": "Signs on motorways - blue backgrounds",
+   "caption": "Route confirmatory sign after junction",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55b8a49e40f0b6151f000001/direction-sign-blue-route-sign.jpg",
+   "multi": false
+  },
+  {
+   "n": 105,
+   "id": "direction-sign-blue-get-in-lane",
+   "page": "Traffic signs",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/traffic-signs",
+   "category": "Direction signs",
+   "subcategory": "Signs on motorways - blue backgrounds",
+   "caption": "Downward pointing arrows mean ‘Get in lane’ \nThe left-hand lane leads to a different destination from the other lanes.",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55b8a4c0ed915d155c000005/direction-sign-blue-get-in-lane.jpg",
+   "multi": false
+  },
+  {
+   "n": 106,
+   "id": "direction-sign-blue-destination-leaving-motorway",
+   "page": "Traffic signs",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/traffic-signs",
+   "category": "Direction signs",
+   "subcategory": "Signs on motorways - blue backgrounds",
+   "caption": "The panel with the inclined arrow indicates the destinations which can be reached by leaving the motorway at the next junction",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55b8a4e940f0b6151c000003/direction-sign-blue-destination-leaving-motorway.jpg",
+   "multi": false
+  },
+  {
+   "n": 107,
+   "id": "direction-sign-green-approach-junction-roundabout",
+   "page": "Traffic signs",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/traffic-signs",
+   "category": "Direction signs",
+   "subcategory": "Signs on primary routes - green backgrounds",
+   "caption": "On approaches to junctions",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55b8a74fed915d155c000007/direction-sign-green-approach-junction-roundabout.jpg",
+   "multi": false
+  },
+  {
+   "n": 108,
+   "id": "direction-sign-green-at-junction",
+   "page": "Traffic signs",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/traffic-signs",
+   "category": "Direction signs",
+   "subcategory": "Signs on primary routes - green backgrounds",
+   "caption": "At the junction",
+   "imageUrl": "https://assets.publishing.service.gov.uk/media/581715bded915d61c5000007/direction-sign-green-at-junction.jpg",
+   "multi": false
+  },
+  {
+   "n": 109,
+   "id": "direction-sign-green-route-sign",
+   "page": "Traffic signs",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/traffic-signs",
+   "category": "Direction signs",
+   "subcategory": "Signs on primary routes - green backgrounds",
+   "caption": "Route confirmatory sign after junction",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55b8a7afed915d155f000003/direction-sign-green-route-sign.jpg",
+   "multi": false
+  },
+  {
+   "n": 110,
+   "id": "direction-sign-green-approach-junction",
+   "page": "Traffic signs",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/traffic-signs",
+   "category": "Direction signs",
+   "subcategory": "Signs on primary routes - green backgrounds",
+   "caption": "On approaches to junctions",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55b8a7cce5274a1521000003/direction-sign-green-approach-junction.jpg",
+   "multi": false
+  },
+  {
+   "n": 111,
+   "id": "direction-sign-green-billingual",
+   "page": "Traffic signs",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/traffic-signs",
+   "category": "Direction signs",
+   "subcategory": "Signs on primary routes - green backgrounds",
+   "caption": "On approach to a junction in Wales (bilingual)",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55b8a7e7e5274a151e000001/direction-sign-green-billingual.jpg",
+   "multi": false
+  },
+  {
+   "n": 112,
+   "id": "direction-sign-green-ring-road-crossroads",
+   "page": "Traffic signs",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/traffic-signs",
+   "category": "Direction signs",
+   "subcategory": "Signs on primary routes - green backgrounds",
+   "caption": "Primary route forming part of a ring road",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55b8a812e5274a1521000005/direction-sign-green-ring-road-crossroads.jpg",
+   "multi": false
+  },
+  {
+   "n": 113,
+   "id": "direction-sign-green-primary-route-ring-road",
+   "page": "Traffic signs",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/traffic-signs",
+   "category": "Direction signs",
+   "subcategory": "Signs on primary routes - green backgrounds",
+   "caption": "Primary route forming part of a ring road",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55b8a82ce5274a151e000003/direction-sign-green-primary-route-ring-road.jpg",
+   "multi": false
+  },
+  {
+   "n": 114,
+   "id": "direction-sign-black-border-approach-junction-crossroads",
+   "page": "Traffic signs",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/traffic-signs",
+   "category": "Direction signs",
+   "subcategory": "Signs on non-primary and local routes - black borders",
+   "caption": "On approaches to junctions",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55b8aeabed915d155f000005/direction-sign-black-border-approach-junction-crossroads.jpg",
+   "multi": false
+  },
+  {
+   "n": 115,
+   "id": "direction-sign-black-border-approach-junction",
+   "page": "Traffic signs",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/traffic-signs",
+   "category": "Direction signs",
+   "subcategory": "Signs on non-primary and local routes - black borders",
+   "caption": "On approaches to junctions",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55b8aec7ed915d155f000007/direction-sign-black-border-approach-junction.jpg",
+   "multi": false
+  },
+  {
+   "n": 116,
+   "id": "direction-sign-black-border-at-junction",
+   "page": "Traffic signs",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/traffic-signs",
+   "category": "Direction signs",
+   "subcategory": "Signs on non-primary and local routes - black borders",
+   "caption": "At the junction",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55b8aef1e5274a151e00000f/direction-sign-black-border-at-junction.jpg",
+   "multi": false
+  },
+  {
+   "n": 117,
+   "id": "direction-sign-black-border-toilets-disabled-access",
+   "page": "Traffic signs",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/traffic-signs",
+   "category": "Direction signs",
+   "subcategory": "Signs on non-primary and local routes - black borders",
+   "caption": "Direction to toilets with access for the disabled",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55b8af1540f0b6151c000007/direction-sign-black-border-toilets-disabled-access.jpg",
+   "multi": false
+  },
+  {
+   "n": 118,
+   "id": "direction-sign-other-picnic-site",
+   "page": "Traffic signs",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/traffic-signs",
+   "category": "Direction signs",
+   "subcategory": "Other direction signs",
+   "caption": "Picnic site",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55b8a938e5274a1521000007/direction-sign-other-picnic-site.jpg",
+   "multi": false
+  },
+  {
+   "n": 119,
+   "id": "direction-sign-other-english-heritage",
+   "page": "Traffic signs",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/traffic-signs",
+   "category": "Direction signs",
+   "subcategory": "Other direction signs",
+   "caption": "Ancient monument in the care of English Heritage",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55b8a952e5274a151e000005/direction-sign-other-english-heritage.jpg",
+   "multi": false
+  },
+  {
+   "n": 120,
+   "id": "direction-sign-other-direction-car-park",
+   "page": "Traffic signs",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/traffic-signs",
+   "category": "Direction signs",
+   "subcategory": "Other direction signs",
+   "caption": "Direction to a car park",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55b8a965e5274a151e000007/direction-sign-other-direction-car-park.jpg",
+   "multi": false
+  },
+  {
+   "n": 121,
+   "id": "direction-sign-other-tourist-attraction",
+   "page": "Traffic signs",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/traffic-signs",
+   "category": "Direction signs",
+   "subcategory": "Other direction signs",
+   "caption": "Tourist attraction",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55b8a98740f0b6151f000005/direction-sign-other-tourist-attraction.jpg",
+   "multi": false
+  },
+  {
+   "n": 122,
+   "id": "direction-sign-other-camping-caravan",
+   "page": "Traffic signs",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/traffic-signs",
+   "category": "Direction signs",
+   "subcategory": "Other direction signs",
+   "caption": "Direction to camping and caravan site",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55b8a9a140f0b6151f000007/direction-sign-other-camping-caravan.jpg",
+   "multi": false
+  },
+  {
+   "n": 123,
+   "id": "direction-sign-other-advisory-route-lorries",
+   "page": "Traffic signs",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/traffic-signs",
+   "category": "Direction signs",
+   "subcategory": "Other direction signs",
+   "caption": "Advisory route for lorries",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55b8a9b9e5274a151e000009/direction-sign-other-advisory-route-lorries.jpg",
+   "multi": false
+  },
+  {
+   "n": 124,
+   "id": "direction-sign-other-route-pedal-cycles",
+   "page": "Traffic signs",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/traffic-signs",
+   "category": "Direction signs",
+   "subcategory": "Other direction signs",
+   "caption": "Route for pedal cycles forming part of a network",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55b8ab18e5274a1521000009/direction-sign-other-route-pedal-cycles.jpg",
+   "multi": false
+  },
+  {
+   "n": 125,
+   "id": "direction-sign-other-recommended-route-cycle",
+   "page": "Traffic signs",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/traffic-signs",
+   "category": "Direction signs",
+   "subcategory": "Other direction signs",
+   "caption": "Recommended route for pedal cycles to place shown",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55b8ab49e5274a151e00000b/direction-sign-other-recommended-route-cycle.jpg",
+   "multi": false
+  },
+  {
+   "n": 126,
+   "id": "direction-sign-other-route-pedestrians",
+   "page": "Traffic signs",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/traffic-signs",
+   "category": "Direction signs",
+   "subcategory": "Other direction signs",
+   "caption": "Route for pedestrians",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55b8ab66e5274a152100000b/direction-sign-other-route-pedestrians.jpg",
+   "multi": false
+  },
+  {
+   "n": 127,
+   "id": "direction-sign-other-emergency-diversion-square",
+   "page": "Traffic signs",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/traffic-signs",
+   "category": "Direction signs",
+   "subcategory": "Other direction signs",
+   "caption": "Symbols showing emergency diversion route for motorway and other main road traffic",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55b8ab86ed915d155c000009/direction-sign-other-emergency-diversion-square.jpg",
+   "multi": false
+  },
+  {
+   "n": 128,
+   "id": "direction-sign-other-emergency-diversion-triangle",
+   "page": "Traffic signs",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/traffic-signs",
+   "category": "Direction signs",
+   "subcategory": "Other direction signs",
+   "caption": "Symbols showing emergency diversion route for motorway and other main road traffic",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55b8abace5274a151e00000d/direction-sign-other-emergency-diversion-triangle.jpg",
+   "multi": false
+  },
+  {
+   "n": 129,
+   "id": "direction-sign-other-emergency-diversion-diamond",
+   "page": "Traffic signs",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/traffic-signs",
+   "category": "Direction signs",
+   "subcategory": "Other direction signs",
+   "caption": "Symbols showing emergency diversion route for motorway and other main road traffic",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55b8abc2e5274a152100000d/direction-sign-other-emergency-diversion-diamond.jpg",
+   "multi": false
+  },
+  {
+   "n": 130,
+   "id": "direction-sign-other-emergency-diversion-circle",
+   "page": "Traffic signs",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/traffic-signs",
+   "category": "Direction signs",
+   "subcategory": "Other direction signs",
+   "caption": "Symbols showing emergency diversion route for motorway and other main road traffic",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55b8abd6e5274a152100000f/direction-sign-other-emergency-diversion-circle.jpg",
+   "multi": false
+  },
+  {
+   "n": 131,
+   "id": "direction-sign-other-diversion-route",
+   "page": "Traffic signs",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/traffic-signs",
+   "category": "Direction signs",
+   "subcategory": "Other direction signs",
+   "caption": "Diversion route",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55b8abf540f0b6151c000005/direction-sign-other-diversion-route.jpg",
+   "multi": false
+  },
+  {
+   "n": 132,
+   "id": "information-sign-entrance-controlled-parking-zone",
+   "page": "Traffic signs",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/traffic-signs",
+   "category": "Information signs",
+   "subcategory": "All rectangular",
+   "caption": "Entrance to controlled parking zone",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55b8bc8040f0b6151c000009/Information-sign-entrance-controlled-parking-zone.jpg",
+   "multi": false
+  },
+  {
+   "n": 133,
+   "id": "information-sign-entrance-congestion-zone",
+   "page": "Traffic signs",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/traffic-signs",
+   "category": "Information signs",
+   "subcategory": "All rectangular",
+   "caption": "Entrance to congestion charging zone",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55b8bc98ed915d155f000009/Information-sign-entrance-congestion-zone.jpg",
+   "multi": false
+  },
+  {
+   "n": 134,
+   "id": "information-sign-end-controlled-parking-zone",
+   "page": "Traffic signs",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/traffic-signs",
+   "category": "Information signs",
+   "subcategory": "All rectangular",
+   "caption": "End of controlled parking zone",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55b8bcab40f0b6151c00000b/Information-sign-end-controlled-parking-zone.jpg",
+   "multi": false
+  },
+  {
+   "n": 135,
+   "id": "information-sign-advance-warning-restriction-ahead",
+   "page": "Traffic signs",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/traffic-signs",
+   "category": "Information signs",
+   "subcategory": "All rectangular",
+   "caption": "Advance warning of restriction or prohibition ahead",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55b8bcc340f0b6151c00000d/Information-sign-advance-warning-restriction-ahead.jpg",
+   "multi": false
+  },
+  {
+   "n": 136,
+   "id": "information-sign-parking-place-solo-motorcycles",
+   "page": "Traffic signs",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/traffic-signs",
+   "category": "Information signs",
+   "subcategory": "All rectangular",
+   "caption": "Parking place for solo motorcycles",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55b8bcdfed915d155f00000b/Information-sign-parking-place-solo-motorcycles.jpg",
+   "multi": false
+  },
+  {
+   "n": 137,
+   "id": "information-sign-with-flow-bus-lane-ahead",
+   "page": "Traffic signs",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/traffic-signs",
+   "category": "Information signs",
+   "subcategory": "All rectangular",
+   "caption": "With-flow bus lane ahead which pedal cycles and taxis may also use",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55b8bcf4e5274a151e000013/Information-sign-with-flow-bus-lane-ahead.jpg",
+   "multi": false
+  },
+  {
+   "n": 138,
+   "id": "information-sign-lane-for-hov",
+   "page": "Traffic signs",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/traffic-signs",
+   "category": "Information signs",
+   "subcategory": "All rectangular",
+   "caption": "Lane designated for use by high occupancy vehicles (HOV) - see rule 142",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55b8bd2aed915d155c00000b/Information-sign-lane-for-hov.jpg",
+   "multi": false
+  },
+  {
+   "n": 139,
+   "id": "information-sign-vehicles-permitted-hov-lane",
+   "page": "Traffic signs",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/traffic-signs",
+   "category": "Information signs",
+   "subcategory": "All rectangular",
+   "caption": "Vehicles permitted to use an HOV lane ahead",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55b8bd4140f0b6151c00000f/Information-sign-vehicles-permitted-HOV-lane.jpg",
+   "multi": false
+  },
+  {
+   "n": 140,
+   "id": "information-sign-motorway-end",
+   "page": "Traffic signs",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/traffic-signs",
+   "category": "Information signs",
+   "subcategory": "All rectangular",
+   "caption": "End of motorway",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55b8bd5b40f0b6151f000009/Information-sign-motorway-end.jpg",
+   "multi": false
+  },
+  {
+   "n": 141,
+   "id": "information-sign-start-motorway",
+   "page": "Traffic signs",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/traffic-signs",
+   "category": "Information signs",
+   "subcategory": "All rectangular",
+   "caption": "Start of motorway and point from which motorway regulations apply",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55b8bd6fe5274a151e000015/Information-sign-start-motorway.jpg",
+   "multi": false
+  },
+  {
+   "n": 142,
+   "id": "information-sign-appropriate-traffic-lanes-junction",
+   "page": "Traffic signs",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/traffic-signs",
+   "category": "Information signs",
+   "subcategory": "All rectangular",
+   "caption": "Appropriate traffic lanes at junction ahead",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55b8bd89e5274a1521000011/Information-sign-appropriate-traffic-lanes-junction.jpg",
+   "multi": false
+  },
+  {
+   "n": 143,
+   "id": "information-sign-traffic-on-carriageway-priority",
+   "page": "Traffic signs",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/traffic-signs",
+   "category": "Information signs",
+   "subcategory": "All rectangular",
+   "caption": "Traffic on the main carriageway coming from right has priority over joining traffic",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55b8bdefed915d155f00000d/Information-sign-traffic-on-carriageway-priority.jpg",
+   "multi": false
+  },
+  {
+   "n": 144,
+   "id": "information-sign-addtional-traffic-joining-left",
+   "page": "Traffic signs",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/traffic-signs",
+   "category": "Information signs",
+   "subcategory": "All rectangular",
+   "caption": "Additional traffic joining from left ahead. Traffic on main carriageway has priority over joining traffic from right hand lane of slip road",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55b8be2440f0b6151c000011/Information-sign-addtional-traffic-joining-left.jpg",
+   "multi": false
+  },
+  {
+   "n": 145,
+   "id": "information-sign-traffic-joining-right-hand-slip-road",
+   "page": "Traffic signs",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/traffic-signs",
+   "category": "Information signs",
+   "subcategory": "All rectangular",
+   "caption": "Traffic in right hand lane of slip road joining the main carriageway has priority over left hand lane",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55b8be5540f0b6151c000013/Information-sign-traffic-joining-right-hand-slip-road.jpg",
+   "multi": false
+  },
+  {
+   "n": 146,
+   "id": "variable-speed-limit",
+   "page": "Traffic signs",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/traffic-signs",
+   "category": "Information signs",
+   "subcategory": "All rectangular",
+   "caption": "Variable speed limit with camera enforcement sign.",
+   "imageUrl": "https://assets.publishing.service.gov.uk/media/613a0b1e8fa8f503c6403de0/variable_speed_limit.png",
+   "multi": false
+  },
+  {
+   "n": 147,
+   "id": "information-sign-motorway-exit-countdown-markers",
+   "page": "Traffic signs",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/traffic-signs",
+   "category": "Information signs",
+   "subcategory": "All rectangular",
+   "caption": "‘Countdown’ markers at exit from motorway (each bar represents 100 yards to the exit). Green-backed markers may be used on primary routes and white-backed markers with black bars on other routes. At approaches to concealed level crossings white-backed markers with red bars may be used. Although these will be erected at equal distances the bars do not represent 100 yard intervals.",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/560bc777e5274a0369000024/information-sign-motorway-exit-countdown-markers.jpg",
+   "multi": true
+  },
+  {
+   "n": 148,
+   "id": "information-sign-motorway-service",
+   "page": "Traffic signs",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/traffic-signs",
+   "category": "Information signs",
+   "subcategory": "All rectangular",
+   "caption": "Motorway service area sign showing the operator’s name",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55b8beb3ed915d155f000011/Information-sign-motorway-service.jpg",
+   "multi": false
+  },
+  {
+   "n": 149,
+   "id": "information-sign-traffic-priority-over-oncoming-vehicles",
+   "page": "Traffic signs",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/traffic-signs",
+   "category": "Information signs",
+   "subcategory": "All rectangular",
+   "caption": "Traffic has priority over oncoming vehicles",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55b8befce5274a151e000017/Information-sign-traffic-priority-over-oncoming-vehicles.jpg",
+   "multi": false
+  },
+  {
+   "n": 150,
+   "id": "information-sign-hospital-a-and-e",
+   "page": "Traffic signs",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/traffic-signs",
+   "category": "Information signs",
+   "subcategory": "All rectangular",
+   "caption": "Hospital ahead with Accident and Emergency facilities",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55b8c000ed915d155f000014/Information-sign-hospital-a-and-e.jpg",
+   "multi": false
+  },
+  {
+   "n": 151,
+   "id": "information-sign-tourist-info-point",
+   "page": "Traffic signs",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/traffic-signs",
+   "category": "Information signs",
+   "subcategory": "All rectangular",
+   "caption": "Tourist information point",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55b8c01340f0b6151c000015/Information-sign-tourist-info-point.jpg",
+   "multi": false
+  },
+  {
+   "n": 152,
+   "id": "information-sign-no-through-road",
+   "page": "Traffic signs",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/traffic-signs",
+   "category": "Information signs",
+   "subcategory": "All rectangular",
+   "caption": "No through road for vehicles",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55b8c026e5274a1521000015/Information-sign-no-through-road.jpg",
+   "multi": false
+  },
+  {
+   "n": 153,
+   "id": "information-sign-recommended-route-cycles",
+   "page": "Traffic signs",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/traffic-signs",
+   "category": "Information signs",
+   "subcategory": "All rectangular",
+   "caption": "Recommended route for pedal cycles",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55b8c063e5274a151e00001a/Information-sign-recommended-route-cycles.jpg",
+   "multi": false
+  },
+  {
+   "n": 154,
+   "id": "information-sign-home-zone-entry",
+   "page": "Traffic signs",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/traffic-signs",
+   "category": "Information signs",
+   "subcategory": "All rectangular",
+   "caption": "Home Zone Entry",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55b8c079e5274a1521000017/Information-sign-home-zone-entry.jpg",
+   "multi": false
+  },
+  {
+   "n": 155,
+   "id": "information-sign-camera-area",
+   "page": "Traffic signs",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/traffic-signs",
+   "category": "Information signs",
+   "subcategory": "All rectangular",
+   "caption": "Area in which cameras are used to enforce traffic regulations",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55b8c091ed915d155f000016/Information-sign-camera-area.jpg",
+   "multi": false
+  },
+  {
+   "n": 156,
+   "id": "information-sign-bus-lane-road-junction-ahead",
+   "page": "Traffic signs",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/traffic-signs",
+   "category": "Information signs",
+   "subcategory": "All rectangular",
+   "caption": "Bus lane on road at junction ahead",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55b8c0a6ed915d155c00000d/Information-sign-bus-lane-road-junction-ahead.jpg",
+   "multi": false
+  },
+  {
+   "n": 157,
+   "id": "road-work-sign-road-works",
+   "page": "Traffic signs",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/traffic-signs",
+   "category": "Road work signs",
+   "subcategory": null,
+   "caption": "Road works",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55b8c3b2ed915d155f000018/road-work-sign-road-works.jpg",
+   "multi": false
+  },
+  {
+   "n": 158,
+   "id": "road-work-sign-loose-chippings",
+   "page": "Traffic signs",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/traffic-signs",
+   "category": "Road work signs",
+   "subcategory": null,
+   "caption": "Loose chippings",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55b8c3c240f0b6151c000017/road-work-sign-loose-chippings.jpg",
+   "multi": false
+  },
+  {
+   "n": 159,
+   "id": "road-work-sign-temporary-hazard",
+   "page": "Traffic signs",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/traffic-signs",
+   "category": "Road work signs",
+   "subcategory": null,
+   "caption": "Temporary hazard at road works",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55b8c3dbed915d155f00001a/road-work-sign-temporary-hazard.jpg",
+   "multi": false
+  },
+  {
+   "n": 160,
+   "id": "road-work-sign-temporary-lane-closure",
+   "page": "Traffic signs",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/traffic-signs",
+   "category": "Road work signs",
+   "subcategory": null,
+   "caption": "Temporary lane closure (the number and position of arrows and red bars may be varied according to lanes open and closed)",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55b8c3f140f0b6151f00000d/road-work-sign-temporary-lane-closure.jpg",
+   "multi": false
+  },
+  {
+   "n": 161,
+   "id": "road-work-sign-back-vehicle-direction-arrow",
+   "page": "Traffic signs",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/traffic-signs",
+   "category": "Road work signs",
+   "subcategory": null,
+   "caption": "Slow-moving or stationary works vehicle blocking a traffic lane. Pass in the direction shown by the arrow.",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55b8c413ed915d155f00001c/road-work-sign-back-vehicle-direction-arrow.jpg",
+   "multi": false
+  },
+  {
+   "n": 162,
+   "id": "road-work-sign-mandatory-speed-limit",
+   "page": "Traffic signs",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/traffic-signs",
+   "category": "Road work signs",
+   "subcategory": null,
+   "caption": "Mandatory speed limit ahead",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55b8c42740f0b6151c000019/road-work-sign-mandatory-speed-limit.jpg",
+   "multi": false
+  },
+  {
+   "n": 163,
+   "id": "road-work-sign-road-works-ahead",
+   "page": "Traffic signs",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/traffic-signs",
+   "category": "Road work signs",
+   "subcategory": null,
+   "caption": "Road works 1 mile ahead",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55b8c43ee5274a151e00001c/road-work-sign-road-works-ahead.jpg",
+   "multi": false
+  },
+  {
+   "n": 164,
+   "id": "road-work-sign-end-road-works",
+   "page": "Traffic signs",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/traffic-signs",
+   "category": "Road work signs",
+   "subcategory": null,
+   "caption": "End of road works and any temporary restrictions including speed limits",
+   "imageUrl": "https://assets.publishing.service.gov.uk/media/55b8c45540f0b6151c00001b/road-work-sign-end-road-works.jpg",
+   "multi": false
+  },
+  {
+   "n": 165,
+   "id": "road-work-sign-back-vehicle-800-yards",
+   "page": "Traffic signs",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/traffic-signs",
+   "category": "Road work signs",
+   "subcategory": null,
+   "caption": "Signs used on the back of slow-moving or stationary vehicles warning of a lane closed ahead by a works vehicle. There are no cones on the road.",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55b8c476e5274a1521000019/road-work-sign-back-vehicle-800-yards.jpg",
+   "multi": false
+  },
+  {
+   "n": 166,
+   "id": "road-work-sign-back-vehicle450-yards",
+   "page": "Traffic signs",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/traffic-signs",
+   "category": "Road work signs",
+   "subcategory": null,
+   "caption": "Signs used on the back of slow-moving or stationary vehicles warning of a lane closed ahead by a works vehicle. There are no cones on the road.",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55b8c486e5274a152100001b/road-work-sign-back-vehicle450-yards.jpg",
+   "multi": false
+  },
+  {
+   "n": 167,
+   "id": "road-work-sign-lane-restriction",
+   "page": "Traffic signs",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/traffic-signs",
+   "category": "Road work signs",
+   "subcategory": null,
+   "caption": "Lane restrictions at road works ahead",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55b8c4a640f0b6151f00000f/road-work-sign-lane-restriction.jpg",
+   "multi": false
+  },
+  {
+   "n": 168,
+   "id": "road-work-sign-lane-crossover",
+   "page": "Traffic signs",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/traffic-signs",
+   "category": "Road work signs",
+   "subcategory": null,
+   "caption": "One lane crossover at contraflow road works",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55b8c4b840f0b6151f000011/road-work-sign-lane-crossover.jpg",
+   "multi": false
+  },
+  {
+   "n": 169,
+   "id": "across-carriageway-stop-line-signals-or-police",
+   "page": "Road markings",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/road-markings",
+   "category": "Across the carriageway",
+   "subcategory": null,
+   "caption": "Stop line at signals or police control",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55bb5ed1ed915d1565000002/across-carriageway-stop-line-signals-or-police.jpg",
+   "multi": false
+  },
+  {
+   "n": 170,
+   "id": "across-carriageway-stop-line-at-stop-sign",
+   "page": "Road markings",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/road-markings",
+   "category": "Across the carriageway",
+   "subcategory": null,
+   "caption": "Stop line at ‘Stop’ sign",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55bb5f0040f0b6154e000005/across-carriageway-stop-line-at-stop-sign.jpg",
+   "multi": false
+  },
+  {
+   "n": 171,
+   "id": "across-carriageway-stop-line-level-crossing",
+   "page": "Road markings",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/road-markings",
+   "category": "Across the carriageway",
+   "subcategory": null,
+   "caption": "Stop line for pedestrians at a level crossing",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55bb5f38e5274a1548000005/across-carriageway-stop-line-level-crossing.jpg",
+   "multi": false
+  },
+  {
+   "n": 172,
+   "id": "across-carriageway-give-way-traffic-major-road",
+   "page": "Road markings",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/road-markings",
+   "category": "Across the carriageway",
+   "subcategory": null,
+   "caption": "Give way to traffic on major road (can also be used at mini roundabouts)",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55bb5f73ed915d1568000009/across-carriageway-give-way-traffic-major-road.jpg",
+   "multi": false
+  },
+  {
+   "n": 173,
+   "id": "across-carriageway-give-way-traffic-from-right-roundabout",
+   "page": "Road markings",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/road-markings",
+   "category": "Across the carriageway",
+   "subcategory": null,
+   "caption": "Give way to traffic from the right at a roundabout",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55bb5f9e40f0b61551000004/across-carriageway-give-way-traffic-from-right-roundabout.jpg",
+   "multi": false
+  },
+  {
+   "n": 174,
+   "id": "across-carriageway-give-way-traffic-from-right-miniroundabout",
+   "page": "Road markings",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/road-markings",
+   "category": "Across the carriageway",
+   "subcategory": null,
+   "caption": "Give way to traffic from the right at a mini-roundabout",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55bb5fc340f0b6154e000007/across-carriageway-give-way-traffic-from-right-miniroundabout.jpg",
+   "multi": false
+  },
+  {
+   "n": 175,
+   "id": "along-carriageway-edge-line",
+   "page": "Road markings",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/road-markings",
+   "category": "Along the carriageway",
+   "subcategory": null,
+   "caption": "Edge line",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55bb6062ed915d1565000004/along-carriageway-edge-line.jpg",
+   "multi": false
+  },
+  {
+   "n": 176,
+   "id": "along-carriageway-centre-line",
+   "page": "Road markings",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/road-markings",
+   "category": "Along the carriageway",
+   "subcategory": null,
+   "caption": "Centre line See Rule 127",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55bb607ae5274a1545000004/along-carriageway-centre-line.jpg",
+   "multi": false
+  },
+  {
+   "n": 177,
+   "id": "along-carriageway-hazard-warn-line",
+   "page": "Road markings",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/road-markings",
+   "category": "Along the carriageway",
+   "subcategory": null,
+   "caption": "Hazard warning line See Rule 127",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55bb609a40f0b6154e000009/along-carriageway-hazard-warn-line.jpg",
+   "multi": false
+  },
+  {
+   "n": 178,
+   "id": "along-carriageway-double-white-broken-line",
+   "page": "Road markings",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/road-markings",
+   "category": "Along the carriageway",
+   "subcategory": null,
+   "caption": "Double white lines See Rules 128 and 129",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55bb60cf40f0b6154e00000b/along-carriageway-double-white-broken-line.jpg",
+   "multi": false
+  },
+  {
+   "n": 179,
+   "id": "along-carriageway-double-white-line",
+   "page": "Road markings",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/road-markings",
+   "category": "Along the carriageway",
+   "subcategory": null,
+   "caption": "Double white lines See Rules 128 and 129",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55bb60eee5274a1548000007/along-carriageway-double-white-line.jpg",
+   "multi": false
+  },
+  {
+   "n": 180,
+   "id": "along-carriageway-diagonal-line",
+   "page": "Road markings",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/road-markings",
+   "category": "Along the carriageway",
+   "subcategory": null,
+   "caption": "See Rule 130",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55bb616eed915d1565000006/along-carriageway-diagonal-line.jpg",
+   "multi": false
+  },
+  {
+   "n": 181,
+   "id": "along-carriageway-lane-line",
+   "page": "Road markings",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/road-markings",
+   "category": "Along the carriageway",
+   "subcategory": null,
+   "caption": "Lane line See Rule 131",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55bb618bed915d1565000008/along-carriageway-lane-line.jpg",
+   "multi": false
+  },
+  {
+   "n": 182,
+   "id": "along-edge-carriageway-double-yellow",
+   "page": "Road markings",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/road-markings",
+   "category": "Along the edge of the carriageway",
+   "subcategory": "Waiting restrictions",
+   "caption": "No waiting at any time",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55bb62db40f0b6154e00000d/along-edge-carriageway-double-yellow.jpg",
+   "multi": false
+  },
+  {
+   "n": 183,
+   "id": "along-edge-carriageway-single-yellow-with-parking",
+   "page": "Road markings",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/road-markings",
+   "category": "Along the edge of the carriageway",
+   "subcategory": "Waiting restrictions",
+   "caption": "No waiting during times shown on sign",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55bb6347ed915d156800000b/along-edge-carriageway-single_yellow-with-parking.jpg",
+   "multi": false
+  },
+  {
+   "n": 184,
+   "id": "along-edge-carriageway-park-times",
+   "page": "Road markings",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/road-markings",
+   "category": "Along the edge of the carriageway",
+   "subcategory": "Waiting restrictions",
+   "caption": "",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55bb63a4ed915d156500000a/along-edge-carriageway-park-times.jpg",
+   "multi": false
+  },
+  {
+   "n": 185,
+   "id": "along-edge-carriageway-waiting-space",
+   "page": "Road markings",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/road-markings",
+   "category": "Along the edge of the carriageway",
+   "subcategory": "Waiting restrictions",
+   "caption": "Waiting is limited to the duration specified during the days and times shown",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55bb63c5ed915d156800000d/along-edge-carriageway-waiting-space.jpg",
+   "multi": false
+  },
+  {
+   "n": 186,
+   "id": "along-edge-carriageway-red-route-no-stopping-at-any-time",
+   "page": "Road markings",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/road-markings",
+   "category": "Along the edge of the carriageway",
+   "subcategory": "Red Route stopping controls",
+   "caption": "",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55bb7c2be5274a154800000f/along-edge-carriageway-red-route-no-stopping-at-any-time.jpg",
+   "multi": false
+  },
+  {
+   "n": 187,
+   "id": "along-edge-carriageway-red-route-no-stopping-double-red-line",
+   "page": "Road markings",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/road-markings",
+   "category": "Along the edge of the carriageway",
+   "subcategory": "Red Route stopping controls",
+   "caption": "No stopping at any time",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55bb7c4ce5274a154500000a/along-edge-carriageway-red-route-no-stopping-double-red-line.jpg",
+   "multi": false
+  },
+  {
+   "n": 188,
+   "id": "along-edge-carriageway-red-route-no-stopping-times",
+   "page": "Road markings",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/road-markings",
+   "category": "Along the edge of the carriageway",
+   "subcategory": "Red Route stopping controls",
+   "caption": "",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55bb7c76ed915d156800001b/along-edge-carriageway-red-route-no-stopping-times.jpg",
+   "multi": false
+  },
+  {
+   "n": 189,
+   "id": "along-edge-carriageway-red-route-no-stopping-red-line",
+   "page": "Road markings",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/road-markings",
+   "category": "Along the edge of the carriageway",
+   "subcategory": "Red Route stopping controls",
+   "caption": "No stopping during times shown on sign",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55bb7c95ed915d156800001d/along-edge-carriageway-red-route-no-stopping-red-line.jpg",
+   "multi": false
+  },
+  {
+   "n": 190,
+   "id": "along-edge-carriageway-red-route-parking",
+   "page": "Road markings",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/road-markings",
+   "category": "Along the edge of the carriageway",
+   "subcategory": "Red Route stopping controls",
+   "caption": "",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55bb7cd0e5274a1548000011/along-edge-carriageway-red-route-parking.jpg",
+   "multi": false
+  },
+  {
+   "n": 191,
+   "id": "along-edge-carriageway-red-route-parking-space",
+   "page": "Road markings",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/road-markings",
+   "category": "Along the edge of the carriageway",
+   "subcategory": "Red Route stopping controls",
+   "caption": "Parking is limited to the duration specified during the days and times shown",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55bb7d05ed915d156500000e/along-edge-carriageway-red-route-parking-space.jpg",
+   "multi": false
+  },
+  {
+   "n": 192,
+   "id": "along-edge-carriageway-red-route-except-loading-time",
+   "page": "Road markings",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/road-markings",
+   "category": "Along the edge of the carriageway",
+   "subcategory": "Red Route stopping controls",
+   "caption": "",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55bb7d2fed915d1565000010/along-edge-carriageway-red-route-except-loading-time.jpg",
+   "multi": false
+  },
+  {
+   "n": 193,
+   "id": "along-edge-carriageway-red-route-loading-space",
+   "page": "Road markings",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/road-markings",
+   "category": "Along the edge of the carriageway",
+   "subcategory": "Red Route stopping controls",
+   "caption": "Only loading may take place at the times shown for up to a maximum duration of 20 mins",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55bb7d6540f0b6154e000010/along-edge-carriageway-red-route-loading-space.jpg",
+   "multi": false
+  },
+  {
+   "n": 194,
+   "id": "on-kerb-no-loading-anytime",
+   "page": "Road markings",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/road-markings",
+   "category": "On the kerb or at the edge of the carriageway",
+   "subcategory": "Loading restrictions on roads other than Red Routes",
+   "caption": "",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55bb7ea0ed915d1565000012/on-kerb-no-loading-anytime.jpg",
+   "multi": false
+  },
+  {
+   "n": 195,
+   "id": "on-kerb-double-line-no-loading",
+   "page": "Road markings",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/road-markings",
+   "category": "On the kerb or at the edge of the carriageway",
+   "subcategory": "Loading restrictions on roads other than Red Routes",
+   "caption": "No loading or unloading at any time",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55bb7ebd40f0b6154e000016/on-kerb-double-line-no-loading.jpg",
+   "multi": false
+  },
+  {
+   "n": 196,
+   "id": "on-kerb-no-loading-times",
+   "page": "Road markings",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/road-markings",
+   "category": "On the kerb or at the edge of the carriageway",
+   "subcategory": "Loading restrictions on roads other than Red Routes",
+   "caption": "",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55bb7eceed915d1565000014/on-kerb-no-loading-times.jpg",
+   "multi": false
+  },
+  {
+   "n": 197,
+   "id": "on-kerb-single-line-no-loading-times",
+   "page": "Road markings",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/road-markings",
+   "category": "On the kerb or at the edge of the carriageway",
+   "subcategory": "Loading restrictions on roads other than Red Routes",
+   "caption": "No loading or unloading at the times shown",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55bb7ee740f0b6155100000a/on-kerb-single-line-no-loading-times.jpg",
+   "multi": false
+  },
+  {
+   "n": 198,
+   "id": "on-kerb-loading-only-sign",
+   "page": "Road markings",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/road-markings",
+   "category": "On the kerb or at the edge of the carriageway",
+   "subcategory": "Loading restrictions on roads other than Red Routes",
+   "caption": "",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55bb7ef840f0b6155100000c/on-kerb-loading-only-sign.jpg",
+   "multi": false
+  },
+  {
+   "n": 199,
+   "id": "on-kerb-loading-only-space",
+   "page": "Road markings",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/road-markings",
+   "category": "On the kerb or at the edge of the carriageway",
+   "subcategory": "Loading restrictions on roads other than Red Routes",
+   "caption": "Loading bay",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55bb7f0de5274a154500000c/on-kerb-loading-only-space.jpg",
+   "multi": false
+  },
+  {
+   "n": 200,
+   "id": "other-road-markings-school-keep-clear",
+   "page": "Road markings",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/road-markings",
+   "category": "Other road markings",
+   "subcategory": null,
+   "caption": "Keep entrance clear of stationary vehicles, even if picking up or setting down children",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55bb8aa840f0b6154e00001c/other-road-markings-school-keep-clear.jpg",
+   "multi": false
+  },
+  {
+   "n": 201,
+   "id": "other-road-markings-give-way-road",
+   "page": "Road markings",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/road-markings",
+   "category": "Other road markings",
+   "subcategory": null,
+   "caption": "Warning of ‘Give Way’ just ahead",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55bb8ada40f0b6154e00001e/other-road-markings-give-way-road.jpg",
+   "multi": false
+  },
+  {
+   "n": 202,
+   "id": "other-road-markings-space-doctor",
+   "page": "Road markings",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/road-markings",
+   "category": "Other road markings",
+   "subcategory": null,
+   "caption": "Parking space reserved for vehicles named",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55bb8af2e5274a1548000013/other-road-markings-space-doctor.jpg",
+   "multi": false
+  },
+  {
+   "n": 203,
+   "id": "other-road-markings-bus-stop-road",
+   "page": "Road markings",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/road-markings",
+   "category": "Other road markings",
+   "subcategory": null,
+   "caption": "See Rule 243",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55bb8b0d40f0b61551000010/other-road-markings-bus-stop-road.jpg",
+   "multi": false
+  },
+  {
+   "n": 204,
+   "id": "other-road-markings-bus-lane-road",
+   "page": "Road markings",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/road-markings",
+   "category": "Other road markings",
+   "subcategory": null,
+   "caption": "See Rule 141",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55bb8b3840f0b6154e000020/other-road-markings-bus-lane-road.jpg",
+   "multi": false
+  },
+  {
+   "n": 205,
+   "id": "other-road-markings-box-junction",
+   "page": "Road markings",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/road-markings",
+   "category": "Other road markings",
+   "subcategory": null,
+   "caption": "Box junction - See Rule 174",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55bb8b4740f0b61551000012/other-road-markings-box-junction.jpg",
+   "multi": false
+  },
+  {
+   "n": 206,
+   "id": "other-road-markings-keep-clear",
+   "page": "Road markings",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/road-markings",
+   "category": "Other road markings",
+   "subcategory": null,
+   "caption": "Do not block that part of the carriageway indicated",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55bb8b58e5274a1545000010/other-road-markings-keep-clear.jpg",
+   "multi": false
+  },
+  {
+   "n": 207,
+   "id": "other-road-markings-indication-lanes",
+   "page": "Road markings",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/road-markings",
+   "category": "Other road markings",
+   "subcategory": null,
+   "caption": "Indication of traffic lanes",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55bb8b78e5274a1548000015/other-road-markings-indication-lanes.jpg",
+   "multi": false
+  },
+  {
+   "n": 208,
+   "id": "traffic-light-red",
+   "page": "Light signals controlling traffic",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/light-signals-controlling-traffic",
+   "category": "Traffic light signals",
+   "subcategory": null,
+   "caption": "RED means ‘Stop’. Wait behind the stop line on the carriageway",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/559fbe1940f0b6156700004d/traffic-light-red.jpg",
+   "multi": false
+  },
+  {
+   "n": 209,
+   "id": "traffic-light-red-amber",
+   "page": "Light signals controlling traffic",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/light-signals-controlling-traffic",
+   "category": "Traffic light signals",
+   "subcategory": null,
+   "caption": "RED AND AMBER also means ‘Stop’. Do not pass through or start until GREEN shows",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/559fbe31e5274a155c000056/traffic-light-red-amber.jpg",
+   "multi": false
+  },
+  {
+   "n": 210,
+   "id": "traffic-light-green",
+   "page": "Light signals controlling traffic",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/light-signals-controlling-traffic",
+   "category": "Traffic light signals",
+   "subcategory": null,
+   "caption": "GREEN means you may go on if the way is clear. Take special care if you intend to turn left or right and give way to pedestrians who are crossing",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/559fbe3e40f0b6156700004f/traffic-light-green.jpg",
+   "multi": false
+  },
+  {
+   "n": 211,
+   "id": "traffic-light-amber",
+   "page": "Light signals controlling traffic",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/light-signals-controlling-traffic",
+   "category": "Traffic light signals",
+   "subcategory": null,
+   "caption": "AMBER means ‘Stop’ at the stop line. You may go on only if the AMBER appears after you have crossed the stop line or are so close to it that  to pull up might cause an accident",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/559fbe48ed915d1592000048/traffic-light-amber.jpg",
+   "multi": false
+  },
+  {
+   "n": 212,
+   "id": "traffic-light-green-arrow",
+   "page": "Light signals controlling traffic",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/light-signals-controlling-traffic",
+   "category": "Traffic light signals",
+   "subcategory": null,
+   "caption": "A GREEN ARROW may be provided in addition to the full green signal if movement in a certain direction is allowed before or after the full green phase. If the way  is clear you may go but only in the direction shown by  the arrow. You may do this whatever other lights may be showing. White light signals may be provided for trams",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/559fbe58e5274a155c000058/traffic-light-green-arrow.jpg",
+   "multi": false
+  },
+  {
+   "n": 213,
+   "id": "flashing-red-lights",
+   "page": "Light signals controlling traffic",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/light-signals-controlling-traffic",
+   "category": "Flashing red lights",
+   "subcategory": null,
+   "caption": "Alternately flashing red lights mean YOU MUST STOP",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/559fbe92ed915d159200004a/flashing-red-lights.jpg",
+   "multi": false
+  },
+  {
+   "n": 214,
+   "id": "motorway-signal-red-cross",
+   "page": "Light signals controlling traffic",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/light-signals-controlling-traffic",
+   "category": "Motorway signals",
+   "subcategory": null,
+   "caption": "You MUST NOT proceed further in this lane",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/559fbeb6ed915d159500003e/motorway-signal-red-cross.jpg",
+   "multi": false
+  },
+  {
+   "n": 215,
+   "id": "motorway-signal-change-lane",
+   "page": "Light signals controlling traffic",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/light-signals-controlling-traffic",
+   "category": "Motorway signals",
+   "subcategory": null,
+   "caption": "Change lane",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/559fbec5e5274a155900002f/motorway-signal-change-lane.jpg",
+   "multi": false
+  },
+  {
+   "n": 216,
+   "id": "motorway-signal-fog",
+   "page": "Light signals controlling traffic",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/light-signals-controlling-traffic",
+   "category": "Motorway signals",
+   "subcategory": null,
+   "caption": "Reduced visibility ahead",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/559fbef4ed915d1595000040/motorway-signal-fog.jpg",
+   "multi": false
+  },
+  {
+   "n": 217,
+   "id": "motorway-signal-lane-ahead-closed",
+   "page": "Light signals controlling traffic",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/light-signals-controlling-traffic",
+   "category": "Motorway signals",
+   "subcategory": null,
+   "caption": "Lane ahead closed",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/559fbf08e5274a1559000031/motorway-signal-lane-ahead-closed.jpg",
+   "multi": false
+  },
+  {
+   "n": 218,
+   "id": "motorway-signal-temporary-speed-limit-message",
+   "page": "Light signals controlling traffic",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/light-signals-controlling-traffic",
+   "category": "Motorway signals",
+   "subcategory": null,
+   "caption": "Temporary maximum speed advised and information message",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/559fbf20ed915d159200004c/motorway-signal-temporary-speed-limit-message.jpg",
+   "multi": false
+  },
+  {
+   "n": 219,
+   "id": "obstruction-final",
+   "page": "Light signals controlling traffic",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/light-signals-controlling-traffic",
+   "category": "Motorway signals",
+   "subcategory": null,
+   "caption": "You **MUST NOT** enter or proceed in the left lane, temporary mandatory maximum speed limit and information message",
+   "imageUrl": "https://assets.publishing.service.gov.uk/media/613a08c58fa8f503c0fa759a/Obstruction_FINAL_.jpg",
+   "multi": false
+  },
+  {
+   "n": 220,
+   "id": "motorway-signal-temporary-speed",
+   "page": "Light signals controlling traffic",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/light-signals-controlling-traffic",
+   "category": "Motorway signals",
+   "subcategory": null,
+   "caption": "Temporary maximum speed advised",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/559fbf5940f0b61567000051/motorway-signal-temporary-speed.jpg",
+   "multi": false
+  },
+  {
+   "n": 221,
+   "id": "motorway-signal-end-restriction",
+   "page": "Light signals controlling traffic",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/light-signals-controlling-traffic",
+   "category": "Motorway signals",
+   "subcategory": null,
+   "caption": "End of restriction",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/559fbf68ed915d159200004e/motorway-signal-end-restriction.jpg",
+   "multi": false
+  },
+  {
+   "n": 222,
+   "id": "lane-control-signals",
+   "page": "Light signals controlling traffic",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/light-signals-controlling-traffic",
+   "category": "Lane control signals",
+   "subcategory": null,
+   "caption": "Green arrow - lane available to traffic facing the sign\nRed crosses - lane closed to traffic facing the sign\nWhite diagonal arrow - change lanes in direction shown",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/559fbf77ed915d1595000042/lane-control-signals.jpg",
+   "multi": true
+  },
+  {
+   "n": 223,
+   "id": "large-goods-vehicle-markings",
+   "page": "Vehicle markings",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/vehicle-markings",
+   "category": "Large goods vehicle rear markings",
+   "subcategory": null,
+   "caption": "Left  -  Central  -  Right",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55bb8be1ed915d1565000016/large-goods-vehicle-markings.jpg",
+   "multi": true
+  },
+  {
+   "n": 224,
+   "id": "hazard-warning-hazard-info-label",
+   "page": "Vehicle markings",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/vehicle-markings",
+   "category": "Hazard warning plates",
+   "subcategory": null,
+   "caption": "The panel illustrated is for flammable liquid. Diamond symbols indicating other risks include:",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55bb8c5940f0b6154e000022/hazard-warning-hazard-info-label.jpg",
+   "multi": false
+  },
+  {
+   "n": 225,
+   "id": "hazard-warning-dangerous-goods",
+   "page": "Vehicle markings",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/vehicle-markings",
+   "category": "Hazard warning plates",
+   "subcategory": null,
+   "caption": "The above panel will be displayed by vehicles carrying certain dangerous goods in packages",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55bb8c79ed915d1565000018/hazard-warning-dangerous-goods.jpg",
+   "multi": false
+  },
+  {
+   "n": 226,
+   "id": "hazard-warning-toxic-label",
+   "page": "Vehicle markings",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/vehicle-markings",
+   "category": "Hazard warning plates",
+   "subcategory": null,
+   "caption": "Toxic substance",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55bb8c9ce5274a1545000012/hazard-warning-toxic-label.jpg",
+   "multi": false
+  },
+  {
+   "n": 227,
+   "id": "hazard-warning-oxidising-plate",
+   "page": "Vehicle markings",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/vehicle-markings",
+   "category": "Hazard warning plates",
+   "subcategory": null,
+   "caption": "Oxidizing substance",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55bb8cafe5274a1548000017/hazard-warning-oxidising-plate.jpg",
+   "multi": false
+  },
+  {
+   "n": 228,
+   "id": "hazard-warning-compressed-gas-plate",
+   "page": "Vehicle markings",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/vehicle-markings",
+   "category": "Hazard warning plates",
+   "subcategory": null,
+   "caption": "Non-flammable compressed gas",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55bb8cc3e5274a1548000019/hazard-warning-compressed-gas-plate.jpg",
+   "multi": false
+  },
+  {
+   "n": 229,
+   "id": "hazard-warning-radioactive-plate",
+   "page": "Vehicle markings",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/vehicle-markings",
+   "category": "Hazard warning plates",
+   "subcategory": null,
+   "caption": "Radioactive substance",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55bb8cd440f0b61551000014/hazard-warning-radioactive-plate.jpg",
+   "multi": false
+  },
+  {
+   "n": 230,
+   "id": "hazard-warning-spon-combust-red",
+   "page": "Vehicle markings",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/vehicle-markings",
+   "category": "Hazard warning plates",
+   "subcategory": null,
+   "caption": "Spontaneously combustible substance",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55bb8ce5e5274a1545000014/hazard-warning-spon-combust-red.jpg",
+   "multi": false
+  },
+  {
+   "n": 231,
+   "id": "hazard-warning-corrosive-plate",
+   "page": "Vehicle markings",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/vehicle-markings",
+   "category": "Hazard warning plates",
+   "subcategory": null,
+   "caption": "Corrosive substance",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55bb8cf5e5274a1545000016/hazard-warning-corrosive-plate.jpg",
+   "multi": false
+  },
+  {
+   "n": 232,
+   "id": "projection-marker-side",
+   "page": "Vehicle markings",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/vehicle-markings",
+   "category": "Projections markers",
+   "subcategory": null,
+   "caption": "Side marker",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55bb8d18e5274a1545000018/projection-marker-side.jpg",
+   "multi": false
+  },
+  {
+   "n": 233,
+   "id": "projection-marker-end",
+   "page": "Vehicle markings",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/vehicle-markings",
+   "category": "Projections markers",
+   "subcategory": null,
+   "caption": "End marker",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55bb8d2ced915d156500001a/projection-marker-end.jpg",
+   "multi": false
+  },
+  {
+   "n": 234,
+   "id": "other-school-bus",
+   "page": "Vehicle markings",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/vehicle-markings",
+   "category": "Other",
+   "subcategory": null,
+   "caption": "School bus (displayed in front or rear window of bus or coach)",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55bb8d54ed915d156500001c/other-school-bus.jpg",
+   "multi": false
+  },
+  {
+   "n": 235,
+   "id": "direction-indicator-signals-right",
+   "page": "Signals to other road users",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/signals-to-other-road-users",
+   "category": "Direction indicator signals",
+   "subcategory": null,
+   "caption": "I intend to move out to the right or turn right",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/559bd430ed915d159500001b/direction-indicator-signals-right.jpg",
+   "multi": true
+  },
+  {
+   "n": 236,
+   "id": "direction-indicator-signals-left",
+   "page": "Signals to other road users",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/signals-to-other-road-users",
+   "category": "Direction indicator signals",
+   "subcategory": null,
+   "caption": "I intend to move in to the left or turn left or stop on the left",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/559bd4cbed915d159200002a/direction-indicator-signals-left.jpg",
+   "multi": true
+  },
+  {
+   "n": 237,
+   "id": "brake-light-signals",
+   "page": "Signals to other road users",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/signals-to-other-road-users",
+   "category": "Brake light signals",
+   "subcategory": null,
+   "caption": "I am applying the brakes",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/559beb6a40f0b61567000023/brake-light-signals.jpg",
+   "multi": true
+  },
+  {
+   "n": 238,
+   "id": "reverse-light-signals",
+   "page": "Signals to other road users",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/signals-to-other-road-users",
+   "category": "Reversing light signals",
+   "subcategory": null,
+   "caption": "I intend to reverse",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55b24bbae5274a371100000b/reverse-light-signals.jpg",
+   "multi": false
+  },
+  {
+   "n": 239,
+   "id": "car-arm-signal-turn-left",
+   "page": "Signals to other road users",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/signals-to-other-road-users",
+   "category": "Arm signals",
+   "subcategory": null,
+   "caption": "I intend to move in to the left or turn left",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55b24be3ed915d3082000008/car-arm-signal-turn-left.jpg",
+   "multi": false
+  },
+  {
+   "n": 240,
+   "id": "car-arm-signal-turn-right",
+   "page": "Signals to other road users",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/signals-to-other-road-users",
+   "category": "Arm signals",
+   "subcategory": null,
+   "caption": "I intend to move out to the right or turn right",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55b24c03e5274a3729000016/car-arm-signal-turn-right.jpg",
+   "multi": false
+  },
+  {
+   "n": 241,
+   "id": "car-arm-signal-slow-stop",
+   "page": "Signals to other road users",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/signals-to-other-road-users",
+   "category": "Arm signals",
+   "subcategory": null,
+   "caption": "I intend to slow down or stop",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55b24c23e5274a371100000d/car-arm-signal-slow-stop.jpg",
+   "multi": false
+  },
+  {
+   "n": 242,
+   "id": "bike-arm-signal-turn-left",
+   "page": "Signals to other road users",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/signals-to-other-road-users",
+   "category": "Arm signals",
+   "subcategory": null,
+   "caption": "I intend to move in to the left or turn left",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55b24c4ee5274a371100000f/bike-arm-signal-turn-left.jpg",
+   "multi": false
+  },
+  {
+   "n": 243,
+   "id": "bike-arm-signal-turn-right",
+   "page": "Signals to other road users",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/signals-to-other-road-users",
+   "category": "Arm signals",
+   "subcategory": null,
+   "caption": "I intend to move out to the right or turn right",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55b24c65e5274a3729000018/bike-arm-signal-turn-right.jpg",
+   "multi": false
+  },
+  {
+   "n": 244,
+   "id": "bike-arm-signal-slow-stop",
+   "page": "Signals to other road users",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/signals-to-other-road-users",
+   "category": "Arm signals",
+   "subcategory": null,
+   "caption": "I intend to slow down or stop",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55b24c93ed915d3085000010/bike-arm-signal-slow-stop.jpg",
+   "multi": false
+  },
+  {
+   "n": 245,
+   "id": "077-edit-2-v0-2",
+   "page": "Signals to other road users",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/signals-to-other-road-users",
+   "category": "Hazard lights",
+   "subcategory": null,
+   "caption": "I am temporarily obstructing traffic or warning of a hazard or obstruction ahead (see Rule 116)",
+   "imageUrl": "https://assets.publishing.service.gov.uk/media/613a09c48fa8f503b02d1e6d/077-Edit_2__v0_2.jpg",
+   "multi": true
+  },
+  {
+   "n": 246,
+   "id": "police-officers-traffic-from-front",
+   "page": "Signals by authorised persons",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/signals-by-authorised-persons",
+   "category": "Police officers",
+   "subcategory": "Stop",
+   "caption": "Traffic approaching from the front",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/559e6c97ed915d159500002e/police-officers-traffic-from-front.jpg",
+   "multi": false
+  },
+  {
+   "n": 247,
+   "id": "police-officers-traffic-from-front-and-behind",
+   "page": "Signals by authorised persons",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/signals-by-authorised-persons",
+   "category": "Police officers",
+   "subcategory": "Stop",
+   "caption": "Traffic approaching from both front and behind",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/559e6cafe5274a155c00003b/police-officers-traffic-from-front-and-behind.jpg",
+   "multi": false
+  },
+  {
+   "n": 248,
+   "id": "police-officers-traffic-from-behind",
+   "page": "Signals by authorised persons",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/signals-by-authorised-persons",
+   "category": "Police officers",
+   "subcategory": "Stop",
+   "caption": "Traffic approaching from behind",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/559e6cc5e5274a155c00003d/police-officers-traffic-from-behind.jpg",
+   "multi": false
+  },
+  {
+   "n": 249,
+   "id": "police-officer-beckon-from-the-side",
+   "page": "Signals by authorised persons",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/signals-by-authorised-persons",
+   "category": "Police officers",
+   "subcategory": "To beckon traffic on",
+   "caption": "From the side",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55b5eac240f0b67aa3000002/police-officer-beckon-from-the-side.jpg",
+   "multi": false
+  },
+  {
+   "n": 250,
+   "id": "police-officer-beckon-from-the-front",
+   "page": "Signals by authorised persons",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/signals-by-authorised-persons",
+   "category": "Police officers",
+   "subcategory": "To beckon traffic on",
+   "caption": "From the front",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55b5eada40f0b6790f000003/police-officer-beckon-from-the-front.jpg",
+   "multi": false
+  },
+  {
+   "n": 251,
+   "id": "police-officer-beckon-from-behind",
+   "page": "Signals by authorised persons",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/signals-by-authorised-persons",
+   "category": "Police officers",
+   "subcategory": "To beckon traffic on",
+   "caption": "From behind*",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55b5eaf140f0b6790f000005/police-officer-beckon-from-behind.jpg",
+   "multi": false
+  },
+  {
+   "n": 252,
+   "id": "car-arm-signal-straight-on",
+   "page": "Signals by authorised persons",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/signals-by-authorised-persons",
+   "category": "Arm signals to persons controlling traffic",
+   "subcategory": null,
+   "caption": "I want to go straight on",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55cb0962e5274a547300001f/car-arm-signal-straight-on.jpg",
+   "multi": false
+  },
+  {
+   "n": 253,
+   "id": "car-arm-signal-turn-left--signals-by-authorised-persons",
+   "page": "Signals by authorised persons",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/signals-by-authorised-persons",
+   "category": "Arm signals to persons controlling traffic",
+   "subcategory": null,
+   "caption": "I want to turn left; use either hand",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55cb094940f0b61374000019/car-arm-signal-turn-left.jpg",
+   "multi": false
+  },
+  {
+   "n": 254,
+   "id": "car-arm-signals-turn-right",
+   "page": "Signals by authorised persons",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/signals-by-authorised-persons",
+   "category": "Arm signals to persons controlling traffic",
+   "subcategory": null,
+   "caption": "I want to turn right",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55b5eb57ed915d07e2000001/car-arm-signals-turn-right.jpg",
+   "multi": false
+  },
+  {
+   "n": 255,
+   "id": "traffic-officer-car",
+   "page": "Signals by authorised persons",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/signals-by-authorised-persons",
+   "category": "Driver and Vehicle Standards Agency officers and traffic officers",
+   "subcategory": null,
+   "caption": "Traffic officer",
+   "imageUrl": "https://assets.publishing.service.gov.uk/media/591dd678ed915d20f800005b/traffic-officer-car.jpg",
+   "multi": true
+  },
+  {
+   "n": 256,
+   "id": "dvsa-officer-car",
+   "page": "Signals by authorised persons",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/signals-by-authorised-persons",
+   "category": "Driver and Vehicle Standards Agency officers and traffic officers",
+   "subcategory": null,
+   "caption": "DVSA officer",
+   "imageUrl": "https://assets.publishing.service.gov.uk/media/591dd688ed915d20fb00005a/dvsa-officer-car.jpg",
+   "multi": true
+  },
+  {
+   "n": 257,
+   "id": "school-crossing-patrol-not-ready",
+   "page": "Signals by authorised persons",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/signals-by-authorised-persons",
+   "category": "School crossing patrols",
+   "subcategory": null,
+   "caption": "Not ready to cross pedestrians",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55b5ebf3e5274a21ec000001/school-crossing-patrol-not-ready.jpg",
+   "multi": false
+  },
+  {
+   "n": 258,
+   "id": "school-crossing-patrol-barrier-to-stop",
+   "page": "Signals by authorised persons",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/signals-by-authorised-persons",
+   "category": "School crossing patrols",
+   "subcategory": null,
+   "caption": "Barrier to stop pedestrians crossing",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55b5ec22e5274a21ec000003/school-crossing-patrol-barrier-to-stop.jpg",
+   "multi": false
+  },
+  {
+   "n": 259,
+   "id": "school-crossing-patrol-vehicle-prepare-stop",
+   "page": "Signals by authorised persons",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/signals-by-authorised-persons",
+   "category": "School crossing patrols",
+   "subcategory": null,
+   "caption": "Ready to cross pedestrians, vehicles must be prepared to stop",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55b5ec4fed915d07e2000003/school-crossing-patrol-vehicle-prepare-stop.jpg",
+   "multi": false
+  },
+  {
+   "n": 260,
+   "id": "school-crossing-patrol-all-vehicles-stop",
+   "page": "Signals by authorised persons",
+   "pageUrl": "https://www.gov.uk/guidance/the-highway-code/signals-by-authorised-persons",
+   "category": "School crossing patrols",
+   "subcategory": null,
+   "caption": "All vehicles must stop",
+   "imageUrl": "https://assets.digital.cabinet-office.gov.uk/media/55b5ec6fe5274a2152000002/school-crossing-patrol-all-vehicles-stop.jpg",
+   "multi": false
+  }
+ ],
+ "leftOut": {
+  "sign-giving-order-red-route": {
+   "n": 27,
+   "reason": "Caption and picture disagree: the caption says \"during period indicated\", the picture says \"at any time\" (lead decision)."
+  },
+  "warning-sign-plate-below-some-signs": {
+   "n": 62,
+   "reason": "The caption is not a meaning (\"Plate below some signs\")."
+  },
+  "warning-sign-school-crossing-patrol-ahead": {
+   "n": 78,
+   "reason": "The official page shows the wrong picture: it is byte-for-byte the same file as #4, School crossing patrol (lead decision)."
+  },
+  "warning-sign-available-width-head-room": {
+   "n": 83,
+   "reason": "One picture of several signs with no single meaning (\"Available width of headroom indicated\")."
+  },
+  "warning-sign-worded-sign-ford": {
+   "n": 99,
+   "reason": "The caption is not a meaning (\"Worded warning sign\")."
+  },
+  "direction-sign-blue-junction-leading-to-motorway": {
+   "n": 102,
+   "reason": "The caption says where the sign is used, not what it means (\"At a junction leading directly into a motorway (junction number may be\")."
+  },
+  "direction-sign-blue-approach-to-junction": {
+   "n": 103,
+   "reason": "The caption says where the sign is used, not what it means (\"On approaches to junctions (junction number on black background)\")."
+  },
+  "direction-sign-green-approach-junction-roundabout": {
+   "n": 107,
+   "reason": "The caption says where the sign is used, not what it means (\"On approaches to junctions\")."
+  },
+  "direction-sign-green-at-junction": {
+   "n": 108,
+   "reason": "The caption says where the sign is used, not what it means (\"At the junction\")."
+  },
+  "direction-sign-green-approach-junction": {
+   "n": 110,
+   "reason": "The caption says where the sign is used, not what it means (\"On approaches to junctions\")."
+  },
+  "direction-sign-green-billingual": {
+   "n": 111,
+   "reason": "The caption says where the sign is used, not what it means (\"On approach to a junction in Wales (bilingual)\")."
+  },
+  "direction-sign-black-border-approach-junction-crossroads": {
+   "n": 114,
+   "reason": "The caption says where the sign is used, not what it means (\"On approaches to junctions\")."
+  },
+  "direction-sign-black-border-approach-junction": {
+   "n": 115,
+   "reason": "The caption says where the sign is used, not what it means (\"On approaches to junctions\")."
+  },
+  "direction-sign-black-border-at-junction": {
+   "n": 116,
+   "reason": "The caption says where the sign is used, not what it means (\"At the junction\")."
+  },
+  "information-sign-entrance-congestion-zone": {
+   "n": 133,
+   "reason": "The picture includes the Transport for London roundel; the Open Government Licence does not cover logos (lead decision)."
+  },
+  "road-work-sign-end-road-works": {
+   "n": 164,
+   "reason": "The picture includes the National Highways logo; the Open Government Licence does not cover logos (lead decision)."
+  },
+  "along-carriageway-diagonal-line": {
+   "n": 180,
+   "reason": "The caption is only a rule reference (\"See Rule 130\")."
+  },
+  "along-edge-carriageway-park-times": {
+   "n": 184,
+   "reason": "No caption of its own (an upright sign shown before the marking whose caption covers both) (\"\")."
+  },
+  "along-edge-carriageway-red-route-no-stopping-at-any-time": {
+   "n": 186,
+   "reason": "No caption of its own (an upright sign shown before the marking whose caption covers both) (\"\")."
+  },
+  "along-edge-carriageway-red-route-no-stopping-times": {
+   "n": 188,
+   "reason": "No caption of its own (an upright sign shown before the marking whose caption covers both) (\"\")."
+  },
+  "along-edge-carriageway-red-route-parking": {
+   "n": 190,
+   "reason": "No caption of its own (an upright sign shown before the marking whose caption covers both) (\"\")."
+  },
+  "along-edge-carriageway-red-route-except-loading-time": {
+   "n": 192,
+   "reason": "No caption of its own (an upright sign shown before the marking whose caption covers both) (\"\")."
+  },
+  "on-kerb-no-loading-anytime": {
+   "n": 194,
+   "reason": "No caption of its own (an upright sign shown before the marking whose caption covers both) (\"\")."
+  },
+  "on-kerb-no-loading-times": {
+   "n": 196,
+   "reason": "No caption of its own (an upright sign shown before the marking whose caption covers both) (\"\")."
+  },
+  "on-kerb-loading-only-sign": {
+   "n": 198,
+   "reason": "No caption of its own (an upright sign shown before the marking whose caption covers both) (\"\")."
+  },
+  "other-road-markings-bus-stop-road": {
+   "n": 203,
+   "reason": "The caption is only a rule reference (\"See Rule 243\")."
+  },
+  "other-road-markings-bus-lane-road": {
+   "n": 204,
+   "reason": "The caption is only a rule reference (\"See Rule 141\")."
+  },
+  "lane-control-signals": {
+   "n": 222,
+   "reason": "One picture of several signs with no single meaning (\"Green arrow - lane available to traffic facing the sign / Red crosses \")."
+  },
+  "large-goods-vehicle-markings": {
+   "n": 223,
+   "reason": "The caption is not a meaning (\"Left  -  Central  -  Right\")."
+  },
+  "hazard-warning-hazard-info-label": {
+   "n": 224,
+   "reason": "The caption is not a meaning (\"The panel illustrated is for flammable liquid. Diamond symbols indicat\")."
+  },
+  "direction-indicator-signals-right": {
+   "n": 235,
+   "reason": "Signals to other road users: photographs of people - possible personal data, not decided (lead decision)."
+  },
+  "direction-indicator-signals-left": {
+   "n": 236,
+   "reason": "Signals to other road users: photographs of people - possible personal data, not decided (lead decision)."
+  },
+  "brake-light-signals": {
+   "n": 237,
+   "reason": "Signals to other road users: photographs of people - possible personal data, not decided (lead decision)."
+  },
+  "reverse-light-signals": {
+   "n": 238,
+   "reason": "Signals to other road users: photographs of people - possible personal data, not decided (lead decision)."
+  },
+  "car-arm-signal-turn-left": {
+   "n": 239,
+   "reason": "Signals to other road users: photographs of people - possible personal data, not decided (lead decision)."
+  },
+  "car-arm-signal-turn-right": {
+   "n": 240,
+   "reason": "Signals to other road users: photographs of people - possible personal data, not decided (lead decision)."
+  },
+  "car-arm-signal-slow-stop": {
+   "n": 241,
+   "reason": "Signals to other road users: photographs of people - possible personal data, not decided (lead decision)."
+  },
+  "bike-arm-signal-turn-left": {
+   "n": 242,
+   "reason": "Signals to other road users: photographs of people - possible personal data, not decided (lead decision)."
+  },
+  "bike-arm-signal-turn-right": {
+   "n": 243,
+   "reason": "Signals to other road users: photographs of people - possible personal data, not decided (lead decision)."
+  },
+  "bike-arm-signal-slow-stop": {
+   "n": 244,
+   "reason": "Signals to other road users: photographs of people - possible personal data, not decided (lead decision)."
+  },
+  "077-edit-2-v0-2": {
+   "n": 245,
+   "reason": "Signals to other road users: photographs of people - possible personal data, not decided (lead decision)."
+  },
+  "police-officers-traffic-from-front": {
+   "n": 246,
+   "reason": "Signals by authorised persons: photographs of people - possible personal data, not decided (lead decision)."
+  },
+  "police-officers-traffic-from-front-and-behind": {
+   "n": 247,
+   "reason": "Signals by authorised persons: photographs of people - possible personal data, not decided (lead decision)."
+  },
+  "police-officers-traffic-from-behind": {
+   "n": 248,
+   "reason": "Signals by authorised persons: photographs of people - possible personal data, not decided (lead decision)."
+  },
+  "police-officer-beckon-from-the-side": {
+   "n": 249,
+   "reason": "Signals by authorised persons: photographs of people - possible personal data, not decided (lead decision)."
+  },
+  "police-officer-beckon-from-the-front": {
+   "n": 250,
+   "reason": "Signals by authorised persons: photographs of people - possible personal data, not decided (lead decision)."
+  },
+  "police-officer-beckon-from-behind": {
+   "n": 251,
+   "reason": "Signals by authorised persons: photographs of people - possible personal data, not decided (lead decision)."
+  },
+  "car-arm-signal-straight-on": {
+   "n": 252,
+   "reason": "Signals by authorised persons: photographs of people - possible personal data, not decided (lead decision)."
+  },
+  "car-arm-signal-turn-left--signals-by-authorised-persons": {
+   "n": 253,
+   "reason": "Signals by authorised persons: photographs of people - possible personal data, not decided (lead decision)."
+  },
+  "car-arm-signals-turn-right": {
+   "n": 254,
+   "reason": "Signals by authorised persons: photographs of people - possible personal data, not decided (lead decision)."
+  },
+  "traffic-officer-car": {
+   "n": 255,
+   "reason": "Signals by authorised persons: photographs of people - possible personal data, not decided (lead decision)."
+  },
+  "dvsa-officer-car": {
+   "n": 256,
+   "reason": "Signals by authorised persons: photographs of people - possible personal data, not decided (lead decision)."
+  },
+  "school-crossing-patrol-not-ready": {
+   "n": 257,
+   "reason": "Signals by authorised persons: photographs of people - possible personal data, not decided (lead decision)."
+  },
+  "school-crossing-patrol-barrier-to-stop": {
+   "n": 258,
+   "reason": "Signals by authorised persons: photographs of people - possible personal data, not decided (lead decision)."
+  },
+  "school-crossing-patrol-vehicle-prepare-stop": {
+   "n": 259,
+   "reason": "Signals by authorised persons: photographs of people - possible personal data, not decided (lead decision)."
+  },
+  "school-crossing-patrol-all-vehicles-stop": {
+   "n": 260,
+   "reason": "Signals by authorised persons: photographs of people - possible personal data, not decided (lead decision)."
+  }
+ }
+}

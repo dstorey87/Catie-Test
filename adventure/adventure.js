@@ -341,6 +341,9 @@
     settings: {}, mine: { attempts: [], flags: {} } };
   var C = null, A = null;   // TTCoach and its ADVENTURE numbers, once the scripts have loaded
   var byId = {};            // the bank, by question id
+  // A question on the route: the bank's, or a sign world's (issue #48: signs.js builds it from the
+  // official picture and captions, id "sign:<key>"). null when it has gone from both.
+  function questionFor(qid) { return byId[qid] || (root.TTSigns && root.TTSigns.question(qid)) || null; }
 
   // Her record as saved now, with anything this page saved that another tab's save dropped put
   // back (healRecord). Every save starts from this, so this page never saves over the app's
@@ -462,7 +465,9 @@
       var bank = withContent((got && got.questions) || [], readJSON(storage, APP.base + '.content'));
       bank.forEach(function (q) { byId[q.id] = q; });
       S.source = (got && got.source) || '';
-      S.route = C.adventureRoute(bank);
+      // The topic worlds from the bank, then one sign world per Highway Code category (signs.js,
+      // issue #48): the same route the app's Home card counts.
+      S.route = C.adventureRoute(bank, {signs: root.TTSigns ? root.TTSigns.worlds() : []});
       if (!S.route.length) {
         message('No questions yet', 'There are no questions to play on this device yet. Open Theory Trainer while you are online so it can fetch them, then come back.');
         return;
@@ -485,13 +490,19 @@
     var colour = colourOf(w.world), ws = worldSummary(w, st), mine = starsSummary([w], st, max);
     paintStars();
 
-    // world tabs: every world, with how far she is through it
-    var tabs = S.route.map(function (x, i) {
+    // world tabs: every world, with how far she is through it. The topic worlds are one row and
+    // the sign worlds (track 'signs', issue #48) a second, labelled "Signs": each row fits a wide
+    // screen on one line, and a phone scrolls each row sideways.
+    var topicTabs = '', signTabs = '';
+    S.route.forEach(function (x, i) {
       var s = worldSummary(x, st), cur = i === S.world;
       var label = 'World ' + x.world + ', ' + x.name + ': ' + (s.done ? 'complete' : s.open ? s.passed + ' of ' + s.total + ' stages passed' : 'locked');
-      return '<button type="button" class="wtab' + (s.done ? ' done' : '') + (s.open ? '' : ' shut') + '" style="--wc:' + colourOf(x.world) + '" data-act="world" data-i="' + i + '"' +
+      var tab = '<button type="button" class="wtab' + (s.done ? ' done' : '') + (s.open ? '' : ' shut') + '" style="--wc:' + colourOf(x.world) + '" data-act="world" data-i="' + i + '"' +
         (cur ? ' aria-current="true"' : '') + ' aria-label="' + esc(label) + '">' + (s.open ? (s.done ? ICON.check : x.world) : ICON.lock) + '</button>';
-    }).join('');
+      if (x.track === 'signs') signTabs += tab; else topicTabs += tab;
+    });
+    var tabs = (topicTabs ? '<div class="worlds" role="group" aria-label="Topic worlds">' + topicTabs + '</div>' : '') +
+      (signTabs ? '<div class="worlds" role="group" aria-label="Road sign worlds"><span class="wlabel" aria-hidden="true">Signs</span>' + signTabs + '</div>' : '');
 
     // the road and the stages on it
     var lay = nodeLayout(w.stages.length);
@@ -536,7 +547,7 @@
           '<p class="sub"><span class="nw">' + ws.passed + ' of ' + ws.total + ' stages passed</span> <span class="nw"><span class="st on">' + ICON.star + '</span> ' + mine.earned + ' / ' + mine.available + '</span></p></div>' +
         '<button type="button" class="arrow" data-act="world" data-i="' + (S.world + 1) + '"' + (S.world < S.route.length - 1 ? '' : ' disabled') + ' aria-label="Next world">' + ICON.right + '</button>' +
       '</div>' +
-      '<nav class="worlds" aria-label="Worlds">' + tabs + '</nav>' + free +
+      '<nav class="world-nav" aria-label="Worlds">' + tabs + '</nav>' + free +
       '<div class="map" style="--wc:' + colour + ';aspect-ratio:' + lay.width + ' / ' + lay.height + '">' + svg + nodes + '</div>' + after +
       '<div id="sheet-slot"></div>';
     show('map');
@@ -605,12 +616,15 @@
   }
 
   function renderQuestion() {
-    var p = S.play, qid = p.queue[p.i], q = byId[qid];
+    var p = S.play, qid = p.queue[p.i], q = questionFor(qid);
     if (!q) { p.i++; if (p.i >= p.queue.length) return finishStage(); return renderQuestion(); }   // a question gone from the bank: skip it
     S.q = q; S.picked = -1; S.shownAt = Date.now();
     // options in a new order each play; order[i] = the option's index in the question's own order
     S.order = shuffle(q.options.map(function (_, i) { return i; }), Math.random);
     var flagged = !!(blob().revisionFlags || {})[qid];
+    // A sign question (issue #48) has no Flag: flags belong to the bank's questions (the app's
+    // Flagged screen, Focus Drill and coach read them).
+    var canFlag = !(root.TTSigns && root.TTSigns.isQuizId(qid));
     var sign = signSvg(q.imageHint);
     // Each option, with its read-aloud button BESIDE it (a button inside a button can't be named
     // or reached properly), as in the app.
@@ -629,7 +643,7 @@
         '<div class="qcard">' +
           '<div class="qmeta"><span class="where">World ' + p.world + ' · ' + esc(p.name) + '</span>' +
             (isComeback(p) ? '<span class="again">Second chance</span>' : '') +
-            '<button type="button" class="flag' + (flagged ? ' on' : '') + '" data-act="flag" aria-pressed="' + flagged + '">' + ICON.flag + '<span>' + (flagged ? 'Flagged' : 'Flag') + '</span></button></div>' +
+            (canFlag ? '<button type="button" class="flag' + (flagged ? ' on' : '') + '" data-act="flag" aria-pressed="' + flagged + '">' + ICON.flag + '<span>' + (flagged ? 'Flagged' : 'Flag') + '</span></button>' : '') + '</div>' +
           (sign ? '<div class="sign" role="img" aria-label="Road sign picture">' + sign + '</div>' : '') +
           '<div class="qrow"><h2 id="q-text" tabindex="-1">' + esc(q.question) + '</h2>' + speakBtn('say-q', 'Read the question aloud', 'big') + '</div>' +
           '<div class="opts" role="group" aria-labelledby="q-text">' + opts + '</div>' +
@@ -677,12 +691,15 @@
     // the feedback sheet: right or wrong, the answer, the bank's explanation and approved memory tip
     var words = ['Nice!', 'Great!', 'Spot on!', 'You got it!'];
     var head = ok ? words[(S.praise++) % words.length] : 'Not quite';
+    // The explanation, unless it is only the answer's own words just shown above it (a sign
+    // question's explanation is its caption, issue #48): the answer is said once.
+    var why = q.explanation && (ok || q.explanation !== q.options[q.correctIndex]);
     var html = '<div class="feedback ' + (ok ? 'ok' : 'no') + '" role="region" aria-label="Answer feedback">' +
       '<div class="fb-in"><p class="fb-head" role="status"><span class="fb-icon">' + (ok ? ICON.check : ICON.cross) + '</span><b>' + head + '</b>' +
         (ok ? '<span class="xp">+' + APP.xpPerRight + ' XP</span>' : '') + '</p>' +
       (ok ? '' : '<p class="fb-answer">The answer is <b>' + esc(q.options[q.correctIndex]) + '</b></p>') +
       // why, with the app's "Read the explanation aloud" button beside it
-      (q.explanation ? '<div class="fb-why"><p class="fb-expl">' + esc(q.explanation) + '</p>' + speakBtn('say-exp', 'Read the explanation aloud') + '</div>' : '') +
+      (why ? '<div class="fb-why"><p class="fb-expl">' + esc(q.explanation) + '</p>' + speakBtn('say-exp', 'Read the explanation aloud') + '</div>' : '') +
       (q.ruleRef ? '<p class="fb-rule">' + esc(q.ruleRef) + '</p>' : '') +
       (q.memoryTip ? '<div class="tip">' + ICON.bulb + '<p><b>Memory tip</b> ' + esc(q.memoryTip) + '</p></div>' : '') +
       (!ok && !comeback ? '<p class="fb-back">This one will come back before the end of the stage.</p>' : '') +

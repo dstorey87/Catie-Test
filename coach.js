@@ -681,12 +681,40 @@
     stars: [0.8, 0.9, 1]    // share right for 1, 2 and 3 stars
   };
 
-  // adventureRoute(bank, opts) -> [{world, name, stages: [{id, kind, qids}]}]
+  // One world's stages from its question ids, in the order given: lessons of lessonSize
+  // (prefix + 's1', 's2', ...), a last lesson shorter than minLesson joining the one before (so
+  // nobody gets a 2-question lesson), then a checkpoint (prefix + 'c') of checkpointSize questions
+  // picked evenly across the whole world. Topic worlds and sign worlds are cut the same way.
+  function worldStages(prefix, ids, o) {
+    var stages = [], chunks = [];
+    // Lessons: fixed-size chunks of the ids.
+    for (var i = 0; i < ids.length; i += o.lessonSize) chunks.push(ids.slice(i, i + o.lessonSize));
+    // A short last chunk is folded into the one before it (when there is one).
+    if (chunks.length > 1 && chunks[chunks.length - 1].length < o.minLesson) {
+      var tail = chunks.pop();
+      chunks[chunks.length - 1] = chunks[chunks.length - 1].concat(tail);
+    }
+    chunks.forEach(function (qids, n) {
+      stages.push({ id: prefix + 's' + (n + 1), kind: 'lesson', qids: qids });
+    });
+    // Checkpoint: every k-th question, k = world size / checkpoint size (a fraction is rounded
+    // down), so it samples the whole world. A small world uses all of it.
+    var cp = [];
+    if (ids.length <= o.checkpointSize) cp = ids.slice();
+    else for (var j = 0; j < o.checkpointSize; j++) cp.push(ids[Math.floor(j * ids.length / o.checkpointSize)]);
+    stages.push({ id: prefix + 'c', kind: 'checkpoint', qids: cp });
+    return stages;
+  }
+
+  // adventureRoute(bank, opts) -> [{world, name, stages: [{id, kind, qids}], track?}]
   // One world per topic that has questions in the bank, in topic order. Inside a world the
-  // questions are sorted by id and cut into lessons of lessonSize ('w<topic>s1', 's2', ...);
-  // a last lesson shorter than minLesson joins the one before, so nobody gets a 2-question
-  // lesson. Then a checkpoint ('w<topic>c') of checkpointSize questions picked evenly across
-  // the whole world. Same bank in, same route out: no dice. Only ids from the bank are used.
+  // questions are sorted by id and cut into lessons and a checkpoint (worldStages: 'w<topic>s1',
+  // 's2', ..., 'w<topic>c'). Same bank in, same route out: no dice. Only ids from the bank are used.
+  // opts.signs (issue #48): the sign worlds from signs.js, TTSigns.worlds() = [{id, name, qids}],
+  // one per Highway Code category. Each comes after the topic worlds, numbered on from the 14
+  // topics (world 15, 16, ...), its questions in the order given (the page's), with stage ids
+  // 'signs-<id>-s1' ... 'signs-<id>-c' that no topic stage has, and track 'signs': its own road
+  // (adventureStatus). A category with no questions has no world.
   function adventureRoute(bank, opts) {
     var o = Object.assign({}, ADVENTURE, opts || {}), Q = byId(bank), byTopic = {};
     // Group the bank's question ids by topic number (a question with no number topic is skipped).
@@ -695,27 +723,15 @@
       if (!isFinite(t)) return;
       (byTopic[t] || (byTopic[t] = [])).push(id);
     });
-    return Object.keys(byTopic).sort(byNumber).map(function (k) {
-      var t = Number(k), ids = byTopic[k].sort(), stages = [];
-      // Lessons: fixed-size chunks of the sorted ids.
-      var chunks = [];
-      for (var i = 0; i < ids.length; i += o.lessonSize) chunks.push(ids.slice(i, i + o.lessonSize));
-      // A short last chunk is folded into the one before it (when there is one).
-      if (chunks.length > 1 && chunks[chunks.length - 1].length < o.minLesson) {
-        var tail = chunks.pop();
-        chunks[chunks.length - 1] = chunks[chunks.length - 1].concat(tail);
-      }
-      chunks.forEach(function (qids, n) {
-        stages.push({ id: 'w' + t + 's' + (n + 1), kind: 'lesson', qids: qids });
-      });
-      // Checkpoint: every k-th question by id, k = world size / checkpoint size (a fraction
-      // is rounded down), so it samples the whole world. A small world uses all of it.
-      var cp = [];
-      if (ids.length <= o.checkpointSize) cp = ids.slice();
-      else for (var j = 0; j < o.checkpointSize; j++) cp.push(ids[Math.floor(j * ids.length / o.checkpointSize)]);
-      stages.push({ id: 'w' + t + 'c', kind: 'checkpoint', qids: cp });
-      return { world: t, name: topicName(TOPIC_NAMES, t), stages: stages };
+    var topics = Object.keys(byTopic).sort(byNumber).map(function (k) {
+      var t = Number(k);
+      return { world: t, name: topicName(TOPIC_NAMES, t), stages: worldStages('w' + t, byTopic[k].sort(), o) };
     });
+    var signs = (o.signs || []).map(function (w, i) {
+      var ids = (w && w.qids) || [];
+      return ids.length ? { world: TOPIC_NAMES.length + i + 1, name: w.name, track: 'signs', stages: worldStages('signs-' + w.id + '-', ids.slice(), o) } : null;
+    }).filter(Boolean);
+    return topics.concat(signs);
   }
 
   // One stage's saved record, with safe defaults for a stage never played.
@@ -727,17 +743,20 @@
 
   // adventureStatus(route, progress) -> {stages: {<id>: {unlocked, passed, stars, best, plays}},
   //                                     current, worldsDone}
-  // Walks the route in order, across worlds. The very first stage is always open; every
-  // other stage opens once the stage before it is passed, so world N+1 opens when world N's
-  // checkpoint is passed. A stage already passed stays open (any passed stage can be redone).
-  // current = the first open stage not yet passed (null once everything is passed);
-  // worldsDone = worlds whose checkpoint is passed.
+  // Walks the route in order, across worlds. The first stage of each road is always open: the
+  // topic worlds are one road, the sign worlds (track 'signs', issue #48) another, so the signs
+  // never wait for the 14 topics. Every other stage opens once the stage before it is passed, so
+  // world N+1 opens when world N's checkpoint is passed. A stage already passed stays open (any
+  // passed stage can be redone). current = the first open stage not yet passed, in route order
+  // (null once everything is passed); worldsDone = worlds whose checkpoint is passed.
   function adventureStatus(route, progress) {
-    var out = { stages: {}, current: null, worldsDone: 0 }, prevPassed = null;
+    var out = { stages: {}, current: null, worldsDone: 0 }, prevPassed = null, road = null;
     (route || []).forEach(function (w) {
+      var track = w.track || 'topics';
+      if (track !== road) { road = track; prevPassed = null; }        // a new road starts open
       (w.stages || []).forEach(function (s) {
         var r = stageRecord(progress, s.id);
-        var unlocked = prevPassed === null || prevPassed || r.passed;   // null = the first stage
+        var unlocked = prevPassed === null || prevPassed || r.passed;   // null = a road's first stage
         out.stages[s.id] = { unlocked: unlocked, passed: r.passed, stars: r.stars, best: r.best, plays: r.plays };
         if (out.current === null && unlocked && !r.passed) out.current = s.id;
         if (s.kind === 'checkpoint' && r.passed) out.worldsDone++;

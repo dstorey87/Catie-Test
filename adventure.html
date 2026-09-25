@@ -5,10 +5,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <!-- ===== Adventure mode (issue #27) =====
      A Duolingo-style route through the 14 DVSA topics: each topic is a world, each world is a
-     road of short lessons and a checkpoint. It is its own page, but it plays the SAME bank and
-     saves into the SAME learner as the app (see adventure/adventure.js for how). -->
+     road of short lessons and a checkpoint. After them, a second road: one world per category of
+     The Highway Code's signs, markings and light signals (issue #48, from signs.js). It is its own
+     page, but it plays the SAME bank and saves into the SAME learner as the app (see
+     adventure/adventure.js for how). -->
 <title>Adventure: Theory Trainer</title>
-<meta name="description" content="Adventure mode: drive through the 14 theory test topics one stage at a time.">
+<meta name="description" content="Adventure mode: drive through the 14 theory test topics and The Highway Code's road signs one stage at a time.">
 <meta name="theme-color" content="#0E7C6B">
 <meta name="robots" content="noindex">
 <link rel="icon" href="icon-192.png">
@@ -26,7 +28,7 @@
        config.js  - which server the app talks to
        backend.js - TTBank (the question bank, same server + offline copy as the app), TTTrack (events)
        coach.js   - TTCoach: the adventure route, unlocking, scoring and stars (every number)
-       signs.js   - the app's road-sign drawings, for questions about a sign -->
+       signs.js   - the app's road-sign pictures, and the sign worlds' questions (issue #48) -->
 <script src="adventure/adventure.js"></script>
 <script src="config.js" defer></script>
 <script src="backend.js" defer></script>

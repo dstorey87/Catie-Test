@@ -80,17 +80,41 @@ function widePx(sel, prop) {
   return m[1].trim().split(/\s+/).map(v => parseFloat(v));
 }
 
-test('#38 item 2: on a wide screen every world tab fits on one row, so none is left alone over the road', () => {
+test('#38 item 2 / #48: on a wide screen each row of world tabs fits on one line, so none is left alone over the road', () => {
   // v13 at 768px and 1280px: the 14 tabs wrapped 13 + 1, and tab 14 sat on its own above the
-  // road like a locked stage. From the wide breakpoint up the page column is its widest, so the
-  // row must fit there: tabs, the gaps between them and the row's side padding.
-  const worlds = coach.adventureRoute(bank).length;
+  // road like a locked stage. From the wide breakpoint up the page column is its widest, so each
+  // row must fit there: tabs, the gaps between them and the row's side padding. #48 added 8 sign
+  // worlds: they are a second row (22 tabs in one row would wrap), led by its "Signs" label.
+  const signsJs = { window: {}, React: {} };
+  vm.runInNewContext(read('signs.js'), signsJs);
+  const route = coach.adventureRoute(bank, { signs: signsJs.window.TTSigns.worlds() });
+  const topics = route.filter(w => !w.track).length, signs = route.filter(w => w.track === 'signs').length;
   const column = Math.min(widePx('main, .top', 'max-width')[0], wideMin) - 2 * widePx('main', 'padding')[1];
   const [tab] = widePx('.wtab', 'width'), [gap] = widePx('.worlds', 'gap'), pad = widePx('.worlds', 'padding')[1];
-  const row = worlds * tab + (worlds - 1) * gap + 2 * pad;
-  assert.equal(worlds, 14);
-  assert.ok(row <= column, worlds + ' tabs need ' + row + 'px, the column has ' + column + 'px: the last tab wraps');
+  const [label] = widePx('.wlabel', 'width');
+  const row = n => n * tab + (n - 1) * gap + 2 * pad;
+  assert.deepEqual([topics, signs], [14, 8]);
+  assert.ok(row(topics) <= column, topics + ' tabs need ' + row(topics) + 'px, the column has ' + column + 'px: the last tab wraps');
+  assert.ok(label + gap + row(signs) <= column, 'the sign row wraps');
   assert.ok(tab >= 44, 'each tab stays a 44px target');
+  // The two rows, each a labelled group; the sign worlds' tabs in the second.
+  assert.match(js, /'<div class="worlds" role="group" aria-label="Topic worlds">' \+ topicTabs \+ '<\/div>'/);
+  assert.match(js, /'<div class="worlds" role="group" aria-label="Road sign worlds"><span class="wlabel" aria-hidden="true">Signs<\/span>' \+ signTabs \+ '<\/div>'/);
+});
+
+test('#48: the page plays the app\'s route: the topic worlds, then one sign world per Highway Code category', () => {
+  // The same call as the app's Home card (tests/app-files.test.js), so both count the same stars.
+  assert.match(js, /S\.route = C\.adventureRoute\(bank, \{signs: root\.TTSigns \? root\.TTSigns\.worlds\(\) : \[\]\}\);/);
+  // A sign question comes from signs.js (the official picture and captions); every other one
+  // from the bank.
+  assert.match(js, /function questionFor\(qid\) \{ return byId\[qid\] \|\| \(root\.TTSigns && root\.TTSigns\.question\(qid\)\) \|\| null; \}/);
+  assert.match(js, /var p = S\.play, qid = p\.queue\[p\.i\], q = questionFor\(qid\);/);
+  // No flag on a sign question: flags belong to the bank's questions (the app's Flagged screen).
+  assert.match(js, /var canFlag = !\(root\.TTSigns && root\.TTSigns\.isQuizId\(qid\)\);/);
+  assert.match(js, /\(canFlag \? '<button type="button" class="flag/);
+  // After a wrong answer the answer is said once: an explanation that is only the answer's own
+  // words (a sign question's) is not printed again under it.
+  assert.match(js, /var why = q\.explanation && \(ok \|\| q\.explanation !== q\.options\[q\.correctIndex\]\);/);
 });
 
 test('#38 item 3: the top bar keeps "Theory Trainer" on one line and makes room for her name on a phone', () => {
