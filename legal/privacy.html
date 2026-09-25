@@ -52,7 +52,7 @@
       <h3>On the server, per account</h3>
       <dl class="pairs">
         <div><dt>Sign-in (Supabase Auth)</dt><dd>Your email address and password. Supabase checks the password when you sign in; the app itself never stores it. Supabase also keeps its own records of sign-ins.</dd></div>
-        <div><dt><code>profiles</code></dt><dd>Your email, the name you gave, whether the account is a normal account or the admin, and when it was created. Once the app asks for them (see <a href="#h-children">Young learners</a>): the learner's year of birth, whether a parent or guardian has agreed, and that parent's or guardian's email.</dd></div>
+        <div><dt><code>profiles</code></dt><dd>Your email, the name you gave, whether the account is a normal account or the admin, and when it was created. When given (see <a href="#h-children">Young learners</a>): the learner's year of birth, whether a parent or guardian has agreed, and that parent's or guardian's email.</dd></div>
         <div><dt><code>entitlements</code></dt><dd>Whether the account has access and why (none, active, trialing, past due, cancelled, or free access given by the admin), the plan (monthly, annual or free), Stripe's customer and subscription reference numbers, when the paid period ends, and whether it is set to cancel. Written only by the payment system, never by the app.</dd></div>
         <div><dt><code>snapshots</code></dt><dd>One copy of the account's progress. For each learner on the account: their name, settings (including theory test date, daily goal, voice and reminder choices), every practice and mock answer (which question, when, right or wrong, and which option was picked), memory boxes, mock test results, flags, XP, streak, notes, and a profile photo if one was uploaded (reduced to 128 × 128 pixels). Also any question edits, question-pack choices and learner access settings made on the admin dashboard.</dd></div>
         <div><dt><code>events</code></dt><dd>The activity log: one row for each thing a learner does — each answer (with the option picked and how long it took), each question shown, practice sessions started, finished or left, mock tests started, finished or abandoned, changed mock answers, hints, read-aloud, flags and un-flags, screens opened, "More like this", finishing or skipping the quick setup, dismissing the What's new card, and memory-tip reviews. Each row has the learner's name and the time on the device. Rows are only ever added; the app cannot change or delete them.</dd></div>
@@ -129,9 +129,9 @@
       <h2 id="h-rights">Getting a copy, or having it deleted</h2>
       <h3>A copy of your data</h3>
       <p>In the app: <span class="path">Admin dashboard → Data → Export backup</span> downloads a file with the learner's settings, memory boxes, answers and mock tests.</p>
-      <p>The server can also produce a complete copy of everything it holds for your account — profile, access, progress, reminder settings, the devices set up for reminders, and the whole activity log — but the button for it in the app is not built yet. Until it is, ask using the contact above.</p>
+      <p>The server can also produce a complete copy of everything it holds for your account — profile, access, progress, reminder settings, the devices set up for reminders, and the whole activity log — from <span class="path">Settings → Your data → Download my data</span>.</p>
       <h3>Deleting data</h3>
-      <p>The server can delete an account and all its rows from every table when the account's owner asks, but the button for it in the app is not built yet. It will refuse, and say why, for:</p>
+      <p><span class="path">Settings → Your data → Delete my account</span> deletes the account and all its rows from every table, after you type a confirmation. It will refuse, and say why, for:</p>
       <ul>
         <li>the admin account (another account must be made the admin first), and</li>
         <li>an account whose subscription is still set to renew (cancel it first with <strong>Manage subscription</strong>).</li>
@@ -145,8 +145,8 @@
 
     <section aria-labelledby="h-children">
       <h2 id="h-children">Young learners</h2>
-      <p>Learners may be under 18. The app's rule is that a learner who may be younger than <span data-config="age.guardianUnder">16</span> needs a parent's or guardian's agreement. The server can record a learner's year of birth, whether that agreement was given, and the parent's or guardian's email, but the app does not ask for them yet.</p>
-      <p>Until it does: a learner younger than <span data-config="age.guardianUnder">16</span> should ask a parent or guardian before signing up. Full access is given by the admin by hand, and the admin checks that a parent or guardian has agreed before giving it to a learner that young. A parent or guardian who finds an account they did not agree to can ask for it to be deleted, using the contact above.</p>
+      <p>Learners may be under 18. The app's rule is that a learner who may be younger than <span data-config="age.guardianUnder">16</span> needs a parent's or guardian's agreement. The app asks for the year of birth once (at sign-up, or on the next visit for an older account); a learner younger than that is asked for a parent's or guardian's email and to confirm their agreement, and these are stored with the account.</p>
+      <p>As well as that: Full access is given by the admin by hand, and the admin checks that a parent or guardian has agreed before giving it to a learner that young. A parent or guardian who finds an account they did not agree to can ask for it to be deleted, using the contact above.</p>
     </section>
 
     <section aria-labelledby="h-changes">
