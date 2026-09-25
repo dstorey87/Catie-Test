@@ -71,15 +71,73 @@
   }
 
   // One answer into her data (a NEW object; the old one is not changed): the attempt the coach,
-  // My answers and Activity read, and the app's XP for a right answer.
+  // My answers, Activity and Home's goal ring read, the app's XP for a right answer, and her
+  // streak record, exactly as the app's award() does after a practice answer (issue #47).
+  // Every answer counts once, as in practice: a second chance at a missed question is one more
+  // answer, just as a drill repeat is in the app.
   //   a: {q, ok, topic, p}   p = the option she picked, as its index in the question's own order
-  function withAnswer(blob, a, now) {
-    var b = Object.assign({}, blob || {});
-    b.attempts = ((b.attempts || []).concat([{ q: a.q, t: now, ok: !!a.ok, topic: a.topic, p: a.p, src: APP.src }]))
+  //   coach: TTCoach (the streak rule lives there, one copy for the app and this page)
+  function withAnswer(blob, a, now, coach) {
+    var b = Object.assign({}, blob || {}), before = b.attempts || [];
+    b.attempts = (before.concat([{ q: a.q, t: now, ok: !!a.ok, topic: a.topic, p: a.p, src: APP.src }]))
       .slice(-APP.attemptsKeep);
     b.xp = (b.xp || 0) + (a.ok ? APP.xpPerRight : 0);
+    b.streak = coach.streakAward(b.streak, before, 1, coach.dailyGoal(b.settings), now);
     b.updatedAt = now;
     return b;
+  }
+
+  // ---------- two tabs (issue #47) ----------
+  // The app saves her WHOLE record from what it loaded. An app tab left open while she plays here
+  // can later save its older copy over this page's answers, XP and flags (it keeps only the
+  // 'adventure' part). So this page remembers what it saved while open ("mine") and puts back
+  // anything a later save dropped.
+  //   mine: {attempts: [the attempts this page added], flags: {qid: {on, t}}}
+  // healRecord(stored, mine, coach, now) -> a NEW record with mine put back, or null when nothing
+  // is missing (then nothing needs saving).
+  //   - an answer is missing when no attempt has the same question and time; it goes back in
+  //     time order, with its XP, and today's goal day is recorded if it now meets her goal
+  //   - flags are joined by time with coach.mergeFlags, so a later flag or un-flag in the app wins
+  //   - an empty answer list means her history was wiped on purpose (Settings -> Reset progress):
+  //     answers are never brought back after that
+  function healRecord(stored, mine, coach, now) {
+    var s = stored || {}, have = s.attempts || [], m = mine || {}, seen = {};
+    have.forEach(function (a) { if (a) seen[a.q + '@' + a.t] = true; });
+    var lost = have.length ? (m.attempts || []).filter(function (a) { return !seen[a.q + '@' + a.t]; }) : [];
+    // flags: for each question this page flagged or un-flagged (and ONLY those, so every other
+    // flag stays exactly as saved), join this page's choice with the saved one: newest wins
+    var rf = Object.assign({}, s.revisionFlags || {}), fc = Object.assign({}, s.flagCleared || {}), flagsMoved = false;
+    Object.keys(m.flags || {}).forEach(function (id) {
+      var f = m.flags[id], saved = { flags: {}, cleared: {} }, here = { flags: {}, cleared: {} };
+      if (rf[id]) saved.flags[id] = rf[id];
+      if (fc[id]) saved.cleared[id] = fc[id];
+      if (f.on) here.flags[id] = { t: f.t, src: APP.src }; else here.cleared[id] = f.t;
+      var j = coach.mergeFlags(saved, here);
+      if (JSON.stringify([j.flags[id], j.cleared[id]]) === JSON.stringify([rf[id], fc[id]])) return;   // already so
+      flagsMoved = true;
+      delete rf[id]; delete fc[id];
+      if (j.flags[id]) rf[id] = j.flags[id];
+      if (j.cleared[id]) fc[id] = j.cleared[id];
+    });
+    if (!lost.length && !flagsMoved) return null;
+    var b = Object.assign({}, s, { revisionFlags: rf, flagCleared: fc, updatedAt: now });
+    if (lost.length) {
+      // back in the order she answered (a stable sort keeps same-time answers in place), newest kept
+      b.attempts = have.concat(lost).map(function (a, i) { return { a: a, i: i }; })
+        .sort(function (x, y) { return ((+x.a.t || 0) - (+y.a.t || 0)) || (x.i - y.i); })
+        .map(function (x) { return x.a; }).slice(-APP.attemptsKeep);
+      b.xp = (s.xp || 0) + lost.filter(function (a) { return a.ok; }).length * APP.xpPerRight;
+      // the lost answers from today count toward today, as they did when she gave them
+      var n = coach.dayCounts(lost)[coach.localDay(now)] || 0;
+      b.streak = coach.streakAward(s.streak, have, n, coach.dailyGoal(s.settings), now);
+    }
+    return b;
+  }
+  // After her history was wiped on purpose (see healRecord), this page forgets the answers it
+  // saved before, so a later save can't bring them back. Returns mine, changed or not.
+  function forgetWiped(mine, stored) {
+    if (!((stored || {}).attempts || []).length) mine.attempts = [];
+    return mine;
   }
 
   // Flag or un-flag a question, in the same shape as the app's setRevFlag(), so the app's
@@ -207,6 +265,7 @@
 
   var api = { APP: APP, WORLD_COLOURS: WORLD_COLOURS, MAP: MAP, themeFor: themeFor, readJSON: readJSON, writeJSON: writeJSON,
     learnerFrom: learnerFrom, blobKey: blobKey, withContent: withContent, withAnswer: withAnswer, withFlag: withFlag,
+    healRecord: healRecord, forgetWiped: forgetWiped,
     withStage: withStage, shuffle: shuffle, newPlay: newPlay, isComeback: isComeback, answerStep: answerStep, tally: tally,
     passNeed: passNeed, nodeLayout: nodeLayout, roadPath: roadPath, starsSummary: starsSummary, worldSummary: worldSummary,
     stageName: stageName, previousStage: previousStage, nextStage: nextStage, worldIndexOf: worldIndexOf };
@@ -223,10 +282,14 @@
   var storage = store || { getItem: function (k) { return k in mem ? mem[k] : null; }, setItem: function (k, v) { mem[k] = String(v); } };
 
   // Light or dark, before anything draws: the choice saved in the app, or the device's.
-  (function () {
-    var saved = null; try { saved = storage.getItem('tt.theme'); } catch (e) { saved = null; }
+  // Also run again when the app changes it in another tab (the storage listener below).
+  function applyTheme(saved) {
     var t = themeFor(saved);
     if (t) doc.documentElement.setAttribute('data-theme', t); else doc.documentElement.removeAttribute('data-theme');
+  }
+  (function () {
+    var saved = null; try { saved = storage.getItem('tt.theme'); } catch (e) { saved = null; }
+    applyTheme(saved);
   })();
 
   // ---------- small drawing helpers ----------
@@ -249,7 +312,9 @@
     flame: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2c1 4 6 6 6 12a6 6 0 0 1-12 0c0-3 1.5-5 3-6.5.5 2 1.5 3 3 3 0-3-1-5.5 0-8.5z" fill="currentColor"/></svg>',
     left: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/></svg>',
     right: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/></svg>',
-    bulb: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3z" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"/></svg>'
+    bulb: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3z" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"/></svg>',
+    // the app's read-aloud speaker (the same drawing as its "Read the question aloud" button)
+    speak: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9 L8 9 L13 4 L13 20 L8 15 L4 15 Z" fill="currentColor"/><path d="M16.5 8.5 Q19.5 12 16.5 15.5 M18.5 6 Q23 12 18.5 18" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/></svg>'
   };
   // The little car that sits on the stage she is up to (side view, in the world's colour).
   var CAR = '<svg class="car" viewBox="0 0 64 40" aria-hidden="true"><path d="M6 26c0-5 3-7 8-8l7-8c1.5-1.6 3-2 5-2h13c2.4 0 4 .8 5.6 2.6L51 18c6 .6 9 3 9 8v4c0 1.2-.8 2-2 2H8c-1.2 0-2-.8-2-2z" fill="var(--wc)" stroke="var(--car-edge)" stroke-width="2.4" stroke-linejoin="round"/><path d="M22 18l5-6h8v6zM38 12h5l4.6 6H38z" fill="var(--car-glass)"/><circle cx="18" cy="32" r="5.5" fill="var(--car-tyre)"/><circle cx="18" cy="32" r="2.2" fill="var(--car-hub)"/><circle cx="48" cy="32" r="5.5" fill="var(--car-tyre)"/><circle cx="48" cy="32" r="2.2" fill="var(--car-hub)"/></svg>';
@@ -269,12 +334,21 @@
   // learner {id,name} · route/status from TTCoach · source: 'server' | 'cache' | 'free' · world: which
   // world the map shows · play: the stage being played (newPlay) · q/order/picked: the question on
   // screen, its option order and her pick · feedback: the feedback sheet's HTML · sheet: open stage card
+  // settings: her Settings from the app (reading and read-aloud) · mine: what this page saved while
+  // open, for putting back after an app tab's older save (healRecord, issue #47)
   var S = { learner: null, route: [], status: null, source: '', world: 0, play: null, q: null, order: null,
-    picked: -1, shownAt: 0, last: null, sheet: null, reduced: false, praise: 0, feedback: '' };
+    picked: -1, shownAt: 0, last: null, sheet: null, reduced: false, praise: 0, feedback: '',
+    settings: {}, mine: { attempts: [], flags: {} } };
   var C = null, A = null;   // TTCoach and its ADVENTURE numbers, once the scripts have loaded
   var byId = {};            // the bank, by question id
 
-  function blob() { return readJSON(storage, blobKey(S.learner.id)) || {}; }
+  // Her record as saved now, with anything this page saved that another tab's save dropped put
+  // back (healRecord). Every save starts from this, so this page never saves over the app's
+  // answers either: it always adds to the newest copy.
+  function blob() {
+    var b = readJSON(storage, blobKey(S.learner.id)) || {};
+    return (C && healRecord(b, S.mine, C, Date.now())) || b;
+  }
   function save(b) {
     if (!writeJSON(storage, blobKey(S.learner.id), b)) say('Could not save on this device (storage is full or blocked). Your answers this session will not be kept.');
   }
@@ -297,6 +371,57 @@
   }
   function refresh() { S.status = C.adventureStatus(S.route, blob().adventure || {}); }
 
+  // ---------- her reading settings (issue #47) ----------
+  // Text size, easy-reading font and high contrast, drawn as the app draws them (TTCoach.readingStyle
+  // holds the values), plus Reduce motion. Run at the start and whenever the app saves new settings.
+  //   zoom:   on <html>, so the top bar, the page and the sheets all grow together
+  //   filter: on <html> too. On any other element a filter would pin the bottom sheets to that
+  //           element instead of the screen; the page's root is the one place it doesn't
+  //   font:   the --read-font value adventure.css uses for her reading text (headings stay Nunito)
+  function applyReading(settings) {
+    var st = settings || {}, look = C.readingStyle(st), html = doc.documentElement;
+    S.settings = st;
+    html.style.zoom = look.zoom ? String(look.zoom) : '';
+    html.style.filter = look.filter || '';
+    if (look.fontFamily) html.style.setProperty('--read-font', look.fontFamily); else html.style.removeProperty('--read-font');
+    // less movement: the device's setting or her Settings -> Reduce motion
+    S.reduced = !!(root.matchMedia && root.matchMedia('(prefers-reduced-motion: reduce)').matches) || !!st.reducedMotion;
+    html.classList.toggle('calm', S.reduced);
+  }
+
+  // ---------- read aloud (issue #47) ----------
+  // The same voice and speed the app reads with (Settings -> Read aloud), through the browser's
+  // own speech (Web Speech API). A device without it gets no speaker buttons at all.
+  function canSpeak() { return !!(root.speechSynthesis && root.SpeechSynthesisUtterance); }
+  function speak(text) {
+    if (!canSpeak() || !text) return;
+    try {
+      var syn = root.speechSynthesis, st = S.settings || {};
+      syn.cancel();                                   // one voice at a time, as in the app
+      track('read_aloud', S.q ? S.q.id : null, { chars: text.length });
+      var u = new root.SpeechSynthesisUtterance(text);
+      var v = C.pickVoice(syn.getVoices(), st.voiceName);
+      if (v) u.voice = v;                             // none: the browser's own voice
+      u.rate = st.voiceRate || C.READING.voiceRate;
+      syn.speak(u);
+    } catch (e) {
+      say('Reading aloud did not work on this device (' + (e && e.message || e) + '). Try the speaker button again, or check the voice in the app\'s Settings.');
+    }
+  }
+  // A round speaker button, or nothing on a device that cannot speak.
+  //   act: what it reads (data-act) · label: what a screen reader says · cls: 'big' for the
+  //   question's · i: which option, for an option's button
+  function speakBtn(act, label, cls, i) {
+    if (!canSpeak()) return '';
+    return '<button type="button" class="say' + (cls ? ' ' + cls : '') + '" data-act="' + act + '"' + (i == null ? '' : ' data-i="' + i + '"') +
+      ' aria-label="' + esc(label) + '">' + ICON.speak + '</button>';
+  }
+  // The question on screen and its options in the order she sees them.
+  function sayQuestionNow() {
+    var q = S.q; if (!q) return;
+    speak(C.sayQuestion(q.question, S.order.map(function (o) { return q.options[o]; })));
+  }
+
   // A full-page message (no learner yet, no questions, something failed) with a way forward.
   function message(title, text, actions) {
     $('view-message').innerHTML = '<div class="msg"><div class="msg-art" aria-hidden="true">' + CAR + '</div><h1>' + esc(title) + '</h1><p>' + text + '</p>' +
@@ -315,21 +440,21 @@
         message('Open the app first', 'Adventure mode plays as the learner chosen in Theory Trainer. Open the app, choose who is learning, then come back here.');
         return;
       }
-      var settings = (blob().settings || {});
-      if (settings.reducedMotion) S.reduced = true;          // her Settings -> Reduce motion choice
-      doc.documentElement.classList.toggle('calm', S.reduced);
       $('who').hidden = false;
       $('who-name').textContent = S.learner.name;
       $('who-initial').textContent = (S.learner.name || '?').trim().charAt(0).toUpperCase();
 
-      // 2. The rules: coach.js must be new enough to know the adventure route.
+      // 2. The rules: coach.js must be new enough to know the adventure route, and the goal,
+      //    streak, reading and read-aloud rules shared with the app (#47).
       C = root.TTCoach;
-      if (!C || typeof C.adventureRoute !== 'function' || !C.ADVENTURE) {
+      if (!C || typeof C.adventureRoute !== 'function' || !C.ADVENTURE || typeof C.streakAward !== 'function' || typeof C.readingStyle !== 'function') {
         message('Adventure needs an update', 'This copy of the app is older than Adventure mode. Reload the page; if this stays, open Theory Trainer once so it can update itself.',
           '<button class="btn primary" type="button" data-act="reload">Reload</button>');
         return;
       }
       A = C.ADVENTURE;
+      // Her reading settings from the app: text size, font, contrast, less movement, read aloud.
+      applyReading(blob().settings);
 
       // 3. The questions: the same bank (and offline copy) the app uses.
       if (!root.TTBank) throw new Error('backend.js did not load');
@@ -487,9 +612,12 @@
     S.order = shuffle(q.options.map(function (_, i) { return i; }), Math.random);
     var flagged = !!(blob().revisionFlags || {})[qid];
     var sign = signSvg(q.imageHint);
+    // Each option, with its read-aloud button BESIDE it (a button inside a button can't be named
+    // or reached properly), as in the app.
     var opts = S.order.map(function (orig, i) {
-      return '<button type="button" class="opt" data-act="answer" data-i="' + i + '" aria-label="Answer ' + 'ABCD'.charAt(i) + ': ' + esc(q.options[orig]) + '">' +
-        '<span class="letter" aria-hidden="true">' + 'ABCD'.charAt(i) + '</span><span class="otext">' + esc(q.options[orig]) + '</span></button>';
+      return '<div class="orow"><button type="button" class="opt" data-act="answer" data-i="' + i + '" aria-label="Answer ' + 'ABCD'.charAt(i) + ': ' + esc(q.options[orig]) + '">' +
+        '<span class="letter" aria-hidden="true">' + 'ABCD'.charAt(i) + '</span><span class="otext">' + esc(q.options[orig]) + '</span></button>' +
+        speakBtn('say-opt', 'Read answer ' + 'ABCD'.charAt(i) + ' aloud', '', i) + '</div>';
     }).join('');
     $('view-play').innerHTML =
       '<div class="play" style="--wc:' + colourOf(p.world) + '">' +
@@ -503,7 +631,7 @@
             (isComeback(p) ? '<span class="again">Second chance</span>' : '') +
             '<button type="button" class="flag' + (flagged ? ' on' : '') + '" data-act="flag" aria-pressed="' + flagged + '">' + ICON.flag + '<span>' + (flagged ? 'Flagged' : 'Flag') + '</span></button></div>' +
           (sign ? '<div class="sign" role="img" aria-label="Road sign picture">' + sign + '</div>' : '') +
-          '<h2 id="q-text" tabindex="-1">' + esc(q.question) + '</h2>' +
+          '<div class="qrow"><h2 id="q-text" tabindex="-1">' + esc(q.question) + '</h2>' + speakBtn('say-q', 'Read the question aloud', 'big') + '</div>' +
           '<div class="opts" role="group" aria-labelledby="q-text">' + opts + '</div>' +
         '</div>' +
         '<div id="feedback-slot"></div>' +
@@ -511,6 +639,8 @@
     show('play');
     try { root.scrollTo(0, 0); } catch (e) { /* old browsers */ }
     $('q-text').focus();
+    // Settings -> "Read questions aloud automatically": the question and its options, as in the app
+    if (S.settings.autoRead) sayQuestionNow();
   }
   function progressHtml() {
     var p = S.play, done = p.i + (S.picked >= 0 ? 1 : 0), all = p.queue.length;
@@ -523,8 +653,13 @@
     var comeback = isComeback(S.play);
     S.picked = i;
     S.play = answerStep(S.play, q.id, ok);
-    // save straight away: the attempt, the XP, and the time
-    save(withAnswer(blob(), { q: q.id, ok: ok, topic: q.topic, p: orig }, now));
+    // save straight away: the attempt, the XP, her streak record and the time (as the app's
+    // award() after a practice answer), and remember it in case an app tab saves over it
+    var rec = withAnswer(blob(), { q: q.id, ok: ok, topic: q.topic, p: orig }, now, C);
+    S.mine.attempts.push(rec.attempts[rec.attempts.length - 1]);
+    save(rec);
+    // she has practised today: the reminder server then leaves her streak reminder, as award() does
+    try { if (root.TTPush) root.TTPush.markActive(); } catch (e) { /* a reminder note must never break learning */ }
     track('answer', q.id, { ok: ok, p: orig, ms: now - S.shownAt, src: APP.src, stage: S.play.stage, retry: comeback });
     // mark the options: hers, and the right one
     var btns = $('view-play').querySelectorAll('.opt');
@@ -546,7 +681,8 @@
       '<div class="fb-in"><p class="fb-head" role="status"><span class="fb-icon">' + (ok ? ICON.check : ICON.cross) + '</span><b>' + head + '</b>' +
         (ok ? '<span class="xp">+' + APP.xpPerRight + ' XP</span>' : '') + '</p>' +
       (ok ? '' : '<p class="fb-answer">The answer is <b>' + esc(q.options[q.correctIndex]) + '</b></p>') +
-      (q.explanation ? '<p class="fb-expl">' + esc(q.explanation) + '</p>' : '') +
+      // why, with the app's "Read the explanation aloud" button beside it
+      (q.explanation ? '<div class="fb-why"><p class="fb-expl">' + esc(q.explanation) + '</p>' + speakBtn('say-exp', 'Read the explanation aloud') + '</div>' : '') +
       (q.ruleRef ? '<p class="fb-rule">' + esc(q.ruleRef) + '</p>' : '') +
       (q.memoryTip ? '<div class="tip">' + ICON.bulb + '<p><b>Memory tip</b> ' + esc(q.memoryTip) + '</p></div>' : '') +
       (!ok && !comeback ? '<p class="fb-back">This one will come back before the end of the stage.</p>' : '') +
@@ -554,6 +690,8 @@
     S.feedback = html;
     $('feedback-slot').innerHTML = html;
     $('feedback-slot').querySelector('[data-act="continue"]').focus();
+    // Settings -> "Read questions aloud automatically": right or the right answer, then why (as the app)
+    if (S.settings.autoRead) speak(C.sayAnswer(ok, 'ABCD'.charAt(S.order.indexOf(q.correctIndex)), q.options[q.correctIndex], q.explanation || ''));
   }
 
   function next() {
@@ -566,10 +704,15 @@
     if (!S.q) return;
     var b = blob(), on = !(b.revisionFlags || {})[S.q.id], now = Date.now();
     save(withFlag(b, S.q.id, on, now));
+    S.mine.flags[S.q.id] = { on: on, t: now };      // remembered in case an app tab saves over it
     track(on ? 'flag' : 'unflag', S.q.id, { src: APP.src });
-    var f = $('view-play').querySelector('.flag');
-    if (f) { f.classList.toggle('on', on); f.setAttribute('aria-pressed', String(on)); f.querySelector('span').textContent = on ? 'Flagged' : 'Flag'; }
+    paintFlag(on);
     say(on ? 'Flagged. It is in your Flagged list in the app.' : 'Flag removed.');
+  }
+  // The Flag button on the question on screen: pressed or not.
+  function paintFlag(on) {
+    var f = $('view-play') && $('view-play').querySelector('.flag');
+    if (f) { f.classList.toggle('on', on); f.setAttribute('aria-pressed', String(on)); f.querySelector('span').textContent = on ? 'Flagged' : 'Flag'; }
   }
 
   // Quit: ask once, in the page (answers so far are already saved; the stage does not count).
@@ -669,6 +812,9 @@
       else if (act === 'answer') answer(Number(t.getAttribute('data-i')));
       else if (act === 'continue') next();
       else if (act === 'flag') toggleFlag();
+      else if (act === 'say-q') sayQuestionNow();
+      else if (act === 'say-opt' && S.q) speak(S.q.options[S.order[Number(t.getAttribute('data-i'))]]);
+      else if (act === 'say-exp' && S.q) speak(C.sayExplanation(S.q.explanation, S.q.ruleRef));
       else if (act === 'quit') askQuit();
       else if (act === 'quit-yes') quit();
       else if (act === 'quit-no') unquit();
@@ -693,6 +839,28 @@
     var k = e.key.toLowerCase(), n = '1234'.indexOf(k) >= 0 ? '1234'.indexOf(k) : 'abcd'.indexOf(k);
     if (S.picked < 0 && n >= 0 && S.q && n < S.q.options.length && k.length === 1) { answer(n); e.preventDefault(); }
     else if (S.picked >= 0 && e.key === 'Enter' && !(e.target && e.target.tagName === 'BUTTON')) { next(); e.preventDefault(); }
+  });
+
+  // ---------- another tab saved (issue #47) ----------
+  // The browser tells this page when another tab (the app, most likely) changes storage.
+  //   tt.theme:            she changed light/dark in the app: follow it
+  //   her record (.d.<id>): put back anything of this page's that the save dropped (healRecord),
+  //                        then follow any new reading settings and the Flag on screen
+  root.addEventListener('storage', function (e) {
+    try {
+      if (e.key === 'tt.theme') { applyTheme(e.newValue); return; }
+      if (!S.learner || !C || e.key !== blobKey(S.learner.id) || !e.newValue) return;
+      var stored = JSON.parse(e.newValue) || {};
+      forgetWiped(S.mine, stored);                    // Reset progress in the app: forget, never restore
+      var healed = healRecord(stored, S.mine, C, Date.now());
+      if (healed) { save(healed); stored = healed; }
+      applyReading(stored.settings);
+      if (S.q) paintFlag(!!(stored.revisionFlags || {})[S.q.id]);
+    } catch (err) {
+      // Another tab's copy could not be read. This page's own saves still start from the newest
+      // copy (blob), so nothing is lost; the next save puts back anything missing.
+      if (root.console) root.console.warn('Adventure: could not read the copy another tab saved (' + (err && err.message || err) + '). Answers here are still saved; if the app looks out of date, reload it.');
+    }
   });
 
   if (doc.readyState === 'loading') doc.addEventListener('DOMContentLoaded', start); else start();
