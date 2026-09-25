@@ -408,7 +408,7 @@
       '<div class="world-head" style="--wc:' + colour + '">' +
         '<button type="button" class="arrow" data-act="world" data-i="' + (S.world - 1) + '"' + (S.world ? '' : ' disabled') + ' aria-label="Previous world">' + ICON.left + '</button>' +
         '<div class="wh-text"><p class="kicker">World ' + w.world + '</p><h1 id="world-title" tabindex="-1">' + esc(w.name) + '</h1>' +
-          '<p class="sub"><span class="nw">' + ws.passed + ' of ' + ws.total + ' stages passed</span> <span class="dot">·</span> <span class="nw"><span class="st on">' + ICON.star + '</span> ' + mine.earned + ' / ' + mine.available + '</span></p></div>' +
+          '<p class="sub"><span class="nw">' + ws.passed + ' of ' + ws.total + ' stages passed</span> <span class="nw"><span class="st on">' + ICON.star + '</span> ' + mine.earned + ' / ' + mine.available + '</span></p></div>' +
         '<button type="button" class="arrow" data-act="world" data-i="' + (S.world + 1) + '"' + (S.world < S.route.length - 1 ? '' : ' disabled') + ' aria-label="Next world">' + ICON.right + '</button>' +
       '</div>' +
       '<nav class="worlds" aria-label="Worlds">' + tabs + '</nav>' + free +
@@ -425,7 +425,8 @@
   function paintStars() {
     var all = starsSummary(S.route, S.status, A.stars.length), tot = $('stars-total');
     tot.hidden = false;
-    tot.innerHTML = '<span class="st on">' + ICON.star + '</span><span><b>' + all.earned + '</b> / ' + all.available + '</span>';
+    // the total in its own part, which a phone hides from sight (adventure.css, #38)
+    tot.innerHTML = '<span class="st on">' + ICON.star + '</span><span><b>' + all.earned + '</b><span class="of"> / ' + all.available + '</span></span>';
     tot.setAttribute('aria-label', all.earned + ' of ' + all.available + ' stars earned');
   }
 

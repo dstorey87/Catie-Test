@@ -71,7 +71,8 @@ main { max-width: 640px; margin: 0 auto; padding: 0 16px 48px; outline: none; }
 
 /* ---------- top bar ---------- */
 .top { display: flex; align-items: center; gap: 10px; max-width: 640px; margin: 0 auto; padding: 12px 16px; }
-.back { display: inline-flex; align-items: center; gap: 4px; min-height: 44px; padding: 0 10px 0 4px; border-radius: 12px; text-decoration: none; font-weight: 700; color: var(--brand-text); }
+.back { display: inline-flex; align-items: center; gap: 4px; min-height: 44px; padding: 0 10px 0 4px; border-radius: 12px; text-decoration: none; font-weight: 700; color: var(--brand-text);
+  flex: none; white-space: nowrap; }   /* one line, full width: the learner's name gives way first (#38) */
 .back:hover { background: var(--chip); }
 .who { display: flex; align-items: center; gap: 8px; margin-left: auto; font-weight: 800; min-width: 0; }
 .who span:last-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -108,7 +109,9 @@ main { max-width: 640px; margin: 0 auto; padding: 0 16px 48px; outline: none; }
 .wh-text { flex: 1; min-width: 0; text-align: center; }
 .kicker { margin: 0; font-size: 13px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; opacity: .92; }
 .world-head h1 { font-size: 24px; font-weight: 900; outline: none; }
-.world-head .sub { margin: 4px 0 0; font-size: 15px; font-weight: 700; }
+/* "3 of 7 stages passed" and the stars: side by side, or one under the other on a phone. No "·"
+   between them, so nothing is left dangling at the end of a line (#38). */
+.world-head .sub { margin: 4px 0 0; font-size: 15px; font-weight: 700; display: flex; flex-wrap: wrap; justify-content: center; column-gap: 14px; }
 .world-head .st.on { color: #FFE2A6; }
 .arrow { flex: none; width: 44px; height: 44px; border-radius: 14px; border: none; background: rgba(255, 255, 255, .18); color: #fff; cursor: pointer; display: grid; place-items: center; }
 .arrow svg { width: 22px; height: 22px; }
@@ -244,10 +247,22 @@ body[data-view="play"] main { padding-bottom: 60vh; }   /* room to scroll past t
 .opened svg { width: 24px; height: 24px; color: var(--tip-ink); flex: none; }
 #confetti { position: fixed; inset: 0; pointer-events: none; z-index: 30; display: none; }
 
+/* ---------- phones ----------
+   The top bar's star pill shows only the stars she has ("12", not "12 / 210"), so "Theory
+   Trainer" stays on one line and her name has room at 360px (#38). The total is hidden from
+   sight only: screen readers still say "12 / 210" (the same rule as .sr-only). */
+@media (max-width: 480px) {
+  .stat .of { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+}
+
 /* ---------- wider screens ---------- */
 @media (min-width: 760px) {
   main, .top { max-width: 760px; }
-  .worlds { flex-wrap: wrap; justify-content: center; overflow: visible; }
+  /* All 14 world tabs on one row: 14 x 44px + 13 gaps of 6px + 6px each side = 706px, inside the
+     728px column (760 - 2 x 16). With the phone's 8px gaps it was 736px, and the 14th tab wrapped
+     onto its own line above the road, like a locked stage (#38). 6px still leaves room for the
+     current tab's 6px ring. */
+  .worlds { flex-wrap: wrap; justify-content: center; overflow: visible; gap: 6px; padding: 16px 6px 10px; }
   .map { max-width: 420px; }
   .qcard { padding: 26px 28px 28px; }
   .qcard h2 { font-size: 26px; }
