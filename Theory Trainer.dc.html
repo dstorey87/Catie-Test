@@ -20,13 +20,19 @@ var TT_DARK = {
   // backgrounds: page, cards, chips, tinted panels, dark toasts
   'bg-faf6ef':'#121411', 'bg-fffdf8':'#191b18', 'bg-fff':'#1c1f1c', 'bg-efe9dc':'#2a2c28',
   'bg-f2ede1':'#262824', 'bg-e4f2ef':'#163631', 'bg-e7f6ec':'#173322', 'bg-fbf1dc':'#3a2f17',
-  'bg-fbeae9':'#3d201e', 'bg-f3faf8':'#183a34', 'bg-2a2c33':'#3a3d45', 'bg-d8d0bf':'#4a4c45',
+  'bg-fbeae9':'#3d201e', 'bg-f3faf8':'#183a34', 'bg-2a2c33':'#3a3d45', 'bg-8c8779':'#737067',
   'bg-eaf2fb':'#172636',   // streak-freeze blue panel
-  // text: body, muted, faint, links and status words
-  'fg-2a2c33':'#ece8df', 'fg-6e6a5e':'#aaa596', 'fg-b5ae9e':'#817c70', 'fg-0e7c6b':'#46c7ae',
+  // bg-8c8779: a switch's track when off, 3:1 against the card so the switch can be seen (it was
+  // #d8d0bf, 1.5:1; issue #10, WCAG 1.4.11).
+  // text: body, muted, links and status words
+  'fg-2a2c33':'#ece8df', 'fg-6e6a5e':'#aaa596', 'fg-0e7c6b':'#46c7ae',
+  // fg-686458: muted words ON A CHIP (bg-efe9dc). Plain muted is 4.47:1 there, just under the
+  // 4.5:1 words need (WCAG 1.4.3); this is a shade darker. fg-b5ae9e (faint) is for decoration
+  // only (1.7-2.2:1): never for words. The help pages copy it (help/site.css --faint).
+  'fg-686458':'#aaa596', 'fg-b5ae9e':'#817c70',
   'fg-0a5d50':'#6fd8c3', 'fg-1c6b3c':'#72d596', 'fg-b8433d':'#f28b83', 'fg-8a5a0b':'#eab45e',
-  'fg-8a6a22':'#e2c070', 'fg-c77e14':'#eba748', 'fg-111':'#eeeeee', 'fg-444':'#cccccc',
-  'fg-555':'#bbbbbb', 'fg-888':'#9a9a9a', 'fg-999':'#8a8a8a', 'fg-aaa':'#777777', 'fg-c9c2b2':'#6c6960',
+  'fg-111':'#eeeeee', 'fg-444':'#cccccc',
+  'fg-555':'#bbbbbb',   // the print area's greys: #888, #999 and #aaa were under 4.5:1 on its white page
   'fg-2f6ea8':'#8cbbe8',   // streak-freeze blue text and snowflake
   // borders and dividers
   'bd-e8e1d2':'#363833', 'bd-f2ede1':'#2e302b', 'bd-d8d0bf':'#4a4c45', 'bd-efe9dc':'#363833',
@@ -409,6 +415,36 @@ window.TTScreen = (function(){
     return 'Question ' + num + ', ' + (answered ? 'answered' : 'not answered') + (flagged ? ', flagged' : '');
   };
 
+  // An answer option's name for a screen reader: its letter and the bank's own text, then what
+  // the colours say once she has answered (mark from S.optionMark), or that the 50:50 hint took
+  // it away. e.g. "Answer B: Brake gently. Your answer, right".
+  S.optionLabel = function(letter, text, mark, removed){
+    return 'Answer ' + n(letter) + ': ' + n(text) + (mark ? '. ' + mark.say : '') + (removed ? '. Taken away by the hint' : '');
+  };
+
+  // ARIA state attributes (aria-pressed, aria-checked, aria-expanded, aria-disabled) take the
+  // words "true" and "false", not a JavaScript true/false. One place turns one into the other.
+  S.pressed = function(on){ return on ? 'true' : 'false'; };
+
+  // The status colours (green, amber, red, grey) are made for dots, bars and rings. As words they
+  // are too light: amber on white is 2:1 where words need 4.5:1 (WCAG 1.4.3). Words in a status
+  // colour use its darker text colour instead, which has its own dark-theme value in TT_DARK.
+  // Any other colour comes back unchanged.
+  S.TEXT_TONE = {'#2E9E5B': 'var(--tt-fg-1c6b3c)', '#F2A93B': 'var(--tt-fg-8a5a0b)', '#D14B45': 'var(--tt-fg-b8433d)', '#B5AE9E': 'var(--tt-fg-6e6a5e)'};
+  S.textTone = function(c){ return S.TEXT_TONE[n(c).toUpperCase()] || c; };
+
+  // The mock-score chart in words, for a screen reader (WCAG 1.1.1): each saved mock's score,
+  // oldest first, whether it was a pass, and where the dashed pass line is. tests: the saved
+  // mocks [{score, total, pass}] (total missing means 50, as the chart draws it); pass: the
+  // score the line is drawn at. Only her own saved numbers are used.
+  S.chartSay = function(tests, pass){
+    tests = tests || [];
+    if(!tests.length) return 'Mock test scores: none yet';
+    return 'Mock test scores, oldest first: ' + tests.map(function(r){
+      return r.score + ' out of ' + (r.total || 50) + (r.pass ? ', a pass' : ', not a pass');
+    }).join('; ') + '. The dashed line is the pass mark, ' + pass + '.';
+  };
+
   return S;
 })();
 </script>
@@ -544,7 +580,9 @@ input,select{font-family:inherit}
 html{scroll-padding-bottom:160px}
 /* Hidden on screen, still read by screen readers (headings, live announcements). */
 .tt-sr{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}
-/* The photo upload is a <label> round a hidden file input: show the ring on the label. */
+/* A file upload is a <label> round a visually hidden file input (.tt-sr, still reachable by Tab,
+   where display:none was not): the input stays inside its label, and the ring shows on the label. */
+.tt-file{position:relative}
 .tt-file:focus-within{outline:3px solid var(--tt-fg-0e7c6b);outline-offset:2px}
 /* Motion only for those who have not asked their device for less (2.3.3). */
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}button:active{transform:none}}
@@ -572,21 +610,21 @@ html{scroll-padding-bottom:160px}
       <button onClick="{{ u.pick }}" style="display:flex;align-items:center;gap:14px;background:#0E7C6B;color:#fff;border:none;border-radius:20px;padding:18px 22px;cursor:pointer;text-align:left;min-height:72px">
         <sc-if value="{{ u.hasAvatar }}" hint-placeholder-val="{{ false }}"><span style="flex:none;width:44px;height:44px;border-radius:50%;background-image:url({{ u.avatar }});background-size:cover;background-position:center"></span></sc-if>
         <sc-if value="{{ u.noAvatar }}" hint-placeholder-val="{{ true }}"><span style="flex:none;width:44px;height:44px;border-radius:50%;background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;font-family:'Nunito',sans-serif;font-weight:900;font-size:20px">{{ u.initial }}</span></sc-if>
-        <span><span style="display:block;font-family:'Nunito',sans-serif;font-weight:900;font-size:20px">{{ u.name }}</span><span style="display:block;font-size:14px;opacity:.85">Learner</span></span>
+        <span><span style="display:block;font-family:'Nunito',sans-serif;font-weight:900;font-size:20px">{{ u.name }}</span><span style="display:block;font-size:14px">Learner</span></span>
       </button>
     </sc-for>
     <button onClick="{{ loginAdmin }}" style="display:flex;align-items:center;gap:14px;background:var(--tt-bg-fff);border:2px solid var(--tt-bd-e8e1d2);border-radius:20px;padding:18px 22px;cursor:pointer;text-align:left;min-height:72px">
-      <span style="flex:none;width:44px;height:44px;border-radius:50%;background:var(--tt-bg-efe9dc);color:var(--tt-fg-6e6a5e);display:flex;align-items:center;justify-content:center;font-family:'Nunito',sans-serif;font-weight:900;font-size:20px">{{ parentInitial }}</span>
+      <span style="flex:none;width:44px;height:44px;border-radius:50%;background:var(--tt-bg-efe9dc);color:var(--tt-fg-686458);display:flex;align-items:center;justify-content:center;font-family:'Nunito',sans-serif;font-weight:900;font-size:20px">{{ parentInitial }}</span>
       <span><span style="display:block;font-family:'Nunito',sans-serif;font-weight:900;font-size:20px;color:var(--tt-fg-2a2c33)">{{ parentName }}</span><span style="display:block;font-size:14px;color:var(--tt-fg-6e6a5e)">Admin · progress &amp; editing</span></span>
     </button>
     <button onClick="{{ addLearner }}" style="background:none;border:none;color:var(--tt-fg-0e7c6b);font-size:14.5px;font-weight:700;cursor:pointer;padding:10px;min-height:44px">+ Add another learner</button>
     <sc-if value="{{ signedIn }}" hint-placeholder-val="{{ false }}">
-      <div style="font-size:13px;color:var(--tt-fg-b5ae9e);padding:6px 6px 0">{{ accountLine }}</div>
+      <div style="font-size:13px;color:var(--tt-fg-6e6a5e);padding:6px 6px 0">{{ accountLine }}</div>
       <button onClick="{{ signOutBtn }}" style="background:none;border:none;color:var(--tt-fg-6e6a5e);font-size:13px;cursor:pointer;padding:6px;min-height:44px;text-decoration:underline">Sign out</button>
     </sc-if>
     <sc-if value="{{ signedOut }}" hint-placeholder-val="{{ true }}">
       <button onClick="{{ goAuthScreen }}" style="background:var(--tt-bg-fff);border:2px solid var(--tt-bd-e8e1d2);border-radius:18px;min-height:52px;font-size:15.5px;font-weight:700;color:var(--tt-fg-0e7c6b);cursor:pointer">Sign in or create an account</button>
-      <div style="font-size:12.5px;color:var(--tt-fg-b5ae9e);padding:2px 6px">{{ accountLine }}</div>
+      <div style="font-size:12.5px;color:var(--tt-fg-6e6a5e);padding:2px 6px">{{ accountLine }}</div>
     </sc-if>
   </div>
   <!-- Help, About, Privacy, Terms (TTWelcome.LINKS) and the DVSA line: same on both sign-in screens -->
@@ -617,8 +655,8 @@ html{scroll-padding-bottom:160px}
     <sc-if value="{{ authNeedsPw }}" hint-placeholder-val="{{ true }}">
       <label style="font-size:13.5px;color:var(--tt-fg-6e6a5e)">Password
         <span style="display:flex;gap:8px;margin-top:4px">
-          <input type="{{ passType }}" value="{{ authPw }}" name="pw" onChange="{{ authChange }}" onKeyDown="{{ authKey }}" placeholder="At least 6 characters" autocapitalize="none" style="flex:1;box-sizing:border-box;padding:12px;border:1px solid var(--tt-bd-e8e1d2);border-radius:10px;font-size:16px;min-width:0">
-          <button onClick="{{ togglePass }}" style="flex:none;background:var(--tt-bg-efe9dc);border:none;border-radius:10px;padding:0 14px;font-size:13.5px;font-weight:700;color:var(--tt-fg-6e6a5e);cursor:pointer;min-height:44px">{{ passToggleLabel }}</button>
+          <input type="{{ passType }}" value="{{ authPw }}" name="pw" aria-label="Password" onChange="{{ authChange }}" onKeyDown="{{ authKey }}" placeholder="At least 6 characters" autocapitalize="none" style="flex:1;box-sizing:border-box;padding:12px;border:1px solid var(--tt-bd-e8e1d2);border-radius:10px;font-size:16px;min-width:0">
+          <button onClick="{{ togglePass }}" style="flex:none;background:var(--tt-bg-efe9dc);border:none;border-radius:10px;padding:0 14px;font-size:13.5px;font-weight:700;color:var(--tt-fg-686458);cursor:pointer;min-height:44px">{{ passToggleLabel }}</button>
         </span>
       </label>
     </sc-if>
@@ -642,8 +680,8 @@ html{scroll-padding-bottom:160px}
     <div style="text-align:center;margin-top:12px"><button onClick="{{ goLogin }}" style="background:none;border:none;color:var(--tt-fg-0e7c6b);font-size:14px;font-weight:700;cursor:pointer;padding:8px;min-height:44px">Carry on without an account</button></div>
   </sc-if>
   <div style="text-align:center;margin-top:6px;display:flex;gap:14px;justify-content:center">
-    <button onClick="{{ showPayScreen }}" style="background:none;border:none;color:var(--tt-fg-b5ae9e);font-size:12.5px;cursor:pointer;padding:8px;min-height:44px;text-decoration:underline">See subscription plans</button>
-    <button onClick="{{ goSetupScreen }}" style="background:none;border:none;color:var(--tt-fg-b5ae9e);font-size:12.5px;cursor:pointer;padding:8px;min-height:44px;text-decoration:underline">Server settings</button>
+    <button onClick="{{ showPayScreen }}" style="background:none;border:none;color:var(--tt-fg-6e6a5e);font-size:12.5px;cursor:pointer;padding:8px;min-height:44px;text-decoration:underline">See subscription plans</button>
+    <button onClick="{{ goSetupScreen }}" style="background:none;border:none;color:var(--tt-fg-6e6a5e);font-size:12.5px;cursor:pointer;padding:8px;min-height:44px;text-decoration:underline">Server settings</button>
   </div>
   <!-- Help, About, Privacy, Terms (TTWelcome.LINKS) and the DVSA line: same on both sign-in screens -->
   <nav aria-label="Help and legal" style="display:flex;flex-wrap:wrap;gap:0 18px;justify-content:center;margin-top:6px">
@@ -685,11 +723,11 @@ html{scroll-padding-bottom:160px}
     <sc-if value="{{ paySubVisible }}" hint-placeholder-val="{{ true }}">
       <button onClick="{{ buyMonthly }}" style="background:#0E7C6B;color:#fff;border:none;border-radius:18px;min-height:58px;font-family:'Nunito',sans-serif;font-weight:900;font-size:19px;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px">
         <span>{{ payMonthlyLabel }}</span>
-        <span style="font-size:12.5px;font-weight:700;opacity:.85">Cancel any time</span>
+        <span style="font-size:12.5px;font-weight:700">Cancel any time</span>
       </button>
       <button onClick="{{ buyAnnual }}" style="background:var(--tt-bg-fbf1dc);color:var(--tt-fg-2a2c33);border:2px solid #F2A93B;border-radius:18px;min-height:58px;font-family:'Nunito',sans-serif;font-weight:900;font-size:18px;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px">
         <span>{{ payAnnualLabel }}</span>
-        <span style="font-size:12.5px;font-weight:700;color:var(--tt-fg-8a6a22)">Best value until test day</span>
+        <span style="font-size:12.5px;font-weight:700;color:var(--tt-fg-8a5a0b)">Best value until test day</span>
       </button>
       <sc-if value="{{ trialAvailable }}" hint-placeholder-val="{{ true }}">
         <button onClick="{{ startTrial }}" style="background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);border-radius:18px;min-height:52px;font-size:16px;cursor:pointer;font-weight:700">{{ trialLabel }}</button>
@@ -822,7 +860,8 @@ html{scroll-padding-bottom:160px}
 <!-- ============ HOME ============ -->
 <sc-if value="{{ vHome }}" hint-placeholder-val="{{ true }}">
 <div data-screen-label="Home">
-  <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:6px">
+  <!-- wraps: at 320px wide the Catie / Admin chips ran 8px off the screen (WCAG 1.4.10) -->
+  <div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;margin-bottom:6px">
     <div style="display:flex;align-items:center;gap:10px">
       <div style="width:40px;height:40px;border-radius:12px;background:#0E7C6B;display:flex;align-items:center;justify-content:center;flex:none">
         <svg width="24" height="24" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="#fff" stroke-width="2.4"/><circle cx="12" cy="12" r="2.4" fill="#fff"/><path d="M12 14.2 L12 21 M10 12.6 L3.6 10.4 M14 12.6 L20.4 10.4" stroke="#fff" stroke-width="2.2"/></svg>
@@ -830,8 +869,8 @@ html{scroll-padding-bottom:160px}
       <div style="font-family:'Nunito',sans-serif;font-weight:900;font-size:20px">Theory Trainer</div>
     </div>
     <div style="display:flex;gap:8px;align-items:center">
-      <button onClick="{{ setLearnerProfile }}" style="{{ learnerChipStyle }}">{{ learnerName }}</button>
-      <button onClick="{{ setParentProfile }}" style="{{ parentChipStyle }}">{{ parentName }}</button>
+      <button onClick="{{ setLearnerProfile }}" aria-pressed="{{ learnerChipOn }}" style="{{ learnerChipStyle }}">{{ learnerName }}</button>
+      <button onClick="{{ setParentProfile }}" aria-pressed="{{ parentChipOn }}" style="{{ parentChipStyle }}">{{ parentName }}</button>
     </div>
   </div>
   <h1 tabindex="-1" style="margin:0;font-family:'Nunito',sans-serif;font-weight:900;font-size:30px;margin:22px 0 4px">{{ greeting }}</h1>
@@ -884,7 +923,7 @@ html{scroll-padding-bottom:160px}
     <sc-if value="{{ nudgeShow }}" hint-placeholder-val="{{ false }}">
       <span style="display:flex;align-items:center;gap:7px;width:100%;box-sizing:border-box;font-size:13.5px;font-weight:700;line-height:1.35;color:var(--tt-fg-8a5a0b);background:var(--tt-bg-fbf1dc);border-radius:10px;padding:7px 10px"><svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" style="flex:none"><path d="M12 2.5 L14.6 8.6 L21.2 9.2 L16.2 13.6 L17.7 20.1 L12 16.7 L6.3 20.1 L7.8 13.6 L2.8 9.2 L9.4 8.6 Z" fill="#F2A93B"/></svg><span>Close to a badge: {{ nudgeText }}</span></span>
     </sc-if>
-    <span style="font-size:12px;color:var(--tt-fg-b5ae9e)">{{ badgeCountLine }} · tap to see them</span>
+    <span style="font-size:12px;color:var(--tt-fg-6e6a5e)">{{ badgeCountLine }} · tap to see them</span>
   </button>
   <!-- Test countdown, and what today's study plan asks; tap for the whole plan -->
   <sc-if value="{{ hasExamDate }}" hint-placeholder-val="{{ false }}">
@@ -896,7 +935,7 @@ html{scroll-padding-bottom:160px}
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
     <button onClick="{{ startDailyLesson }}" style="grid-column:1/-1;display:flex;align-items:center;gap:16px;background:var(--tt-bg-2a2c33);color:#fff;border:none;border-radius:22px;padding:18px 22px;cursor:pointer;text-align:left">
       <svg width="34" height="34" viewBox="0 0 24 24" style="flex:none"><circle cx="12" cy="12" r="9.4" fill="none" stroke="#F2A93B" stroke-width="2"/><path d="M10 8.2 L16 12 L10 15.8 Z" fill="#F2A93B"/></svg>
-      <span><span style="display:block;font-family:'Nunito',sans-serif;font-weight:900;font-size:19px">Today's lesson</span><span style="display:block;font-size:14.5px;opacity:.8;margin-top:2px">{{ dailyDesc }}</span></span>
+      <span><span style="display:block;font-family:'Nunito',sans-serif;font-weight:900;font-size:19px">Today's lesson</span><span style="display:block;font-size:14.5px;margin-top:2px">{{ dailyDesc }}</span></span>
     </button>
     <!-- What to work on: the topic where more right answers would lift her expected mock
          score most (coach.js improvements), with a button that drills it -->
@@ -932,7 +971,7 @@ html{scroll-padding-bottom:160px}
     </sc-if>
     <button onClick="{{ goLearn }}" style="grid-column:1/-1;display:flex;align-items:center;gap:16px;background:#0E7C6B;color:#fff;border:none;border-radius:22px;padding:22px 22px;cursor:pointer;text-align:left;min-height:96px">
       <svg width="40" height="40" viewBox="0 0 24 24" style="flex:none"><path d="M5 4.5 C8 3.2 10.5 3.4 12 4.6 C13.5 3.4 16 3.2 19 4.5 L19 19 C16 17.8 13.5 18 12 19.2 C10.5 18 8 17.8 5 19 Z" fill="none" stroke="#fff" stroke-width="2"/><path d="M12 4.6 L12 19.2" stroke="#fff" stroke-width="2"/></svg>
-      <span><span style="display:block;font-family:'Nunito',sans-serif;font-weight:900;font-size:22px">Practise</span><span style="display:block;font-size:15px;opacity:.9;margin-top:2px">Friendly questions, read aloud</span></span>
+      <span><span style="display:block;font-family:'Nunito',sans-serif;font-weight:900;font-size:22px">Practise</span><span style="display:block;font-size:15px;margin-top:2px">Friendly questions, read aloud</span></span>
     </button>
     <button onClick="{{ startFocusDrill }}" style="grid-column:1/-1;display:flex;align-items:center;gap:16px;background:var(--tt-bg-fbf1dc);color:var(--tt-fg-2a2c33);border:2px solid #F2A93B;border-radius:22px;padding:18px 22px;cursor:pointer;text-align:left">
       <svg width="34" height="34" viewBox="0 0 24 24" style="flex:none"><circle cx="12" cy="12" r="9" fill="none" stroke="#C77E14" stroke-width="2"/><circle cx="12" cy="12" r="5" fill="none" stroke="#C77E14" stroke-width="2"/><circle cx="12" cy="12" r="1.8" fill="#C77E14"/></svg>
@@ -1005,7 +1044,7 @@ html{scroll-padding-bottom:160px}
   <h2 style="font-family:'Nunito',sans-serif;font-weight:800;font-size:17px;margin:14px 0 10px">What shall we practise?</h2>
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
     <sc-for list="{{ topicChoices }}" as="t" hint-placeholder-count="4">
-      <button onClick="{{ t.pick }}" style="{{ t.style }}">
+      <button onClick="{{ t.pick }}" aria-pressed="{{ t.on }}" style="{{ t.style }}">
         <span style="display:block;font-weight:700;font-size:15.5px;line-height:1.25">{{ t.name }}</span>
         <span style="display:block;font-size:13px;color:var(--tt-fg-6e6a5e);margin-top:3px">{{ t.sub }}</span>
       </button>
@@ -1015,7 +1054,7 @@ html{scroll-padding-bottom:160px}
     <h2 style="font-family:'Nunito',sans-serif;font-weight:800;font-size:17px;margin:20px 0 10px">How many questions?</h2>
     <div style="display:flex;gap:10px">
       <sc-for list="{{ lenChoices }}" as="l" hint-placeholder-count="3">
-        <button onClick="{{ l.pick }}" style="{{ l.style }}">{{ l.label }}</button>
+        <button onClick="{{ l.pick }}" aria-pressed="{{ l.on }}" style="{{ l.style }}">{{ l.label }}</button>
       </sc-for>
     </div>
   </sc-if>
@@ -1025,7 +1064,7 @@ html{scroll-padding-bottom:160px}
       <sc-for list="{{ mixRows }}" as="m" hint-placeholder-count="5">
         <div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--tt-bd-f2ede1)">
           <span style="flex:1;font-size:14.5px;line-height:1.3">{{ m.name }}</span>
-          <button onClick="{{ m.dec }}" aria-label="Fewer" style="flex:none;width:44px;height:44px;border-radius:12px;background:var(--tt-bg-efe9dc);border:none;font-size:20px;cursor:pointer;color:var(--tt-fg-6e6a5e)">−</button>
+          <button onClick="{{ m.dec }}" aria-label="Fewer" style="flex:none;width:44px;height:44px;border-radius:12px;background:var(--tt-bg-efe9dc);border:none;font-size:20px;cursor:pointer;color:var(--tt-fg-686458)">−</button>
           <span style="width:30px;text-align:center;font-family:'Nunito',sans-serif;font-weight:900;font-size:17px;flex:none">{{ m.count }}</span>
           <button onClick="{{ m.inc }}" aria-label="More" style="flex:none;width:44px;height:44px;border-radius:12px;background:var(--tt-bg-e4f2ef);border:none;font-size:20px;cursor:pointer;color:var(--tt-fg-0a5d50)">+</button>
         </div>
@@ -1056,7 +1095,7 @@ html{scroll-padding-bottom:160px}
   </sc-if>
   <div style="background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);border-radius:22px;padding:22px;display:flex;gap:14px;align-items:flex-start">
     <div style="flex:1;font-size:22px;line-height:1.45;font-weight:700">{{ qText }}</div>
-    <button onClick="{{ speakQ }}" aria-label="Read the question aloud" style="flex:none;width:52px;height:52px;border-radius:50%;background:var(--tt-bg-e4f2ef);border:none;cursor:pointer;color:var(--tt-fg-0e7c6b);display:flex;align-items:center;justify-content:center">
+    <button onClick="{{ speakQ }}" aria-label="Read the question aloud" style="flex:none;width:52px;height:52px;border-radius:50%;background:var(--tt-bg-e4f2ef);border:none;cursor:pointer;color:var(--tt-fg-0a5d50);display:flex;align-items:center;justify-content:center">
       <svg width="26" height="26" viewBox="0 0 24 24"><path d="M4 9 L8 9 L13 4 L13 20 L8 15 L4 15 Z" fill="currentColor"/><path d="M16.5 8.5 Q19.5 12 16.5 15.5 M18.5 6 Q23 12 18.5 18" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/></svg>
     </button>
   </div>
@@ -1065,17 +1104,30 @@ html{scroll-padding-bottom:160px}
       <button onClick="{{ useHint }}" style="background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);border-radius:12px;padding:10px 16px;cursor:pointer;font-size:14.5px;color:var(--tt-fg-0e7c6b);font-weight:700;min-height:44px">Hint: take two away</button>
     </div>
   </sc-if>
+  <!-- Each option is one role="button": its letter, the bank's words and, once she has answered, a
+       tick or a cross, so right and wrong never rest on green and red alone (WCAG 1.4.1). Its
+       read-aloud button sits over the option's right-hand end as a SIBLING, not inside it: a
+       button inside a button cannot be named or reached properly (4.1.2). The option keeps room
+       for it on the right. Once answered the options do nothing more, so they say so
+       (aria-disabled); the right one and hers say which they are in their names. The two the
+       50:50 hint takes away also leave the Tab order (tabindex -1). -->
   <div style="display:flex;flex-direction:column;gap:12px;margin-top:16px">
     <sc-for list="{{ opts }}" as="o" hint-placeholder-count="4">
-      <div onClick="{{ o.pick }}" onKeyDown="{{ o.key }}" role="button" tabindex="0" aria-label="{{ o.label }}" style="{{ o.style }}">
-        <span style="{{ o.letterStyle }}">{{ o.letter }}</span>
-        <span style="flex:1;font-size:19px;line-height:1.4">{{ o.text }}</span>
-        <button onClick="{{ o.speak }}" aria-label="Read this answer aloud" style="flex:none;width:44px;height:44px;border-radius:50%;background:rgba(0,0,0,.05);border:none;cursor:pointer;color:var(--tt-fg-6e6a5e);display:flex;align-items:center;justify-content:center">
-          <svg width="20" height="20" viewBox="0 0 24 24"><path d="M4 9 L8 9 L13 4 L13 20 L8 15 L4 15 Z" fill="currentColor"/><path d="M16.5 8.5 Q19.5 12 16.5 15.5" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/></svg>
+      <div style="position:relative">
+        <div onClick="{{ o.pick }}" onKeyDown="{{ o.key }}" role="button" tabindex="{{ o.tab }}" aria-label="{{ o.label }}" aria-disabled="{{ o.off }}" style="{{ o.style }}">
+          <span style="{{ o.letterStyle }}">{{ o.letter }}</span>
+          <span style="flex:1;font-size:19px;line-height:1.4">{{ o.text }}</span>
+          <sc-if value="{{ o.hasMark }}" hint-placeholder-val="{{ false }}"><span aria-hidden="true" style="{{ o.markStyle }}">{{ o.markGlyph }}</span></sc-if>
+        </div>
+        <button onClick="{{ o.speak }}" aria-label="{{ o.speakLabel }}" disabled="{{ o.removed }}" style="{{ o.speakStyle }}">
+          <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24"><path d="M4 9 L8 9 L13 4 L13 20 L8 15 L4 15 Z" fill="currentColor"/><path d="M16.5 8.5 Q19.5 12 16.5 15.5" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/></svg>
         </button>
       </div>
     </sc-for>
   </div>
+  <!-- Said by a screen reader as soon as she answers: right or not, and the right answer in the
+       bank's own words (WCAG 4.1.3). Empty until then; always in the page so the change is heard. -->
+  <div class="tt-sr" role="status">{{ answerSay }}</div>
   <sc-if value="{{ answered }}" hint-placeholder-val="{{ false }}">
     <div style="{{ feedbackStyle }}">
       <div style="display:flex;align-items:flex-start;gap:12px">
@@ -1096,7 +1148,8 @@ html{scroll-padding-bottom:160px}
             </sc-if>
           </sc-if>
         </div>
-        <button onClick="{{ speakExp }}" aria-label="Read the explanation aloud" style="flex:none;width:48px;height:48px;border-radius:50%;background:rgba(255,255,255,.7);border:none;cursor:pointer;color:var(--tt-fg-2a2c33);display:flex;align-items:center;justify-content:center">
+        <!-- A card-coloured circle in both themes: see-through white hid the dark theme's light icon (WCAG 1.4.11). -->
+        <button onClick="{{ speakExp }}" aria-label="Read the explanation aloud" style="flex:none;width:48px;height:48px;border-radius:50%;background:var(--tt-bg-fff);border:none;cursor:pointer;color:var(--tt-fg-2a2c33);display:flex;align-items:center;justify-content:center">
           <svg width="22" height="22" viewBox="0 0 24 24"><path d="M4 9 L8 9 L13 4 L13 20 L8 15 L4 15 Z" fill="currentColor"/><path d="M16.5 8.5 Q19.5 12 16.5 15.5" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/></svg>
         </button>
       </div>
@@ -1112,7 +1165,7 @@ html{scroll-padding-bottom:160px}
   </sc-if>
   <!-- Notes: in the page on question screens, after Next, so it can never cover it (#12 C) -->
   <sc-if value="{{ notesInline }}" hint-placeholder-val="{{ false }}">
-    <div style="display:flex;justify-content:flex-end;margin-top:16px"><button onClick="{{ toggleNotes }}" style="{{ notesInlineStyle }}"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24"><path d="M5 4 L16 4 L20 8 L20 20 L5 20 Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M8.5 10.5 L16.5 10.5 M8.5 14 L14.5 14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>My notes</button></div>
+    <div style="display:flex;justify-content:flex-end;margin-top:16px"><button onClick="{{ toggleNotes }}" data-tt-notes-btn="1" style="{{ notesInlineStyle }}"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24"><path d="M5 4 L16 4 L20 8 L20 20 L5 20 Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M8.5 10.5 L16.5 10.5 M8.5 14 L14.5 14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>My notes</button></div>
   </sc-if>
 </div>
 </sc-if>
@@ -1126,7 +1179,7 @@ html{scroll-padding-bottom:160px}
   <sc-if value="{{ hasLevelUp }}" hint-placeholder-val="{{ false }}">
     <div style="max-width:420px;margin:18px auto 0;background:#0E7C6B;color:#fff;border-radius:18px;padding:14px 18px;display:flex;align-items:center;gap:12px;text-align:left">
       <svg width="30" height="30" viewBox="0 0 24 24" style="flex:none"><path d="M12 2.5 L14.6 8.6 L21.2 9.2 L16.2 13.6 L17.7 20.1 L12 16.7 L6.3 20.1 L7.8 13.6 L2.8 9.2 L9.4 8.6 Z" fill="#F2A93B"/></svg>
-      <span><span style="display:block;font-family:'Nunito',sans-serif;font-weight:900;font-size:17px">Levelled up</span><span style="display:block;font-size:14px;opacity:.9">{{ levelUpLine }}</span></span>
+      <span><span style="display:block;font-family:'Nunito',sans-serif;font-weight:900;font-size:17px">Levelled up</span><span style="display:block;font-size:14px">{{ levelUpLine }}</span></span>
     </div>
   </sc-if>
   <div style="max-width:420px;margin:20px auto 0">
@@ -1181,7 +1234,8 @@ html{scroll-padding-bottom:160px}
     <button onClick="{{ goHome }}" aria-label="Back to home" style="background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);border-radius:12px;width:44px;height:44px;cursor:pointer;font-size:18px">←</button>
     <h1 tabindex="-1" style="margin:0;font-family:'Nunito',sans-serif;font-weight:900;font-size:24px;flex:1">My Progress</h1>
   </div>
-  <div style="background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);border-radius:22px;padding:20px;display:flex;align-items:center;gap:20px">
+  <!-- wraps: at 320px wide "Keep practising" ran 17px past the card beside the dial (WCAG 1.4.10) -->
+  <div style="background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);border-radius:22px;padding:20px;display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:20px">
     <!-- The number is HTML laid over the ring: a {{ value }} inside SVG <text> becomes an HTML
          <span>, which SVG never draws, so the dial showed only "%" (issue #12 D) -->
     <div data-tt-dial style="position:relative;width:132px;height:132px;flex:none">
@@ -1194,7 +1248,7 @@ html{scroll-padding-bottom:160px}
         <span style="font-size:10.5px;line-height:1;color:var(--tt-fg-6e6a5e)">ready</span>
       </div>
     </div>
-    <div style="flex:1">
+    <div style="flex:1 1 150px;min-width:0">
       <div style="font-family:'Nunito',sans-serif;font-weight:900;font-size:22px">{{ readyLabel }}</div>
       <div style="font-size:14.5px;color:var(--tt-fg-6e6a5e);margin-top:6px;line-height:1.5">{{ readySub }}</div>
     </div>
@@ -1261,9 +1315,9 @@ html{scroll-padding-bottom:160px}
   <sc-if value="{{ hasTests }}" hint-placeholder-val="{{ false }}">
     <h2 style="font-family:'Nunito',sans-serif;font-weight:800;font-size:18px;margin:26px 0 10px">Your mock tests</h2>
     <div style="background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);border-radius:20px;padding:16px">
-      <svg viewBox="0 0 340 130" style="width:100%;display:block">
-        <line x1="12" y1="{{ passLineY }}" x2="328" y2="{{ passLineY }}" stroke="#F2A93B" stroke-width="1.5" stroke-dasharray="5 4"></line>
-        <text x="328" y="{{ passLabelY }}" text-anchor="end" font-size="9" fill="#C77E14" font-family="sans-serif">pass 43</text>
+      <svg viewBox="0 0 340 130" role="img" aria-label="{{ chartSay }}" style="width:100%;display:block">
+        <line x1="12" y1="{{ passLineY }}" x2="328" y2="{{ passLineY }}" stroke="#C77E14" stroke-width="1.5" stroke-dasharray="5 4"></line>
+        <text x="328" y="{{ passLabelY }}" text-anchor="end" font-size="9" font-family="sans-serif" style="fill:var(--tt-fg-8a5a0b)">pass 43</text>
         <polyline points="{{ chartPts }}" fill="none" stroke="#0E7C6B" stroke-width="2.5" stroke-linejoin="round"></polyline>
         <sc-for list="{{ chartDots }}" as="d" hint-placeholder-count="3">
           <circle cx="{{ d.x }}" cy="{{ d.y }}" r="4" fill="{{ d.fill }}"></circle>
@@ -1275,7 +1329,7 @@ html{scroll-padding-bottom:160px}
   <div style="display:flex;flex-direction:column;gap:10px">
     <sc-for list="{{ progTips }}" as="t" hint-placeholder-count="3">
       <div style="background:var(--tt-bg-fbf1dc);border:1px solid var(--tt-bd-f0d9a8);border-radius:16px;padding:13px 16px">
-        <div style="font-size:12px;font-weight:800;color:var(--tt-fg-c77e14);text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px">{{ t.topic }}</div>
+        <div style="font-size:12px;font-weight:800;color:var(--tt-fg-8a5a0b);text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px">{{ t.topic }}</div>
         <div style="font-size:15.5px;line-height:1.5">{{ t.text }}</div>
       </div>
     </sc-for>
@@ -1339,11 +1393,12 @@ html{scroll-padding-bottom:160px}
   <button onClick="{{ startSignPractice }}" style="width:100%;background:#0E7C6B;color:#fff;border:none;border-radius:18px;min-height:60px;font-family:'Nunito',sans-serif;font-weight:900;font-size:19px;cursor:pointer;margin-bottom:8px">Quiz me on the signs</button>
   <div style="font-size:14.5px;color:var(--tt-fg-6e6a5e);margin:6px 0 16px;text-align:center">Or tap any sign to hear what it means.</div>
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+    <!-- A real button, so a keyboard can reach it and Enter or Space plays it (WCAG 2.1.1). -->
     <sc-for list="{{ signTiles }}" as="s" hint-placeholder-count="6">
-      <div onClick="{{ s.speak }}" style="background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);border-radius:18px;padding:16px 12px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center">
+      <button type="button" onClick="{{ s.speak }}" aria-label="{{ s.say }}" style="background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);border-radius:18px;padding:16px 12px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center;width:100%;color:inherit;font:inherit">
         <x-import component-from-global-scope="SignImage" from="./signs.js" hint="{{ s.hint }}" size="{{ signTileSize }}" hint-size="92px,92px"></x-import>
         <span style="font-size:14.5px;font-weight:700;line-height:1.3">{{ s.label }}</span>
-      </div>
+      </button>
     </sc-for>
   </div>
 </div>
@@ -1358,16 +1413,16 @@ html{scroll-padding-bottom:160px}
   </div>
   <div style="background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);border-radius:22px;padding:24px">
     <div style="display:flex;flex-direction:column;gap:16px;font-size:18px;line-height:1.5">
-      <div style="display:flex;gap:12px;align-items:center"><span style="flex:none;width:38px;height:38px;border-radius:12px;background:var(--tt-bg-e4f2ef);color:var(--tt-fg-0e7c6b);display:flex;align-items:center;justify-content:center;font-family:'Nunito',sans-serif;font-weight:900">50</span>questions from every topic</div>
-      <div style="display:flex;gap:12px;align-items:center"><span style="flex:none;width:38px;height:38px;border-radius:12px;background:var(--tt-bg-e4f2ef);color:var(--tt-fg-0e7c6b);display:flex;align-items:center;justify-content:center;font-family:'Nunito',sans-serif;font-weight:900">57</span>minutes on the clock</div>
-      <div style="display:flex;gap:12px;align-items:center"><span style="flex:none;width:38px;height:38px;border-radius:12px;background:var(--tt-bg-e4f2ef);color:var(--tt-fg-0e7c6b);display:flex;align-items:center;justify-content:center;font-family:'Nunito',sans-serif;font-weight:900">43</span>correct answers to pass</div>
+      <div style="display:flex;gap:12px;align-items:center"><span style="flex:none;width:38px;height:38px;border-radius:12px;background:var(--tt-bg-e4f2ef);color:var(--tt-fg-0a5d50);display:flex;align-items:center;justify-content:center;font-family:'Nunito',sans-serif;font-weight:900">50</span>questions from every topic</div>
+      <div style="display:flex;gap:12px;align-items:center"><span style="flex:none;width:38px;height:38px;border-radius:12px;background:var(--tt-bg-e4f2ef);color:var(--tt-fg-0a5d50);display:flex;align-items:center;justify-content:center;font-family:'Nunito',sans-serif;font-weight:900">57</span>minutes on the clock</div>
+      <div style="display:flex;gap:12px;align-items:center"><span style="flex:none;width:38px;height:38px;border-radius:12px;background:var(--tt-bg-e4f2ef);color:var(--tt-fg-0a5d50);display:flex;align-items:center;justify-content:center;font-family:'Nunito',sans-serif;font-weight:900">43</span>correct answers to pass</div>
     </div>
     <div style="font-size:15.5px;color:var(--tt-fg-6e6a5e);margin-top:18px;line-height:1.5">No feedback until the end, just like the real test. You can flag a question and come back to it. The speaker buttons still work — the real test has a voiceover option too.</div>
   </div>
   <h2 style="font-family:'Nunito',sans-serif;font-weight:800;font-size:16px;margin:18px 0 8px">Which kind of test?</h2>
   <div style="display:flex;gap:10px">
     <sc-for list="{{ testModeChoices }}" as="m" hint-placeholder-count="2">
-      <button onClick="{{ m.pick }}" style="{{ m.style }}"><span style="display:block;font-weight:800;font-size:15.5px">{{ m.name }}</span><span style="display:block;font-size:13px;color:var(--tt-fg-6e6a5e);margin-top:2px">{{ m.sub }}</span></button>
+      <button onClick="{{ m.pick }}" aria-pressed="{{ m.on }}" style="{{ m.style }}"><span style="display:block;font-weight:800;font-size:15.5px">{{ m.name }}</span><span style="display:block;font-size:13px;color:var(--tt-fg-6e6a5e);margin-top:2px">{{ m.sub }}</span></button>
     </sc-for>
   </div>
   <sc-if value="{{ showTestMix }}" hint-placeholder-val="{{ false }}">
@@ -1377,7 +1432,7 @@ html{scroll-padding-bottom:160px}
       <sc-for list="{{ testMixRows }}" as="m" hint-placeholder-count="5">
         <div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--tt-bd-f2ede1)">
           <span style="flex:1;font-size:14.5px;line-height:1.3">{{ m.name }}</span>
-          <button onClick="{{ m.dec }}" aria-label="Fewer" style="flex:none;width:44px;height:44px;border-radius:12px;background:var(--tt-bg-efe9dc);border:none;font-size:20px;cursor:pointer;color:var(--tt-fg-6e6a5e)">−</button>
+          <button onClick="{{ m.dec }}" aria-label="Fewer" style="flex:none;width:44px;height:44px;border-radius:12px;background:var(--tt-bg-efe9dc);border:none;font-size:20px;cursor:pointer;color:var(--tt-fg-686458)">−</button>
           <span style="width:30px;text-align:center;font-family:'Nunito',sans-serif;font-weight:900;font-size:17px;flex:none">{{ m.count }}</span>
           <button onClick="{{ m.inc }}" aria-label="More" style="flex:none;width:44px;height:44px;border-radius:12px;background:var(--tt-bg-e4f2ef);border:none;font-size:20px;cursor:pointer;color:var(--tt-fg-0a5d50)">+</button>
         </div>
@@ -1385,7 +1440,7 @@ html{scroll-padding-bottom:160px}
     </div>
     <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 2px 0">
       <span style="font-size:15px">Timer <span style="color:var(--tt-fg-6e6a5e)">({{ customTimeLabel }})</span></span>
-      <button onClick="{{ flipCustomTimer }}" aria-label="Timer on or off" style="{{ ctTrack }}"><span style="{{ ctKnob }}"></span></button>
+      <button onClick="{{ flipCustomTimer }}" role="switch" aria-checked="{{ ctOn }}" aria-label="Timer for tests" style="{{ ctTrack }}"><span style="{{ ctKnob }}"></span></button>
     </div>
   </sc-if>
   <button onClick="{{ startTest }}" style="width:100%;margin-top:20px;background:#0E7C6B;color:#fff;border:none;border-radius:18px;min-height:60px;font-family:'Nunito',sans-serif;font-weight:900;font-size:20px;cursor:pointer">Start the test</button>
@@ -1398,9 +1453,9 @@ html{scroll-padding-bottom:160px}
   <h1 class="tt-sr" tabindex="-1">Mock test, {{ tQNum }} of {{ tTotal }}</h1>
   <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
     <div style="{{ timerStyle }}">{{ testTimer }}</div>
-    <div style="flex:1;text-align:center;font-size:15px;color:var(--tt-fg-6e6a5e)">{{ tQNum }} of {{ tTotal }}</div>
-    <button onClick="{{ toggleFlag }}" style="{{ flagStyle }}">
-      <svg width="18" height="18" viewBox="0 0 24 24"><path d="M6 21 L6 4 L18 4 L14.5 8.5 L18 13 L6 13" fill="currentColor" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
+    <div style="flex:1;min-width:0;text-align:center;font-size:15px;color:var(--tt-fg-6e6a5e)">{{ tQNum }} of {{ tTotal }}</div><!-- min-width:0 lets it wrap: with "Flagged" the row ran 4px off a 320px screen -->
+    <button onClick="{{ toggleFlag }}" aria-label="Flag this question to come back to" aria-pressed="{{ flagPressed }}" style="{{ flagStyle }}">
+      <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24"><path d="M6 21 L6 4 L18 4 L14.5 8.5 L18 13 L6 13" fill="currentColor" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
       {{ flagLabel }}
     </button>
   </div>
@@ -1411,17 +1466,22 @@ html{scroll-padding-bottom:160px}
   </sc-if>
   <div style="background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);border-radius:22px;padding:20px;display:flex;gap:12px;align-items:flex-start">
     <div style="flex:1;font-size:20px;line-height:1.45;font-weight:700">{{ tQText }}</div>
-    <button onClick="{{ speakTQ }}" aria-label="Read the question aloud" style="flex:none;width:48px;height:48px;border-radius:50%;background:var(--tt-bg-e4f2ef);border:none;cursor:pointer;color:var(--tt-fg-0e7c6b);display:flex;align-items:center;justify-content:center">
+    <button onClick="{{ speakTQ }}" aria-label="Read the question aloud" style="flex:none;width:48px;height:48px;border-radius:50%;background:var(--tt-bg-e4f2ef);border:none;cursor:pointer;color:var(--tt-fg-0a5d50);display:flex;align-items:center;justify-content:center">
       <svg width="23" height="23" viewBox="0 0 24 24"><path d="M4 9 L8 9 L13 4 L13 20 L8 15 L4 15 Z" fill="currentColor"/><path d="M16.5 8.5 Q19.5 12 16.5 15.5 M18.5 6 Q23 12 18.5 18" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/></svg>
     </button>
   </div>
+  <!-- As in practice: each option is one role="button" with its read-aloud button beside it, not
+       inside it (WCAG 4.1.2). aria-pressed says which one is her answer, which the page shows
+       with the filled letter and the teal border. -->
   <div style="display:flex;flex-direction:column;gap:11px;margin-top:14px">
     <sc-for list="{{ tOpts }}" as="o" hint-placeholder-count="4">
-      <div onClick="{{ o.pick }}" onKeyDown="{{ o.key }}" role="button" tabindex="0" aria-label="{{ o.label }}" style="{{ o.style }}">
-        <span style="{{ o.letterStyle }}">{{ o.letter }}</span>
-        <span style="flex:1;font-size:18px;line-height:1.4">{{ o.text }}</span>
-        <button onClick="{{ o.speak }}" aria-label="Read this answer aloud" style="flex:none;width:42px;height:42px;border-radius:50%;background:rgba(0,0,0,.05);border:none;cursor:pointer;color:var(--tt-fg-6e6a5e);display:flex;align-items:center;justify-content:center">
-          <svg width="19" height="19" viewBox="0 0 24 24"><path d="M4 9 L8 9 L13 4 L13 20 L8 15 L4 15 Z" fill="currentColor"/><path d="M16.5 8.5 Q19.5 12 16.5 15.5" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/></svg>
+      <div style="position:relative">
+        <div onClick="{{ o.pick }}" onKeyDown="{{ o.key }}" role="button" tabindex="0" aria-label="{{ o.label }}" aria-pressed="{{ o.pressed }}" style="{{ o.style }}">
+          <span style="{{ o.letterStyle }}">{{ o.letter }}</span>
+          <span style="flex:1;font-size:18px;line-height:1.4">{{ o.text }}</span>
+        </div>
+        <button onClick="{{ o.speak }}" aria-label="{{ o.speakLabel }}" style="position:absolute;right:10px;top:50%;margin-top:-21px;width:42px;height:42px;border-radius:50%;background:rgba(0,0,0,.05);border:none;cursor:pointer;color:var(--tt-fg-6e6a5e);display:flex;align-items:center;justify-content:center">
+          <svg aria-hidden="true" width="19" height="19" viewBox="0 0 24 24"><path d="M4 9 L8 9 L13 4 L13 20 L8 15 L4 15 Z" fill="currentColor"/><path d="M16.5 8.5 Q19.5 12 16.5 15.5" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/></svg>
         </button>
       </div>
     </sc-for>
@@ -1433,7 +1493,7 @@ html{scroll-padding-bottom:160px}
   </div>
   <!-- Notes: in the page, after the Back / Review / Next row, so it can never cover Next (#12 C) -->
   <sc-if value="{{ notesInline }}" hint-placeholder-val="{{ false }}">
-    <div style="display:flex;justify-content:flex-end;margin-top:16px"><button onClick="{{ toggleNotes }}" style="{{ notesInlineStyle }}"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24"><path d="M5 4 L16 4 L20 8 L20 20 L5 20 Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M8.5 10.5 L16.5 10.5 M8.5 14 L14.5 14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>My notes</button></div>
+    <div style="display:flex;justify-content:flex-end;margin-top:16px"><button onClick="{{ toggleNotes }}" data-tt-notes-btn="1" style="{{ notesInlineStyle }}"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24"><path d="M5 4 L16 4 L20 8 L20 20 L5 20 Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M8.5 10.5 L16.5 10.5 M8.5 14 L14.5 14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>My notes</button></div>
   </sc-if>
 </div>
 </sc-if>
@@ -1447,13 +1507,16 @@ html{scroll-padding-bottom:160px}
   </div>
   <div style="font-size:15.5px;color:var(--tt-fg-6e6a5e);margin-bottom:14px">{{ reviewSummary }}</div>
   <div style="display:grid;grid-template-columns:repeat(10,1fr);gap:7px">
+    <!-- Each square says in words what its colour and border show (TTScreen.reviewCellLabel). -->
     <sc-for list="{{ reviewCells }}" as="c" hint-placeholder-count="10">
-      <button onClick="{{ c.go }}" style="{{ c.style }}">{{ c.n }}</button>
+      <button onClick="{{ c.go }}" aria-label="{{ c.label }}" style="{{ c.style }}">{{ c.n }}</button>
     </sc-for>
   </div>
+  <!-- The key: the flagged border is the darker amber #C77E14, 3.3:1 against the white square
+       where #F2A93B was 2:1 (WCAG 1.4.11). -->
   <div style="display:flex;gap:14px;margin-top:14px;font-size:13.5px;color:var(--tt-fg-6e6a5e);flex-wrap:wrap">
     <span style="display:flex;align-items:center;gap:6px"><span style="width:14px;height:14px;border-radius:4px;background:#0E7C6B;display:inline-block"></span>Answered</span>
-    <span style="display:flex;align-items:center;gap:6px"><span style="width:14px;height:14px;border-radius:4px;background:var(--tt-bg-fff);border:2px solid #F2A93B;display:inline-block"></span>Flagged</span>
+    <span style="display:flex;align-items:center;gap:6px"><span style="width:14px;height:14px;border-radius:4px;background:var(--tt-bg-fff);border:2px solid #C77E14;display:inline-block"></span>Flagged</span>
     <span style="display:flex;align-items:center;gap:6px"><span style="width:14px;height:14px;border-radius:4px;background:var(--tt-bg-fff);border:1px solid var(--tt-bd-d8d0bf);display:inline-block"></span>Not answered</span>
   </div>
   <div style="display:flex;gap:10px;margin-top:22px">
@@ -1462,7 +1525,7 @@ html{scroll-padding-bottom:160px}
   </div>
   <!-- Notes: in the page, after Keep going / End test, so it can never cover them (#12 C) -->
   <sc-if value="{{ notesInline }}" hint-placeholder-val="{{ false }}">
-    <div style="display:flex;justify-content:flex-end;margin-top:16px"><button onClick="{{ toggleNotes }}" style="{{ notesInlineStyle }}"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24"><path d="M5 4 L16 4 L20 8 L20 20 L5 20 Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M8.5 10.5 L16.5 10.5 M8.5 14 L14.5 14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>My notes</button></div>
+    <div style="display:flex;justify-content:flex-end;margin-top:16px"><button onClick="{{ toggleNotes }}" data-tt-notes-btn="1" style="{{ notesInlineStyle }}"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24"><path d="M5 4 L16 4 L20 8 L20 20 L5 20 Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M8.5 10.5 L16.5 10.5 M8.5 14 L14.5 14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>My notes</button></div>
   </sc-if>
 </div>
 </sc-if>
@@ -1473,7 +1536,7 @@ html{scroll-padding-bottom:160px}
   <div style="{{ resultBannerStyle }}">
     <div style="font-family:'Nunito',sans-serif;font-weight:900;font-size:44px">{{ resultScore }} / {{ resultTotal }}</div>
     <h1 tabindex="-1" style="margin:0;font-family:'Nunito',sans-serif;font-weight:900;font-size:26px;margin-top:4px">{{ resultLabel }}</h1>
-    <div style="font-size:16px;margin-top:6px;opacity:.85">{{ resultMsg }}</div>
+    <div style="font-size:16px;margin-top:6px">{{ resultMsg }}</div>
   </div>
   <sc-if value="{{ hasWrong }}" hint-placeholder-val="{{ false }}">
     <h2 style="font-family:'Nunito',sans-serif;font-weight:800;font-size:18px;margin:24px 0 10px">Worth another look ({{ wrongN }})</h2>
@@ -1489,7 +1552,7 @@ html{scroll-padding-bottom:160px}
             <div style="font-size:14.5px;color:var(--tt-fg-1c6b3c);font-weight:700;margin-top:3px">Correct — {{ w.right }}</div>
             <div style="font-size:14px;color:var(--tt-fg-6e6a5e);line-height:1.5;margin-top:6px">{{ w.explanation }} · {{ w.ruleRef }}</div>
             <div style="display:flex;gap:8px;flex-wrap:wrap">
-              <button onClick="{{ w.flag }}" style="{{ w.flagStyle }}">{{ w.flagLabel }}</button>
+              <button onClick="{{ w.flag }}" aria-pressed="{{ w.flagOn }}" style="{{ w.flagStyle }}">{{ w.flagLabel }}</button>
               <button onClick="{{ w.more }}" style="margin-top:10px;padding:9px 14px;border-radius:10px;font-size:13.5px;font-weight:700;cursor:pointer;background:var(--tt-bg-fff);border:1px solid var(--tt-bd-0e7c6b);color:var(--tt-fg-0a5d50)">More like this</button>
             </div>
           </div>
@@ -1502,8 +1565,9 @@ html{scroll-padding-bottom:160px}
   <div style="background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);border-radius:20px;padding:6px 18px">
     <sc-for list="{{ resultTopicRows }}" as="r" hint-placeholder-count="5">
       <div style="display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid var(--tt-bd-f2ede1)">
-        <span style="flex:1;font-size:15.5px">{{ r.name }}</span>
-        <span style="width:110px;height:9px;background:var(--tt-bg-efe9dc);border-radius:5px;overflow:hidden;flex:none"><span style="{{ r.barStyle }}"></span></span>
+        <!-- the bar shrinks (to 48px) before a long topic name runs off a 320px screen (WCAG 1.4.10) -->
+        <span style="flex:1;min-width:0;font-size:15.5px">{{ r.name }}</span>
+        <span style="flex:0 1 110px;min-width:48px;height:9px;background:var(--tt-bg-efe9dc);border-radius:5px;overflow:hidden"><span style="{{ r.barStyle }}"></span></span>
         <span style="width:44px;text-align:right;font-weight:700;font-size:15px;flex:none">{{ r.label }}</span>
       </div>
     </sc-for>
@@ -1527,7 +1591,7 @@ html{scroll-padding-bottom:160px}
   <div style="font-size:13px;color:var(--tt-fg-6e6a5e);line-height:1.5;margin-bottom:12px">{{ actNote }}</div>
   <sc-if value="{{ actManyAccounts }}" hint-placeholder-val="{{ false }}">
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
-      <sc-for list="{{ actAccounts }}" as="a" hint-placeholder-count="2"><button onClick="{{ a.pick }}" style="{{ a.style }}">{{ a.label }}</button></sc-for>
+      <sc-for list="{{ actAccounts }}" as="a" hint-placeholder-count="2"><button onClick="{{ a.pick }}" aria-pressed="{{ a.on }}" style="{{ a.style }}">{{ a.label }}</button></sc-for>
     </div>
   </sc-if>
   <sc-if value="{{ actHas }}" hint-placeholder-val="{{ false }}">
@@ -1589,7 +1653,7 @@ html{scroll-padding-bottom:160px}
   </div>
   <div style="font-size:13px;color:var(--tt-fg-6e6a5e);line-height:1.5;margin-bottom:10px">{{ tipsNote }}</div>
   <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
-    <sc-for list="{{ tipsTabs }}" as="t" hint-placeholder-count="3"><button onClick="{{ t.pick }}" style="{{ t.style }}">{{ t.label }}</button></sc-for>
+    <sc-for list="{{ tipsTabs }}" as="t" hint-placeholder-count="3"><button onClick="{{ t.pick }}" aria-pressed="{{ t.on }}" style="{{ t.style }}">{{ t.label }}</button></sc-for>
   </div>
   <sc-if value="{{ tipsCanApproveAll }}" hint-placeholder-val="{{ false }}">
     <button onClick="{{ tipsApproveAll }}" style="width:100%;margin-bottom:12px;background:var(--tt-bg-fff);border:2px solid var(--tt-bd-0e7c6b);border-radius:14px;min-height:48px;font-size:15px;font-weight:700;color:var(--tt-fg-0a5d50);cursor:pointer">Approve all {{ tipsShownCount }} shown</button>
@@ -1662,7 +1726,7 @@ html{scroll-padding-bottom:160px}
   <sc-if value="{{ ansSome }}" hint-placeholder-val="{{ true }}">
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">
       <sc-for list="{{ ansFilters }}" as="f" hint-placeholder-count="3">
-        <button onClick="{{ f.pick }}" style="{{ f.style }}">{{ f.label }}</button>
+        <button onClick="{{ f.pick }}" aria-pressed="{{ f.on }}" style="{{ f.style }}">{{ f.label }}</button>
       </sc-for>
     </div>
     <div style="display:flex;gap:10px;margin-bottom:12px">
@@ -1700,12 +1764,13 @@ html{scroll-padding-bottom:160px}
       <div style="position:sticky;bottom:calc(10px + env(safe-area-inset-bottom));margin-top:16px;background:var(--tt-bg-2a2c33);color:#fff;border-radius:20px;padding:12px;box-shadow:0 8px 24px rgba(0,0,0,.22);z-index:5">
         <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:0 4px 10px">
           <span style="font-family:'Nunito',sans-serif;font-weight:900;font-size:16px">{{ ansTickedLabel }}</span>
-          <span style="display:flex;align-items:center;gap:8px;font-size:13.5px">Timer for tests <button onClick="{{ flipCustomTimer }}" aria-label="Timer on or off" style="{{ ctTrack }}"><span style="{{ ctKnob }}"></span></button></span>
+          <span style="display:flex;align-items:center;gap:8px;font-size:13.5px">Timer for tests <button onClick="{{ flipCustomTimer }}" role="switch" aria-checked="{{ ctOn }}" aria-label="Timer for tests" style="{{ ctTrack }}"><span style="{{ ctKnob }}"></span></button></span>
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
           <button onClick="{{ ansPractise }}" style="background:var(--tt-bg-fff);color:var(--tt-fg-2a2c33);border:none;border-radius:14px;min-height:52px;font-family:'Nunito',sans-serif;font-weight:900;font-size:15px;cursor:pointer;line-height:1.15">Practise them</button>
           <button onClick="{{ ansTest }}" style="background:#0E7C6B;color:#fff;border:none;border-radius:14px;min-height:52px;font-family:'Nunito',sans-serif;font-weight:900;font-size:15px;cursor:pointer;line-height:1.15">Make a test</button>
-          <button onClick="{{ ansMoreLike }}" style="background:#F2A93B;color:var(--tt-fg-2a2c33);border:none;border-radius:14px;min-height:52px;font-family:'Nunito',sans-serif;font-weight:900;font-size:15px;cursor:pointer;line-height:1.15">More like these</button>
+          <!-- dark words on the amber in both themes: the theme's body colour turned light on it in dark (1.6:1) -->
+          <button onClick="{{ ansMoreLike }}" style="background:#F2A93B;color:#2A2C33;border:none;border-radius:14px;min-height:52px;font-family:'Nunito',sans-serif;font-weight:900;font-size:15px;cursor:pointer;line-height:1.15">More like these</button>
         </div>
       </div>
     </sc-if>
@@ -1725,7 +1790,7 @@ html{scroll-padding-bottom:160px}
     <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:-6px 0 14px">
       <span style="font-size:13.5px;color:var(--tt-fg-6e6a5e)">Learner:</span>
       <sc-for list="{{ dashUsers }}" as="u" hint-placeholder-count="2">
-        <button onClick="{{ u.pick }}" style="{{ u.style }}">{{ u.name }}</button>
+        <button onClick="{{ u.pick }}" aria-pressed="{{ u.on }}" style="{{ u.style }}">{{ u.name }}</button>
       </sc-for>
     </div>
   </sc-if>
@@ -1733,7 +1798,7 @@ html{scroll-padding-bottom:160px}
   <div style="background:var(--tt-bg-e4f2ef);border:1px solid var(--tt-bd-bfe0d8);border-radius:20px;padding:16px 18px;margin-bottom:16px">
     <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px">
       <div style="font-family:'Nunito',sans-serif;font-weight:900;font-size:16px;color:var(--tt-fg-0a5d50);flex:1">Coach summary</div>
-      <div style="font-family:'Nunito',sans-serif;font-weight:900;font-size:15px;color:{{ readyColor }}">{{ readyPct }}% ready</div>
+      <div style="font-family:'Nunito',sans-serif;font-weight:900;font-size:15px;color:{{ readyText }}">{{ readyPct }}% ready</div>
     </div>
     <div style="display:flex;flex-direction:column;gap:8px">
       <sc-for list="{{ coachLines }}" as="c" hint-placeholder-count="3">
@@ -1760,9 +1825,9 @@ html{scroll-padding-bottom:160px}
   <h2 style="font-family:'Nunito',sans-serif;font-weight:800;font-size:18px;margin:28px 0 10px">Mock test scores</h2>
   <sc-if value="{{ hasTests }}" hint-placeholder-val="{{ false }}">
     <div style="background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);border-radius:20px;padding:16px">
-      <svg viewBox="0 0 340 130" style="width:100%;display:block">
-        <line x1="12" y1="{{ passLineY }}" x2="328" y2="{{ passLineY }}" stroke="#F2A93B" stroke-width="1.5" stroke-dasharray="5 4"></line>
-        <text x="328" y="{{ passLabelY }}" text-anchor="end" font-size="9" fill="#C77E14" font-family="sans-serif">pass 43</text>
+      <svg viewBox="0 0 340 130" role="img" aria-label="{{ chartSay }}" style="width:100%;display:block">
+        <line x1="12" y1="{{ passLineY }}" x2="328" y2="{{ passLineY }}" stroke="#C77E14" stroke-width="1.5" stroke-dasharray="5 4"></line>
+        <text x="328" y="{{ passLabelY }}" text-anchor="end" font-size="9" font-family="sans-serif" style="fill:var(--tt-fg-8a5a0b)">pass 43</text>
         <polyline points="{{ chartPts }}" fill="none" stroke="#0E7C6B" stroke-width="2.5" stroke-linejoin="round"></polyline>
         <sc-for list="{{ chartDots }}" as="d" hint-placeholder-count="3">
           <circle cx="{{ d.x }}" cy="{{ d.y }}" r="4" fill="{{ d.fill }}"></circle>
@@ -1771,13 +1836,15 @@ html{scroll-padding-bottom:160px}
     </div>
     <div style="background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);border-radius:20px;padding:4px 18px;margin-top:12px">
       <sc-for list="{{ historyRows }}" as="h" hint-placeholder-count="3">
-        <div onClick="{{ h.pick }}" style="padding:12px 0;border-bottom:1px solid var(--tt-bd-f2ede1);cursor:pointer">
-          <div style="display:flex;align-items:center;gap:10px">
+        <!-- The row's summary line is a real button that opens its topic breakdown, and says
+             whether it is open (aria-expanded), so a keyboard can reach it (WCAG 2.1.1, 4.1.2). -->
+        <div style="padding:12px 0;border-bottom:1px solid var(--tt-bd-f2ede1)">
+          <button type="button" onClick="{{ h.pick }}" aria-expanded="{{ h.expanded }}" style="display:flex;align-items:center;gap:10px;width:100%;min-height:32px;padding:0;background:none;border:none;cursor:pointer;color:inherit;font:inherit;text-align:left">
             <span style="flex:1;font-size:15px">{{ h.date }}</span>
             <span style="font-size:13px;color:var(--tt-fg-6e6a5e)">{{ h.src }}</span>
             <span style="font-weight:700;font-size:15.5px">{{ h.score }}</span>
             <span style="{{ h.passStyle }}">{{ h.passLabel }}</span>
-          </div>
+          </button>
           <sc-if value="{{ h.open }}" hint-placeholder-val="{{ false }}">
             <div style="margin-top:10px;display:grid;grid-template-columns:1fr 1fr;gap:4px 18px">
               <sc-for list="{{ h.detail }}" as="d" hint-placeholder-count="2">
@@ -1805,9 +1872,9 @@ html{scroll-padding-bottom:160px}
         <sc-for list="{{ logTopics }}" as="t" hint-placeholder-count="4">
           <div style="display:flex;align-items:center;gap:6px;font-size:13px">
             <span style="flex:1;line-height:1.2">{{ t.name }}</span>
-            <input type="number" min="0" max="20" value="{{ t.c }}" name="{{ t.cName }}" onChange="{{ logTopicChange }}" style="width:44px;padding:7px 4px;border:1px solid var(--tt-bd-e8e1d2);border-radius:8px;text-align:center;font-size:14px">
-            <span style="color:var(--tt-fg-b5ae9e)">/</span>
-            <input type="number" min="0" max="20" value="{{ t.n }}" name="{{ t.nName }}" onChange="{{ logTopicChange }}" style="width:44px;padding:7px 4px;border:1px solid var(--tt-bd-e8e1d2);border-radius:8px;text-align:center;font-size:14px">
+            <input type="number" min="0" max="20" value="{{ t.c }}" name="{{ t.cName }}" onChange="{{ logTopicChange }}" aria-label="{{ t.cLabel }}" style="width:44px;padding:7px 4px;border:1px solid var(--tt-bd-e8e1d2);border-radius:8px;text-align:center;font-size:14px">
+            <span style="color:var(--tt-fg-6e6a5e)">/</span>
+            <input type="number" min="0" max="20" value="{{ t.n }}" name="{{ t.nName }}" onChange="{{ logTopicChange }}" aria-label="{{ t.nLabel }}" style="width:44px;padding:7px 4px;border:1px solid var(--tt-bd-e8e1d2);border-radius:8px;text-align:center;font-size:14px">
           </div>
         </sc-for>
       </div>
@@ -1830,7 +1897,7 @@ html{scroll-padding-bottom:160px}
         <!-- Wraps: at the largest text size the one-line figure ("0/2 · Incidents and
              emergencies") pushed the dashboard 5px past a 390px screen (#12 B) -->
         <div style="display:flex;flex-wrap:wrap;gap:2px 12px;align-items:baseline;padding:10px 0;border-bottom:1px solid var(--tt-bd-f2ede1)">
-          <span style="flex:none;width:24px;font-family:'Nunito',sans-serif;font-weight:900;color:var(--tt-fg-b5ae9e);font-size:14px">{{ h.rank }}</span>
+          <span style="flex:none;width:24px;font-family:'Nunito',sans-serif;font-weight:900;color:var(--tt-fg-6e6a5e);font-size:14px">{{ h.rank }}</span>
           <span style="flex:1 1 150px;min-width:0;font-size:14.5px;line-height:1.35">{{ h.text }}</span>
           <span style="flex:0 1 auto;margin-left:auto;font-size:12.5px;color:var(--tt-fg-6e6a5e)">{{ h.meta }}</span>
         </div>
@@ -1843,17 +1910,17 @@ html{scroll-padding-bottom:160px}
 
   <h2 style="font-family:'Nunito',sans-serif;font-weight:800;font-size:18px;margin:28px 0 10px">Question packs</h2>
   <div style="background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);border-radius:20px;padding:4px 18px">
-    <div style="display:flex;gap:12px;padding:10px 0 2px;font-size:11.5px;color:var(--tt-fg-b5ae9e);font-weight:700;text-transform:uppercase;letter-spacing:.04em"><span style="flex:1"></span><span style="width:66px;text-align:center">Practise</span><span style="width:66px;text-align:center">Tests</span><span style="width:26px"></span></div>
+    <div style="display:flex;gap:12px;padding:10px 0 2px;font-size:11.5px;color:var(--tt-fg-6e6a5e);font-weight:700;text-transform:uppercase;letter-spacing:.04em"><span style="flex:1"></span><span style="width:66px;text-align:center">Practise</span><span style="width:66px;text-align:center">Tests</span><span style="width:26px"></span></div>
     <sc-for list="{{ packRows }}" as="p" hint-placeholder-count="4">
       <div style="display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid var(--tt-bd-f2ede1)">
         <span style="flex:1;min-width:0"><span style="display:block;font-size:15px;font-weight:700">{{ p.name }}</span><span style="display:block;font-size:12.5px;color:var(--tt-fg-6e6a5e);margin-top:2px">{{ p.meta }}</span></span>
-        <span style="width:66px;display:flex;justify-content:center;flex:none"><button onClick="{{ p.flipLearn }}" aria-label="Use in practise" style="{{ p.learnStyle }}"><span style="{{ p.learnKnob }}"></span></button></span>
-        <span style="width:66px;display:flex;justify-content:center;flex:none"><button onClick="{{ p.flipTest }}" aria-label="Use in tests" style="{{ p.testStyle }}"><span style="{{ p.testKnob }}"></span></button></span>
+        <span style="width:66px;display:flex;justify-content:center;flex:none"><button onClick="{{ p.flipLearn }}" role="switch" aria-checked="{{ p.learnOn }}" aria-label="Use in practise" style="{{ p.learnStyle }}"><span style="{{ p.learnKnob }}"></span></button></span>
+        <span style="width:66px;display:flex;justify-content:center;flex:none"><button onClick="{{ p.flipTest }}" role="switch" aria-checked="{{ p.testOn }}" aria-label="Use in tests" style="{{ p.testStyle }}"><span style="{{ p.testKnob }}"></span></button></span>
         <span style="width:26px;display:flex;justify-content:center;flex:none"><sc-if value="{{ p.canDelete }}" hint-placeholder-val="{{ false }}"><button onClick="{{ p.del }}" aria-label="Remove this pack" style="background:none;border:none;color:var(--tt-fg-b8433d);font-size:16px;cursor:pointer;padding:4px">✕</button></sc-if></span>
       </div>
     </sc-for>
   </div>
-  <label style="display:flex;align-items:center;justify-content:center;width:100%;box-sizing:border-box;margin-top:12px;background:var(--tt-bg-e4f2ef);border:2px dashed var(--tt-bd-0e7c6b);color:var(--tt-fg-0a5d50);border-radius:16px;min-height:52px;font-size:15.5px;cursor:pointer;font-weight:700">Load a question pack (JSON file)…<input type="file" accept=".json,application/json" onChange="{{ importPack }}" style="display:none"></label>
+  <label class="tt-file" style="display:flex;align-items:center;justify-content:center;width:100%;box-sizing:border-box;margin-top:12px;background:var(--tt-bg-e4f2ef);border:2px dashed var(--tt-bd-0e7c6b);color:var(--tt-fg-0a5d50);border-radius:16px;min-height:52px;font-size:15.5px;cursor:pointer;font-weight:700">Load a question pack (JSON file)…<input type="file" accept=".json,application/json" onChange="{{ importPack }}" class="tt-sr"></label>
   <div style="font-size:13px;color:var(--tt-fg-6e6a5e);margin-top:8px;line-height:1.5">A pack is a JSON list using the same fields as the exported bank (question, options ×4, correctIndex, explanation, ruleRef, topic 1–14). Questions you write or have a licence for can be loaded here, then switched on or off for practise and tests separately. Packs can also carry a <b>testType</b> field (car, motorcycle, LGV…), so other theory tests drop in later as packs — no redesign needed.</div>
 
   <h2 style="font-family:'Nunito',sans-serif;font-weight:800;font-size:18px;margin:28px 0 10px">Subscription</h2>
@@ -1861,18 +1928,18 @@ html{scroll-padding-bottom:160px}
     <div style="font-size:14px;color:var(--tt-fg-6e6a5e);line-height:1.55;margin-bottom:12px">{{ subStatus }}</div>
     <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:6px 0 12px">
       <span style="font-size:15px">Require a subscription to practise</span>
-      <button onClick="{{ subToggle }}" aria-label="Require subscription" style="{{ subTrackStyle }}"><span style="{{ subKnobStyle }}"></span></button>
+      <button onClick="{{ subToggle }}" role="switch" aria-checked="{{ subOn }}" aria-label="Require subscription" style="{{ subTrackStyle }}"><span style="{{ subKnobStyle }}"></span></button>
     </div>
     <label style="font-size:13.5px;color:var(--tt-fg-6e6a5e)">Price wording shown on the lock screen<input value="{{ subPrice }}" onChange="{{ subPriceChange }}" placeholder="£4.99 a month" style="display:block;width:100%;box-sizing:border-box;margin-top:4px;padding:11px;border:1px solid var(--tt-bd-e8e1d2);border-radius:10px;font-size:14px"></label>
     <div style="font-size:13px;color:var(--tt-fg-6e6a5e);line-height:1.5;margin-top:10px">Charging is handled by Stripe on the server: subscribers pay in the app, access switches on by itself, and cancelling or a failed payment switches it off again. The amounts come from your Stripe prices (SETUP.md §3) — this field is only the wording.</div>
     <div style="font-family:'Nunito',sans-serif;font-weight:800;font-size:15px;margin:16px 0 8px">Access for {{ learnerName }}</div>
     <div style="display:flex;flex-wrap:wrap;gap:8px">
-      <sc-for list="{{ planChoices }}" as="p" hint-placeholder-count="5"><button onClick="{{ p.pick }}" style="{{ p.style }}">{{ p.label }}</button></sc-for>
+      <sc-for list="{{ planChoices }}" as="p" hint-placeholder-count="5"><button onClick="{{ p.pick }}" aria-pressed="{{ p.on }}" style="{{ p.style }}">{{ p.label }}</button></sc-for>
     </div>
     <sc-if value="{{ planIsComp }}" hint-placeholder-val="{{ false }}">
       <label style="font-size:13.5px;color:var(--tt-fg-6e6a5e);display:block;margin-top:10px">Free until<input type="date" value="{{ planUntil }}" onChange="{{ planUntilChange }}" style="display:block;margin-top:4px;padding:11px;border:1px solid var(--tt-bd-e8e1d2);border-radius:10px;font-size:14px;background:var(--tt-bg-fff)"></label>
     </sc-if>
-    <button onClick="{{ showPayScreen }}" style="background:var(--tt-bg-efe9dc);border:none;border-radius:12px;min-height:46px;font-size:14.5px;font-weight:700;color:var(--tt-fg-6e6a5e);cursor:pointer;width:100%;margin-top:14px">Show me the subscribe screen</button>
+    <button onClick="{{ showPayScreen }}" style="background:var(--tt-bg-efe9dc);border:none;border-radius:12px;min-height:46px;font-size:14.5px;font-weight:700;color:var(--tt-fg-686458);cursor:pointer;width:100%;margin-top:14px">Show me the subscribe screen</button>
     <div style="font-size:13px;color:var(--tt-fg-6e6a5e);line-height:1.5;margin-top:12px">Use these for family and testers — Always free or Free until a date give access without paying. Suspended and Blocked lock a learner out until you change it back. Switch learner with the chips at the top of this page. Paying subscribers need nothing here.</div>
   </div>
 
@@ -1893,10 +1960,10 @@ html{scroll-padding-bottom:160px}
       </sc-if>
       <div style="font-size:13px;color:var(--tt-fg-6e6a5e);line-height:1.5">Progress backs up to your account automatically and follows you to every device you sign in on. Answers made offline are sent when the device is back online.</div>
       <sc-if value="{{ isAdminAccount }}" hint-placeholder-val="{{ false }}">
-        <button onClick="{{ uploadBank }}" style="background:var(--tt-bg-efe9dc);border:none;border-radius:12px;min-height:46px;font-size:14.5px;font-weight:700;color:var(--tt-fg-6e6a5e);cursor:pointer">{{ uploadBankLabel }}</button>
+        <button onClick="{{ uploadBank }}" style="background:var(--tt-bg-efe9dc);border:none;border-radius:12px;min-height:46px;font-size:14.5px;font-weight:700;color:var(--tt-fg-686458);cursor:pointer">{{ uploadBankLabel }}</button>
       </sc-if>
       <sc-if value="{{ isAdminAccount }}" hint-placeholder-val="{{ false }}">
-        <button onClick="{{ goSetupScreen }}" style="background:none;border:none;color:var(--tt-fg-b5ae9e);font-size:12.5px;cursor:pointer;padding:6px;min-height:44px;text-decoration:underline">Server settings</button>
+        <button onClick="{{ goSetupScreen }}" style="background:none;border:none;color:var(--tt-fg-6e6a5e);font-size:12.5px;cursor:pointer;padding:6px;min-height:44px;text-decoration:underline">Server settings</button>
       </sc-if>
     </div>
   </div>
@@ -1904,7 +1971,7 @@ html{scroll-padding-bottom:160px}
   <h2 style="font-family:'Nunito',sans-serif;font-weight:800;font-size:18px;margin:28px 0 10px">Data</h2>
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
     <button onClick="{{ exportData }}" style="background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);border-radius:14px;min-height:50px;font-size:15px;cursor:pointer">Export backup</button>
-    <label style="background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);border-radius:14px;min-height:50px;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center">Import backup<input type="file" accept=".json,application/json" onChange="{{ importFile }}" style="display:none"></label>
+    <label class="tt-file" style="background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);border-radius:14px;min-height:50px;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center">Import backup<input type="file" accept=".json,application/json" onChange="{{ importFile }}" class="tt-sr"></label>
     <button onClick="{{ goEditor }}" style="background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);border-radius:14px;min-height:50px;font-size:15px;cursor:pointer">Edit questions</button>
     <button onClick="{{ goPrint }}" style="background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);border-radius:14px;min-height:50px;font-size:15px;cursor:pointer">Print</button>
   </div>
@@ -1919,7 +1986,7 @@ html{scroll-padding-bottom:160px}
     <h1 tabindex="-1" style="margin:0;font-family:'Nunito',sans-serif;font-weight:900;font-size:24px;flex:1">Questions</h1>
     <button onClick="{{ exportBank }}" style="background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);border-radius:12px;padding:0 14px;height:44px;cursor:pointer;font-size:14px;color:var(--tt-fg-0e7c6b);font-weight:700">Export bank</button>
   </div>
-  <select value="{{ edTopic }}" onChange="{{ setEdTopic }}" style="width:100%;padding:12px;border:1px solid var(--tt-bd-e8e1d2);border-radius:12px;font-size:16px;background:var(--tt-bg-fff);margin-bottom:12px">
+  <select value="{{ edTopic }}" onChange="{{ setEdTopic }}" aria-label="Topic to edit" style="width:100%;padding:12px;border:1px solid var(--tt-bd-e8e1d2);border-radius:12px;font-size:16px;background:var(--tt-bg-fff);margin-bottom:12px">
     <sc-for list="{{ edTopicOpts }}" as="t" hint-placeholder-count="3">
       <option value="{{ t.v }}">{{ t.label }}</option>
     </sc-for>
@@ -1929,8 +1996,8 @@ html{scroll-padding-bottom:160px}
       <label style="font-size:13.5px;color:var(--tt-fg-6e6a5e)">Question<textarea name="question" value="{{ edQ.question }}" onChange="{{ edChange }}" rows="3" style="display:block;width:100%;box-sizing:border-box;margin-top:4px;padding:10px;border:1px solid var(--tt-bd-e8e1d2);border-radius:10px;font-size:15px;font-family:inherit;resize:vertical"></textarea></label>
       <sc-for list="{{ edOpts }}" as="o" hint-placeholder-count="4">
         <div style="display:flex;gap:8px;align-items:center">
-          <button onClick="{{ o.pickCorrect }}" title="Mark as the correct answer" style="{{ o.radioStyle }}">✓</button>
-          <input value="{{ o.val }}" name="{{ o.name }}" onChange="{{ edChange }}" style="flex:1;padding:10px;border:1px solid var(--tt-bd-e8e1d2);border-radius:10px;font-size:15px">
+          <button onClick="{{ o.pickCorrect }}" title="Mark as the correct answer" aria-label="{{ o.markLabel }}" aria-pressed="{{ o.marked }}" style="{{ o.radioStyle }}">✓</button>
+          <input value="{{ o.val }}" name="{{ o.name }}" onChange="{{ edChange }}" aria-label="{{ o.aria }}" style="flex:1;padding:10px;border:1px solid var(--tt-bd-e8e1d2);border-radius:10px;font-size:15px">
         </div>
       </sc-for>
       <label style="font-size:13.5px;color:var(--tt-fg-6e6a5e)">Explanation<textarea name="explanation" value="{{ edQ.explanation }}" onChange="{{ edChange }}" rows="2" style="display:block;width:100%;box-sizing:border-box;margin-top:4px;padding:10px;border:1px solid var(--tt-bd-e8e1d2);border-radius:10px;font-size:15px;font-family:inherit;resize:vertical"></textarea></label>
@@ -1946,14 +2013,15 @@ html{scroll-padding-bottom:160px}
     </div>
   </sc-if>
   <sc-if value="{{ edListShow }}" hint-placeholder-val="{{ false }}">
-    <input value="{{ edSearch }}" onChange="{{ setEdSearch }}" placeholder="Search all questions…" style="width:100%;box-sizing:border-box;padding:12px;border:1px solid var(--tt-bd-e8e1d2);border-radius:12px;font-size:15px;margin-bottom:10px;background:var(--tt-bg-fff)">
+    <input value="{{ edSearch }}" onChange="{{ setEdSearch }}" placeholder="Search all questions…" aria-label="Search all questions" style="width:100%;box-sizing:border-box;padding:12px;border:1px solid var(--tt-bd-e8e1d2);border-radius:12px;font-size:15px;margin-bottom:10px;background:var(--tt-bg-fff)">
     <button onClick="{{ edAdd }}" style="width:100%;background:var(--tt-bg-e4f2ef);border:2px dashed var(--tt-bd-0e7c6b);color:var(--tt-fg-0a5d50);border-radius:16px;min-height:52px;font-size:15.5px;cursor:pointer;font-weight:700;margin-bottom:12px">+ Add a question to this topic</button>
     <div style="background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);border-radius:20px;padding:4px 18px">
       <sc-for list="{{ edList }}" as="q" hint-placeholder-count="6">
-        <div onClick="{{ q.pick }}" style="display:flex;gap:10px;align-items:baseline;padding:12px 0;border-bottom:1px solid var(--tt-bd-f2ede1);cursor:pointer">
+        <!-- A real button per question, so the editor works from a keyboard too (WCAG 2.1.1). -->
+        <button type="button" onClick="{{ q.pick }}" style="display:flex;gap:10px;align-items:baseline;width:100%;padding:12px 0;background:none;border:none;border-bottom:1px solid var(--tt-bd-f2ede1);cursor:pointer;color:inherit;font:inherit;text-align:left">
           <span style="flex:1;font-size:14.5px;line-height:1.35">{{ q.text }}</span>
           <span style="flex:none;font-size:12px;color:var(--tt-fg-6e6a5e)">{{ q.tag }}</span>
-        </div>
+        </button>
       </sc-for>
     </div>
   </sc-if>
@@ -1970,7 +2038,7 @@ html{scroll-padding-bottom:160px}
   <h2 style="font-family:'Nunito',sans-serif;font-weight:800;font-size:17px;margin:8px 0 10px">What would you like?</h2>
   <div style="display:flex;flex-direction:column;gap:10px">
     <sc-for list="{{ printFormatChoices }}" as="f" hint-placeholder-count="2">
-      <button onClick="{{ f.pick }}" style="{{ f.style }}">
+      <button onClick="{{ f.pick }}" aria-pressed="{{ f.on }}" style="{{ f.style }}">
         <span style="display:block;font-weight:700;font-size:16px">{{ f.name }}</span>
         <span style="display:block;font-size:13.5px;color:var(--tt-fg-6e6a5e);margin-top:3px">{{ f.sub }}</span>
       </button>
@@ -1978,7 +2046,7 @@ html{scroll-padding-bottom:160px}
   </div>
   <sc-if value="{{ printIsCards }}" hint-placeholder-val="{{ false }}">
     <h2 style="font-family:'Nunito',sans-serif;font-weight:800;font-size:17px;margin:18px 0 10px">Which questions?</h2>
-    <select value="{{ printScope }}" onChange="{{ setPrintScope }}" style="width:100%;padding:12px;border:1px solid var(--tt-bd-e8e1d2);border-radius:12px;font-size:16px;background:var(--tt-bg-fff)">
+    <select value="{{ printScope }}" onChange="{{ setPrintScope }}" aria-label="Which questions to print" style="width:100%;padding:12px;border:1px solid var(--tt-bd-e8e1d2);border-radius:12px;font-size:16px;background:var(--tt-bg-fff)">
       <sc-for list="{{ printScopeOpts }}" as="s" hint-placeholder-count="3">
         <option value="{{ s.v }}">{{ s.label }}</option>
       </sc-for>
@@ -2001,25 +2069,25 @@ html{scroll-padding-bottom:160px}
       <span style="font-size:16.5px">Text size</span>
       <div style="display:flex;gap:6px">
         <sc-for list="{{ sizeChoices }}" as="s" hint-placeholder-count="3">
-          <button onClick="{{ s.pick }}" style="{{ s.style }}">{{ s.label }}</button>
+          <button onClick="{{ s.pick }}" aria-label="{{ s.name }}" aria-pressed="{{ s.on }}" style="{{ s.style }}">{{ s.label }}</button>
         </sc-for>
       </div>
     </div>
     <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;padding:14px 0;border-bottom:1px solid var(--tt-bd-f2ede1)">
       <span style="font-size:16.5px">Appearance</span>
       <div style="display:flex;gap:6px;flex-wrap:wrap">
-        <sc-for list="{{ themeChoices }}" as="c" hint-placeholder-count="3"><button onClick="{{ c.pick }}" style="{{ c.style }}">{{ c.label }}</button></sc-for>
+        <sc-for list="{{ themeChoices }}" as="c" hint-placeholder-count="3"><button onClick="{{ c.pick }}" aria-pressed="{{ c.on }}" style="{{ c.style }}">{{ c.label }}</button></sc-for>
       </div>
     </div>
     <sc-for list="{{ toggleRows }}" as="t" hint-placeholder-count="4">
       <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 0;border-bottom:1px solid var(--tt-bd-f2ede1)">
         <span style="font-size:16.5px;flex:1">{{ t.name }}<span style="display:block;font-size:13px;color:var(--tt-fg-6e6a5e);margin-top:2px">{{ t.sub }}</span></span>
-        <button onClick="{{ t.flip }}" aria-label="{{ t.name }}" style="{{ t.trackStyle }}"><span style="{{ t.knobStyle }}"></span></button>
+        <button onClick="{{ t.flip }}" role="switch" aria-checked="{{ t.on }}" aria-label="{{ t.name }}" style="{{ t.trackStyle }}"><span style="{{ t.knobStyle }}"></span></button>
       </div>
     </sc-for>
     <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 0;border-bottom:1px solid var(--tt-bd-f2ede1)">
       <span style="font-size:16.5px;flex:none">Voice</span>
-      <select value="{{ voiceSel }}" onChange="{{ setVoice }}" style="flex:1;min-width:0;max-width:250px;padding:10px;border:1px solid var(--tt-bd-e8e1d2);border-radius:10px;font-size:14px;background:var(--tt-bg-fff)">
+      <select value="{{ voiceSel }}" onChange="{{ setVoice }}" aria-label="Voice" style="flex:1;min-width:0;max-width:250px;padding:10px;border:1px solid var(--tt-bd-e8e1d2);border-radius:10px;font-size:14px;background:var(--tt-bg-fff)">
         <sc-for list="{{ voiceOpts }}" as="v" hint-placeholder-count="2"><option value="{{ v.v }}">{{ v.label }}</option></sc-for>
       </select>
     </div>
@@ -2027,7 +2095,7 @@ html{scroll-padding-bottom:160px}
     <div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;padding:14px 0;border-bottom:1px solid var(--tt-bd-f2ede1)">
       <span style="font-size:16.5px">Voice speed</span>
       <div style="display:flex;flex-wrap:wrap;gap:6px">
-        <sc-for list="{{ speedChoices }}" as="s" hint-placeholder-count="3"><button onClick="{{ s.pick }}" style="{{ s.style }}">{{ s.label }}</button></sc-for>
+        <sc-for list="{{ speedChoices }}" as="s" hint-placeholder-count="3"><button onClick="{{ s.pick }}" aria-pressed="{{ s.on }}" style="{{ s.style }}">{{ s.label }}</button></sc-for>
       </div>
     </div>
     <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 0">
@@ -2044,7 +2112,7 @@ html{scroll-padding-bottom:160px}
     <sc-if value="{{ hasAvatar }}" hint-placeholder-val="{{ false }}"><span role="img" aria-label="Profile photo" style="width:64px;height:64px;border-radius:50%;background-image:url({{ avatarSrc }});background-size:cover;background-position:center;flex:none;border:2px solid var(--tt-bd-e8e1d2);display:block"></span></sc-if>
     <sc-if value="{{ noAvatar }}" hint-placeholder-val="{{ true }}"><span style="width:64px;height:64px;border-radius:50%;background:#0E7C6B;color:#fff;display:flex;align-items:center;justify-content:center;font-family:'Nunito',sans-serif;font-weight:900;font-size:26px;flex:none">{{ learnerInitial }}</span></sc-if>
     <div style="flex:1;display:flex;flex-direction:column;gap:8px">
-      <label style="background:var(--tt-bg-e4f2ef);color:var(--tt-fg-0a5d50);border-radius:12px;min-height:44px;display:flex;align-items:center;justify-content:center;font-size:14.5px;font-weight:700;cursor:pointer">Upload a photo<input type="file" accept="image/*" onChange="{{ avatarUpload }}" style="display:none"></label>
+      <label class="tt-file" style="background:var(--tt-bg-e4f2ef);color:var(--tt-fg-0a5d50);border-radius:12px;min-height:44px;display:flex;align-items:center;justify-content:center;font-size:14.5px;font-weight:700;cursor:pointer">Upload a photo<input type="file" accept="image/*" onChange="{{ avatarUpload }}" class="tt-sr"></label>
       <sc-if value="{{ hasAvatar }}" hint-placeholder-val="{{ false }}"><button onClick="{{ avatarRemove }}" style="background:none;border:1px solid var(--tt-bd-e8e1d2);border-radius:12px;min-height:40px;font-size:13.5px;cursor:pointer;color:var(--tt-fg-6e6a5e)">Remove photo</button></sc-if>
     </div>
   </div>
@@ -2052,21 +2120,21 @@ html{scroll-padding-bottom:160px}
     <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 0;border-bottom:1px solid var(--tt-bd-f2ede1)">
       <span style="font-size:16.5px;flex:1">Daily goal<span style="display:block;font-size:13px;color:var(--tt-fg-6e6a5e);margin-top:2px">questions a day to keep your streak</span></span>
       <div style="display:flex;gap:6px">
-        <sc-for list="{{ goalChoices }}" as="g" hint-placeholder-count="3"><button onClick="{{ g.pick }}" style="{{ g.style }}">{{ g.label }}</button></sc-for>
+        <sc-for list="{{ goalChoices }}" as="g" hint-placeholder-count="3"><button onClick="{{ g.pick }}" aria-pressed="{{ g.on }}" style="{{ g.style }}">{{ g.label }}</button></sc-for>
       </div>
     </div>
     <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 0;border-bottom:1px solid var(--tt-bd-f2ede1)">
       <span style="font-size:16.5px;flex:1">My theory test date<span style="display:block;font-size:13px;color:var(--tt-fg-6e6a5e);margin-top:2px">shows a countdown on Home</span></span>
-      <input type="date" value="{{ examDate }}" onChange="{{ examDateChange }}" style="padding:10px;border:1px solid var(--tt-bd-e8e1d2);border-radius:10px;font-size:14px;background:var(--tt-bg-fff)">
+      <input type="date" value="{{ examDate }}" onChange="{{ examDateChange }}" aria-label="My theory test date" style="padding:10px;border:1px solid var(--tt-bd-e8e1d2);border-radius:10px;font-size:14px;background:var(--tt-bg-fff)">
     </div>
     <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 0;border-bottom:1px solid var(--tt-bd-f2ede1)">
       <span style="font-size:16.5px;flex:1">Daily reminder<span style="display:block;font-size:13px;color:var(--tt-fg-6e6a5e);margin-top:2px">a nudge only on days with no practice</span></span>
-      <button onClick="{{ remindToggle }}" aria-label="Daily reminder" style="{{ remindTrackStyle }}"><span style="{{ remindKnobStyle }}"></span></button>
+      <button onClick="{{ remindToggle }}" role="switch" aria-checked="{{ remindOn }}" aria-label="Daily reminder" style="{{ remindTrackStyle }}"><span style="{{ remindKnobStyle }}"></span></button>
     </div>
     <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 0;flex-wrap:wrap">
       <span style="font-size:16.5px;flex:1">Reminder time<span style="display:block;font-size:13px;color:var(--tt-fg-6e6a5e);margin-top:2px">{{ remindStatus }}</span></span>
       <div style="display:flex;gap:6px;flex-wrap:wrap">
-        <sc-for list="{{ remindHourChoices }}" as="r" hint-placeholder-count="4"><button onClick="{{ r.pick }}" style="{{ r.style }}">{{ r.label }}</button></sc-for>
+        <sc-for list="{{ remindHourChoices }}" as="r" hint-placeholder-count="4"><button onClick="{{ r.pick }}" aria-pressed="{{ r.on }}" style="{{ r.style }}">{{ r.label }}</button></sc-for>
       </div>
     </div>
     <!-- The first-run quick setup again: same three settings, one step at a time -->
@@ -2145,19 +2213,23 @@ html{scroll-padding-bottom:160px}
 </sc-if>
 
 <sc-if value="{{ notesAvail }}" hint-placeholder-val="{{ false }}">
-  <button onClick="{{ toggleNotes }}" aria-label="My notes" style="{{ notesFabStyle }}">
+  <button onClick="{{ toggleNotes }}" data-tt-notes-btn="1" aria-label="My notes" style="{{ notesFabStyle }}">
     <svg width="24" height="24" viewBox="0 0 24 24"><path d="M5 4 L16 4 L20 8 L20 20 L5 20 Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M8.5 10.5 L16.5 10.5 M8.5 14 L14.5 14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
   </button>
 </sc-if>
 <sc-if value="{{ notesOpen }}" hint-placeholder-val="{{ false }}">
-  <div onClick="{{ toggleNotes }}" style="position:fixed;inset:0;background:rgba(42,44,51,.35);z-index:70"></div>
-  <div style="position:fixed;left:0;right:0;bottom:0;z-index:71;background:var(--tt-bg-faf6ef);border-radius:24px 24px 0 0;box-shadow:0 -10px 30px rgba(0,0,0,.18)">
+  <!-- The dimmed page behind the sheet: a tap closes the notes (a keyboard uses Close or Escape). -->
+  <div onClick="{{ toggleNotes }}" aria-hidden="true" style="position:fixed;inset:0;background:rgba(42,44,51,.35);z-index:70"></div>
+  <!-- A dialog: focus moves to the text box when it opens, Tab goes round the sheet instead of into
+       the page hidden behind it, Escape closes it, and focus goes back to the button that opened
+       it (notesKeyDown here, syncA11y in the script; WCAG 2.1.2, 2.4.3, 4.1.2). -->
+  <div role="dialog" aria-modal="true" aria-labelledby="tt-notes-title" data-tt-notes="1" onKeyDown="{{ notesKeyDown }}" style="position:fixed;left:0;right:0;bottom:0;z-index:71;background:var(--tt-bg-faf6ef);border-radius:24px 24px 0 0;box-shadow:0 -10px 30px rgba(0,0,0,.18)">
     <div style="max-width:680px;margin:0 auto;padding:18px 20px calc(20px + env(safe-area-inset-bottom))">
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
-        <div style="font-family:'Nunito',sans-serif;font-weight:900;font-size:19px;flex:1">Notes · {{ notesScreenName }}</div>
+        <h2 id="tt-notes-title" style="margin:0;font-family:'Nunito',sans-serif;font-weight:900;font-size:19px;flex:1">Notes · {{ notesScreenName }}</h2>
         <button onClick="{{ toggleNotes }}" aria-label="Close notes" style="background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);border-radius:12px;width:44px;height:44px;cursor:pointer;font-size:17px;color:var(--tt-fg-6e6a5e)">✕</button>
       </div>
-      <textarea value="{{ notesText }}" onChange="{{ notesChange }}" placeholder="Jot anything down — it saves itself and stays with this screen." style="width:100%;box-sizing:border-box;min-height:150px;padding:14px;border:1px solid var(--tt-bd-e8e1d2);border-radius:14px;font-size:16px;line-height:1.5;background:var(--tt-bg-fff);font-family:inherit;resize:vertical"></textarea>
+      <textarea value="{{ notesText }}" onChange="{{ notesChange }}" aria-label="Notes for this screen" placeholder="Jot anything down — it saves itself and stays with this screen." style="width:100%;box-sizing:border-box;min-height:150px;padding:14px;border:1px solid var(--tt-bd-e8e1d2);border-radius:14px;font-size:16px;line-height:1.5;background:var(--tt-bg-fff);font-family:inherit;resize:vertical"></textarea>
       <sc-if value="{{ hasOtherNotes }}" hint-placeholder-val="{{ false }}">
         <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:12px;align-items:center">
           <span style="font-size:13px;color:var(--tt-fg-6e6a5e)">Also on:</span>
@@ -2186,7 +2258,7 @@ html{scroll-padding-bottom:160px}
         <sc-for list="{{ page.cards }}" as="c" hint-placeholder-count="4">
           <div style="display:flex;height:69mm;border-bottom:1.5px dashed var(--tt-bd-999);position:relative;box-sizing:border-box">
             <div style="width:50%;box-sizing:border-box;padding:6mm 7mm;border-right:1.5px dashed var(--tt-bd-bbb);display:flex;flex-direction:column">
-              <div style="font-size:8.5pt;color:var(--tt-fg-888);margin-bottom:2mm">{{ c.topicName }} · {{ c.id }}</div>
+              <div style="font-size:8.5pt;color:var(--tt-fg-555);margin-bottom:2mm">{{ c.topicName }} · {{ c.id }}</div>
               <div style="font-size:11.5pt;font-weight:700;line-height:1.35">{{ c.question }}</div>
               <div style="margin-top:2.5mm;display:flex;flex-direction:column;gap:1.2mm">
                 <sc-for list="{{ c.opts }}" as="o" hint-placeholder-count="4">
@@ -2197,11 +2269,11 @@ html{scroll-padding-bottom:160px}
             <div style="width:50%;box-sizing:border-box;padding:6mm 7mm;display:flex;flex-direction:column;justify-content:center">
               <div style="font-size:13pt;font-weight:800">{{ c.answerLetter }} — {{ c.answerText }}</div>
               <div style="font-size:9.5pt;line-height:1.4;margin-top:2.5mm">{{ c.explanation }}</div>
-              <div style="font-size:8.5pt;color:var(--tt-fg-888);margin-top:2mm">{{ c.ruleRef }}</div>
+              <div style="font-size:8.5pt;color:var(--tt-fg-555);margin-top:2mm">{{ c.ruleRef }}</div>
             </div>
           </div>
         </sc-for>
-        <div style="text-align:center;font-size:8pt;color:var(--tt-fg-aaa);padding:2mm 0">Theory Trainer · fold along the centre line, cut along the dashes · {{ page.label }}</div>
+        <div style="text-align:center;font-size:8pt;color:var(--tt-fg-555);padding:2mm 0">Theory Trainer · fold along the centre line, cut along the dashes · {{ page.label }}</div>
       </div>
     </sc-for>
   </sc-if>
@@ -2211,7 +2283,7 @@ html{scroll-padding-bottom:160px}
       <div style="font-size:10pt;color:var(--tt-fg-555);padding-bottom:4mm">50 questions · 57 minutes · pass mark 43 · answer key on the last page</div>
       <sc-for list="{{ printQs }}" as="q" hint-placeholder-count="5">
         <div style="padding:2.5mm 0;border-bottom:1px solid var(--tt-bd-eee);break-inside:avoid">
-          <div style="font-size:10.5pt;font-weight:700;line-height:1.35"><span style="color:var(--tt-fg-888)">{{ q.n }}.</span> {{ q.question }}</div>
+          <div style="font-size:10.5pt;font-weight:700;line-height:1.35"><span style="color:var(--tt-fg-555)">{{ q.n }}.</span> {{ q.question }}</div>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:1mm 6mm;margin-top:1.5mm">
             <sc-for list="{{ q.opts }}" as="o" hint-placeholder-count="4">
               <div style="font-size:9.5pt;line-height:1.3"><b>{{ o.letter }}</b>&nbsp; {{ o.text }}</div>
@@ -2223,7 +2295,7 @@ html{scroll-padding-bottom:160px}
       <div style="font-size:14pt;font-weight:800;padding:6mm 0 3mm">Answer key</div>
       <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:1.5mm 6mm">
         <sc-for list="{{ printKey }}" as="k" hint-placeholder-count="10">
-          <div style="font-size:10pt"><span style="color:var(--tt-fg-888)">{{ k.n }}.</span> <b>{{ k.a }}</b></div>
+          <div style="font-size:10pt"><span style="color:var(--tt-fg-555)">{{ k.n }}.</span> <b>{{ k.a }}</b></div>
         </sc-for>
       </div>
     </div>
@@ -2237,13 +2309,13 @@ html{scroll-padding-bottom:160px}
           <div style="font-size:13pt;font-weight:800;padding:5mm 0 2mm;border-bottom:2px solid var(--tt-bd-333)">{{ bt.name }}</div>
           <sc-for list="{{ bt.qs }}" as="q" hint-placeholder-count="4">
             <div style="padding:2.5mm 0;border-bottom:1px solid var(--tt-bd-eee);break-inside:avoid">
-              <div style="font-size:10.5pt;font-weight:700;line-height:1.35"><span style="color:var(--tt-fg-888)">{{ q.n }}.</span> {{ q.question }} <span style="font-weight:400;color:var(--tt-fg-999);font-size:8.5pt">[{{ q.id }}]</span></div>
+              <div style="font-size:10.5pt;font-weight:700;line-height:1.35"><span style="color:var(--tt-fg-555)">{{ q.n }}.</span> {{ q.question }} <span style="font-weight:400;color:var(--tt-fg-555);font-size:8.5pt">[{{ q.id }}]</span></div>
               <div style="display:grid;grid-template-columns:1fr 1fr;gap:1mm 6mm;margin-top:1.5mm">
                 <sc-for list="{{ q.opts }}" as="o" hint-placeholder-count="4">
                   <div style="{{ o.style }}"><b>{{ o.letter }}</b>&nbsp; {{ o.text }} {{ o.mark }}</div>
                 </sc-for>
               </div>
-              <div style="font-size:9pt;color:var(--tt-fg-444);margin-top:1.5mm">{{ q.explanation }} <span style="color:var(--tt-fg-999)">· {{ q.ruleRef }}</span></div>
+              <div style="font-size:9pt;color:var(--tt-fg-444);margin-top:1.5mm">{{ q.explanation }} <span style="color:var(--tt-fg-555)">· {{ q.ruleRef }}</span></div>
             </div>
           </sc-for>
         </div>
@@ -2560,6 +2632,7 @@ class Component extends DCLogic {
     if(window.speechSynthesis){ speechSynthesis.getVoices(); speechSynthesis.onvoiceschanged = ()=>this.forceUpdate(); }
     window.addEventListener('online', ()=>this.flushCloud());
     setTimeout(()=>this.pullCloud(), 800);
+    this.syncA11y(null);                                  // the tab's title for the first screen
   }
   componentWillUnmount(){ clearInterval(this.tick); }
   // Admin → Activity: send anything queued on this device, then read the last 60 days.
@@ -2659,9 +2732,39 @@ class Component extends DCLogic {
   }
   // This app's framework (support.js) passes only the previous PROPS here, never the
   // previous state, so the last state seen is kept in this._seen and compared by hand.
+  // ---------- accessibility after each redraw (issue #10, WCAG 2.2 AA) ----------
+  // Runs once the page shows the new state, so it can look at what is on screen. prev: the
+  // state before (none on the first draw).
+  //  - 2.4.2 the browser tab's title names the screen showing (TTScreen.title);
+  //  - 2.4.3 a new screen or question moves keyboard focus to its heading, so Tab carries on
+  //    from the top of what is now showing, not from a button that has gone;
+  //  - the notes sheet takes focus when it opens and gives it back when it closes.
+  // The screen showing is the last one labelled on the page (the print preview draws below the
+  // Print screen). Focus and the title are extras: a failure here must never stop the app, so
+  // it is caught and there is nothing more to do.
+  syncA11y(prev){
+    try {
+      const s = this.state;
+      const screens = document.querySelectorAll('main [data-screen-label]');
+      const screen = screens[screens.length - 1] || null;
+      const title = TTScreen.title(screen && screen.getAttribute('data-screen-label'));
+      if(document.title !== title) document.title = title;
+      if(!prev) return;
+      if(!prev.notesOpen && s.notesOpen){ const box = document.querySelector('[data-tt-notes] textarea'); if(box) box.focus(); return; }
+      if(prev.notesOpen && !s.notesOpen){
+        // Back to the button that opened the notes. The in-page one is redrawn while the sheet
+        // is open, so if the old one has gone, the notes button now on screen takes focus.
+        const was = this._notesFrom; this._notesFrom = null;
+        const back = (was && document.contains(was)) ? was : document.querySelector('[data-tt-notes-btn]');
+        if(back){ back.focus(); return; }
+      }
+      if(TTScreen.key(prev) !== TTScreen.key(s)){ const h = screen && screen.querySelector('h1'); if(h) h.focus({preventScroll: true}); }
+    } catch(e) { /* title and focus are extras; the screen itself has already drawn */ }
+  }
   componentDidUpdate(){
     const prev = this._seen, s = this.state, now = Date.now();
     this._seen = s;
+    this.syncA11y(prev);
     if(!prev || prev === s) return;
     // A different screen (or the next question) starts at the top, not at the old screen's
     // scroll position (issue #12 A: Road Signs opened half-way down after a tap low on Home).
@@ -3336,7 +3439,7 @@ class Component extends DCLogic {
       tipsTitle: R.label,
       tipsKinds: Object.keys(this.REVIEW).map(k=>({label: this.REVIEW[k].label, on: String(k===kind), style: kindStyle(k===kind), pick: ()=>{ if(k!==kind) this.openTips(k); }})),
       tipsNote: s.tipsBusy ? 'Loading\u2026' : s.tipsErr ? s.tipsErr : !(s.tipsList||[]).length ? R.empty : R.about,
-      tipsTabs: [['draft','To check'],['approved','Approved'],['rejected','Rejected']].map(([k,l])=>({label: l+' ('+count(k)+')', pick: ()=>this.setState({tipsTab:k}), style: chip(tab===k)})),
+      tipsTabs: [['draft','To check'],['approved','Approved'],['rejected','Rejected']].map(([k,l])=>({label: l+' ('+count(k)+')', on: TTScreen.pressed(tab===k), pick: ()=>this.setState({tipsTab:k}), style: chip(tab===k)})),
       tipsShownCount: Math.min(rows.length, 50),
       tipsCanApproveAll: tab==='draft' && rows.length>0,
       tipsApproveAll: ()=>{ const list = rows.slice(0,50); if(confirm('Approve these '+list.length+' '+R.noun+' as they stand? Catie will start seeing them.')) this.saveTips(list.map(r=>({qid:r.qid, tip:textOf(r)})), 'approved'); },
@@ -3417,7 +3520,7 @@ class Component extends DCLogic {
     Object.assign(out, {
       predEnough: pr.enough, predShort: !pr.enough, predScore: pr.score, predTotal: pr.total, predPassMark: pr.passMark,
       predChance: pr.chance, predBasis: pr.basis, predNeed: pr.need,
-      predChanceColor: prob >= band[0] ? 'var(--tt-fg-1c6b3c)' : prob >= band[1] ? 'var(--tt-fg-c77e14)' : 'var(--tt-fg-b8433d)',
+      predChanceColor: prob >= band[0] ? 'var(--tt-fg-1c6b3c)' : prob >= band[1] ? 'var(--tt-fg-8a5a0b)' : 'var(--tt-fg-b8433d)',
       // "under 1%" and "over 99%" are longer: a size down keeps them on one line at 390px.
       predChanceSize: pr.chance.length > 4 ? '21px' : '28px',
       predRaise: pr.raise, predRaiseShow: !!pr.raise,
@@ -3505,7 +3608,7 @@ class Component extends DCLogic {
       actNote: s.actBusy ? 'Loading\u2026' : s.actErr ? s.actErr : !mine.length ? 'Nothing recorded yet. Activity is saved from this version on, whenever she uses the app signed in.' : 'Last 60 days for ' + name(pick) + '. Everything she does is kept, newest first.',
       actHas: !s.actBusy && !s.actErr && mine.length>0,
       actManyAccounts: ids.length>1,
-      actAccounts: ids.map(id=>({label: name(id) + ' (' + count[id] + ')', pick: ()=>this.setState({actUser:id}), style: chip(id===pick)})),
+      actAccounts: ids.map(id=>({label: name(id) + ' (' + count[id] + ')', pick: ()=>this.setState({actUser:id}), on: TTScreen.pressed(id===pick), style: chip(id===pick)})),
       actTiles: [
         {label:'answered', value: String(tt.answered||0)},
         {label:'right', value: tt.answered ? Math.round(100*tt.right/tt.answered)+'%' : '\u2014'},
@@ -3524,8 +3627,8 @@ class Component extends DCLogic {
   renderVals(){
     const s = this.state, st = s.settings, T = this.TOPICS;
     const nav = v => () => this.setState({view:v, printPreview:false});
-    const chip = on => 'padding:9px 14px;border-radius:12px;border:none;cursor:pointer;font-size:14px;font-weight:700;' + (on ? 'background:#0E7C6B;color:#fff' : 'background:var(--tt-bg-efe9dc);color:var(--tt-fg-6e6a5e)');
-    const miniTrack = on => 'flex:none;width:46px;height:27px;border-radius:14px;border:none;cursor:pointer;position:relative;transition:background .2s;background:'+(on?'#0E7C6B':'var(--tt-bg-d8d0bf)');
+    const chip = on => 'padding:9px 14px;border-radius:12px;border:none;cursor:pointer;font-size:14px;font-weight:700;' + (on ? 'background:#0E7C6B;color:#fff' : 'background:var(--tt-bg-efe9dc);color:var(--tt-fg-686458)');
+    const miniTrack = on => 'flex:none;width:46px;height:27px;border-radius:14px;border:none;cursor:pointer;position:relative;transition:background .2s;background:'+(on?'#0E7C6B':'var(--tt-bg-8c8779)');
     const miniKnob = on => 'position:absolute;top:3px;width:21px;height:21px;border-radius:50%;background:#fff;transition:left .2s;left:'+(on?'22px':'3px');
     const zoom = [1, 1.12, 1.25][st.textSize] || 1;
     const dyn = {};
@@ -3617,8 +3720,8 @@ class Component extends DCLogic {
     ].concat(T.map((n,i)=>{
       const a = stAll[i];
       return {name:n, sub: a.n? Math.round(100*a.c/a.n)+'% right so far' : 'not tried yet', v:i+1};
-    })).map(c => ({name:c.name, sub:c.sub, style: topicChoiceStyle(effSel===c.v), pick:()=>this.setState({learnTopic:c.v})}));
-    const lenChoices = [10,20,30].map(v=>({label:String(v), pick:()=>this.setState({learnLen:v}),
+    })).map(c => ({name:c.name, sub:c.sub, on: TTScreen.pressed(effSel===c.v), style: topicChoiceStyle(effSel===c.v), pick:()=>this.setState({learnTopic:c.v})}));
+    const lenChoices = [10,20,30].map(v=>({label:String(v), on: TTScreen.pressed(s.learnLen===v), pick:()=>this.setState({learnLen:v}),
       style:'flex:1;min-height:56px;border-radius:16px;cursor:pointer;font-family:Nunito,sans-serif;font-weight:900;font-size:20px;'+(s.learnLen===v?'background:#0E7C6B;color:#fff;border:none':'background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2)')}));
 
     // ----- learn question -----
@@ -3628,19 +3731,28 @@ class Component extends DCLogic {
       const q = this.qById(sess.ids[sess.i]) || {question:'', options:['','','',''], correctIndex:0, explanation:'', ruleRef:''};
       const vq = this.viewQ(q);
       const picked = sess.picked, answered = picked>=0;
+      // The right padding leaves room for the read-aloud button laid over the option's end.
+      // Once answered, the options not involved fade (to .75, where their words still read at
+      // 4.5:1 or more) and none of them can be picked again, so the pointer stops saying so.
       const optStyle = i => {
-        let base = 'display:flex;align-items:center;gap:12px;padding:14px 16px;border-radius:18px;cursor:pointer;min-height:56px;';
+        let base = 'display:flex;align-items:center;gap:12px;padding:14px 64px 14px 16px;border-radius:18px;min-height:56px;' + (answered ? 'cursor:default;' : 'cursor:pointer;');
         if(!answered) return base + 'background:var(--tt-bg-fff);border:2px solid var(--tt-bd-e8e1d2)';
         if(i===vq.correctIndex) return base + anim + 'background:var(--tt-bg-e7f6ec);border:2px solid #2E9E5B';
         if(i===picked) return base + 'background:var(--tt-bg-fbeae9);border:2px solid #D14B45';
-        return base + 'background:var(--tt-bg-fff);border:2px solid var(--tt-bd-efe9dc);opacity:.6';
+        return base + 'background:var(--tt-bg-fff);border:2px solid var(--tt-bd-efe9dc);opacity:.75';
       };
+      // Answered letters are white on a darker green or red than the border: white on the
+      // border colours is 3.4:1 and 4.4:1, under the 4.5:1 words need.
       const letterStyle = i => {
-        let c = 'var(--tt-bg-efe9dc);color:var(--tt-fg-6e6a5e)';
-        if(answered && i===vq.correctIndex) c = '#2E9E5B;color:#fff';
-        else if(answered && i===sess.picked) c = '#D14B45;color:#fff';
+        let c = 'var(--tt-bg-efe9dc);color:var(--tt-fg-686458)';
+        if(answered && i===vq.correctIndex) c = '#1C6B3C;color:#fff';
+        else if(answered && i===sess.picked) c = '#B8433D;color:#fff';
         return 'flex:none;width:38px;height:38px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-family:Nunito,sans-serif;font-weight:900;font-size:17px;background:'+c;
       };
+      // The read-aloud button beside each option: over its right-hand end, faded with it when
+      // the hint takes the option away. margin-top centres it (a transform would fight the
+      // pressed-button scale in the page CSS).
+      const speakStyle = hidden => 'position:absolute;right:10px;top:50%;margin-top:-22px;width:44px;height:44px;border-radius:50%;background:rgba(0,0,0,.05);border:none;cursor:pointer;color:var(--tt-fg-6e6a5e);display:flex;align-items:center;justify-content:center' + (hidden ? ';opacity:.22;pointer-events:none' : '');
       const ok = answered && picked===vq.correctIndex;
       const plainOpen = answered && !ok && !!q.plainExplanation && sess.plainFor===q.id;
       const goodWords = ['Nice one!','You got it!','Brilliant!','That\u2019s right!','Great remembering!'];
@@ -3651,12 +3763,21 @@ class Component extends DCLogic {
         qText: q.question, hasSign: !!q.imageHint && (this.props.showSignImages !== false), qSignHint: q.imageHint || '',
         opts: vq.options.map((text,i)=>{
           const hidden = (sess.hint||[]).indexOf(i)>=0 && !answered;
+          // mark: after she answers, the right option and hers say which they are, in words
+          // for a screen reader and as a tick or a cross on screen (TTScreen.optionMark).
+          const mark = TTScreen.optionMark(i, vq.correctIndex, picked);
           return {letter:'ABCD'[i], text, style: optStyle(i) + (hidden?';opacity:.22;pointer-events:none':''), letterStyle: letterStyle(i),
             pick: ()=>{ if(!hidden) this.answerLearn(i); },
             key: e=>{ if((e.key==='Enter'||e.key===' ') && e.target===e.currentTarget){ e.preventDefault(); if(!hidden) this.answerLearn(i); } },
-            label: 'Answer ' + 'ABCD'[i] + ': ' + text,
+            label: TTScreen.optionLabel('ABCD'[i], text, mark, hidden),
+            off: TTScreen.pressed(answered || hidden), removed: hidden, tab: hidden ? -1 : 0,   // the hint's two are out of the Tab order
+            hasMark: !!mark, markGlyph: mark ? mark.glyph : '',
+            markStyle: 'flex:none;font-family:Nunito,sans-serif;font-weight:900;font-size:24px;line-height:1;color:' + (mark && mark.ok ? 'var(--tt-fg-1c6b3c)' : 'var(--tt-fg-b8433d)'),
+            speakLabel: 'Read answer ' + 'ABCD'[i] + ' aloud', speakStyle: speakStyle(hidden),
             speak: e=>{ e.stopPropagation(); this.speak(text); }};
         }),
+        // What a screen reader hears the moment she answers (TTScreen.answerSay); '' before.
+        answerSay: answered ? TTScreen.answerSay(picked===vq.correctIndex, 'ABCD'[vq.correctIndex], vq.options[vq.correctIndex]) : '',
         hintReady: st.fiftyFifty!==false && !answered && !(sess.hint && sess.hint.length),
         useHint: ()=>{ const wrongs = [0,1,2,3].filter(x=>x!==vq.correctIndex).map(x=>[Math.random(),x]).sort((a,b)=>a[0]-b[0]).map(p=>p[1]).slice(0,2); this.setState({session: Object.assign({}, this.state.session, {hint: wrongs})}); },
         answered,
@@ -3683,7 +3804,7 @@ class Component extends DCLogic {
         nextLabel: sess.i+1>=sess.ids.length ? 'Finish' : 'Next question',
         nextQ: ()=>this.nextLearn(),
         qFlagLabel: s.revisionFlags[q.id] ? 'Flagged' : 'Tricky?', qFlagPressed: s.revisionFlags[q.id] ? 'true' : 'false',
-        qFlagStyle: 'flex:none;display:flex;align-items:center;gap:6px;height:44px;padding:0 12px;border-radius:12px;cursor:pointer;font-size:13.5px;font-weight:700;'+(s.revisionFlags[q.id]?'background:#F2A93B;color:#fff;border:none':'background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);color:var(--tt-fg-6e6a5e)'),
+        qFlagStyle: 'flex:none;display:flex;align-items:center;gap:6px;height:44px;padding:0 12px;border-radius:12px;cursor:pointer;font-size:13.5px;font-weight:700;'+(s.revisionFlags[q.id]?'background:#F2A93B;color:#2A2C33;border:none':'background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);color:var(--tt-fg-6e6a5e)'),
         toggleQFlag: ()=>this.toggleRevFlag(q.id),
         // "More like this" shows once answered; after a tap it says what it added.
         moreShow: answered && sess.moreFor!==q.id,
@@ -3721,21 +3842,23 @@ class Component extends DCLogic {
         tQNum: 'Question ' + (t.i+1), tQText: q.question,
         tHasSign: !!q.imageHint && (this.props.showSignImages !== false), tSignHint: q.imageHint || '',
         speakTQ: ()=>this.speakQFull(q),
-        flagLabel: t.flags[t.i]? 'Flagged' : 'Flag',
-        flagStyle: 'display:flex;align-items:center;gap:6px;padding:0 14px;height:44px;border-radius:12px;cursor:pointer;font-size:14.5px;font-weight:700;'+(t.flags[t.i]?'background:#F2A93B;color:#fff;border:none':'background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);color:var(--tt-fg-6e6a5e)'),
+        flagLabel: t.flags[t.i]? 'Flagged' : 'Flag', flagPressed: TTScreen.pressed(t.flags[t.i]),
+        flagStyle: 'display:flex;align-items:center;gap:6px;padding:0 14px;height:44px;border-radius:12px;cursor:pointer;font-size:14.5px;font-weight:700;'+(t.flags[t.i]?'background:#F2A93B;color:#2A2C33;border:none':'background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);color:var(--tt-fg-6e6a5e)'),
         toggleFlag: ()=>{
           const flags = Object.assign({}, t.flags); flags[t.i] = !flags[t.i];
           const id = t.ids[t.i], had = s.revisionFlags[id];
           const rev = flags[t.i] ? (had ? {} : this.setRevFlag(id, true, 'test')) : (had && had.src==='test' ? this.setRevFlag(id, false) : {});
           this.set(Object.assign({test: Object.assign({}, t, {flags})}, rev));
         },
+        // The right padding (62px) leaves room for the read-aloud button laid over the option's end.
         tOpts: vq.options.map((text,i)=>({
           letter:'ABCD'[i], text,
-          style: 'display:flex;align-items:center;gap:12px;padding:13px 15px;border-radius:16px;cursor:pointer;min-height:52px;'+(sel===i?'background:var(--tt-bg-e4f2ef);border:2px solid var(--tt-bd-0e7c6b)':'background:var(--tt-bg-fff);border:2px solid var(--tt-bd-e8e1d2)'),
-          letterStyle: 'flex:none;width:36px;height:36px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-family:Nunito,sans-serif;font-weight:900;font-size:16px;'+(sel===i?'background:#0E7C6B;color:#fff':'background:var(--tt-bg-efe9dc);color:var(--tt-fg-6e6a5e)'),
+          style: 'display:flex;align-items:center;gap:12px;padding:13px 62px 13px 15px;border-radius:16px;cursor:pointer;min-height:52px;'+(sel===i?'background:var(--tt-bg-e4f2ef);border:2px solid var(--tt-bd-0e7c6b)':'background:var(--tt-bg-fff);border:2px solid var(--tt-bd-e8e1d2)'),
+          letterStyle: 'flex:none;width:36px;height:36px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-family:Nunito,sans-serif;font-weight:900;font-size:16px;'+(sel===i?'background:#0E7C6B;color:#fff':'background:var(--tt-bg-efe9dc);color:var(--tt-fg-686458)'),
           pick: ()=>this.answerTest(i),
           key: e=>{ if((e.key==='Enter'||e.key===' ') && e.target===e.currentTarget){ e.preventDefault(); this.answerTest(i); } },
-          label: 'Answer ' + 'ABCD'[i] + ': ' + text,
+          label: TTScreen.optionLabel('ABCD'[i], text), pressed: TTScreen.pressed(sel===i),
+          speakLabel: 'Read answer ' + 'ABCD'[i] + ' aloud',
           speak: e=>{ e.stopPropagation(); this.speak(text); }
         })),
         prevTQ: ()=>this.set({test: Object.assign({}, t, {i: Math.max(0, t.i-1)})}),
@@ -3746,10 +3869,10 @@ class Component extends DCLogic {
         reviewCells: t.ids.map((_,i)=>{
           const done = t.answers[i]!==undefined, fl = t.flags[i];
           let sty = 'aspect-ratio:1;border-radius:9px;cursor:pointer;font-size:13px;font-weight:700;padding:0;';
-          if(fl) sty += 'background:var(--tt-bg-fff);border:2.5px solid #F2A93B;color:var(--tt-fg-2a2c33)';
+          if(fl) sty += 'background:var(--tt-bg-fff);border:2.5px solid #C77E14;color:var(--tt-fg-2a2c33)';
           else if(done) sty += 'background:#0E7C6B;border:none;color:#fff';
           else sty += 'background:var(--tt-bg-fff);border:1px solid var(--tt-bd-d8d0bf);color:var(--tt-fg-6e6a5e)';
-          return {n:i+1, style:sty, go:()=>this.setState({testView:'run', test:Object.assign({},t,{i})})};
+          return {n:i+1, style:sty, label: TTScreen.reviewCellLabel(i+1, done, fl), go:()=>this.setState({testView:'run', test:Object.assign({},t,{i})})};
         }),
         reviewSummary: (()=>{ const a = Object.keys(t.answers).length, f = Object.keys(t.flags).filter(k=>t.flags[k]).length; return a+' answered · '+(t.ids.length-a)+' not answered · '+f+' flagged'; })()
       };
@@ -3768,8 +3891,8 @@ class Component extends DCLogic {
           yours: yours===undefined? 'No answer given' : 'You picked '+'ABCD'[yours]+': '+v.options[yours],
           right: 'ABCD'[v.correctIndex]+': '+v.options[v.correctIndex],
           explanation:q.explanation, ruleRef:q.ruleRef, hasSign: !!q.imageHint, sign: q.imageHint||'',
-          flagLabel: fl? 'Saved for revision' : 'Save for revision',
-          flagStyle: 'margin-top:10px;padding:9px 14px;border-radius:10px;font-size:13.5px;font-weight:700;cursor:pointer;'+(fl?'background:#F2A93B;color:#fff;border:none':'background:var(--tt-bg-fbf1dc);border:1px solid var(--tt-bd-f0d9a8);color:var(--tt-fg-8a5a0b)'),
+          flagLabel: fl? 'Saved for revision' : 'Save for revision', flagOn: TTScreen.pressed(fl),
+          flagStyle: 'margin-top:10px;padding:9px 14px;border-radius:10px;font-size:13.5px;font-weight:700;cursor:pointer;'+(fl?'background:#F2A93B;color:#2A2C33;border:none':'background:var(--tt-bg-fbf1dc);border:1px solid var(--tt-bd-f0d9a8);color:var(--tt-fg-8a5a0b)'),
           flag: ()=>this.toggleRevFlag(id),
           more: ()=>this.moreLikeThis([id])};
       }).filter(Boolean);
@@ -3799,13 +3922,17 @@ class Component extends DCLogic {
     const py = v => Y0 + (1 - v/50)*H;
     const chartPts = tests.map((r,i)=>px(i)+','+py(r.score/(r.total||50)*50)).join(' ');
     const chartDots = tests.map((r,i)=>({x:px(i), y:py(r.score/(r.total||50)*50), fill: r.pass?'#2E9E5B':'#D14B45'}));
+    // The dashed pass line on the chart (out of 50; its label "pass 43" is written in the SVG,
+    // where a {{ value }} would not draw). chartSay is the same chart in words.
+    const chartPass = 43;
+    const chartSay = TTScreen.chartSay(tests, chartPass);
     const historyRows = tests.map((r,i)=>({
       date: this.fmtDate(r.date), score: r.score+'/'+(r.total||50),
       src: r.source==='app'? '' : (r.source||'external'),
       passLabel: r.pass? 'PASS':'FAIL',
       passStyle: 'font-size:12px;font-weight:800;padding:4px 9px;border-radius:8px;'+(r.pass?'background:var(--tt-bg-e7f6ec);color:var(--tt-fg-1c6b3c)':'background:var(--tt-bg-fbeae9);color:var(--tt-fg-b8433d)'),
       pick: ()=>this.setState({openTest: s.openTest===i? -1 : i}),
-      open: s.openTest===i,
+      open: s.openTest===i, expanded: TTScreen.pressed(s.openTest===i),
       detail: Object.keys(r.perTopic||{}).map(k=>({name:T[k-1], val:r.perTopic[k].c+'/'+r.perTopic[k].n}))
     })).reverse();
     const hard = this.questions().map(q=>({q, r:this.rec(q.id)})).filter(x=>x.r.seen>0)
@@ -3841,7 +3968,7 @@ class Component extends DCLogic {
       ansVals = {
         ansFilters: [{v:'all', label:'All (' + hist.length + ')'}, {v:'wrong', label:'Wrong last time (' + nWrong + ')'}, {v:'right', label:'Right last time (' + (hist.length-nWrong) + ')'}]
           .concat(nSame ? [{v:'same', label:'Same wrong answer again (' + nSame + ')'}] : [])
-          .map(f=>({label:f.label, style: chip(s.ansFilter===f.v), pick: ()=>this.setState({ansFilter:f.v, ansShow:40})})),
+          .map(f=>({label:f.label, on: TTScreen.pressed(s.ansFilter===f.v), style: chip(s.ansFilter===f.v), pick: ()=>this.setState({ansFilter:f.v, ansShow:40})})),
         ansRows: shown.map(r=>{
           const q = r.q, on = !!sel[r.id], right = optText(q, q.correctIndex);
           return {
@@ -3899,7 +4026,11 @@ class Component extends DCLogic {
         this.setState({edDraft:d}); },
       edOpts: (draft? draft.options : ['','','','']).map((val,i)=>({
         val, name:'opt'+i,
-        radioStyle: 'flex:none;width:40px;height:40px;border-radius:12px;cursor:pointer;font-size:16px;font-weight:900;'+(draft && draft.correctIndex===i?'background:#2E9E5B;color:#fff;border:none':'background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);color:var(--tt-fg-c9c2b2)'),
+        // Names for a screen reader: which answer box this is, and whether it is marked right.
+        aria: 'Answer ' + 'ABCD'[i], markLabel: 'Answer ' + 'ABCD'[i] + ' is the correct one', marked: TTScreen.pressed(!!draft && draft.correctIndex===i),
+        // Marked: white on the darker green (4.5:1 or more); not marked: the muted grey, not the
+        // faint one it was (1.7:1 on white).
+        radioStyle: 'flex:none;width:40px;height:40px;border-radius:12px;cursor:pointer;font-size:16px;font-weight:900;'+(draft && draft.correctIndex===i?'background:#1C6B3C;color:#fff;border:none':'background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);color:var(--tt-fg-6e6a5e)'),
         pickCorrect: ()=>this.setState({edDraft: Object.assign({}, s.edDraft, {correctIndex:i})})
       })),
       signOpts: [{v:'', label:'none'}].concat((window.__signKeys||[]).map(k=>({v:k, label:k}))),
@@ -3927,7 +4058,7 @@ class Component extends DCLogic {
       {v:'cards', name:'Flashcards', sub:'4 per page · questions left, answers right · fold down the middle'},
       {v:'paper', name:'Test paper', sub:'50 numbered questions, answer key on the last page'},
       {v:'book', name:'Full answer book', sub:'every question in the bank with its correct answer, explanation and rule'}
-    ].map(f=>({name:f.name, sub:f.sub, style:'text-align:left;padding:15px 16px;border-radius:16px;cursor:pointer;'+(s.printFormat===f.v?'background:var(--tt-bg-e4f2ef);border:2px solid var(--tt-bd-0e7c6b)':'background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2)'), pick:()=>this.setState({printFormat:f.v})}));
+    ].map(f=>({name:f.name, sub:f.sub, on: TTScreen.pressed(s.printFormat===f.v), style:'text-align:left;padding:15px 16px;border-radius:16px;cursor:pointer;'+(s.printFormat===f.v?'background:var(--tt-bg-e4f2ef);border:2px solid var(--tt-bd-0e7c6b)':'background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2)'), pick:()=>this.setState({printFormat:f.v})}));
     const wrongCount = this.questions().filter(q=>(this.rec(q.id).wrong||0)>0).length;
     const printTotal = pd.pages ? pd.pages.length : (pd.book ? pd.book.length : 0);
     const printReady = s.printFormat==='paper' || (s.printRendered||0) >= printTotal;
@@ -3976,10 +4107,10 @@ class Component extends DCLogic {
     // page head applies it before first paint. 'auto' follows the phone's own dark mode.
     const theme = s.theme || 'auto';
     const settingsVals = {
-      sizeChoices: [0,1,2].map(i=>({label:'A', pick:()=>setSetting('textSize',i),
+      sizeChoices: [0,1,2].map(i=>({label:'A', name: ['Normal text size', 'Bigger text', 'Biggest text'][i], on: TTScreen.pressed(st.textSize===i), pick:()=>setSetting('textSize',i),
         style:'width:'+(38+i*8)+'px;height:'+(38+i*8)+'px;border-radius:12px;cursor:pointer;font-weight:900;font-size:'+(14+i*4)+'px;'+(st.textSize===i?'background:#0E7C6B;color:#fff;border:none':'background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);color:var(--tt-fg-6e6a5e)')})),
-      toggleRows: toggles.map(([k,name,sub])=>({name, sub, flip:()=>setSetting(k,!st[k]),
-        trackStyle:'flex:none;width:56px;height:32px;border-radius:16px;border:none;cursor:pointer;position:relative;transition:background .2s;background:'+(st[k]?'#0E7C6B':'var(--tt-bg-d8d0bf)'),
+      toggleRows: toggles.map(([k,name,sub])=>({name, sub, on: TTScreen.pressed(!!st[k]), flip:()=>setSetting(k,!st[k]),
+        trackStyle:'flex:none;width:56px;height:32px;border-radius:16px;border:none;cursor:pointer;position:relative;transition:background .2s;background:'+(st[k]?'#0E7C6B':'var(--tt-bg-8c8779)'),
         knobStyle:'position:absolute;top:3px;width:26px;height:26px;border-radius:50%;background:#fff;transition:left .2s;left:'+(st[k]?'27px':'3px')})),
       testVoice: ()=>this.speak('Hello '+st.learnerName+'! This is how I will read your questions.'),
       voiceOpts: this.voices().slice().sort((a,b)=>this.scoreVoice(b)-this.scoreVoice(a)).map(v=>({v:v.name, label: v.name + (this.scoreVoice(v)>=2.5?' \u2605':'')})),
@@ -3988,9 +4119,9 @@ class Component extends DCLogic {
       hasVoiceNotice: (()=>{ const vs = this.voices(); if(!vs.length) return true; return this.scoreVoice(this.bestVoice()) < 2.5; })(),
       setVoice: e=>{ setSetting('voiceName', e.target.value); setTimeout(()=>this.speak('Hello! I am the new voice.'), 200); },
       speedChoices: [['Slower',0.85],['Normal',0.95],['Faster',1.1]].map(p=>({label:p[0], pick:()=>setSetting('voiceRate',p[1]),
-        style:choiceStyle(Math.abs((st.voiceRate||0.95)-p[1])<0.01)})),
+        on: TTScreen.pressed(Math.abs((st.voiceRate||0.95)-p[1])<0.01), style:choiceStyle(Math.abs((st.voiceRate||0.95)-p[1])<0.01)})),
       themeChoices: [['Match device','auto'],['Light','light'],['Dark','dark']].map(([label,v])=>({label, pick:()=>{ window.ttApplyTheme && window.ttApplyTheme(v); this.setState({theme:v}); },
-        style:choiceStyle(theme===v)})),
+        on: TTScreen.pressed(theme===v), style:choiceStyle(theme===v)})),
       nameChange: e=>setSetting(e.target.name==='learner'?'learnerName':'parentName', e.target.value),
       resetProgress: ()=>{ if(confirm('Really wipe all progress, scores and history? Questions you added are kept.')) this.set({leitner:{}, attempts:[], tests:[], openTest:-1}); }
     };
@@ -4001,7 +4132,7 @@ class Component extends DCLogic {
       logFormLabel: s.showLogForm? 'Hide the form' : '+ Log an external mock result',
       logDate: s.logDate, setLogDate: e=>this.setState({logDate:e.target.value}),
       logScore: s.logScore, setLogScore: e=>this.setState({logScore:e.target.value}),
-      logTopics: T.map((n,i)=>({name:n, c:(s.logPT[i+1]||{}).c||'', n:(s.logPT[i+1]||{}).n||'', cName:'c'+(i+1), nName:'n'+(i+1)})),
+      logTopics: T.map((n,i)=>({name:n, c:(s.logPT[i+1]||{}).c||'', n:(s.logPT[i+1]||{}).n||'', cName:'c'+(i+1), nName:'n'+(i+1), cLabel: n + ': questions right', nLabel: n + ': questions asked'})),
       logTopicChange: e=>{ const m = e.target.name, k = Number(m.slice(1)); const pt = Object.assign({}, s.logPT); pt[k] = Object.assign({}, pt[k]); pt[k][m[0]] = e.target.value; this.setState({logPT:pt}); },
       saveLog: ()=>{
         const score = Number(s.logScore); if(!(score>=0 && score<=50) || s.logScore==='') return;
@@ -4052,7 +4183,7 @@ class Component extends DCLogic {
       privTyped: s.delTyped || '', privTypedChange: e=>this.setState({delTyped: e.target.value, delErr:''}),
       // the button stays off until the word is typed
       privDeleteOff: !delReady,
-      privDeleteStyle: 'width:100%;margin-top:12px;border:none;border-radius:14px;min-height:52px;font-family:Nunito,sans-serif;font-weight:900;font-size:16px;' + (delReady ? 'background:#B8433D;color:#fff;cursor:pointer' : 'background:var(--tt-bg-efe9dc);color:var(--tt-fg-6e6a5e);cursor:not-allowed'),
+      privDeleteStyle: 'width:100%;margin-top:12px;border:none;border-radius:14px;min-height:52px;font-family:Nunito,sans-serif;font-weight:900;font-size:16px;' + (delReady ? 'background:#B8433D;color:#fff;cursor:pointer' : 'background:var(--tt-bg-efe9dc);color:var(--tt-fg-686458);cursor:not-allowed'),
       privDeleteLabel: s.delBusy ? 'Deleting\u2026' : 'Delete my account for good',
       privDelete: ()=>{ if(delReady) this.deleteMyAccount(); },
       privDelErr: s.delErr || '', privDelErrShow: !!s.delErr
@@ -4089,7 +4220,7 @@ class Component extends DCLogic {
       goLogin: nav('login'),
       vProgress: view==='progress',
       goProgress: nav('progress'),
-      readyPct: rdy, readyDash: (rdy*3.64).toFixed(0)+' 365', readyColor: rdyColor,
+      readyPct: rdy, readyDash: (rdy*3.64).toFixed(0)+' 365', readyColor: rdyColor, readyText: TTScreen.textTone(rdyColor),
       readyLabel: rdy>=90?'Ready to book!':rdy>=75?'Nearly ready':rdy>=50?'Getting there':'Keep practising',
       readySub: s.tests.length ? 'Based on her mocks, practice answers and memory boxes.' : 'Do a mock test to make this score properly accurate.',
       coachLines: this.advise().map(t=>({text:t})),
@@ -4100,7 +4231,7 @@ class Component extends DCLogic {
         const needy = !few && pct<70;
         return {name: T[x.t-1],
           status: few? 'Not tried much' : pct<50? 'Needs work' : pct<70? 'Shaky' : pct<85? 'Good' : 'Strong',
-          statusStyle: 'width:96px;text-align:right;font-size:13px;font-weight:800;flex:none;color:'+col,
+          statusStyle: 'width:96px;text-align:right;font-size:13px;font-weight:800;flex:none;color:'+TTScreen.textTone(col),
           dotStyle: 'flex:none;width:12px;height:12px;border-radius:50%;background:'+col,
           showAdvice: needy, advice: needy? (this.COACH[x.t-1]||{}).low || '' : '',
           barStyle: 'display:block;height:100%;border-radius:5px;width:'+(few?0:pct)+'%;background:'+col};
@@ -4161,13 +4292,13 @@ class Component extends DCLogic {
       trialAvailable: !hardLock && s.bankSource!=='server' && (this.state.bank||[]).length>0,
       trialLabel: 'Try ' + (s.bankSource==='free'? (this.state.bank||[]).length : prices.trial) + ' free questions',
       startTrial: ()=>this.setState({view:'learnSetup'}),
-      subTrackStyle: miniTrack(!!subCfg.required), subKnobStyle: miniKnob(!!subCfg.required),
+      subTrackStyle: miniTrack(!!subCfg.required), subKnobStyle: miniKnob(!!subCfg.required), subOn: TTScreen.pressed(!!subCfg.required),
       subToggle: ()=>this.set({sub: Object.assign({}, subCfg, {required: !subCfg.required})}),
       subLink: subCfg.link||'',
       subLinkChange: e=>this.set({sub: Object.assign({}, subCfg, {link: e.target.value})}),
       subPrice: subCfg.price||'',
       subPriceChange: e=>this.set({sub: Object.assign({}, subCfg, {price: e.target.value})}),
-      planChoices: [{v:'', label:'Default'}, {v:'free', label:'Always free'}, {v:'comp', label:'Free until\u2026'}, {v:'suspended', label:'Suspended'}, {v:'blocked', label:'Blocked'}].map(p=>({label:p.label, style: chip(p.v===(myPlan.type||'')), pick: ()=>{ const plans = Object.assign({}, subCfg.plans); plans[s.userId] = Object.assign({}, plans[s.userId], {type:p.v}); this.set({sub: Object.assign({}, subCfg, {plans})}); }})),
+      planChoices: [{v:'', label:'Default'}, {v:'free', label:'Always free'}, {v:'comp', label:'Free until\u2026'}, {v:'suspended', label:'Suspended'}, {v:'blocked', label:'Blocked'}].map(p=>({label:p.label, on: TTScreen.pressed(p.v===(myPlan.type||'')), style: chip(p.v===(myPlan.type||'')), pick: ()=>{ const plans = Object.assign({}, subCfg.plans); plans[s.userId] = Object.assign({}, plans[s.userId], {type:p.v}); this.set({sub: Object.assign({}, subCfg, {plans})}); }})),
       planIsComp: (myPlan.type||'')==='comp',
       planUntil: myPlan.until||'',
       planUntilChange: e=>{ const plans = Object.assign({}, subCfg.plans); plans[s.userId] = Object.assign({}, plans[s.userId], {until: e.target.value}); this.set({sub: Object.assign({}, subCfg, {plans})}); },
@@ -4179,17 +4310,17 @@ class Component extends DCLogic {
       cloudSignOutBtn: ()=>this.doSignOut(),
       cloudStatus: !backendOn? 'Running on this device only \u2014 no account server connected yet (Server settings).' : !signedIn? 'Signed out \u2014 progress stays on this device until you sign in.' : ('Signed in as ' + (TTAuth.email()||'') + ' \u00b7 ' + accessLine + (s.cloudMsg? (' \u00b7 ' + s.cloudMsg) : '')),
       hasManyUsers: this.users.length>1,
-      dashUsers: this.users.map(u=>({name:u.name, style: chip(u.id===s.userId), pick:()=>{ if(u.id!==s.userId) this.loadUser(u.id); }})),
+      dashUsers: this.users.map(u=>({name:u.name, on: TTScreen.pressed(u.id===s.userId), style: chip(u.id===s.userId), pick:()=>{ if(u.id!==s.userId) this.loadUser(u.id); }})),
       loginAdmin: ()=>{ this.setState({profile:'parent', view:'dash'}); },
       parentInitial: (st.parentName||'A')[0].toUpperCase(),
       goSigns: nav('signs'), signTileSize: 92,
-      signTiles: this.SIGNMETA.map(m=>({hint:m.k, label:m.label, speak:()=>this.speak(m.label+'. '+m.desc)})),
+      signTiles: this.SIGNMETA.map(m=>({hint:m.k, label:m.label, say: 'Hear what it means: ' + m.label, speak:()=>this.speak(m.label+'. '+m.desc)})),
       startSignPractice: ()=>{ const ids = this.signBank().map(q=>q.id).map(x=>[Math.random(),x]).sort((a,b)=>a[0]-b[0]).map(p=>p[1]); this.buildSession(ids, 'Road signs'); },
       hasFlagged: revRows.length>0, flaggedCount: revRows.length,
       packRows: this.packList().map(p=>({
         name: p.name, meta: p.count + ' questions' + (p.imported ? ' \u00b7 imported' : ''),
-        learnStyle: miniTrack(this.isPackOn('learn',p.id)), learnKnob: miniKnob(this.isPackOn('learn',p.id)),
-        testStyle: miniTrack(this.isPackOn('test',p.id)), testKnob: miniKnob(this.isPackOn('test',p.id)),
+        learnStyle: miniTrack(this.isPackOn('learn',p.id)), learnKnob: miniKnob(this.isPackOn('learn',p.id)), learnOn: TTScreen.pressed(this.isPackOn('learn',p.id)),
+        testStyle: miniTrack(this.isPackOn('test',p.id)), testKnob: miniKnob(this.isPackOn('test',p.id)), testOn: TTScreen.pressed(this.isPackOn('test',p.id)),
         flipLearn: ()=>this.togglePack('learn', p.id), flipTest: ()=>this.togglePack('test', p.id),
         canDelete: p.imported, del: ()=>{ if(confirm('Remove this pack and all its questions?')) this.deletePack(p.id); }
       })),
@@ -4230,9 +4361,9 @@ class Component extends DCLogic {
         pillStyle: 'align-self:flex-start;margin-top:auto;font-size:11.5px;font-weight:700;padding:4px 9px;border-radius:99px;background:' + (b.done? '#0E7C6B' : 'var(--tt-bg-f2ede1)') + ';color:' + (b.done? '#fff' : 'var(--tt-fg-6e6a5e)')
       })),
       remindOn: !!st.remindOn,
-      remindTrackStyle: miniTrack(!!st.remindOn), remindKnobStyle: miniKnob(!!st.remindOn),
+      remindTrackStyle: miniTrack(!!st.remindOn), remindKnobStyle: miniKnob(!!st.remindOn), remindOn: TTScreen.pressed(!!st.remindOn),
       remindToggle: ()=>this.toggleReminders(),
-      remindHourChoices: TW.REMIND_TIMES.map(o=>({label:o.label, style: chip((st.remindHour||18)===o.h), pick: ()=>this.setRemindHour(o.h)})),
+      remindHourChoices: TW.REMIND_TIMES.map(o=>({label:o.label, on: TTScreen.pressed((st.remindHour||18)===o.h), style: chip((st.remindHour||18)===o.h), pick: ()=>this.setRemindHour(o.h)})),
       remindStatus: s.remindMsg || (st.remindOn? ((window.TTPush && TTPush.canServerPush())? 'On \u2014 a nudge arrives at the time below on any day you haven\u2019t practised.' : 'On for this device. Reminders while the app is closed need the push key (SETUP.md \u00a75).') : 'Off \u2014 no reminders are sent.'),
       levelUpLine: s.lastLevelUp? ('Level ' + s.lastLevelUp + ' \u2014 ' + this.levelInfo(s.xp||0).name) : '',
       hasLevelUp: !!s.lastLevelUp,
@@ -4251,7 +4382,7 @@ class Component extends DCLogic {
       examDate: st.examDate||'',
       // A new test date also restarts the study plan from today (settings.planStart).
       examDateChange: e=>this.set({settings: Object.assign({}, st, {examDate: e.target.value, planStart: e.target.value ? window.TTInsights.localDay(Date.now()) : ''})}),
-      goalChoices: TW.GOALS.map(g=>({label:String(g), style: chip((st.dailyGoal||20)===g), pick: ()=>setGoal(g)})),
+      goalChoices: TW.GOALS.map(g=>({label:String(g), on: TTScreen.pressed((st.dailyGoal||20)===g), style: chip((st.dailyGoal||20)===g), pick: ()=>setGoal(g)})),
       hasAvatar: !!s.avatar, noAvatar: !s.avatar, avatarSrc: s.avatar||'', learnerInitial: (st.learnerName||'?')[0].toUpperCase(),
       avatarUpload: e=>{ const f = e.target.files && e.target.files[0]; if(!f) return; const rd = new FileReader(); rd.onload = ()=>{ const img = new Image(); img.onload = ()=>{ const c = document.createElement('canvas'); const S = 128; c.width = S; c.height = S; const x = c.getContext('2d'); const m = Math.min(img.width, img.height); x.drawImage(img, (img.width-m)/2, (img.height-m)/2, m, m, 0, 0, S, S); this.set({avatar: c.toDataURL('image/jpeg', .82)}); }; img.src = rd.result; }; rd.readAsDataURL(f); e.target.value = ''; },
       avatarRemove: ()=>this.set({avatar:''}),
@@ -4260,7 +4391,19 @@ class Component extends DCLogic {
       notesInlineStyle: 'display:flex;align-items:center;gap:8px;background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);border-radius:14px;min-height:48px;padding:0 16px;font-size:15px;font-weight:700;color:var(--tt-fg-6e6a5e);cursor:pointer',
       pageStyle: 'max-width:680px;margin:0 auto;padding:20px 20px calc(' + TTScreen.bottomPad(notesAvail) + 'px + env(safe-area-inset-bottom))',
       notesOpen: !!s.notesOpen,
-      toggleNotes: ()=>this.setState({notesOpen: !s.notesOpen, notesKey: s.view}),
+      // Opening remembers which button opened the notes, so closing can put focus back there.
+      toggleNotes: ()=>{ if(!s.notesOpen) this._notesFrom = document.activeElement; this.setState({notesOpen: !s.notesOpen, notesKey: s.view}); },
+      // The notes sheet is a dialog: Escape closes it, and Tab / Shift+Tab go round its own
+      // controls instead of into the page hidden behind it (WCAG 2.1.2, 2.4.3).
+      notesKeyDown: e=>{
+        if(e.key==='Escape'){ e.preventDefault(); this.setState({notesOpen:false}); return; }
+        if(e.key!=='Tab') return;
+        const f = Array.from(e.currentTarget.querySelectorAll('button,textarea,input,select,a[href]')).filter(x=>!x.disabled);
+        if(!f.length) return;
+        const first = f[0], last = f[f.length-1];
+        if(e.shiftKey && document.activeElement===first){ e.preventDefault(); last.focus(); }
+        else if(!e.shiftKey && document.activeElement===last){ e.preventDefault(); first.focus(); }
+      },
       notesFabStyle: 'position:fixed;right:' + N.edge + 'px;bottom:calc(' + N.edge + 'px + env(safe-area-inset-bottom));width:' + N.size + 'px;height:' + N.size + 'px;border-radius:50%;background:var(--tt-bg-2a2c33);color:#fff;border:none;cursor:pointer;box-shadow:0 6px 18px rgba(0,0,0,.22);z-index:60;display:flex;align-items:center;justify-content:center',
       notesScreenName: this.NOTESN[s.notesKey||s.view] || 'This screen',
       notesText: (s.notes||{})[s.notesKey||s.view] || '',
@@ -4269,7 +4412,7 @@ class Component extends DCLogic {
       otherNotes: Object.keys(s.notes||{}).filter(k=>k!==(s.notesKey||s.view) && (s.notes[k]||'').trim()).map(k=>({name: this.NOTESN[k]||k, pick: ()=>this.setState({notesKey:k})})),
       homeSub: isParent? 'The dashboard has all the tracking and editing tools.' : (smartOn? 'Your practice now adapts to your mock scores.' : 'A little practice every day beats a lot all at once.'),
       learnerName: st.learnerName, parentName: st.parentName,
-      learnerChipStyle: chip(!isParent), parentChipStyle: chip(isParent),
+      learnerChipStyle: chip(!isParent), parentChipStyle: chip(isParent), learnerChipOn: TTScreen.pressed(!isParent), parentChipOn: TTScreen.pressed(isParent),
       setLearnerProfile: ()=>this.set({profile:'learner'}),
       setParentProfile: ()=>{ this.set({profile:'parent'}); this.setState({view:'dash'}); },
       goHome: nav('home'), goDash: nav('dash'), goSettings: nav('settings'), goEditor: nav('editor'), goPrint: nav('print'),
@@ -4293,8 +4436,8 @@ class Component extends DCLogic {
         dec: ()=>{ const m = Object.assign({}, s.testMix); m[i+1] = Math.max(0,(m[i+1]||0)-1); this.setState({testMix:m}); }})),
       customTimeLabel: s.customTimer ? (Math.max(3, Math.round(T.reduce((a,_,i)=>a+(s.testMix[i+1]||0), 0)*1.14)) + ' min') : 'no time limit',
       flipCustomTimer: ()=>this.setState({customTimer: !s.customTimer}),
-      ctTrack: miniTrack(!!s.customTimer), ctKnob: miniKnob(!!s.customTimer),
-      testModeChoices: [{v:'balanced', name:'Like the real test', sub:'even spread across all topics'}, {v:'random', name:'Surprise mix', sub:'50 pulled at random from everything'}, {v:'custom', name:'Build your own', sub:'pick topics and how many'}].map(m=>({name:m.name, sub:m.sub, pick:()=>this.setState({testMode:m.v}), style:'flex:1;text-align:left;padding:13px 14px;border-radius:14px;cursor:pointer;'+((s.testMode||'balanced')===m.v?'background:var(--tt-bg-e4f2ef);border:2px solid var(--tt-bd-0e7c6b)':'background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2)')})),
+      ctTrack: miniTrack(!!s.customTimer), ctKnob: miniKnob(!!s.customTimer), ctOn: TTScreen.pressed(!!s.customTimer),
+      testModeChoices: [{v:'balanced', name:'Like the real test', sub:'even spread across all topics'}, {v:'random', name:'Surprise mix', sub:'50 pulled at random from everything'}, {v:'custom', name:'Build your own', sub:'pick topics and how many'}].map(m=>({name:m.name, sub:m.sub, on: TTScreen.pressed((s.testMode||'balanced')===m.v), pick:()=>this.setState({testMode:m.v}), style:'flex:1;text-align:left;padding:13px 14px;border-radius:14px;cursor:pointer;'+((s.testMode||'balanced')===m.v?'background:var(--tt-bg-e4f2ef);border:2px solid var(--tt-bd-0e7c6b)':'background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2)')})),
       doneScore, doneTotal: doneAsked, doneTitle, doneMsg, hasSessRows: sessRows.length>1, sessRows,
       doneTip: sess ? this.tipAt((sess.wrongTopics&&sess.wrongTopics[0]) || weak[0] || 1, doneAsked + (sess.wrongTopics? sess.wrongTopics.length:0)) : '',
       doneTipShow: !!(sess && doneAsked>0),
@@ -4304,7 +4447,7 @@ class Component extends DCLogic {
       toggleRange: ()=>this.setState({range: s.range==='all'?'7d':'all'}),
       topicBars,
       hasTests: tests.length>0, noTests: tests.length===0,
-      chartPts, chartDots, passLineY: py(43), passLabelY: py(43)-5,
+      chartPts, chartDots, chartSay, passLineY: py(chartPass), passLabelY: py(chartPass)-5,
       historyRows,
       hasHard: hardRows.length>0, noHard: hardRows.length===0, hardRows,
       exportData: ()=>this.download('theory-trainer-backup.json', {settings:st, leitner:s.leitner, attempts:s.attempts, tests:s.tests, overrides:s.overrides, custom:s.custom, deleted:s.deleted}),
