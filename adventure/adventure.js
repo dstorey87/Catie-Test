@@ -29,7 +29,7 @@
   var WORLD_COLOURS = ['#0E7C6B', '#2F6EA8', '#C77E14', '#2E9E5B', '#D14B45', '#0A5D50'];
 
   // The map drawing, in the SVG's own units (it scales to the screen). Geometry only.
-  var MAP = { width: 300, gap: 118, top: 78, bottom: 96, swing: 80,
+  var MAP = { width: 300, gap: 128, top: 78, bottom: 96, swing: 80,
     // how far left/right each stage sits, in turn: a gentle S-bend like a country road
     bends: [0, 0.7, 1, 0.7, 0, -0.7, -1, -0.7] };
 
@@ -352,12 +352,8 @@
   function renderMap(scrollToCurrent) {
     S.sheet = null;
     var w = S.route[S.world], st = S.status, max = A.stars.length;
-    var colour = colourOf(w.world), ws = worldSummary(w, st), all = starsSummary(S.route, st, max), mine = starsSummary([w], st, max);
-    // top bar: stars over the whole route
-    var tot = $('stars-total');
-    tot.hidden = false;
-    tot.innerHTML = '<span class="st on">' + ICON.star + '</span><span><b>' + all.earned + '</b> / ' + all.available + '</span>';
-    tot.setAttribute('aria-label', all.earned + ' of ' + all.available + ' stars earned');
+    var colour = colourOf(w.world), ws = worldSummary(w, st), mine = starsSummary([w], st, max);
+    paintStars();
 
     // world tabs: every world, with how far she is through it
     var tabs = S.route.map(function (x, i) {
@@ -388,7 +384,7 @@
       var icon = state === 'locked' ? ICON.lock : s.kind === 'checkpoint' ? (state === 'passed' ? ICON.trophy : ICON.flag) : (state === 'passed' ? ICON.check : ICON.wheel);
       return '<button type="button" class="node ' + s.kind + ' ' + state + (cur ? ' here' : '') + '" data-act="node" data-stage="' + s.id + '" ' +
         'style="left:' + (p.x / lay.width * 100) + '%;top:' + (p.y / lay.height * 100) + '%" aria-label="' + esc(label) + '">' +
-        (cur ? '<span class="bubble">' + (ss.plays ? 'Try again' : 'Start') + '</span>' + CAR : '') +
+        (cur ? '<span class="bubble" aria-hidden="true">Start</span>' + CAR : '') +
         '<span class="disc">' + icon + '</span>' +
         (state === 'passed' ? '<span class="nstars">' + starsHtml(ss.stars || 0, max) + '</span>' : '') + '</button>';
     }).join('');
@@ -407,7 +403,7 @@
       '<div class="world-head" style="--wc:' + colour + '">' +
         '<button type="button" class="arrow" data-act="world" data-i="' + (S.world - 1) + '"' + (S.world ? '' : ' disabled') + ' aria-label="Previous world">' + ICON.left + '</button>' +
         '<div class="wh-text"><p class="kicker">World ' + w.world + '</p><h1 id="world-title" tabindex="-1">' + esc(w.name) + '</h1>' +
-          '<p class="sub">' + ws.passed + ' of ' + ws.total + ' stages passed <span class="dot">·</span> <span class="st on">' + ICON.star + '</span> ' + mine.earned + ' / ' + mine.available + '</p></div>' +
+          '<p class="sub"><span class="nw">' + ws.passed + ' of ' + ws.total + ' stages passed</span> <span class="dot">·</span> <span class="nw"><span class="st on">' + ICON.star + '</span> ' + mine.earned + ' / ' + mine.available + '</span></p></div>' +
         '<button type="button" class="arrow" data-act="world" data-i="' + (S.world + 1) + '"' + (S.world < S.route.length - 1 ? '' : ' disabled') + ' aria-label="Next world">' + ICON.right + '</button>' +
       '</div>' +
       '<nav class="worlds" aria-label="Worlds">' + tabs + '</nav>' + free +
@@ -418,6 +414,14 @@
       var here = $('view-map').querySelector('.node.here');
       if (here && here.scrollIntoView) here.scrollIntoView({ block: 'center', behavior: S.reduced ? 'auto' : 'smooth' });
     }
+  }
+
+  // The top bar's star count, over the whole route. Redrawn whenever progress changes.
+  function paintStars() {
+    var all = starsSummary(S.route, S.status, A.stars.length), tot = $('stars-total');
+    tot.hidden = false;
+    tot.innerHTML = '<span class="st on">' + ICON.star + '</span><span><b>' + all.earned + '</b> / ' + all.available + '</span>';
+    tot.setAttribute('aria-label', all.earned + ' of ' + all.available + ' stars earned');
   }
 
   // The card that opens when a stage is tapped: what it is, her best, and Start (or why it's locked).
@@ -459,6 +463,8 @@
     var wi = worldIndexOf(S.route, stageId); if (wi < 0) return;
     var w = S.route[wi], s = w.stages.filter(function (x) { return x.id === stageId; })[0];
     if (!(S.status.stages[stageId] || {}).unlocked) { openSheet(stageId); return; }
+    // close the stage card on the map (it stays in the hidden map otherwise, and Escape would find it)
+    S.sheet = null; var slot = $('sheet-slot'); if (slot) slot.innerHTML = '';
     S.world = wi;
     S.play = newPlay(s, Math.random);
     S.play.world = w.world; S.play.name = stageName(w, s); S.play.worldName = w.name;
@@ -587,7 +593,7 @@
     var p = S.play, r = tally(p), sc = C.adventureScore(r), now = Date.now();
     var before = S.status;
     save(withStage(blob(), C, p.stage, r, now));
-    refresh();
+    refresh(); paintStars();
     track('adventure_stage_end', null, { stage: p.stage, world: p.world, correct: r.correct, total: r.total, pct: sc.pct, passed: sc.passed, stars: sc.stars, bestCombo: p.bestCombo });
     S.last = { play: p, r: r, sc: sc };
     // did this pass open a new world?
