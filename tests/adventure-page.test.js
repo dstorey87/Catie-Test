@@ -5,6 +5,7 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
+const vm = require('node:vm');
 const path = require('node:path');
 
 const root = path.join(__dirname, '..');
@@ -189,20 +190,20 @@ test('learner: none when the app has never been opened, or storage is blocked or
 
 test('answer: appended to attempts in the app\'s shape (src adventure), XP only for a right one, nothing mutated', () => {
   const before = { xp: 30, attempts: [{ q: 'x', t: 1, ok: true, topic: 1, p: 0 }], settings: { learnerName: 'Catie' } };
-  const right = adv.withAnswer(before, { q: 't01q01', ok: true, topic: 1, p: 2 }, 1000);
+  const right = adv.withAnswer(before, { q: 't01q01', ok: true, topic: 1, p: 2 }, 1000, coach);
   assert.deepEqual(right.attempts[1], { q: 't01q01', t: 1000, ok: true, topic: 1, p: 2, src: 'adventure' });
   assert.equal(right.xp, 30 + adv.APP.xpPerRight);
   assert.equal(right.updatedAt, 1000);
   assert.deepEqual(right.settings, before.settings, 'the rest of her data is kept');
-  const wrong = adv.withAnswer(right, { q: 't01q02', ok: false, topic: 1, p: 0 }, 2000);
+  const wrong = adv.withAnswer(right, { q: 't01q02', ok: false, topic: 1, p: 0 }, 2000, coach);
   assert.equal(wrong.xp, right.xp);
   assert.equal(before.attempts.length, 1, 'the old copy is untouched');
-  assert.equal(adv.withAnswer({}, { q: 'a', ok: true, topic: 1, p: 0 }, 5).xp, adv.APP.xpPerRight, 'a brand-new learner works too');
+  assert.equal(adv.withAnswer({}, { q: 'a', ok: true, topic: 1, p: 0 }, 5, coach).xp, adv.APP.xpPerRight, 'a brand-new learner works too');
 });
 
 test('answer: attempts are capped like the app, keeping the newest', () => {
   const many = { attempts: Array.from({ length: adv.APP.attemptsKeep }, (_, i) => ({ q: 'q' + i, t: i, ok: true, topic: 1, p: 0 })) };
-  const out = adv.withAnswer(many, { q: 'new', ok: true, topic: 1, p: 0 }, 99999);
+  const out = adv.withAnswer(many, { q: 'new', ok: true, topic: 1, p: 0 }, 99999, coach);
   assert.equal(out.attempts.length, adv.APP.attemptsKeep);
   assert.equal(out.attempts[out.attempts.length - 1].q, 'new');
   assert.equal(out.attempts[0].q, 'q1');
@@ -334,4 +335,225 @@ test("bank: the admin's deletions are left out and corrections shown, like the a
   const out = adv.withContent([{ id: 'a', question: 'old' }, { id: 'b', question: 'b' }], { deleted: ['b'], overrides: { a: { question: 'new' } } });
   assert.deepEqual(out, [{ id: 'a', question: 'new' }]);
   assert.equal(adv.withContent(bank, null).length, bank.length);
+});
+
+// =========================================================================================
+// ---------- issue #47: goal and streak, reading settings, read-aloud, two tabs ----------
+
+// The app's own code, run here in node, so each shared rule in coach.js can be checked against
+// what the app does today. When the app switches to the coach.js copies, these checks go.
+// methodSrc('award') -> "award(qCount, correctCount, bonus){ ... }", found by matching braces.
+function methodSrc(name) {
+  const at = app.indexOf('\n  ' + name + '(');
+  assert.ok(at > 0, 'the app has no ' + name + '() method any more');
+  let i = app.indexOf('{', at), depth = 0;
+  for (; i < app.length; i++) {
+    if (app[i] === '{') depth++;
+    else if (app[i] === '}' && --depth === 0) break;
+  }
+  return app.slice(at + 3, i + 1);
+}
+// The app's TTInsights block (its goal-day list), run the way tests/app-files.test.js runs it.
+const insightsSrc = [...app.matchAll(/<script>([\s\S]*?)<\/script>/g)].map(m => m[1]).find(s => s.includes('window.TTInsights ='));
+const I = (() => { const ctx = { window: {} }; vm.runInNewContext(insightsSrc, ctx); return ctx.window.TTInsights; })();
+// A time on a given local day: noon, so no time zone can move it to another day.
+const noon = s => { const [y, m, d] = s.split('-').map(Number); return new Date(y, m - 1, d, 12).getTime(); };
+
+// The streak the app's award() leaves after n answers at time `now`, for a learner's state.
+function appAward(state, n, now) {
+  class FixedDate extends Date { constructor(...a) { if (a.length) super(...a); else super(now); } static now() { return now; } }
+  const ctx = { window: { TTCoach: coach, TTInsights: I }, TTCoach: coach, Date: FixedDate };
+  const award = vm.runInNewContext('({' + methodSrc('award') + '})', ctx).award;
+  return award.call({ state, levelInfo: () => ({ level: 1 }) }, n, 0).streak;
+}
+
+test('#47 goal and streak: coach.streakAward leaves the same streak record as the app\'s award()', () => {
+  const now = noon('2026-09-25'), utc = d => new Date(d).toISOString().slice(0, 10);
+  const today = k => Array.from({ length: k }, (_, i) => ({ q: 'q' + i, t: now - (i + 1) * 60000, ok: true, topic: 1 }));
+  const cases = [
+    { streak: { count: 0, last: '', todayDate: '', todayN: 0 }, attempts: [], settings: {} },
+    { streak: { count: 0, last: '', todayDate: utc(now), todayN: 19 }, attempts: today(19), settings: {} },
+    { streak: { count: 4, last: utc(now - 86400000), todayDate: utc(now - 86400000), todayN: 22 }, attempts: today(9), settings: { dailyGoal: 10 } },
+    { streak: { count: 2, last: '2026-01-01', todayDate: '2026-01-01', todayN: 3, goalDays: ['2026-09-20', '2026-09-24'] }, attempts: today(29), settings: { dailyGoal: 30 } },
+    { streak: { count: 1, last: utc(now), todayDate: utc(now), todayN: 40 }, attempts: today(40), settings: { dailyGoal: 20 } }
+  ];
+  for (const c of cases) {
+    for (const n of [1, 3]) {
+      const want = appAward(JSON.parse(JSON.stringify(c)), n, now);
+      const got = coach.streakAward(c.streak, c.attempts, n, coach.dailyGoal(c.settings), now);
+      assert.deepEqual(JSON.parse(JSON.stringify(got)), JSON.parse(JSON.stringify(want)), JSON.stringify(c.settings) + ' + ' + n);
+    }
+  }
+});
+
+test('#47 goal days: coach.recordGoalDay and its limit match the app\'s TTInsights', () => {
+  assert.equal(coach.coachDefaults.goalDaysKept, I.CFG.goalDaysKept);
+  const cases = [[[], '2026-09-25', 20, 20], [['2026-09-25'], '2026-09-25', 40, 20], [['2026-09-26'], '2026-09-25', 20, 20],
+    [[], '2026-09-25', 19, 20], [null, 'junk', 50, 20], [[], '2026-09-25', 5, 0]];
+  for (const c of cases) assert.deepEqual(JSON.parse(JSON.stringify(coach.recordGoalDay(...c))), JSON.parse(JSON.stringify(I.recordGoalDay(...c))), JSON.stringify(c));
+});
+
+test('#47 reading settings: coach.readingStyle is what the app puts on its page for every choice', () => {
+  // The app's lines, from "const zoom" to the high-contrast one, run for each mix of settings.
+  const from = app.indexOf('const zoom = ['), to = app.indexOf('\n', app.indexOf('if(st.highContrast) dyn.filter'));
+  assert.ok(from > 0 && to > from, 'the app\'s reading-style lines were not found');
+  const appDyn = new Function('st', app.slice(from, to) + '\nreturn dyn;');
+  for (const textSize of [0, 1, 2, undefined]) for (const dyslexiaFont of [false, true]) for (const highContrast of [false, true]) {
+    const st = { textSize, dyslexiaFont, highContrast };
+    assert.deepEqual(coach.readingStyle(st), appDyn(st), JSON.stringify(st));
+  }
+  // The read-aloud speed when she has not chosen one: the app's default setting and its fallback.
+  assert.ok(app.includes('voiceRate:' + coach.READING.voiceRate + ','), 'app default voiceRate');
+  assert.ok(app.includes('this.props.speechRate || ' + coach.READING.voiceRate + ';'), 'app speak() fallback');
+});
+
+test('#47 read aloud: coach.pickVoice picks the voice the app\'s bestVoice() picks', () => {
+  const v = (name, lang) => ({ name, lang });
+  const lists = [
+    [v('Alex', 'en-US'), v('Google UK English Female', 'en-GB'), v('Thomas', 'fr-FR'), v('Samantha (Enhanced)', 'en-US')],
+    [v('Daniel', 'en-GB'), v('Karen (Compact)', 'en-AU'), v('Microsoft Sonia Online (Natural)', 'en-GB')],
+    [v('Thomas', 'fr-FR')], []];
+  for (const voices of lists) for (const voiceName of ['', 'Alex', 'Daniel', 'Thomas']) {
+    const fake = { getVoices: () => voices };
+    const ctx = { window: { speechSynthesis: fake }, speechSynthesis: fake };
+    const appSide = vm.runInNewContext('({' + ['voices', 'scoreVoice', 'bestVoice'].map(methodSrc).join(',\n') + '})', ctx);
+    appSide.state = { settings: { voiceName } };
+    const want = appSide.bestVoice(), got = coach.pickVoice(voices, voiceName);
+    assert.equal(got ? got.name : null, want ? want.name : null, JSON.stringify(voices.map(x => x.name)) + ' / ' + voiceName);
+  }
+});
+
+test('#47 read aloud: the words read out are the app\'s own (question, result, explanation)', () => {
+  const q = { question: 'What must you do?', options: ['Stop', 'Give way', 'Speed up', 'Sound your horn'], correctIndex: 1,
+    explanation: 'Give way to traffic.', ruleRef: 'Highway Code rule 1', plainExplanation: 'Let them go first.' };
+  // the question and its options: the app's speakQFull
+  let said = '';
+  const appQ = vm.runInNewContext('({' + methodSrc('speakQFull') + '})', {});
+  appQ.speakQFull.call({ viewQ: x => ({ options: x.options }), speak: t => { said = t; } }, q);
+  assert.equal(coach.sayQuestion(q.question, q.options), said);
+  // the result after answering, when "read aloud automatically" is on: the app's answerLearn
+  const res = app.match(/if\(this\.state\.settings\.autoRead\) this\.speak\((\(ok\?[^\n]*?q\.explanation)\);/);
+  assert.ok(res, 'the app\'s spoken result was not found');
+  const appRes = new Function('ok', 'vq', 'q', 'return ' + res[1]);
+  for (const ok of [true, false]) assert.equal(coach.sayAnswer(ok, 'B', q.options[1], q.explanation), appRes(ok, q, q));
+  // the explanation button: the app's speakExp (with and without the plain re-wording open)
+  const exp = app.match(/speakExp: \(\)=>this\.speak\(([^\n]*?)\),\r?\n/);
+  assert.ok(exp, 'the app\'s explanation read-out was not found');
+  const appExp = new Function('q', 'plainOpen', 'return ' + exp[1]);
+  assert.equal(coach.sayExplanation(q.explanation, q.ruleRef), appExp(q, false));
+  assert.equal(coach.sayExplanation(q.explanation, q.ruleRef, q.plainExplanation), appExp(q, true));
+});
+
+test('#47 goal and streak: an Adventure answer records the streak as a practice answer does', () => {
+  const now = noon('2026-09-25');
+  const earlier = Array.from({ length: 9 }, (_, i) => ({ q: 'p' + i, t: now - (i + 1) * 60000, ok: true, topic: 1 }));
+  const b = adv.withAnswer({ settings: { dailyGoal: 10 }, attempts: earlier, streak: { goalDays: ['2026-09-24'] } },
+    { q: 't01q01', ok: false, topic: 1, p: 0 }, now, coach);
+  assert.equal(b.attempts.length, 10, 'one attempt for one answer, as practice records');
+  assert.deepEqual(b.streak.goalDays, ['2026-09-24', '2026-09-25'], 'the 10th answer today met her goal: today is a goal day');
+  assert.equal(coach.dayCounts(b.attempts)['2026-09-25'], 10, 'Home\'s goal ring counts it (coach.dayCounts, as the app)');
+  assert.deepEqual(b.streak, coach.streakAward({ goalDays: ['2026-09-24'] }, earlier, 1, 10, now), 'exactly the practice rule');
+  // A second chance at a missed question is one more answer, as a drill repeat is in practice.
+  const again = adv.withAnswer(b, { q: 't01q01', ok: true, topic: 1, p: 1 }, now + 1000, coach);
+  assert.equal(again.attempts.length, 11);
+});
+
+// ---------- two tabs: the app open in another tab saves an older copy over Adventure's answers ----------
+// mine: what this Adventure page saved while open ({attempts, flags: {qid: {on, t}}}).
+const T0 = noon('2026-09-25');
+const appOld = () => ({ settings: { dailyGoal: 3 }, xp: 10, updatedAt: T0 + 9000,
+  attempts: [{ q: 'a1', t: T0 - 5000, ok: true, topic: 1, p: 0 }, { q: 'a2', t: T0 + 8000, ok: true, topic: 2, p: 1 }],
+  revisionFlags: {}, flagCleared: {}, streak: { goalDays: [] }, adventure: { stages: { w1s1: { passed: true } } } });
+const mine = () => ({
+  attempts: [{ q: 'v1', t: T0 + 1000, ok: true, topic: 3, p: 2, src: 'adventure' }, { q: 'v2', t: T0 + 2000, ok: false, topic: 3, p: 0, src: 'adventure' }],
+  flags: { v2: { on: true, t: T0 + 2500 } } });
+
+test('#47 two tabs: answers, XP and flags an app tab saved over are put back, in time order', () => {
+  const out = adv.healRecord(appOld(), mine(), coach, T0 + 10000);
+  assert.deepEqual(out.attempts.map(a => a.q), ['a1', 'v1', 'v2', 'a2'], 'Adventure\'s answers back, in the order she gave them');
+  assert.equal(out.xp, 10 + adv.APP.xpPerRight, 'the XP of the one right answer is back');
+  assert.deepEqual(out.revisionFlags.v2, { t: T0 + 2500, src: 'adventure' }, 'the flag is back');
+  assert.deepEqual(out.streak.goalDays, ['2026-09-25'], '4 answers today reach her goal of 3: today is a goal day');
+  assert.equal(out.updatedAt, T0 + 10000);
+  assert.deepEqual(out.adventure, appOld().adventure, 'everything else in her record is kept');
+  assert.deepEqual(out.settings, appOld().settings);
+});
+
+test('#47 two tabs: nothing lost means nothing written; nothing is ever counted twice', () => {
+  const healed = adv.healRecord(appOld(), mine(), coach, T0 + 10000);
+  assert.equal(adv.healRecord(healed, mine(), coach, T0 + 11000), null, 'all there: no save');
+  // Adventure's own saves (mine already in the record) are not added again.
+  const withMine = Object.assign(appOld(), { attempts: appOld().attempts.concat(mine().attempts), revisionFlags: { v2: { t: T0 + 2500, src: 'adventure' } } });
+  assert.equal(adv.healRecord(withMine, mine(), coach, T0 + 11000), null);
+  assert.equal(adv.healRecord(appOld(), { attempts: [], flags: {} }, coach, T0), null, 'nothing saved here yet');
+});
+
+test('#47 two tabs: a later choice in the app wins, and a wiped history stays wiped', () => {
+  // She un-flagged it in the app after flagging it here: the un-flag stands.
+  const unflagged = Object.assign(appOld(), { flagCleared: { v2: T0 + 3000 } });
+  const out = adv.healRecord(unflagged, mine(), coach, T0 + 10000);
+  assert.equal('v2' in out.revisionFlags, false);
+  assert.equal(out.flagCleared.v2, T0 + 3000);
+  // "Reset progress" in the app empties her answers: Adventure never brings them back.
+  const reset = Object.assign(appOld(), { attempts: [] });
+  const r = adv.healRecord(reset, { attempts: mine().attempts, flags: {} }, coach, T0 + 10000);
+  assert.equal(r, null, 'no answers restored after a wipe');
+  // An un-flag made here is put back over the app's older flag.
+  const flagged = Object.assign(appOld(), { revisionFlags: { v3: { t: T0 - 100, src: 'learn' } } });
+  const u = adv.healRecord(flagged, { attempts: [], flags: { v3: { on: false, t: T0 + 100 } } }, coach, T0 + 10000);
+  assert.equal('v3' in u.revisionFlags, false);
+  assert.equal(u.flagCleared.v3, T0 + 100);
+});
+
+test('#47 two tabs: only the flags this page changed are touched; every other flag is left exactly as saved', () => {
+  // A flag saved without a time (or with junk) would be dropped by a whole-list time merge.
+  const other = { old1: { src: 'learn' }, old2: { t: 0, src: 'test' } };
+  const stored = Object.assign(appOld(), { revisionFlags: Object.assign({}, other), flagCleared: { gone: 7 } });
+  const out = adv.healRecord(stored, mine(), coach, T0 + 10000);
+  assert.deepEqual(out.revisionFlags.old1, other.old1);
+  assert.deepEqual(out.revisionFlags.old2, other.old2);
+  assert.equal(out.flagCleared.gone, 7);
+  assert.deepEqual(out.revisionFlags.v2, { t: T0 + 2500, src: 'adventure' }, 'and this page\'s flag is back');
+  // nothing of this page's missing: no save, even with such flags in her record
+  assert.equal(adv.healRecord(out, mine(), coach, T0 + 11000), null);
+});
+
+test('#47 two tabs: restored answers keep the app\'s limit on how many are kept', () => {
+  const full = Object.assign(appOld(), { attempts: Array.from({ length: adv.APP.attemptsKeep }, (_, i) => ({ q: 'o' + i, t: T0 - 1e6 + i, ok: true, topic: 1 })) });
+  const out = adv.healRecord(full, mine(), coach, T0 + 10000);
+  assert.equal(out.attempts.length, adv.APP.attemptsKeep);
+  assert.deepEqual(out.attempts.slice(-2).map(a => a.q), ['v1', 'v2'], 'the newest are kept');
+});
+
+test('#47 page: follows her reading settings, reads aloud and listens for the app\'s saves', () => {
+  // the easy-reading font the app uses is loaded here too
+  assert.match(html, /family=Lexend:wght@400;600;700/);
+  // the rules come from coach.js (one copy), not from this page
+  for (const fn of ['readingStyle', 'pickVoice', 'sayQuestion', 'sayAnswer', 'sayExplanation'])
+    assert.match(js, new RegExp('C\\.' + fn + '\\('), 'the page uses TTCoach.' + fn);
+  for (const fn of ['streakAward', 'dailyGoal', 'mergeFlags'])
+    assert.match(js, new RegExp('coach\\.' + fn + '\\('), 'the saving helpers use TTCoach.' + fn);
+  assert.match(js, /withAnswer\(blob\(\), \{[^}]*\}, now, C\)/, 'each answer records the streak through coach.js');
+  assert.match(js, /TTPush\.markActive\(\)/, 'she counts as active today for reminders, as after a practice answer');
+  assert.match(js, /addEventListener\('storage'/, 'the page hears another tab saving');
+  // older coach.js (cached) without the new rules: the page says so instead of breaking
+  assert.match(js, /typeof C\.streakAward !== 'function'/);
+});
+
+test('#47 two tabs: after "Reset progress" in the app, this page forgets the answers it saved', () => {
+  const m = mine();
+  assert.equal(adv.forgetWiped(m, appOld()).attempts.length, 2, 'answers still in her record: remembered');
+  assert.deepEqual(adv.forgetWiped(m, { attempts: [] }).attempts, [], 'wiped: forgotten, so a later save cannot bring them back');
+  assert.deepEqual(m.flags, mine().flags, 'flags are joined by time, so they are kept');
+});
+
+test('#47 page: the read-aloud button\'s colours are readable in light and dark (WCAG 1.4.11, 3:1)', () => {
+  const { contrast } = require('./contrast.js');
+  const light = css.match(/--say-bg: (#[0-9A-Fa-f]{6}); --say-ink: (#[0-9A-Fa-f]{6});/);
+  const darks = [...css.matchAll(/--say-bg: (#[0-9A-Fa-f]{6}); --say-ink: (#[0-9A-Fa-f]{6});/g)].slice(1);
+  assert.ok(light && darks.length === 2, 'the button colours are set for light and for both dark blocks');
+  for (const m of [light, ...darks]) assert.ok(contrast(m[1], m[2]) >= 3, m[2] + ' on ' + m[1] + ' is ' + contrast(m[1], m[2]).toFixed(2) + ':1');
+  // the app's own pair, so it looks the same as the app's speaker buttons
+  assert.equal(light[1].toLowerCase(), '#e4f2ef');
+  assert.ok(app.includes("'bg-e4f2ef':'" + darks[0][1].toLowerCase() + "'") && app.includes("'fg-0a5d50':'" + darks[0][2].toLowerCase() + "'"), 'dark values are the app\'s TT_DARK ones');
 });
