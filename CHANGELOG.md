@@ -3,6 +3,20 @@
 Newest first. The version is the service-worker `VERSION` in `sw.js` — it changes on every
 deploy that touches the app's cached files. Earlier history: `git log`.
 
+## v14-2026-09-25
+Fixes from the v13 live browser check (issue #38, PR #39). 380 tests (13 new, each seen failing first).
+- **Adventure progress is no longer lost when two devices sync.** The sync kept the newer copy of a
+  learner's whole record, so a device that had never played Adventure could wipe the stars earned on
+  another. Adventure progress is now merged stage by stage, like flags: best score, most stars, passed
+  on either device, most plays, latest play (`TTCoach.mergeAdventure`, used by the app's `mergeSnapshot`).
+- Adventure map: on wide screens all 14 world tabs sit on one row (the 14th used to wrap onto the road).
+- Adventure top bar fits a phone: the title stays on one line, her name shows in full, the star pill
+  shows just her stars on a phone; the world header's stray "·" is gone.
+- Adventure results: the in-a-row counter and "Best run" count first tries only, like the score.
+- No more console errors on every load: the mock charts' marks are drawn by `TTScreen.chartMarks`
+  instead of template values the browser read too early. The charts look the same.
+- The how-to guide's pictures were retaken for v13 (36 of 41), and its Adventure and syncing words updated.
+
 ## v13-2026-09-25
 The number after a line is the GitHub issue where the work is described.
 

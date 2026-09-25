@@ -1,6 +1,6 @@
 # Theory Trainer — request checklist
 
-Last updated: 2026-09-25 (v13).
+Last updated: 2026-09-25 (v14).
 
 States: ✅ done & verified · 🟡 built, not yet seen working for real · ⚠️ built, needs your account/keys to go live · 📋 your step (minutes) · ❌ not possible, honest alternative given.
 
@@ -98,15 +98,13 @@ States: ✅ done & verified · 🟡 built, not yet seen working for real · ⚠�
 - In a browser: serve the repo (`python -m http.server <port> --bind 127.0.0.1`, never port 8765) and drive it with `tests/browser/harness.js` at 390px and 1280px, light and dark. The harness learner has no answers, so tapping Catie opens the quick setup: tap Skip, or seed her as set up with `seed: {'theoryTrainer.d.u1': JSON.stringify({settings: {learnerName: 'Catie', onboardedAt: '2026-09-24'}})}`. Pass `birthYear: null` to see the age question; route `/rest/v1/rpc/export_my_data` and `/rest/v1/rpc/delete_my_account` to fake the server's answers; give bank rows `plain_explanation` + `plain_status: 'approved'` to see Explain it differently; seed a learner with answers to see the prediction, the study plan and the "you keep choosing" lines. For Adventure: open the app through the harness (it seeds a signed-in learner), then tap Adventure on Home or go to `/adventure.html`
 
 ## What's left
-- 📋 Load the plain-explanation drafts into Supabase as `draft`, then approve them in Admin → Memory tips → Plain explanations. Until then no learner sees Explain it differently
+- 📋 Approve or reject the plain-explanation drafts in Admin → Memory tips → Plain explanations (377 loaded as `draft` on 2026-09-25; t09q24 has none). Until then no learner sees Explain it differently
 - 📋 Approve or reject the 44 re-drafted memory tips (and the ones listed under Local AI)
 - Run the delete-account and age flows once from the app against the live project with a throwaway account (not verified there yet)
-- `legal/privacy.html`'s activity-log list doesn't name "Explain it differently" taps, plain-explanation reviews, or Adventure stages started and finished (its old "not built yet" wording was fixed at v12). Needs a Pages-lane fix
 - Adventure (#27): with the app open in another tab, the app doesn't notice an Adventure save until it is reopened, so answers, XP and flags from Adventure can be saved over (Adventure progress itself is safe). Adventure answers don't count toward the daily goal or streak yet. The page doesn't follow the app's text size, dyslexia font or read-aloud yet
 - Adventure: if a learner unlocks more packs, lessons are recut, and saved progress (kept by stage id) then belongs to lessons whose questions have partly changed. With the full bank the route is fixed
 - Two copies to make one (Coach lane, `coach.js`): the Adventure stars total is counted by the page (`starsSummary`) and by the Home card; the scaled mock pass mark is worked out in `coach.js` (`Math.ceil(total * passMark / mockSize)`) and in the app's `TTScreen.passMark`. The 14 topic names are in both `TTCoach.TOPIC_NAMES` and the app's `TOPICS` on purpose (the app keeps its names if `coach.js` fails to load); a test fails if they ever differ
 - The chart's "pass 43" label and the dashboard's "Log a mock" check (`score>=43`) use 43 as a fixed number; that is right for 50-question mocks
-- `help/img`: the 390px screenshots other than `settings.png` and `mock-intro.png` (Home, My Progress and others) still show the old round notes button in the corner. Retaking them needs the guide's example learner, whose seeded data is not in the repo (not verified that it exists anywhere)
 - Accessibility: no screen-reader check by a person (above). At 320px with the app's biggest text size, a few screens scroll sideways slightly (Road signs 14px, Mock test intro 12px, Practise setup 7px, Question editor 6px, Settings 2px, My Progress and the dashboard 1px); WCAG's 320px benchmark uses browser zoom, which passes. A flagged, answered mock square shows only the flag on screen (its spoken name says both)
 - ⚠️ Before charging anyone: a real operator name, address and contact email (and company and ICO numbers, if they apply), a legal review, and Darren's yes or no on the sample choices: lawful bases, liability wording, 30 days' notice of price changes, a full refund within 14 days of the first payment until checkout asks for the waiver, full refunds for wrong charges, a 5-working-day reply to refund emails
 - Not built: change email and change password while signed in; streak repair; the weekly summary email; grouping misconceptions by meaning
@@ -116,9 +114,13 @@ States: ✅ done & verified · 🟡 built, not yet seen working for real · ⚠�
 - The tuning values (14-day half-life, 50-answer minimum, 10-answer what-if, 7-day freeze, hold 2, 70% for the badge nudge, pass-chance colours at 70% and 40%; Adventure's 7-question lessons, 10-question checkpoint, 80% pass and stars at 80/90/100%) are choices, not measurements
 - Not started, and not yet GitHub issues (carried over from the old sections table): React and Babel copied to this site and precached, for true offline; manifest polish (maskable icon, id/scope, viewport tags, offline fallback page); removing the public `questions-1..5.json` and the app's `local()` path (note `tests/bank.test.js` reads those files)
 
+- Adventure map: the road's rounded top reaches up into the bottom of the world-tab row (390, 768 and 1280px); the chart's "pass 43" label can overlap the last dot when her last mock is near 45 (both seen in the v14 check, not new)
+- The help pictures' example learner and capture script were throwaway files, not in the repo: retaking the pictures means writing them again (or adding them to `tools/`)
+
 ## Work in progress
 Tracked as GitHub issues, one per section: https://github.com/dstorey87/Catie-Test/issues (lanes and rules in `CLAUDE.md`).
 
 ## Timeline
+- 2026-09-25 — v14 (`v14-2026-09-25`): fixes from the v13 live check (#38) — Adventure progress merged stage by stage across devices (no more lost stars), map tabs on one row, phone top bar, Best run counts first tries, no console errors on load, help pictures retaken. 380 tests.
 - 2026-09-25 — v12 (`v12-2026-09-25`): quick setup, What's new, the help, about and sample legal pages, pass prediction, what to work on, study plan, streak freezes, family board, Your data and the age question, Explain it differently (waiting for approved text), 44 bank answers corrected to UK rules, and the #12 layout bugs fixed. Earlier versions: `CHANGELOG.md`
 - 2026-09-25 — v13 (`v13-2026-09-25`): Adventure mode (14 worlds and 70 stages, a Home card, works offline), the WCAG 2.2 AA accessibility audit with every automated finding fixed (no screen-reader check by a person yet), the notes button no longer covering controls, and the #32 wording, chart and page fixes. 367 tests
