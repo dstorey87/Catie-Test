@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Cookies and storage (draft) — Theory Trainer</title>
+<meta name="description" content="Draft cookie and storage notice for Theory Trainer: the app sets no cookies of its own; this lists everything it saves in your browser and why.">
+<meta name="theme-color" content="#0E7C6B">
+<meta name="robots" content="noindex">
+<link rel="icon" href="../icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@700;800;900&family=Atkinson+Hyperlegible:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../help/site.css">
+<script src="../config.js"></script>
+<script src="../help/site.js"></script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to the notice</a>
+<div class="wrap">
+  <header class="top">
+    <a class="brand" href="../Theory%20Trainer.dc.html" aria-label="Theory Trainer — open the app">
+      <span class="brand-mark" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="#fff" stroke-width="2.4"/><circle cx="12" cy="12" r="2.4" fill="#fff"/><path d="M12 14.2 L12 21 M10 12.6 L3.6 10.4 M14 12.6 L20.4 10.4" stroke="#fff" stroke-width="2.2"/></svg></span>
+      <span class="brand-name">Theory Trainer</span>
+    </a>
+    <a class="btn" href="../Theory%20Trainer.dc.html">Open the app</a>
+  </header>
+
+  <main id="main" class="legal">
+    <div class="hero">
+      <h1>Cookies and storage</h1>
+      <p class="lede">Theory Trainer sets no cookies of its own. It does save things in your browser so it can work offline and remember you — this page lists all of them.</p>
+    </div>
+
+    <!-- Sample banner: identical on every legal page (tests/help-pages.test.js checks). It comes
+         off only when every "(mock)" value is replaced with a real one — the test ties the two. -->
+    <div class="draft" role="note">
+      <p><strong>Sample policy with mock details.</strong> Theory Trainer is a family project, not a registered business. The operator's name, address, email and registration numbers are mock values, highlighted and marked <span class="fill">(mock)</span>: they are not real and reach no one. Replace them with real details, and have the policy checked, before charging anyone. Everything else describes what the app really does, from its code and database set-up; promises such as reply times and refund rules are sensible defaults to confirm. Not reviewed by a lawyer.</p>
+    </div>
+
+    <section aria-labelledby="h-storage">
+      <h2 id="h-storage">What the app saves in your browser</h2>
+      <p>These live in your browser's local storage on the device you use. They are not sent anywhere except where it says "sent to your account".</p>
+      <dl class="pairs">
+        <div><dt><code>theoryTrainer.users</code></dt><dd>The learners on this device (an id and a name each).</dd></div>
+        <div><dt><code>theoryTrainer.active</code></dt><dd>Which learner was here last.</dd></div>
+        <div><dt><code>theoryTrainer.d.</code> + learner id</dt><dd>That learner's progress and settings: answers, memory boxes, mock results, flags, XP, streak, notes, profile photo and a mock test in progress. Sent to your account when you're signed in.</dd></div>
+        <div><dt><code>theoryTrainer.content</code></dt><dd>Question edits, question-pack choices and learner access settings made on the admin dashboard. Sent to your account when you're signed in.</dd></div>
+        <div><dt><code>theoryTrainer.v1</code>, <code>theoryTrainer.sync</code></dt><dd>Left by older versions of the app; read once so nothing is lost.</dd></div>
+        <div><dt><code>tt.theme</code></dt><dd>Appearance: match device, light or dark. The help pages read it too.</dd></div>
+        <div><dt><code>tt.sb.session</code></dt><dd>Your sign-in session, so you stay signed in. Removed when you sign out.</dd></div>
+        <div><dt><code>tt.sb.cfg</code></dt><dd>The server address and public key, only if they were typed in on the Server settings screen.</dd></div>
+        <div><dt><code>tt.bank.v2</code></dt><dd>A copy of the question bank for offline use. Removed when you sign out. (<code>tt.bank.v1</code> is an older copy.)</dd></div>
+        <div><dt><code>tt.events.q</code></dt><dd>Activity waiting to be sent to your account — kept here while you're offline, then sent and removed.</dd></div>
+        <div><dt><code>tt.nudged</code></dt><dd>The date of the last in-app reminder, so you only get one a day.</dd></div>
+      </dl>
+      <h3>Also on your device</h3>
+      <ul>
+        <li><strong>The app's offline copy</strong> — its own files, saved by the browser's service worker so it opens without signal.</li>
+        <li><strong>Notification permission</strong> — only if you switch on daily reminders.</li>
+      </ul>
+      <p>To clear all of this, sign out and then clear this site's data in your browser's settings. Anything not yet synced to your account is lost.</p>
+    </section>
+
+    <section aria-labelledby="h-third">
+      <h2 id="h-third">Other websites the app loads from</h2>
+      <p>When the app opens, your browser also downloads files from these services, which receive your IP address and browser details as part of any web request:</p>
+      <ul>
+        <li><strong>GitHub Pages</strong> (github.io) — hosts the app.</li>
+        <li><strong>unpkg.com</strong> — three code libraries the app runs on (React, React DOM and Babel).</li>
+        <li><strong>Google Fonts</strong> (fonts.googleapis.com and fonts.gstatic.com) — the fonts.</li>
+        <li><strong>Supabase</strong> (supabase.co) — your account and progress, once you sign in.</li>
+      </ul>
+      <p>None of them set a cookie. Checked on 24 September 2026 in a fresh browser: opening the live app, and the current app, help and legal pages, stored no cookie, and none of these services offered one. The app talks to Supabase without cookies: each request carries your sign-in session in a header, and the browser neither sends nor keeps cookies for it. These services could change that without telling us. More in the <a href="privacy.html">privacy notice</a>.</p>
+    </section>
+
+    <section aria-labelledby="h-consent">
+      <h2 id="h-consent">Consent</h2>
+      <p>Everything the app saves is needed for it to work (signing in, progress, offline use), and there is no advertising or analytics storage, so the app shows no consent banner.</p>
+      <p>This follows the UK's cookie rules (PECR) as the <a href="https://ico.org.uk/for-organisations/direct-marketing-and-privacy-and-electronic-communications/guidance-on-the-use-of-storage-and-access-technologies/what-are-the-exceptions/">ICO's guidance</a> explains them: storage that is strictly necessary for something you asked for, such as staying signed in, keeping your progress, working offline or the reminder you switched on, needs no consent. Remembering your Appearance choice (<code>tt.theme</code>) comes under a separate exception for adapting how a service looks. That one also asks for clear information about it, which this page gives, and a simple, free way to object: choose <strong>Match device</strong> in Settings, or clear this site's data as described above. Checked against the ICO's guidance on 24 September 2026.</p>
+      <p>Version: sample. Last changed: 24 September 2026.</p>
+    </section>
+  </main>
+
+  <footer class="foot">
+    <nav aria-label="More pages">
+      <a href="../Theory%20Trainer.dc.html">Open the app</a>
+      <a href="../about.html">About Theory Trainer</a>
+      <a href="../help.html">How to use Theory Trainer</a>
+      <a href="privacy.html">Privacy (draft)</a>
+      <a href="terms.html">Terms (draft)</a>
+      <a href="refunds.html">Refunds (draft)</a>
+    </nav>
+    <p class="disclaimer">Not affiliated with the DVSA. Theory Trainer is an independent practice app; the official rules are in the Highway Code.</p>
+  </footer>
+</div>
+</body>
+</html>

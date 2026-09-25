@@ -213,3 +213,164 @@ test('profile() is null when signed out — it never asks the server for "any" r
   assert.equal(await win.TTAuth.profile(), null);
   assert.equal(calls.length, 0);
 });
+
+// ---------- "Explain it differently": plain explanations, admin-approved only ----------
+test('a plain explanation reaches the app only once the admin has approved it', async () => {
+  const rows = [
+    { qid: 'a', topic: 1, question: 'A?', options: ['x', 'y'], correct_index: 0, plain_explanation: 'Approved plain', plain_status: 'approved' },
+    { qid: 'b', topic: 1, question: 'B?', options: ['x', 'y'], correct_index: 0, plain_explanation: 'Draft plain', plain_status: 'draft' },
+    { qid: 'c', topic: 1, question: 'C?', options: ['x', 'y'], correct_index: 0, plain_explanation: 'Rejected plain', plain_status: 'rejected' },
+    { qid: 'd', topic: 1, question: 'D?', options: ['x', 'y'], correct_index: 0, plain_explanation: null, plain_status: 'approved' },
+  ];
+  const { win, calls } = tracker(() => ({ status: 200, body: rows }), SIGNED_IN);
+  const got = await win.TTBank.load();
+  assert.deepEqual(got.questions.map(q => q.plainExplanation), ['Approved plain', undefined, undefined, undefined]);
+  const cols = new URL(calls[0].url).searchParams.get('select').split(',');
+  assert.ok(cols.includes('plain_explanation') && cols.includes('plain_status'), 'the bank asks for both columns');
+});
+
+test('explanations() lists every drafted plain explanation with its status, for the review screen', async () => {
+  const back = [{ qid: 'q1', plain_explanation: 'Simpler words.', plain_status: 'draft' }];
+  const { win, calls } = tracker(() => ({ status: 200, body: back }), SIGNED_IN);
+  assert.deepEqual(await win.TTBank.explanations(), back);
+  const u = new URL(calls[0].url);
+  assert.equal(u.pathname, '/rest/v1/questions');
+  assert.equal(u.searchParams.get('select'), 'qid,plain_explanation,plain_status');
+  assert.equal(u.searchParams.get('plain_explanation'), 'not.is.null');
+});
+
+test('saveExplanation sends the text and status for that one question', async () => {
+  const { win, calls } = tracker(() => ({ status: 200, body: [{ qid: 't01q02' }] }), SIGNED_IN);
+  assert.equal(await win.TTBank.saveExplanation('t01q02', 'Stop, look, then go.', 'approved'), true);
+  const u = new URL(calls[0].url);
+  assert.equal(calls[0].opts.method, 'PATCH');
+  assert.equal(u.searchParams.get('qid'), 'eq.t01q02');
+  assert.deepEqual(JSON.parse(calls[0].opts.body), { plain_explanation: 'Stop, look, then go.', plain_status: 'approved' });
+});
+
+test('saveExplanation refuses an unknown status before it asks the server', async () => {
+  const { win, calls } = tracker(() => ({ status: 200, body: [{}] }), SIGNED_IN);
+  await assert.rejects(win.TTBank.saveExplanation('q1', 'x', 'maybe'), /draft, approved or rejected/);
+  assert.equal(calls.length, 0);
+});
+
+test('saveExplanation says so when the server changed nothing (not the admin, or no such question)', async () => {
+  const { win } = tracker(() => ({ status: 200, body: [] }), SIGNED_IN);
+  await assert.rejects(win.TTBank.saveExplanation('nope', 'x', 'draft'), /not saved/i);
+});
+
+// ---------- TTAccount: data export, account deletion, age ----------
+test('exportData returns exactly what the server sent, from the signed-in account\'s own call', async () => {
+  const sent = { exported_at: '2026-09-24T18:00:00Z', account_id: 'u1', profile: { id: 'u1', email: 'a@b.co' }, events: [{ kind: 'answer' }] };
+  const { win, calls } = tracker(() => ({ status: 200, body: sent }), SIGNED_IN);
+  assert.deepEqual(await win.TTAccount.exportData(), sent);
+  assert.equal(new URL(calls[0].url).pathname, '/rest/v1/rpc/export_my_data');
+  assert.equal(calls[0].opts.method, 'POST');
+  assert.equal(calls[0].opts.headers.Authorization, 'Bearer AT');
+});
+
+test('deleteAccount checks nothing itself, and shows the server\'s refusal word for word', async () => {
+  const refusal = 'This is the admin account, so it cannot delete itself from the app. Make another account the admin first.';
+  const { win, calls } = tracker(() => ({ status: 400, body: { code: 'P0001', message: refusal, hint: 'admin_account', details: null } }), SIGNED_IN);
+  await assert.rejects(win.TTAccount.deleteAccount(), (e) => {
+    assert.equal(e.message, refusal);
+    assert.equal(e.hint, 'admin_account', 'the screen can branch on the reason');
+    return true;
+  });
+  assert.equal(calls.length, 1, 'the one and only request is the server call');
+  assert.equal(new URL(calls[0].url).pathname, '/rest/v1/rpc/delete_my_account');
+  assert.equal(win.TTAuth.signedIn(), true, 'a refused deletion leaves you signed in');
+});
+
+test('after a deletion the device forgets the account: session, bank copy and unsent events', async () => {
+  const seed = Object.assign({}, SIGNED_IN, {
+    'tt.bank.v2': JSON.stringify({ at: 1, rows: [{ id: 'q1' }] }),
+    'tt.events.q': JSON.stringify([{ client_id: 'c1', kind: 'answer' }]),
+  });
+  const { win, calls, store } = tracker(() => ({ status: 204, body: null }), seed);
+  assert.equal(await win.TTAccount.deleteAccount(), true);
+  assert.equal(win.TTAuth.signedIn(), false);
+  ['tt.sb.session', 'tt.bank.v2', 'tt.events.q'].forEach(k => assert.equal(store.has(k), false, k + ' is gone'));
+  assert.ok(!calls.some(c => /\/auth\/v1\/logout/.test(c.url)), 'no logout call: the session died with the account');
+});
+
+test('the guardian rule comes from config.js and is careful about birthdays not yet reached', () => {
+  const { win } = tracker(() => null, SIGNED_IN);
+  const now = new Date().getFullYear();
+  win.TT_CONFIG.age = { guardianUnder: 16, oldest: 120 };
+  // Born (now - 16): 16 this year, but maybe still 15 today -> must ask.
+  assert.equal(win.TTAccount.needsGuardian(now - 16), true);
+  assert.equal(win.TTAccount.needsGuardian(now - 17), false);
+  win.TT_CONFIG.age = { guardianUnder: 13, oldest: 120 }; // change the one value: the rule follows
+  assert.equal(win.TTAccount.needsGuardian(now - 13), true);
+  assert.equal(win.TTAccount.needsGuardian(now - 14), false);
+});
+
+test('the shipped config.js holds the age rule', () => {
+  const { win } = tracker(() => null);
+  vm.runInNewContext(fs.readFileSync(path.join(__dirname, '..', 'config.js'), 'utf8'), win);
+  const rule = win.TTAccount.ageRule();
+  assert.ok(rule.guardianUnder > 0 && rule.oldest > 0);
+});
+
+test('a missing age rule is reported with where to fix it, never guessed', async () => {
+  const { win, calls } = tracker(() => null, SIGNED_IN);
+  delete win.TT_CONFIG.age;
+  assert.throws(() => win.TTAccount.needsGuardian(2000), /config\.js/);
+  await assert.rejects(win.TTAccount.saveAge(2000, false, ''), /config\.js/);
+  assert.equal(calls.length, 0);
+});
+
+test('saveAge for an adult stores the year and no guardian details', async () => {
+  const { win, calls } = tracker(() => ({ status: 200, body: [{ id: 'u1' }] }), SIGNED_IN);
+  win.TT_CONFIG.age = { guardianUnder: 16, oldest: 120 };
+  const y = new Date().getFullYear() - 30;
+  const r = await win.TTAccount.saveAge(y, true, 'someone@example.com');
+  assert.equal(r.needsGuardian, false);
+  const u = new URL(calls[0].url);
+  assert.equal(calls[0].opts.method, 'PATCH');
+  assert.equal(u.pathname, '/rest/v1/profiles');
+  assert.equal(u.searchParams.get('id'), 'eq.u1', 'only this account\'s own row');
+  assert.deepEqual(JSON.parse(calls[0].opts.body), { birth_year: y, guardian_consent: false, guardian_email: null });
+});
+
+test('saveAge under the age needs consent and a guardian email that is not the learner\'s own', async () => {
+  const seed = { 'tt.sb.session': JSON.stringify({ access_token: 'AT', refresh_token: 'RT', expires_at: 4102444800, user: { id: 'u1', email: 'catie@example.com' } }) };
+  const { win, calls } = tracker(() => ({ status: 200, body: [{ id: 'u1' }] }), seed);
+  win.TT_CONFIG.age = { guardianUnder: 16, oldest: 120 };
+  const y = new Date().getFullYear() - 14;
+  await assert.rejects(win.TTAccount.saveAge(y, false, 'mum@example.com'), /parent or guardian/);
+  await assert.rejects(win.TTAccount.saveAge(y, true, 'not-an-email'), /email/);
+  await assert.rejects(win.TTAccount.saveAge(y, true, 'Catie@Example.com'), /your own email/);
+  assert.equal(calls.length, 0, 'nothing is sent until it is complete');
+  const r = await win.TTAccount.saveAge(y, true, ' mum@example.com ');
+  assert.equal(r.needsGuardian, true);
+  assert.deepEqual(JSON.parse(calls[0].opts.body), { birth_year: y, guardian_consent: true, guardian_email: 'mum@example.com' });
+});
+
+test('saveAge refuses an impossible year before it asks the server', async () => {
+  const { win, calls } = tracker(() => ({ status: 200, body: [{}] }), SIGNED_IN);
+  win.TT_CONFIG.age = { guardianUnder: 16, oldest: 120 };
+  const now = new Date().getFullYear();
+  for (const bad of [now + 1, now - 121, 'abc', 2000.5, null]) {
+    await assert.rejects(win.TTAccount.saveAge(bad, true, 'mum@example.com'), /year you were born/);
+  }
+  assert.equal(calls.length, 0);
+});
+
+test('saveAge says so when the server saved nothing, and asks to be signed in', async () => {
+  const { win } = tracker(() => ({ status: 200, body: [] }), SIGNED_IN);
+  win.TT_CONFIG.age = { guardianUnder: 16, oldest: 120 };
+  await assert.rejects(win.TTAccount.saveAge(new Date().getFullYear() - 30, false, ''), /not saved/i);
+  const out = tracker(() => null);
+  out.win.TT_CONFIG.age = { guardianUnder: 16, oldest: 120 };
+  await assert.rejects(out.win.TTAccount.saveAge(2000, false, ''), /sign in/i);
+});
+
+test('age() reads this account\'s own row and says whether a guardian is needed', async () => {
+  const y = new Date().getFullYear() - 14;
+  const { win, calls } = tracker(() => ({ status: 200, body: [{ birth_year: y, guardian_consent: true, guardian_email: 'mum@example.com' }] }), SIGNED_IN);
+  win.TT_CONFIG.age = { guardianUnder: 16, oldest: 120 };
+  assert.deepEqual({ ...(await win.TTAccount.age()) }, { birthYear: y, guardianConsent: true, guardianEmail: 'mum@example.com', needsGuardian: true });
+  assert.equal(new URL(calls[0].url).searchParams.get('id'), 'eq.u1');
+});

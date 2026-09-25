@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Privacy notice (draft) — Theory Trainer</title>
+<meta name="description" content="Draft privacy notice for Theory Trainer: what data the app keeps, where, who can see it, how long it is kept, and how to get a copy or have it deleted.">
+<meta name="theme-color" content="#0E7C6B">
+<meta name="robots" content="noindex">
+<link rel="icon" href="../icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@700;800;900&family=Atkinson+Hyperlegible:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../help/site.css">
+<script src="../config.js"></script>
+<script src="../help/site.js"></script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to the notice</a>
+<div class="wrap">
+  <header class="top">
+    <a class="brand" href="../Theory%20Trainer.dc.html" aria-label="Theory Trainer — open the app">
+      <span class="brand-mark" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="#fff" stroke-width="2.4"/><circle cx="12" cy="12" r="2.4" fill="#fff"/><path d="M12 14.2 L12 21 M10 12.6 L3.6 10.4 M14 12.6 L20.4 10.4" stroke="#fff" stroke-width="2.2"/></svg></span>
+      <span class="brand-name">Theory Trainer</span>
+    </a>
+    <a class="btn" href="../Theory%20Trainer.dc.html">Open the app</a>
+  </header>
+
+  <main id="main" class="legal">
+    <div class="hero">
+      <h1>Privacy notice</h1>
+      <p class="lede">What Theory Trainer keeps about you, where it is kept, who can see it, and what you can ask for.</p>
+    </div>
+
+    <!-- Sample banner: identical on every legal page (tests/help-pages.test.js checks). It comes
+         off only when every "(mock)" value is replaced with a real one — the test ties the two. -->
+    <div class="draft" role="note">
+      <p><strong>Sample policy with mock details.</strong> Theory Trainer is a family project, not a registered business. The operator's name, address, email and registration numbers are mock values, highlighted and marked <span class="fill">(mock)</span>: they are not real and reach no one. Replace them with real details, and have the policy checked, before charging anyone. Everything else describes what the app really does, from its code and database set-up; promises such as reply times and refund rules are sensible defaults to confirm. Not reviewed by a lawyer.</p>
+    </div>
+
+    <section aria-labelledby="h-who">
+      <h2 id="h-who">Who is responsible for your data</h2>
+      <p>The data controller is <span class="fill">Theory Trainer (mock operator — not a registered business)</span>, <span class="fill">0 Sample Road, Mocktown, England (mock)</span>.</p>
+      <p>Registered with the Information Commissioner's Office as <span class="fill">ZA000000 (mock)</span>. Company number <span class="fill">00000000 (mock)</span>.</p>
+      <p>Contact for anything about your data: <span class="fill">support@example.com (mock)</span>. While these details are mock, ask the admin instead: the adult who gave you access to the app.</p>
+      <p>Theory Trainer is not affiliated with the DVSA or any government body.</p>
+    </section>
+
+    <section aria-labelledby="h-what">
+      <h2 id="h-what">What the app keeps</h2>
+      <p>The app keeps data in two places: on the server (a Supabase database, so your progress follows you between devices) and on the device you use.</p>
+
+      <h3>On the server, per account</h3>
+      <dl class="pairs">
+        <div><dt>Sign-in (Supabase Auth)</dt><dd>Your email address and password. Supabase checks the password when you sign in; the app itself never stores it. Supabase also keeps its own records of sign-ins.</dd></div>
+        <div><dt><code>profiles</code></dt><dd>Your email, the name you gave, whether the account is a normal account or the admin, and when it was created. When given (see <a href="#h-children">Young learners</a>): the learner's year of birth, whether a parent or guardian has agreed, and that parent's or guardian's email.</dd></div>
+        <div><dt><code>entitlements</code></dt><dd>Whether the account has access and why (none, active, trialing, past due, cancelled, or free access given by the admin), the plan (monthly, annual or free), Stripe's customer and subscription reference numbers, when the paid period ends, and whether it is set to cancel. Written only by the payment system, never by the app.</dd></div>
+        <div><dt><code>snapshots</code></dt><dd>One copy of the account's progress. For each learner on the account: their name, settings (including theory test date, daily goal, voice and reminder choices), every practice and mock answer (which question, when, right or wrong, and which option was picked), memory boxes, mock test results, flags, XP, streak, notes, and a profile photo if one was uploaded (reduced to 128 × 128 pixels). Also any question edits, question-pack choices and learner access settings made on the admin dashboard.</dd></div>
+        <div><dt><code>events</code></dt><dd>The activity log: one row for each thing a learner does — each answer (with the option picked and how long it took), each question shown, practice sessions started, finished or left, mock tests started, finished or abandoned, changed mock answers, hints, read-aloud, flags and un-flags, screens opened, "More like this", finishing or skipping the quick setup, dismissing the What's new card, and memory-tip reviews. Each row has the learner's name and the time on the device. Rows are only ever added; the app cannot change or delete them.</dd></div>
+        <div><dt><code>reminders</code></dt><dd>If you switch on daily reminders: whether they are on, the hour you chose, your time-zone offset, the last day you practised and the last day you were reminded.</dd></div>
+        <div><dt><code>push_subs</code></dt><dd>If reminders are on and server reminders are set up: the address your browser gives for delivering notifications, its two security keys, and your browser's identifying text (the first 200 characters).</dd></div>
+        <div><dt><code>questions</code></dt><dd>The question bank. Not personal data.</dd></div>
+      </dl>
+
+      <h3>On your device</h3>
+      <p>The app saves your progress, settings, sign-in session and a copy of the question bank in your browser's storage so it works offline and opens quickly. It sets no cookies of its own. The full list is on the <a href="cookies.html">cookies and storage page</a>.</p>
+
+      <h3>What the app does not do</h3>
+      <ul>
+        <li>No adverts, and no third-party analytics or tracking code.</li>
+        <li>No card details: when card payments are live, you enter them on Stripe's own page, never in the app.</li>
+        <li>Your data is not sold or shared for marketing.</li>
+      </ul>
+    </section>
+
+    <section aria-labelledby="h-why">
+      <h2 id="h-why">Why it is kept</h2>
+      <ul>
+        <li><strong>Your account and progress</strong> — to sign you in and give you the same progress on every device.</li>
+        <li><strong>The activity log</strong> — so the coach can build lessons from your answers, and so the adult helping you (the admin) can see what you have practised and what you find hard.</li>
+        <li><strong>Access and payments</strong> — to know whether the account may read the full question bank.</li>
+        <li><strong>Reminders</strong> — to nudge you only on days you haven't practised, at the time you chose.</li>
+      </ul>
+      <p>The lawful basis for each, under UK GDPR Article 6(1):</p>
+      <ul>
+        <li><strong>Your account, progress, the coach, and access and payments</strong> — contract (6(1)(b)): they are the service you signed up for.</li>
+        <li><strong>The admin seeing learners' activity</strong> — legitimate interests (6(1)(f)): so the adult helping a learner can see what they have practised and what they find hard.</li>
+        <li><strong>Reminders</strong> — consent (6(1)(a)): nothing is kept until you switch them on, and you can switch them off at any time.</li>
+      </ul>
+    </section>
+
+    <section aria-labelledby="h-see">
+      <h2 id="h-see">Who can see it</h2>
+      <ul>
+        <li><strong>You</strong> — each account can read only its own rows. This is enforced by the database itself (row-level security), not just by the app.</li>
+        <li><strong>The admin</strong> — the admin account can read every account's activity log and profile (that is how the Activity screen works), and edit the question bank.</li>
+        <li><strong>The operator</strong> — whoever runs the Supabase project can see everything in the database from Supabase's dashboard. That is the operator named at the top of this notice, who looks only to answer your requests, fix problems and keep the app running.</li>
+        <li><strong>The services below</strong>, only as far as they need to do their job.</li>
+      </ul>
+    </section>
+
+    <section aria-labelledby="h-processors">
+      <h2 id="h-processors">Services that handle data for the app</h2>
+      <dl class="pairs">
+        <div><dt>Supabase<br><span class="meta">supabase.co</span></dt><dd>Accounts, the database above, the confirmation and password-reset emails, and the server functions for reminders and payments. Where the data is stored: Supabase's Frankfurt region, in Germany (region code eu-central-1). <a href="https://supabase.com/privacy">Supabase's privacy policy</a>.</dd></div>
+        <div><dt>GitHub Pages<br><span class="meta">github.io</span></dt><dd>Hosts the app's files. Like any web host it receives your IP address and browser details when the app loads. <a href="https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement">GitHub's privacy statement</a>.</dd></div>
+        <div><dt>unpkg.com</dt><dd>Serves three code libraries the app runs on (React, React DOM and Babel). Your browser downloads them from there, so that service receives your IP address and browser details.</dd></div>
+        <div><dt>Google Fonts<br><span class="meta">fonts.googleapis.com and fonts.gstatic.com</span></dt><dd>Serves the app's fonts. Your browser downloads them from Google, which receives your IP address and browser details. <a href="https://developers.google.com/fonts/faq/privacy">Google Fonts privacy</a>.</dd></div>
+        <div><dt>Stripe</dt><dd>Only once card payments are live: takes payments on its own page and tells the app's server whether a subscription is active. <a href="https://stripe.com/privacy">Stripe's privacy policy</a>.</dd></div>
+        <div><dt>Your browser's notification service</dt><dd>Only if server reminders are set up and you switch reminders on: the company that makes your browser or phone delivers the nudge.</dd></div>
+      </dl>
+      <h3>Outside the UK</h3>
+      <p>The database is in Germany. UK law treats every EU country as giving adequate protection, so no extra safeguard is needed for it (<a href="https://ico.org.uk/for-organisations/uk-gdpr-guidance-and-resources/international-transfers/adequacy-regulations/is-the-restricted-transfer-covered-by-adequacy-regulations/">ICO: adequacy regulations</a>).</p>
+      <p>The other services above may handle what they receive outside the UK, for example in the United States. Each one's privacy policy, linked above, sets out the safeguards it relies on; those have not been checked one by one for this sample.</p>
+    </section>
+
+    <section aria-labelledby="h-keep">
+      <h2 id="h-keep">How long it is kept</h2>
+      <ul>
+        <li>Everything above is kept for as long as the account exists. Nothing is deleted automatically before then.</li>
+        <li>The progress copy (<code>snapshots</code>) is replaced each time it syncs, so it only ever holds the latest version.</li>
+        <li>The activity log grows: rows are added, never changed.</li>
+        <li>Deleting an account removes its rows from every table above, because each one is linked to the account and set to be deleted with it.</li>
+        <li>What the app saves on your device stays there until you clear it (see the <a href="cookies.html">cookies and storage page</a>).</li>
+        <li>Records the services below keep for themselves, such as Supabase's sign-in records and Stripe's payment records, follow their own policies.</li>
+      </ul>
+    </section>
+
+    <section id="your-data" aria-labelledby="h-rights">
+      <h2 id="h-rights">Getting a copy, or having it deleted</h2>
+      <h3>A copy of your data</h3>
+      <p>In the app: <span class="path">Admin dashboard → Data → Export backup</span> downloads a file with the learner's settings, memory boxes, answers and mock tests.</p>
+      <p>The server can also produce a complete copy of everything it holds for your account — profile, access, progress, reminder settings, the devices set up for reminders, and the whole activity log — from <span class="path">Settings → Your data → Download my data</span>.</p>
+      <h3>Deleting data</h3>
+      <p><span class="path">Settings → Your data → Delete my account</span> deletes the account and all its rows from every table, after you type a confirmation. It will refuse, and say why, for:</p>
+      <ul>
+        <li>the admin account (another account must be made the admin first), and</li>
+        <li>an account whose subscription is still set to renew (cancel it first with <strong>Manage subscription</strong>).</li>
+      </ul>
+      <p>Until the button exists, ask using the contact above, and the operator will delete just the activity history, or the whole account.</p>
+      <p><span class="path">Settings → Reset all progress</span> in the app clears a learner's answers, memory boxes and mock scores, but not the activity log on the server.</p>
+      <p>Requests are answered within one month, the time UK data protection law usually allows (<a href="https://ico.org.uk/for-the-public/getting-copies-of-your-information-subject-access-request/">ICO</a>).</p>
+      <h3>Your rights</h3>
+      <p>Under UK data protection law you can ask to see, correct, delete or move your data, and object to or limit how it is used. If you are unhappy with how your data is handled you can complain to the Information Commissioner's Office (<a href="https://ico.org.uk/make-a-complaint/">ico.org.uk</a>).</p>
+    </section>
+
+    <section aria-labelledby="h-children">
+      <h2 id="h-children">Young learners</h2>
+      <p>Learners may be under 18. The app's rule is that a learner who may be younger than <span data-config="age.guardianUnder">16</span> needs a parent's or guardian's agreement. The app asks for the year of birth once (at sign-up, or on the next visit for an older account); a learner younger than that is asked for a parent's or guardian's email and to confirm their agreement, and these are stored with the account.</p>
+      <p>As well as that: Full access is given by the admin by hand, and the admin checks that a parent or guardian has agreed before giving it to a learner that young. A parent or guardian who finds an account they did not agree to can ask for it to be deleted, using the contact above.</p>
+    </section>
+
+    <section aria-labelledby="h-changes">
+      <h2 id="h-changes">Changes to this notice</h2>
+      <p>Version: sample. Last changed: 24 September 2026.</p>
+    </section>
+  </main>
+
+  <footer class="foot">
+    <nav aria-label="More pages">
+      <a href="../Theory%20Trainer.dc.html">Open the app</a>
+      <a href="../about.html">About Theory Trainer</a>
+      <a href="../help.html">How to use Theory Trainer</a>
+      <a href="terms.html">Terms (draft)</a>
+      <a href="cookies.html">Cookies and storage (draft)</a>
+      <a href="refunds.html">Refunds (draft)</a>
+    </nav>
+    <p class="disclaimer">Not affiliated with the DVSA. Theory Trainer is an independent practice app; the official rules are in the Highway Code.</p>
+  </footer>
+</div>
+</body>
+</html>
