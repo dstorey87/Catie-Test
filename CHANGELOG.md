@@ -3,6 +3,29 @@
 Newest first. The version is the service-worker `VERSION` in `sw.js` — it changes on every
 deploy that touches the app's cached files. Earlier history: `git log`.
 
+## v16-2026-09-25
+Official road sign pictures (#44, PR #50) and Adventure counting like practice (#47, PR #49). 422 tests.
+- **Road signs are the real ones now.** Every sign picture is official Great Britain artwork from
+  GOV.UK, unchanged except scaled down: signs from the Department for Transport's traffic sign images,
+  road markings and traffic/motorway lights from The Highway Code. 37 pictures instead of 20 hand
+  drawings, in one map (`signs.js`, `TTSigns.list`) that the question pictures, the Road Signs screen,
+  the editor's list and the signs quiz all read. Credited (Crown copyright, Open Government Licence
+  v3.0) on Road Signs, About and Help.
+- **13 more bank questions show their sign**, and the three traffic-light questions show the light
+  they ask about. Pictures that gave the answer away are off their questions (the stop sign's shape,
+  the motorway colour, the speed camera, the brown sign, the zigzag lines). Live bank updated with
+  `supabase/data/2026-09-25-sign-images.sql`.
+- **"Quiz me on the signs" asks real bank questions** with a picture (up to 20); the 20 questions the
+  code made up, and the "Road-sign quiz" pack, are gone.
+- **Adventure answers count toward the daily goal and the streak** exactly like practice, and mark her
+  active for reminders.
+- **Adventure follows her reading settings** (text size, easy-reading font, high contrast, reduce
+  motion, theme) and **reads aloud** like practice (speakers by the question, each option and the
+  explanation; automatic read-aloud if she has it on).
+- **Two tabs:** Adventure puts back answers, XP and flags that an older app tab saves over, while
+  Adventure is open (the app's own half is still to do).
+- The rules both pages use (goal, streak, reading style, voice, what is read aloud) live once in `coach.js`.
+
 ## v15-2026-09-25
 Fixes for what Darren hit on v14 live (issue #42, PR #43). 389 tests (9 new, each seen failing first).
 - **Signing in from an email link no longer shows the admin a paywall.** `config.js` and `backend.js`
