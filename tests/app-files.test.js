@@ -987,3 +987,153 @@ test('#10 reflow: rows that ran off a 320px screen now wrap or shrink (WCAG 1.4.
   assert.match(screen('TEST RESULTS'), /<span style="flex:0 1 110px;min-width:48px;height:9px;/);
   assert.match(screen('TEST RUNNING'), /<div style="flex:1;min-width:0;text-align:center;font-size:15px;color:var\(--tt-fg-6e6a5e\)">\{\{ tQNum \}\} of \{\{ tTotal \}\}<\/div>/);
 });
+
+// ---------- Adventure mode in the app (window.TTAdv, issue #27) ----------
+// adventure.html saves into the learner's own record (theoryTrainer.d.<id>): answers, XP, flags
+// and its progress under 'adventure'. The app must keep all of it. TTAdv is a <script> in the page
+// head (plain functions), run here in a sandbox; persist() and loadUser() are lifted out of the
+// page as they are written and run against a fake localStorage, so these tests check the code the
+// app really runs.
+const advSrc = [...app.matchAll(/<script>([\s\S]*?)<\/script>/g)].map(m => m[1]).find(s => s.includes('window.TTAdv ='));
+const ADV = (() => { const ctx = { window: {} }; vm.runInNewContext(advSrc, ctx); return ctx.window.TTAdv; })();
+// One method of the app's component, from its name to the next method's name.
+function method(start, next) {
+  const a = app.indexOf('\n  ' + start), b = app.indexOf('\n  ' + next, a + 1);
+  assert.ok(a >= 0 && b > a, 'method not found in the page: ' + start);
+  return app.slice(a, b);
+}
+// A stand-in for the app: its real persist() and loadUser() over a fake localStorage (store).
+function fakeApp(store) {
+  const localStorage = { getItem: k => (k in store ? store[k] : null), setItem: (k, v) => { store[k] = String(v); } };
+  const ctx = { window: {}, localStorage, JSON, Date, Object };
+  vm.runInNewContext(advSrc, ctx);
+  ctx.TTAdv = ctx.window.TTAdv;
+  vm.runInNewContext('var me = {' + method('persist(extra){', 'set(patch){') + ',' + method('loadUser(id, keepSession){', 'addLearner(){') + '};', ctx);
+  return Object.assign(ctx.me, {
+    BASE: 'theoryTrainer', users: [{ id: 'u1', name: 'Catie' }],
+    state: { userId: 'u1', settings: {}, overrides: {}, custom: [], deleted: [], packNames: {}, packLearn: {}, packTest: {}, sub: {} },
+    setState(patch, cb) { Object.assign(this.state, patch); if (cb) cb(); }
+  });
+}
+// What adventure.html leaves in her record after one stage (the shape adventure.js writes).
+const pageSaved = () => ({
+  settings: { learnerName: 'Catie' }, xp: 70, updatedAt: 1,
+  attempts: [{ q: 'q1', t: 1, ok: true, topic: 1, p: 0, src: 'adventure' }],
+  revisionFlags: { q2: { t: 1, src: 'adventure' } }, flagCleared: {},
+  adventure: { stages: { w1s1: { best: 1, stars: 3, passed: true, plays: 1, lastAt: 1 } } }
+});
+
+test('adventure: the TTAdv block sits in the real head, not <helmet> (the camelCase rewrite would break it)', () => {
+  const at = app.indexOf('window.TTAdv =');
+  assert.ok(at > 0 && at < app.indexOf('\n</head>') && at < app.indexOf('\n<helmet>\n'));
+});
+
+test('adventure: opening the app keeps what the Adventure page saved (answers, XP, flags and progress)', () => {
+  // Bug this prevents (issue #27): persist() rebuilt her record from the app's state alone, so
+  // the first save after opening the app dropped 'adventure' - all her stages and stars.
+  const store = { 'theoryTrainer.d.u1': JSON.stringify(pageSaved()) };
+  const me = fakeApp(store);
+  me.loadUser('u1');                                   // opening her: reads, then saves
+  assert.deepEqual(plain(me.state.attempts), pageSaved().attempts, 'the page\'s answers are loaded');
+  assert.equal(me.state.xp, 70, 'the page\'s XP is loaded');
+  assert.ok(me.state.revisionFlags.q2, 'the page\'s flag is loaded');
+  const saved = JSON.parse(store['theoryTrainer.d.u1']);
+  assert.deepEqual(saved.adventure, pageSaved().adventure, 'persist kept the Adventure progress');
+  assert.equal(saved.xp, 70);
+  assert.equal(saved.attempts.length, 1);
+});
+
+test('adventure: persist keeps the page\'s LATEST progress, not the copy the app loaded', () => {
+  // The page saves again while the app is open (another tab): the app's next save must carry
+  // the new progress over, because the app never changes Adventure progress itself.
+  const store = { 'theoryTrainer.d.u1': JSON.stringify(pageSaved()) };
+  const me = fakeApp(store);
+  me.loadUser('u1');
+  const later = JSON.parse(store['theoryTrainer.d.u1']);
+  later.adventure.stages.w1s2 = { best: 6 / 7, stars: 1, passed: true, plays: 1, lastAt: 2 };
+  store['theoryTrainer.d.u1'] = JSON.stringify(later);
+  me.persist();
+  assert.ok(JSON.parse(store['theoryTrainer.d.u1']).adventure.stages.w1s2, 'the newer stage survived the app saving');
+});
+
+test('adventure: a learner who never played gets no adventure entry, and junk is survived', () => {
+  const store = {};
+  fakeApp(store).loadUser('u1');
+  assert.equal(JSON.parse(store['theoryTrainer.d.u1']).adventure, undefined);
+  // TTAdv.keep on its own: only the KEEP parts come across, the inputs are not changed.
+  const saved = { adventure: { stages: {} }, attempts: ['old'], other: 1 }, next = { attempts: ['new'] };
+  const out = ADV.keep(saved, next);
+  assert.deepEqual(plain(out), { attempts: ['new'], adventure: { stages: {} } });
+  assert.deepEqual(next, { attempts: ['new'] }, 'next is not changed');
+  for (const junk of [null, undefined, 'text', 5]) assert.deepEqual(plain(ADV.keep(junk, next)), { attempts: ['new'] });
+});
+
+test('adventure: the Home card says the world she is on and her stars, counted from coach.js', () => {
+  const route = coach.adventureRoute(bank), max = coach.ADVENTURE.stars.length;
+  const all = route.flatMap(w => w.stages), w1 = route[0].stages;
+  const card = progress => plain(ADV.card(route, coach.adventureStatus(route, progress), max));
+  const passed = (ids, stars) => ({ stages: Object.fromEntries(ids.map(id => [id, { best: 1, stars, passed: true, plays: 1, lastAt: 1 }])) });
+  // Brand new: world 1, no stars yet, out of every star on the route.
+  let c = card({});
+  assert.equal(c.head, 'World 1 · ' + TOPIC_NAMES[0]);
+  assert.equal(c.sub, 'Start your road trip through ' + route.length + ' topics');
+  assert.equal(c.stars, '0 / ' + all.length * max);
+  // One lesson passed with 3 stars: still world 1, one stage along.
+  c = card(passed([w1[0].id], 3));
+  assert.equal(c.head, 'World 1 · ' + TOPIC_NAMES[0]);
+  assert.equal(c.sub, '1 of ' + w1.length + ' stages passed');
+  assert.equal(c.stars, '3 / ' + all.length * max);
+  // World 1's checkpoint passed: the card moves on to world 2.
+  c = card(passed(w1.map(s => s.id), 1));
+  assert.equal(c.head, 'World 2 · ' + TOPIC_NAMES[1]);
+  assert.equal(c.sub, '0 of ' + route[1].stages.length + ' stages passed');
+  assert.match(c.label, /^Adventure: World 2/, 'the button\'s spoken name starts with the word on it');
+  // Everything passed: done, with more stars to collect or none left.
+  assert.deepEqual([card(passed(all.map(s => s.id), 1)).head, card(passed(all.map(s => s.id), 1)).sub], ['Every world done', 'Replay any stage for more stars']);
+  assert.equal(card(passed(all.map(s => s.id), max)).sub, 'Every star earned');
+  // No questions loaded yet: says what Adventure is, with no numbers.
+  c = plain(ADV.card([], coach.adventureStatus([], {}), max));
+  assert.equal(c.stars, '');
+  assert.doesNotMatch(c.head + c.sub, /\d/);
+});
+
+test('adventure: Home has the card under Today\'s lesson, opening adventure.html in this tab', () => {
+  const home = screen('HOME');
+  const lesson = home.indexOf('{{ startDailyLesson }}'), card = home.indexOf('{{ goAdventure }}');
+  assert.ok(lesson > 0 && card > lesson && card < home.indexOf('{{ workShow }}'), 'the card sits right after Today\'s lesson');
+  for (const v of ['advHead', 'advSub', 'advStars', 'advLabel']) assert.ok(home.includes('{{ ' + v + ' }}'), 'the card does not show ' + v);
+  // A button, not a link: the app is not left open in another tab, where its next save would
+  // write over what the page saves.
+  assert.match(app, /goAdventure: ?go\b/);
+  assert.match(app, /location\.href = 'adventure\.html'/);
+  assert.ok(fs.existsSync(path.join(root, 'adventure.html')));
+  // Worked out by coach.js from the questions adventure.html uses, and her saved progress.
+  const vals = method('adventureVals(view){', 'insightVals(view){');
+  assert.match(vals, /C\.adventureRoute\(this\.bankQuestions\(\)\)/);
+  assert.match(vals, /C\.adventureStatus\(route, this\.state\.adventure/);
+  assert.match(vals, /C\.ADVENTURE\.stars\.length/);
+  assert.match(app, /adventure: saved\.adventure/, 'the first load reads her Adventure progress');
+  assert.match(method('loadUser(id, keepSession){', 'addLearner(){'), /adventure: ?blob\.adventure/, 'switching learner reads it');
+});
+
+test('adventure: back from another page with the browser\'s Back button, the app re-reads her data', () => {
+  // A page restored from the back/forward cache still holds the state from before the Adventure
+  // page saved: without this, its next save would write over those answers, XP and flags.
+  assert.match(method('componentDidMount(){', 'componentWillUnmount(){'),
+    /addEventListener\('pageshow', ?e ?=> ?\{ ?if\(e\.persisted && this\.state\.userId\) this\.loadUser\(this\.state\.userId, true\)/);
+});
+
+test('adventure: the How-to guide explains it with the numbers coach.js really uses', () => {
+  const guide = fs.readFileSync(path.join(root, 'help.html'), 'utf8');
+  const sec = guide.slice(guide.indexOf('<section id="adventure"'), guide.indexOf('</section>', guide.indexOf('<section id="adventure"')));
+  const A = coach.ADVENTURE, pct = x => Math.round(x * 100) + '%';
+  for (const e of [
+    'one world for each of the ' + coach.TOPIC_NAMES.length + ' theory test topics',
+    'starting with ' + coach.TOPIC_NAMES[0],
+    'lessons of ' + A.lessonSize + ' questions',
+    'checkpoint: ' + A.checkpointSize + ' questions',
+    pct(A.passPct) + ' or more right to pass',
+    '1 star at ' + pct(A.stars[0]) + ', 2 at ' + pct(A.stars[1]) + ' and 3 at ' + pct(A.stars[2])
+  ]) assert.ok(sec.includes(e), 'coach.js changed: help.html #adventure should say "' + e + '"');
+  assert.ok(guide.includes('<a href="#adventure">Adventure mode</a>'), 'the contents has no Adventure mode link');
+});
