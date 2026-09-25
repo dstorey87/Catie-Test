@@ -15,9 +15,10 @@
   --bad-bg: #FBEAE9;      /* red panels */
   --fg: #2A2C33;          /* body text */
   --muted: #6E6A5E;       /* secondary text */
-  --faint: #B5AE9E;       /* captions */
+  --faint: #B5AE9E;       /* decoration only, never words: 2.2:1 on a card */
   --link: #0E7C6B;        /* links and headings accents */
   --link-hover: #0A5D50;
+  --on-tint: #0A5D50;     /* words on the teal panels: --link there is 4.44:1, under 4.5:1 */
   --good: #1C6B3C;
   --bad: #B8433D;
   --amber: #8A5A0B;
@@ -34,7 +35,7 @@
   :root:not([data-theme="light"]) {
     --bg: #121411; --bg-glow: #191B18; --card: #1C1F1C; --chip: #2A2C28; --tint: #163631;
     --warn-bg: #3A2F17; --bad-bg: #3D201E; --fg: #ECE8DF; --muted: #AAA596; --faint: #817C70;
-    --link: #46C7AE; --link-hover: #6FD8C3; --good: #72D596; --bad: #F28B83; --amber: #EAB45E;
+    --link: #46C7AE; --link-hover: #6FD8C3; --on-tint: #6FD8C3; --good: #72D596; --bad: #F28B83; --amber: #EAB45E;
     --border: #363833; --border-tint: #23514A; --border-warn: #5E4A24;
     --shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 8px 24px rgba(0, 0, 0, .25);
     color-scheme: dark;
@@ -44,7 +45,7 @@
 :root[data-theme="dark"] {
   --bg: #121411; --bg-glow: #191B18; --card: #1C1F1C; --chip: #2A2C28; --tint: #163631;
   --warn-bg: #3A2F17; --bad-bg: #3D201E; --fg: #ECE8DF; --muted: #AAA596; --faint: #817C70;
-  --link: #46C7AE; --link-hover: #6FD8C3; --good: #72D596; --bad: #F28B83; --amber: #EAB45E;
+  --link: #46C7AE; --link-hover: #6FD8C3; --on-tint: #6FD8C3; --good: #72D596; --bad: #F28B83; --amber: #EAB45E;
   --border: #363833; --border-tint: #23514A; --border-warn: #5E4A24;
   --shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 8px 24px rgba(0, 0, 0, .25);
   color-scheme: dark;
@@ -74,7 +75,8 @@ a { color: var(--link); text-underline-offset: 3px; }
 a:hover { color: var(--link-hover); }
 :focus-visible { outline: 3px solid var(--link); outline-offset: 2px; border-radius: 6px; }
 strong { font-weight: 700; }
-code { font-size: .88em; background: var(--chip); border-radius: 6px; padding: 1px 6px; }
+/* Chips set their own colour: inside grey text they took the grey, 4.47:1 on the chip (#32). */
+code { font-size: .88em; background: var(--chip); color: var(--fg); border-radius: 6px; padding: 1px 6px; }
 img { max-width: 100%; height: auto; }
 
 /* Visible when tabbed to: jump past the header and contents. */
@@ -111,7 +113,7 @@ img { max-width: 100%; height: auto; }
 .toc li { margin: 0; }
 .toc a { display: block; padding: 7px 10px; border-radius: 10px; color: var(--fg); text-decoration: none; font-size: 15.5px; }
 .toc a:hover { background: var(--chip); color: var(--fg); }
-.toc .toc-group { font-size: 12.5px; letter-spacing: .06em; text-transform: uppercase; color: var(--faint); font-weight: 700; padding: 12px 10px 4px; }
+.toc .toc-group { font-size: 12.5px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); font-weight: 700; padding: 12px 10px 4px; }
 
 /* ---------- article sections ---------- */
 .doc > section { background: var(--card); border: 1px solid var(--border); border-radius: 22px; padding: 22px 20px; margin-bottom: 18px; box-shadow: var(--shadow); }
@@ -122,7 +124,7 @@ img { max-width: 100%; height: auto; }
 .doc { counter-reset: section; }
 .doc > section { counter-increment: section; }
 .num:empty::before { content: counter(section); }
-.num { flex: none; display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px; border-radius: 11px; background: var(--tint); color: var(--link); font-size: 17px; }
+.num { flex: none; display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px; border-radius: 11px; background: var(--tint); color: var(--on-tint); font-size: 17px; }
 
 /* Text beside its screenshots on wide screens. */
 .step { display: grid; grid-template-columns: 1fr; gap: 16px; margin-top: 18px; }
@@ -144,14 +146,15 @@ img { max-width: 100%; height: auto; }
 .shots-row .shot { flex: 1; max-width: 250px; margin: 0; }
 
 /* "Settings → Appearance" style paths, and small keys. */
-.path { display: inline; background: var(--chip); border-radius: 8px; padding: 1px 7px; font-weight: 700; font-size: .94em; white-space: normal; }
+.path { display: inline; background: var(--chip); color: var(--fg); border-radius: 8px; padding: 1px 7px; font-weight: 700; font-size: .94em; white-space: normal; }
 
 /* ---------- callouts ---------- */
 .note, .known, .draft { border-radius: 16px; padding: 14px 16px; margin: 14px 0; font-size: 15.5px; }
 .note { background: var(--tint); border: 1px solid var(--border-tint); }
 .known, .draft { background: var(--warn-bg); border: 1px solid var(--border-warn); }
 .note > :last-child, .known > :last-child, .draft > :last-child { margin-bottom: 0; }
-.note strong:first-child { color: var(--link); }
+.note strong:first-child { color: var(--on-tint); }
+.note a { color: var(--on-tint); }  /* links on the teal panel: --link is 4.43:1 there */
 .known strong:first-child, .draft strong:first-child { color: var(--amber); }
 .draft { font-size: 16px; }
 
@@ -180,6 +183,10 @@ img { max-width: 100%; height: auto; }
 
 /* ---------- legal pages: a single readable column ---------- */
 .legal { max-width: 760px; padding-bottom: 32px; }
+/* The legal pages' frame (<div class="wrap reading">): the notice's 760px plus .wrap's two 16px
+   gutters, centred, so on a wide screen both sides have the same margin (#32: at 1280px the
+   notice sat on the left with 424px empty to its right). */
+.wrap.reading { max-width: 792px; }
 .legal section { background: var(--card); border: 1px solid var(--border); border-radius: 22px; padding: 22px 20px; margin-bottom: 16px; box-shadow: var(--shadow); }
 @media (min-width: 700px) { .legal section { padding: 28px 32px; } }
 .legal h2 { font-size: 23px; }
@@ -190,7 +197,7 @@ img { max-width: 100%; height: auto; }
   /* Same specificity as the dark blocks and later in the file, so paper is always light. */
   :root:not([data-theme="print"]), :root[data-theme] {
     --bg: #fff; --bg-glow: #fff; --card: #fff; --chip: #EFE9DC; --tint: #E4F2EF; --warn-bg: #FBF1DC;
-    --fg: #000; --muted: #444; --faint: #666; --link: #0A5D50; --border: #ccc; --border-warn: #F0D9A8;
+    --fg: #000; --muted: #444; --faint: #666; --link: #0A5D50; --on-tint: #0A5D50; --border: #ccc; --border-warn: #F0D9A8;
     color-scheme: light;
   }
   body { background: #fff; color: #000; font-size: 11pt; }

@@ -34,6 +34,18 @@ test('page: loads config.js, backend.js and coach.js (in that order) and its own
   assert.ok(!src.includes('support.js'), 'no React runtime: it is a plain page');
 });
 
+test('#32 page: the car on the "Open the app first" message stays on the screen (no sideways scroll)', () => {
+  // Found by the #10 accessibility audit: the message reuses the map's car picture, and the map
+  // places that car 46px outside its stop (.car: position absolute, right -46px). On the message
+  // it ran 46px off the right edge, so the page scrolled sideways at 390px and 1280px (WCAG 1.4.10).
+  const css = read('adventure/adventure.css');
+  assert.match(js, /<div class="msg-art" aria-hidden="true">' \+ CAR \+ '/, 'the message still shows the car');
+  const rule = css.match(/\.msg-art \.car \{([^}]*)\}/);
+  assert.ok(rule, 'no .msg-art .car rule: the map\'s placement applies to the message\'s car');
+  assert.match(rule[1], /position: static;/);
+  assert.match(rule[1], /width: 100%;/, 'as wide as its 120px box, no wider');
+});
+
 test('page: links back to the app with the load-bearing %20 in its name', () => {
   assert.match(html, /href="Theory%20Trainer\.dc\.html"/);
   assert.match(js, /href="Theory%20Trainer\.dc\.html"/);   // the messages' "Open Theory Trainer" buttons too

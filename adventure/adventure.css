@@ -98,6 +98,9 @@ main { max-width: 640px; margin: 0 auto; padding: 0 16px 48px; outline: none; }
 .msg h1 { font-size: 26px; margin: 12px 0 8px; outline: none; }
 .msg p { color: var(--muted); }
 .msg-art { --wc: var(--brand); width: 120px; margin: 0 auto; }
+/* The message reuses the map's car, which the map places 46px outside its stop (.car below). Here it
+   stays in its box, or the page scrolls sideways (#32, WCAG 1.4.10). */
+.msg-art .car { position: static; width: 100%; height: auto; }
 
 /* ---------- world header and tabs ---------- */
 .world-head { display: flex; align-items: center; gap: 8px; margin-top: 4px; padding: 16px 10px; border-radius: 22px; color: #fff;

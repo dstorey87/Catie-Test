@@ -28,6 +28,9 @@
     <a class="btn" href="Theory%20Trainer.dc.html">Open the app</a>
   </header>
 
+  <!-- ============ the guide: its title and introduction, then the contents beside the sections.
+       All inside the main landmark, so the skip link lands on the title and nothing sits outside a landmark. ============ -->
+  <main id="main">
   <div class="hero">
     <h1>How to use Theory Trainer</h1>
     <p class="lede">Everything the app does, screen by screen: how to sign in, what Today's lesson is, how mock tests work, what your progress numbers mean, and every setting. There's a short part at the end for the parent or admin.</p>
@@ -78,7 +81,7 @@
       </details>
     </nav>
 
-    <main id="main" class="doc">
+    <div class="doc">
 
       <!-- ============ 1. sign in ============ -->
       <section id="start" aria-labelledby="h-start">
@@ -257,10 +260,10 @@
               <li><strong>Questions you keep missing</strong> — ones you've got wrong 3 or more times, or on 2 different days. They stay in this group until you get them right twice running.</li>
               <li><strong>Questions you flagged.</strong></li>
               <li><strong>Questions due again</strong> — spaced out so they come back just as you might forget: after 1 right answer in a row, 1 day later; then 3 days, 7 days, 14 days and 30 days.</li>
-              <li><strong>A few new ones</strong> — at most 4 questions you haven't seen before.</li>
+              <li><strong>A few new ones</strong> — at most 4 questions you haven't seen before, unless there's little to review: then the lesson fills up with new ones, so your very first lesson is all new questions.</li>
             </ol>
             <p>Topics are mixed up rather than done in blocks, and if you get a question wrong in the lesson it comes back 3 questions later (at most twice), so you leave having got it right.</p>
-            <p>The line under the button says what's in today's lesson, for example "3 you keep missing · 4 flagged · 13 due again".</p>
+            <p>The line under the button says what's in today's lesson, for example "3 you keep missing · 4 flagged · 13 due again". Before you've answered any questions it says "Your first 20 questions, to get you started" (the number is the lesson's size).</p>
             <p class="note"><strong>Only real questions.</strong> The lesson only ever picks and orders questions from the app's question bank. It never writes a question or an answer of its own.</p>
           </div>
           <figure class="shot">
@@ -505,7 +508,7 @@
             <h3>Your topics</h3>
             <p>Every topic gets a coloured light, weakest first: <strong>Not tried much</strong> (fewer than 5 answers), <strong>Needs work</strong> (under 50% right), <strong>Shaky</strong> (50–69%), <strong>Good</strong> (70–84%) or <strong>Strong</strong> (85% and over). Needs work and Shaky topics show a tip for that topic.</p>
             <h3>Your mock tests and Worth remembering</h3>
-            <p>A chart of your mock scores against the pass mark of 43, and a few short tips for your weakest topics.</p>
+            <p>A chart of your mock scores against the pass mark of 43, and a few short tips for your weakest topics. The chart starts a little under your lowest score rather than at 0, so your scores are easier to tell apart, and the line under it says where it starts, for example "The chart runs from 30 to 50."</p>
           </div>
           <figure class="shot">
             <a href="help/img/progress.png"><img src="help/img/progress.png" width="390" height="844" alt="My Progress: the readiness dial showing 69% ready, labelled Getting there, and Pass prediction below it." loading="lazy"></a>
@@ -685,7 +688,8 @@
         <h2 id="h-notes"><span class="num"></span>Notes</h2>
         <div class="step">
           <div>
-            <p>The round dark button in the bottom-right corner (on every screen except the sign-in screens and the quick setup) opens <strong>Notes</strong> for the screen you're on — for example, a note on Home, or one on the mock test. Just type; it saves as you go.</p>
+            <p><strong>My notes</strong> opens Notes for the screen you're on — for example, a note on Home, or one on the mock test. Just type; it saves as you go. It's on every screen except the sign-in screens and the quick setup.</p>
+            <p>On a phone, and on every question, the <strong>My notes</strong> button is at the bottom of the screen, under everything else: scroll down to it. That way it never covers a button. On a wide screen, such as a computer, it is the round dark button in the bottom-right corner, in the space beside the page.</p>
             <p>If you have notes on other screens, <strong>Also on:</strong> lists them so you can jump to one. <strong>✕</strong> closes the notes. Notes belong to each learner and sync with the account.</p>
           </div>
           <figure class="shot">
@@ -936,8 +940,9 @@
         <p>The questions, answers and explanations are written for practice and are checked against the Highway Code, but mistakes are possible and rules change. Always check the current <a href="https://www.gov.uk/guidance/the-highway-code">Highway Code on GOV.UK</a> — it is the official source. A good score in the app is a sign you're preparing well, not a promise that you'll pass.</p>
         <p>Found something wrong? Tell the admin, who can correct the question in the question editor.</p>
       </section>
-    </main>
+    </div>
   </div>
+  </main>
 
   <!-- ============ footer ============ -->
   <footer class="foot">
