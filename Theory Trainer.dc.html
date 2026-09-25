@@ -9,6 +9,10 @@
 <script src="./picker.js"></script>
 <!-- The coach: flag merging, drills and "keeps getting wrong" (window.TTCoach). -->
 <script src="./coach.js"></script>
+<!-- Road-sign pictures (window.TTSigns: the one map of official images; window.SignImage draws
+     one). Loaded here, not by an x-import `from`, because the Road Signs screen builds its tiles
+     from TTSigns before any picture has been drawn (issue #44). -->
+<script src="./signs.js"></script>
 <!-- The server connection (window.TT_CONFIG) and the Supabase adapter (TTAuth, TTSync, TTBill,
      TTBank, TTTrack, TTAccount). Here in the real head, never in <helmet>: support.js re-mounts
      helmet into the head, which runs a src script a SECOND time, and a second backend.js
@@ -82,11 +86,12 @@ window.TTWelcome = (function(){
   // sw.js VERSION moves on and these don't, so every promotion rewrites them: the newest
   // features, in plain words, written to the learner ("you"). No markdown.
   W.NEWS = {
-    version: 'v15-2026-09-25',
+    version: 'v16-2026-09-25',
     items: [
-      'Signing in from an email link now works properly: you arrive signed in, with your progress, straight away.',
-      'No more payment buttons that could not work: if the full question bank is locked, the screen tells you to ask the admin for free access.',
-      'For the admin: Progress dashboard → Accounts shows every account and gives free access for good, or until a day you pick.'
+      'Road signs are the real ones now: official pictures from GOV.UK, and more questions show the sign they ask about.',
+      'Quiz me on the signs asks real questions from the question bank.',
+      'Adventure answers now count toward your daily goal and streak.',
+      'Adventure follows your text size, easy-reading font and read-aloud settings.'
     ]
   };
 
@@ -1258,7 +1263,7 @@ html{scroll-padding-bottom:160px}
   </div>
   <sc-if value="{{ hasSign }}" hint-placeholder-val="{{ false }}">
     <div style="display:flex;justify-content:center;margin:10px 0 14px">
-      <x-import component-from-global-scope="SignImage" from="./signs.js" hint="{{ qSignHint }}" size="{{ signSize }}" hint-size="128px,128px"></x-import>
+      <x-import component-from-global-scope="SignImage" hint="{{ qSignHint }}" size="{{ signSize }}" hint-size="128px,128px"></x-import>
     </div>
   </sc-if>
   <div style="background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);border-radius:22px;padding:22px;display:flex;gap:14px;align-items:flex-start">
@@ -1555,14 +1560,23 @@ html{scroll-padding-bottom:160px}
   </div>
   <button onClick="{{ startSignPractice }}" style="width:100%;background:#0E7C6B;color:#fff;border:none;border-radius:18px;min-height:60px;font-family:'Nunito',sans-serif;font-weight:900;font-size:19px;cursor:pointer;margin-bottom:8px">Quiz me on the signs</button>
   <div style="font-size:14.5px;color:var(--tt-fg-6e6a5e);margin:6px 0 16px;text-align:center">Or tap any sign to hear what it means.</div>
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+  <!-- Tiles: every official picture in the map (signs.js), with its name and its official
+       meaning. As many 140px-wide columns as fit (two on a phone); a long meaning wraps
+       (overflow-wrap) instead of widening the page. -->
+  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px">
     <!-- A real button, so a keyboard can reach it and Enter or Space plays it (WCAG 2.1.1). -->
     <sc-for list="{{ signTiles }}" as="s" hint-placeholder-count="6">
-      <button type="button" onClick="{{ s.speak }}" aria-label="{{ s.say }}" style="background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);border-radius:18px;padding:16px 12px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center;width:100%;color:inherit;font:inherit">
-        <x-import component-from-global-scope="SignImage" from="./signs.js" hint="{{ s.hint }}" size="{{ signTileSize }}" hint-size="92px,92px"></x-import>
+      <button type="button" onClick="{{ s.speak }}" aria-label="{{ s.say }}" style="background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);border-radius:18px;padding:16px 12px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center;width:100%;min-width:0;box-sizing:border-box;color:inherit;font:inherit">
+        <x-import component-from-global-scope="SignImage" hint="{{ s.hint }}" size="{{ signTileSize }}" hint-size="92px,92px"></x-import>
         <span style="font-size:14.5px;font-weight:700;line-height:1.3">{{ s.label }}</span>
+        <span style="font-size:13px;line-height:1.35;color:var(--tt-fg-6e6a5e);overflow-wrap:anywhere">{{ s.meaning }}</span>
       </button>
     </sc-for>
+  </div>
+  <!-- Where the pictures come from: the Open Government Licence asks for this credit. -->
+  <div style="font-size:13px;line-height:1.5;color:var(--tt-fg-6e6a5e);margin-top:18px">
+    <sc-for list="{{ signCredits }}" as="c" hint-placeholder-count="2"><p style="margin:0 0 6px">{{ c.text }}</p></sc-for>
+    <a href="{{ signLicenceUrl }}" target="_blank" rel="noopener">Read the Open Government Licence v3.0</a>
   </div>
 </div>
 </sc-if>
@@ -1624,7 +1638,7 @@ html{scroll-padding-bottom:160px}
   </div>
   <sc-if value="{{ tHasSign }}" hint-placeholder-val="{{ false }}">
     <div style="display:flex;justify-content:center;margin:8px 0 12px">
-      <x-import component-from-global-scope="SignImage" from="./signs.js" hint="{{ tSignHint }}" size="{{ signSize }}" hint-size="128px,128px"></x-import>
+      <x-import component-from-global-scope="SignImage" hint="{{ tSignHint }}" size="{{ signSize }}" hint-size="128px,128px"></x-import>
     </div>
   </sc-if>
   <div style="background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);border-radius:22px;padding:20px;display:flex;gap:12px;align-items:flex-start">
@@ -1699,7 +1713,7 @@ html{scroll-padding-bottom:160px}
       <sc-for list="{{ wrongRows }}" as="w" hint-placeholder-count="3">
         <div style="background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);border-radius:18px;padding:16px;display:flex;gap:14px">
           <sc-if value="{{ w.hasSign }}" hint-placeholder-val="{{ false }}">
-            <div style="flex:none"><x-import component-from-global-scope="SignImage" from="./signs.js" hint="{{ w.sign }}" size="{{ wrongSignSize }}" hint-size="72px,72px"></x-import></div>
+            <div style="flex:none"><x-import component-from-global-scope="SignImage" hint="{{ w.sign }}" size="{{ wrongSignSize }}" hint-size="72px,72px"></x-import></div>
           </sc-if>
           <div style="flex:1;min-width:0">
             <div style="font-size:15.5px;font-weight:700;line-height:1.4">{{ w.q }}</div>
@@ -1903,7 +1917,7 @@ html{scroll-padding-bottom:160px}
             </span>
           </button>
           <sc-if value="{{ r.hasSign }}" hint-placeholder-val="{{ false }}">
-            <div style="margin:8px 0 0 42px"><x-import component-from-global-scope="SignImage" from="./signs.js" hint="{{ r.sign }}" size="{{ ansSignSize }}" hint-size="56px,56px"></x-import></div>
+            <div style="margin:8px 0 0 42px"><x-import component-from-global-scope="SignImage" hint="{{ r.sign }}" size="{{ ansSignSize }}" hint-size="56px,56px"></x-import></div>
           </sc-if>
           <div style="display:flex;justify-content:flex-end;margin-top:8px">
             <button onClick="{{ r.more }}" style="padding:8px 12px;min-height:40px;border-radius:10px;font-size:13.5px;font-weight:700;cursor:pointer;background:var(--tt-bg-fff);border:1px solid var(--tt-bd-0e7c6b);color:var(--tt-fg-0a5d50)">More like this</button>
@@ -2547,28 +2561,6 @@ class Component extends DCLogic {
       {tip:"3 years old = first MOT. 43 out of 50 to pass. 6 points in your first 2 years and the licence is gone.", low:"It\u2019s a numbers topic: MOT at 3 years \u00b7 pass at 43/50 \u00b7 6 points = revoked \u00b7 7 days to show documents \u00b7 theory certificate lasts 2 years."},
       {tip:"DR ABC: Danger, Response, Airway, Breathing, Circulation. Compressions 100\u2013120 a minute, 5\u20136 cm deep.", low:"Rehearse DR ABC out loud until it\u2019s automatic, and remember: make the scene safe first, move casualties only from real danger."},
       {tip:"Heavy things live low, central and strapped down \u2014 and the driver always carries the blame.", low:"Two ideas cover nearly everything: secure the load low and central, and responsibility always sits with the driver."}
-    ];
-    this.SIGNMETA = [
-      {k:'stop', label:'Stop', desc:'You must stop completely at the line, every time.', ref:'HC Rule 171'},
-      {k:'giveWay', label:'Give way', desc:'Let traffic on the major road go first.', ref:'HC Rule 172'},
-      {k:'speed30', label:'Speed limit 30 mph', desc:'You must not drive faster than 30 miles per hour.', ref:'HC Rule 124'},
-      {k:'speed20', label:'Speed limit 20 mph', desc:'You must not drive faster than 20 miles per hour. This is the usual town limit in Wales.', ref:'HC Rule 124'},
-      {k:'natLimit', label:'National speed limit applies', desc:'The local limit has ended. The national limit for the road type now applies.', ref:'HC Rule 124'},
-      {k:'minSpeed', label:'Minimum speed 30 mph', desc:'A blue circle gives an order: drive at 30 or faster where safe.', ref:'Traffic signs'},
-      {k:'noEntry', label:'No entry', desc:'Do not drive in. The white bar on red means the road is closed to you.', ref:'Traffic signs'},
-      {k:'noOvertaking', label:'No overtaking', desc:'The red car shows the banned action: do not overtake here.', ref:'HC Rule 129'},
-      {k:'roadNarrows', label:'Road narrows on both sides', desc:'The road ahead gets narrower. Slow down and watch for oncoming traffic.', ref:'Traffic signs'},
-      {k:'schoolAhead', label:'Children crossing ahead', desc:'Slow down. Children may be crossing near a school ahead.', ref:'HC Rule 208'},
-      {k:'slippery', label:'Slippery road ahead', desc:'The surface ahead may be slippery. Slow down and steer gently.', ref:'Traffic signs'},
-      {k:'bendLeft', label:'Sharp bend to the left', desc:'Slow down before the bend, not in it.', ref:'Traffic signs'},
-      {k:'trafficLights', label:'Traffic signals', desc:'The order is green, amber, red, then red and amber, then green again.', ref:'HC Rule 175'},
-      {k:'redX', label:'Lane closed — red X', desc:'Do not use this motorway lane. Move out as soon as it is safe.', ref:'HC Rule 258'},
-      {k:'boxJunction', label:'Box junction', desc:'Only enter the yellow box when your exit road is clear.', ref:'HC Rule 174'},
-      {k:'doubleWhite', label:'Double white lines', desc:'When the line nearest you is solid, do not cross it except to turn in or pass something very slow.', ref:'HC Rule 129'},
-      {k:'zebra', label:'Zebra crossing', desc:'Give way to people waiting to cross, and stop once they are on the crossing.', ref:'HC Rule 195'},
-      {k:'levelCrossing', label:'Level crossing with barrier', desc:'A railway crosses the road ahead. Stop when the lights flash.', ref:'HC Rule 293'},
-      {k:'motorway', label:'Start of motorway', desc:'Motorway rules apply from here. Signs on motorways are blue.', ref:'HC Rule 253'},
-      {k:'oneWay', label:'One-way traffic', desc:'All traffic here moves in the direction of the arrow.', ref:'HC Rule 143'}
     ];
     this.TIPS = {
       1:['Only a fool breaks the two-second rule \u2014 say it as the car ahead passes a marker. Finish early? Drop back.','Tired? Only sleep fixes it. Stop somewhere safe and rest \u2014 opening the window does not work.','Phone in the glovebox before you set off = no temptation at all.'],
@@ -3354,21 +3346,10 @@ class Component extends DCLogic {
       if(this.state.settings.autoRead && q) this.speakQFull(q);
     });
   }
-  qById(id){ return this.questions().find(q=>q.id===id) || this.signBank().find(q=>q.id===id); }
-  signBank(){
-    if(this._sb) return this._sb;
-    const labels = this.SIGNMETA.map(m=>m.label);
-    this._sb = this.SIGNMETA.map(m=>{
-      const id = 'sg-'+m.k; let h = 7;
-      for(let i=0;i<id.length;i++) h = Math.imul(h ^ id.charCodeAt(i), 2654435761);
-      const rnd = ()=>{ h = Math.imul(h ^ (h>>>15), 1|h); h ^= h + Math.imul(h ^ (h>>>7), 61|h); return ((h ^ (h>>>14))>>>0)/4294967296; };
-      const pool = labels.filter(l=>l!==m.label);
-      const opts = [m.label];
-      for(let i=0;i<3;i++) opts.push(pool.splice(Math.floor(rnd()*pool.length), 1)[0]);
-      return {id, topic:11, question:'What does this sign mean?', options:opts, correctIndex:0, explanation:m.desc, ruleRef:m.ref, imageHint:m.k};
-    });
-    return this._sb;
-  }
+  // Only bank questions exist (issue #44): the signs quiz used to make up 20 "What does this sign
+  // mean?" questions in code (ids sg-…); it now draws bank questions that carry a picture
+  // (TTSigns.quizIds). Old answers to those made-up questions simply no longer show anywhere.
+  qById(id){ return this.questions().find(q=>q.id===id); }
   // A flag stays until she takes it off — getting the question right doesn't remove it.
   setRevFlag(id, on, src){
     const rf = Object.assign({}, this.state.revisionFlags), fc = Object.assign({}, this.state.flagCleared);
@@ -3378,17 +3359,17 @@ class Component extends DCLogic {
     return {revisionFlags: rf, flagCleared: fc};
   }
   toggleRevFlag(id){ this.set(this.setRevFlag(id, !this.state.revisionFlags[id])); }
-  isPackOn(mode, id){ const m = mode==='test' ? this.state.packTest : this.state.packLearn; return (id in m) ? !!m[id] : id!=='signs'; }
+  // A question set is on unless she switched it off. (The made-up "Road-sign quiz" set, off by
+  // default, is gone: issue #44.)
+  isPackOn(mode, id){ const m = mode==='test' ? this.state.packTest : this.state.packLearn; return (id in m) ? !!m[id] : true; }
   questionsFor(mode){
-    const base = this.questions().filter(q=>this.isPackOn(mode, q.pack||'p1'));
-    return this.isPackOn(mode, 'signs') ? base.concat(this.signBank()) : base;
+    return this.questions().filter(q=>this.isPackOn(mode, q.pack||'p1'));
   }
   packList(){
     const counts = {};
     this.questions().forEach(q=>{ const p = q.pack||'p1'; counts[p] = (counts[p]||0)+1; });
-    counts.signs = this.signBank().length;
-    const names = Object.assign({p1:'Set 1 \u00b7 Core', p2:'Set 2 \u00b7 Core', p3:'Set 3 \u00b7 Extension', signs:'Road-sign quiz', custom:'Added by hand'}, this.state.packNames);
-    const order = ['p1','p2','p3','signs','custom'].concat(Object.keys(this.state.packNames));
+    const names = Object.assign({p1:'Set 1 \u00b7 Core', p2:'Set 2 \u00b7 Core', p3:'Set 3 \u00b7 Extension', custom:'Added by hand'}, this.state.packNames);
+    const order = ['p1','p2','p3','custom'].concat(Object.keys(this.state.packNames));
     const seen = new Set(), out = [];
     order.forEach(id=>{ if(seen.has(id) || !counts[id]) return; seen.add(id); out.push({id, name: names[id]||id, count: counts[id], imported: !!this.state.packNames[id]}); });
     return out;
@@ -3721,7 +3702,7 @@ class Component extends DCLogic {
   coachNow(){
     const C = TTCoach, s = this.state;
     const opts = {mix: C.mockMix(this.questionsFor('test'), C.coachDefaults.mockSize), topicNames: this.TOPICS};
-    const all = this.questions().concat(this.signBank());
+    const all = this.questions();
     return {pred: C.passPrediction(s.attempts, s.tests, all, opts), list: C.improvements(s.attempts, s.tests, all, opts)};
   }
   // The study plan, rebuilt from scratch every time (that is how it adapts). Topics come
@@ -4227,7 +4208,7 @@ class Component extends DCLogic {
     // ----- my answers -----
     // One row per question she has answered (TTPicker.history), newest first.
     // ansSel holds the ticked ids; ticks survive changing the filter.
-    const qMap = new Map(this.questions().concat(this.signBank()).map(q=>[q.id, q]));
+    const qMap = new Map(this.questions().map(q=>[q.id, q]));
     const hist = window.TTPicker ? TTPicker.history(s.attempts, id=>qMap.get(id)||null) : [];
     const answersDesc = hist.length ? (hist.length + ' questions answered — tick some to make your own test') : 'Tick past questions to make your own test';
     let ansVals = {};
@@ -4311,7 +4292,8 @@ class Component extends DCLogic {
         radioStyle: 'flex:none;width:40px;height:40px;border-radius:12px;cursor:pointer;font-size:16px;font-weight:900;'+(draft && draft.correctIndex===i?'background:#1C6B3C;color:#fff;border:none':'background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);color:var(--tt-fg-6e6a5e)'),
         pickCorrect: ()=>this.setState({edDraft: Object.assign({}, s.edDraft, {correctIndex:i})})
       })),
-      signOpts: [{v:'', label:'none'}].concat((window.__signKeys||[]).map(k=>({v:k, label:k}))),
+      // The editor's "Sign image" list: every picture in the map, named with where it is from.
+      signOpts: [{v:'', label:'none'}].concat((window.TTSigns ? TTSigns.list : []).map(m=>({v:m.key, label: m.name + ' (' + (m.diagram ? 'DfT ' + m.diagram : 'Highway Code') + ')'}))),
       edCancel: ()=>this.setState({edDraft:null, edId:null}),
       edSave: ()=>{
         const d = s.edDraft; if(!d.question.trim()) return;
@@ -4632,8 +4614,13 @@ class Component extends DCLogic {
       loginAdmin: ()=>{ this.setState({profile:'parent', view:'dash'}); },
       parentInitial: (st.parentName||'A')[0].toUpperCase(),
       goSigns: nav('signs'), signTileSize: 92,
-      signTiles: this.SIGNMETA.map(m=>({hint:m.k, label:m.label, say: 'Hear what it means: ' + m.label, speak:()=>this.speak(m.label+'. '+m.desc)})),
-      startSignPractice: ()=>{ const ids = this.signBank().map(q=>q.id).map(x=>[Math.random(),x]).sort((a,b)=>a[0]-b[0]).map(p=>p[1]); this.buildSession(ids, 'Road signs'); },
+      // Road Signs: one tile per official picture in the map (signs.js), with its official
+      // meaning; tapping a tile reads both out. The credit lines the licence asks for sit below.
+      signTiles: (window.TTSigns ? TTSigns.list : []).map(m=>({hint:m.key, label:m.name, meaning:m.meaning, say: 'Hear what it means: ' + m.name, speak:()=>this.speak(m.name+'. '+m.meaning)})),
+      signCredits: (window.TTSigns ? TTSigns.credits() : []).map(c=>({text:c})),
+      signLicenceUrl: window.TTSigns ? TTSigns.licenceUrl : '',
+      // The quiz: bank questions that carry a picture, shuffled, at most TTSigns.quizSize.
+      startSignPractice: ()=>{ if(window.TTSigns) this.buildSession(TTSigns.quizIds(this.questions()), 'Road signs'); },
       hasFlagged: revRows.length>0, flaggedCount: revRows.length,
       packRows: this.packList().map(p=>({
         name: p.name, meta: p.count + ' questions' + (p.imported ? ' \u00b7 imported' : ''),

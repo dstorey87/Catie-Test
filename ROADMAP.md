@@ -72,9 +72,8 @@ once they have.
     all learners, pass rates. Doubles as marketing evidence. *2 days.*
 
 ## Phase 4 — Content depth. Competitors advertise volume.
-28. **More road signs.** 20 today; the real test covers far more, and the artwork is drawn
-    hints rather than real sign imagery. Open-licensed Highway Code sign sets exist — I
-    can't generate images, so this needs sourcing. *1–2 days once sourced.*
+28. **More road signs.** v16 (#44): 37 official GOV.UK pictures replace the drawings. Left:
+    every Highway Code sign, marking and signal by category, with a quiz and Adventure worlds (#48).
 29. **More questions.** 378 today; the published DVSA pool is roughly double. Be careful
     what you claim in marketing until the bank matches it. *Ongoing.*
 30. **Junction and road-marking diagrams** for the questions that need them. *Needs artwork.*
