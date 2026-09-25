@@ -22,9 +22,9 @@ window.TT_CONFIG = {
 
   // Age rule: the ONE place it lives (backend.js TTAccount reads it; the server only
   // stores what the learner said). guardianUnder: a learner who may be younger than
-  // this needs a parent's or guardian's consent. 16 is what issue #4 asked for; the
-  // UK GDPR's own figure is 13 (Article 8(1), legislation.gov.uk), so 16 is stricter
-  // than the law requires. Change it here and nowhere else.
+  // this needs a parent's or guardian's consent. 16 is Darren's decision of 2026-09-24
+  // (issue #4): the UK GDPR's own figure is 13 (Article 8(1), legislation.gov.uk), so 16
+  // is stricter than the law requires, by his choice. Change it here and nowhere else.
   // oldest: a birth year more than this many years ago is treated as a typo.
   age: { guardianUnder: 16, oldest: 120 }
 };
