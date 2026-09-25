@@ -72,8 +72,9 @@ once they have.
     all learners, pass rates. Doubles as marketing evidence. *2 days.*
 
 ## Phase 4 — Content depth. Competitors advertise volume.
-28. **More road signs.** v16 (#44): 37 official GOV.UK pictures replace the drawings. Left:
-    every Highway Code sign, marking and signal by category, with a quiz and Adventure worlds (#48).
+28. **More road signs.** Done in v16–v17 (#44, #48): every Highway Code sign, marking, light signal
+    and vehicle marking, by category, with quizzes and Adventure worlds. Left: the arm-signal pages
+    (photographs of people), if Darren wants them.
 29. **More questions.** 378 today; the published DVSA pool is roughly double. Be careful
     what you claim in marketing until the bank matches it. *Ongoing.*
 30. **Junction and road-marking diagrams** for the questions that need them. *Needs artwork.*

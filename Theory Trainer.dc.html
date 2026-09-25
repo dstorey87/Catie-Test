@@ -86,12 +86,11 @@ window.TTWelcome = (function(){
   // sw.js VERSION moves on and these don't, so every promotion rewrites them: the newest
   // features, in plain words, written to the learner ("you"). No markdown.
   W.NEWS = {
-    version: 'v16-2026-09-25',
+    version: 'v17-2026-09-25',
     items: [
-      'Road signs are the real ones now: official pictures from GOV.UK, and more questions show the sign they ask about.',
-      'Quiz me on the signs asks real questions from the question bank.',
-      'Adventure answers now count toward your daily goal and streak.',
-      'Adventure follows your text size, easy-reading font and read-aloud settings.'
+      'Road Signs now has every sign, road marking and light signal in The Highway Code, over 200 official pictures, sorted into their categories.',
+      'Quiz yourself on one category, or on all the signs at once.',
+      'Adventure has 8 new sign worlds, one for each category, open straight away.'
     ]
   };
 
@@ -653,7 +652,7 @@ window.TTAdv = (function(){
 
   // card(route, status, maxStars) -> the words on Home's Adventure card:
   //   {head, sub, stars, label}
-  //   route:    TTCoach.adventureRoute(bank)   [{world, name, stages: [{id, kind}]}]
+  //   route:    TTCoach.adventureRoute(bank, {signs})   [{world, name, stages: [{id, kind}], track?}]
   //   status:   TTCoach.adventureStatus(route, her progress)   {stages: {<id>: {passed, stars}}, current}
   //   maxStars: the stars one stage can earn (TTCoach.ADVENTURE.stars.length)
   // No number is made up here: worlds, stages and stars are all counted from route and status.
@@ -675,7 +674,9 @@ window.TTAdv = (function(){
     var passed = w.stages.filter(function(s){ return st[s.id] && st[s.id].passed; }).length;
     var head = 'World ' + w.world + ' · ' + w.name;     // as the Adventure page writes it
     var fresh = earned === 0 && passed === 0 && worlds[0] === w;
-    var sub2 = fresh ? 'Start your road trip through ' + worlds.length + ' topics' : passed + ' of ' + w.stages.length + ' stages passed';
+    // "topics" counts the topic worlds only: the sign worlds (track 'signs', issue #48) are not topics.
+    var topics = worlds.filter(function(x){ return !x.track; }).length;
+    var sub2 = fresh ? 'Start your road trip through ' + topics + ' topics' : passed + ' of ' + w.stages.length + ' stages passed';
     return {head:head, sub:sub2, stars:stars, label:'Adventure: ' + head + '. ' + sub2 + '. ' + starsSay};
   };
 
@@ -1256,10 +1257,13 @@ html{scroll-padding-bottom:160px}
     <button onClick="{{ quitLearn }}" aria-label="Stop this practice session" style="background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);border-radius:12px;width:44px;height:44px;cursor:pointer;font-size:17px;color:var(--tt-fg-6e6a5e)">✕</button>
     <div style="flex:1;height:10px;background:var(--tt-bg-efe9dc);border-radius:6px;overflow:hidden"><div style="{{ learnBarStyle }}"></div></div>
     <div style="font-size:15px;color:var(--tt-fg-6e6a5e);white-space:nowrap">{{ qNum }} of {{ qTotal }}</div>
+    <!-- A sign question (issue #48) has no flag: flags belong to the bank's questions. -->
+    <sc-if value="{{ qFlagShow }}" hint-placeholder-val="{{ true }}">
     <button onClick="{{ toggleQFlag }}" aria-label="Flag this question to revise later" aria-pressed="{{ qFlagPressed }}" style="{{ qFlagStyle }}">
       <svg width="16" height="16" viewBox="0 0 24 24"><path d="M6 21 L6 4 L18 4 L14.5 8.5 L18 13 L6 13" fill="currentColor" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
       {{ qFlagLabel }}
     </button>
+    </sc-if>
   </div>
   <sc-if value="{{ hasSign }}" hint-placeholder-val="{{ false }}">
     <div style="display:flex;justify-content:center;margin:10px 0 14px">
@@ -1552,30 +1556,56 @@ html{scroll-padding-bottom:160px}
 </sc-if>
 
 <!-- ============ SIGNS ============ -->
+<!-- Road Signs (issues #44, #48): every sign, road marking, light signal and vehicle marking in The
+     Highway Code, under the pages' own headings and in their order (signs.js TTSigns.sections),
+     then the DfT pictures with no Highway Code twin. The chips at the top jump a phone straight to
+     a category; each category has its own quiz; tapping a picture reads its meaning out. -->
 <sc-if value="{{ vSigns }}" hint-placeholder-val="{{ false }}">
 <div data-screen-label="Road signs">
-  <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
+  <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
     <button onClick="{{ goHome }}" aria-label="Back to home" style="background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);border-radius:12px;width:44px;height:44px;cursor:pointer;font-size:18px">←</button>
     <h1 tabindex="-1" style="margin:0;font-family:'Nunito',sans-serif;font-weight:900;font-size:24px;flex:1">Road Signs</h1>
   </div>
-  <button onClick="{{ startSignPractice }}" style="width:100%;background:#0E7C6B;color:#fff;border:none;border-radius:18px;min-height:60px;font-family:'Nunito',sans-serif;font-weight:900;font-size:19px;cursor:pointer;margin-bottom:8px">Quiz me on the signs</button>
-  <div style="font-size:14.5px;color:var(--tt-fg-6e6a5e);margin:6px 0 16px;text-align:center">Or tap any sign to hear what it means.</div>
-  <!-- Tiles: every official picture in the map (signs.js), with its name and its official
-       meaning. As many 140px-wide columns as fit (two on a phone); a long meaning wraps
-       (overflow-wrap) instead of widening the page. -->
-  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px">
-    <!-- A real button, so a keyboard can reach it and Enter or Space plays it (WCAG 2.1.1). -->
-    <sc-for list="{{ signTiles }}" as="s" hint-placeholder-count="6">
-      <button type="button" onClick="{{ s.speak }}" aria-label="{{ s.say }}" style="background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);border-radius:18px;padding:16px 12px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center;width:100%;min-width:0;box-sizing:border-box;color:inherit;font:inherit">
-        <x-import component-from-global-scope="SignImage" hint="{{ s.hint }}" size="{{ signTileSize }}" hint-size="92px,92px"></x-import>
-        <span style="font-size:14.5px;font-weight:700;line-height:1.3">{{ s.label }}</span>
-        <span style="font-size:13px;line-height:1.35;color:var(--tt-fg-6e6a5e);overflow-wrap:anywhere">{{ s.meaning }}</span>
-      </button>
+  <p style="font-size:15px;line-height:1.5;color:var(--tt-fg-6e6a5e);margin:0 0 14px">{{ signIntro }}</p>
+  <button onClick="{{ startSignPractice }}" style="width:100%;background:#0E7C6B;color:#fff;border:none;border-radius:18px;min-height:60px;font-family:'Nunito',sans-serif;font-weight:900;font-size:19px;cursor:pointer">Quiz me on all signs</button>
+  <!-- The categories: one chip each, with how many pictures it holds, in a grid (two columns on a
+       phone, four at 1280px) rather than a row that scrolls sideways, so every one is in sight. -->
+  <nav aria-label="Categories" data-sign-top="1" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;margin:16px 0 4px">
+    <sc-for list="{{ signSections }}" as="c" hint-placeholder-count="9">
+      <button type="button" onClick="{{ c.jump }}" style="display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;min-width:0;box-sizing:border-box;min-height:48px;padding:6px 10px 6px 12px;border-radius:14px;background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);color:var(--tt-fg-2a2c33);font-size:14.5px;font-weight:700;line-height:1.25;cursor:pointer;text-align:left">{{ c.name }}<span style="flex:none;min-width:24px;padding:2px 7px;border-radius:99px;background:var(--tt-bg-efe9dc);color:var(--tt-fg-686458);font-size:13px;text-align:center">{{ c.count }}<span class="tt-sr"> pictures</span></span></button>
     </sc-for>
-  </div>
+  </nav>
+  <sc-for list="{{ signSections }}" as="c" hint-placeholder-count="2">
+    <section style="margin-top:26px">
+      <!-- data-sign-cat: where its chip jumps to (signJump), and where keyboard focus lands -->
+      <h2 tabindex="-1" data-sign-cat="{{ c.id }}" style="font-family:'Nunito',sans-serif;font-weight:900;font-size:21px;margin:0;scroll-margin-top:12px">{{ c.name }}</h2>
+      <div style="font-size:14px;color:var(--tt-fg-6e6a5e);margin:2px 0 10px">{{ c.countLabel }}</div>
+      <sc-if value="{{ c.quiz }}" hint-placeholder-val="{{ true }}">
+        <button onClick="{{ c.startQuiz }}" aria-label="{{ c.quizLabel }}" style="width:100%;background:var(--tt-bg-fff);border:2px solid var(--tt-bd-0e7c6b);color:var(--tt-fg-0a5d50);border-radius:16px;min-height:52px;font-family:'Nunito',sans-serif;font-weight:900;font-size:17px;cursor:pointer;margin-bottom:6px">Quiz me on this category</button>
+      </sc-if>
+      <sc-for list="{{ c.groups }}" as="g" hint-placeholder-count="1">
+        <!-- The page's own sub-headings: each shown once, where it starts -->
+        <sc-if value="{{ g.hasHead }}" hint-placeholder-val="{{ false }}"><h3 style="font-size:16px;font-weight:700;line-height:1.35;margin:16px 0 8px">{{ g.head }}</h3></sc-if>
+        <sc-if value="{{ g.hasHead2 }}" hint-placeholder-val="{{ false }}"><h4 style="font-size:14.5px;font-weight:700;line-height:1.35;color:var(--tt-fg-6e6a5e);margin:12px 0 8px">{{ g.head2 }}</h4></sc-if>
+        <!-- Tiles: as many 140px-wide columns as fit (two on a phone); a long meaning wraps
+             (overflow-wrap) instead of widening the page, and keeps a line break the page has
+             (pre-line). Each picture loads only when it nears the screen (SignImage: lazy). -->
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px;margin-top:8px">
+          <!-- A real button, so a keyboard can reach it and Enter or Space plays it (WCAG 2.1.1). -->
+          <sc-for list="{{ g.tiles }}" as="s" hint-placeholder-count="4">
+            <button type="button" onClick="{{ s.speak }}" aria-label="{{ s.say }}" style="background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);border-radius:18px;padding:14px 10px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center;width:100%;min-width:0;box-sizing:border-box;color:inherit;font:inherit">
+              <x-import component-from-global-scope="SignImage" hint="{{ s.hint }}" size="{{ signTileSize }}" hint-size="92px,92px"></x-import>
+              <span style="font-size:14px;line-height:1.35;overflow-wrap:anywhere;white-space:pre-line">{{ s.meaning }}</span>
+            </button>
+          </sc-for>
+        </div>
+      </sc-for>
+      <button type="button" onClick="{{ signToTop }}" style="margin-top:10px;min-height:44px;padding:0 12px;background:none;border:none;color:var(--tt-fg-0e7c6b);font-size:14.5px;font-weight:700;cursor:pointer;text-decoration:underline">Back to the categories</button>
+    </section>
+  </sc-for>
   <!-- Where the pictures come from: the Open Government Licence asks for this credit. -->
-  <div style="font-size:13px;line-height:1.5;color:var(--tt-fg-6e6a5e);margin-top:18px">
-    <sc-for list="{{ signCredits }}" as="c" hint-placeholder-count="2"><p style="margin:0 0 6px">{{ c.text }}</p></sc-for>
+  <div style="font-size:13px;line-height:1.5;color:var(--tt-fg-6e6a5e);margin-top:22px">
+    <p style="margin:0 0 6px">{{ signCredit }}</p>
     <a href="{{ signLicenceUrl }}" target="_blank" rel="noopener">Read the Open Government Licence v3.0</a>
   </div>
 </div>
@@ -2674,7 +2704,8 @@ class Component extends DCLogic {
   badgeStats(){
     const s = this.state, at = s.attempts||[], tests = s.tests||[];
     const perTopic = {};
-    at.forEach(a=>{ const t = perTopic[a.topic] = perTopic[a.topic] || {n:0, ok:0}; t.n++; if(a.ok) t.ok++; });
+    // Topics tried and mastered: a sign answer (issue #48) has no topic, so it is no DVSA topic.
+    at.forEach(a=>{ if(a.topic==null) return; const t = perTopic[a.topic] = perTopic[a.topic] || {n:0, ok:0}; t.n++; if(a.ok) t.ok++; });
     let run = 0, bestRun = 0;
     at.forEach(a=>{ run = a.ok? run+1 : 0; if(run>bestRun) bestRun = run; });
     return {answered: at.length, run, bestRun, streak: this.streakFor(s).count,
@@ -2992,8 +3023,9 @@ class Component extends DCLogic {
     if(cs && cs.ids[cs.i] && (!ps || ps.startedAt !== cs.startedAt || ps.i !== cs.i)){ this._shownAt = now; this.track('question_shown', cs.ids[cs.i], {i: cs.i, label: cs.label||''}); }
     if(cs && ps && ps.startedAt === cs.startedAt){
       if(ps.picked < 0 && cs.picked >= 0){
-        const qid = cs.ids[cs.i], q = this.qById(qid), ok = !!q && cs.picked === this.viewQ(q).correctIndex;
-        this.track('answer', qid, {ok, p: q ? this.seedPerm(qid)[cs.picked] : null, ms: now - (this._shownAt||now), src:'learn', label: cs.label||'', hint: !!(cs.hint && cs.hint.length)});
+        // A sign question's answer (issue #48) is an answer event too, marked src 'signs'.
+        const qid = cs.ids[cs.i], q = this.sessionQ(qid), ok = !!q && cs.picked === this.viewQ(q).correctIndex;
+        this.track('answer', qid, {ok, p: q ? this.seedPerm(qid)[cs.picked] : null, ms: now - (this._shownAt||now), src: this.isSignQ(qid) ? 'signs' : 'learn', label: cs.label||'', hint: !!(cs.hint && cs.hint.length)});
       }
       if(!(ps.hint && ps.hint.length) && cs.hint && cs.hint.length) this.track('hint_used', cs.ids[cs.i]);
       if(cs.ids.length > ps.ids.length && cs.moreN) this.track('more_like_this_added', cs.ids[cs.i], {n: cs.moreN});
@@ -3342,13 +3374,32 @@ class Component extends DCLogic {
   buildSession(ids, label, extra){
     if(!ids.length) return;
     this.setState({session:Object.assign({ids, i:0, correct:0, picked:-1, hint:null, wrongTopics:[], log:[], label, startedAt: Date.now()}, extra||{}), view:'learnQ'}, ()=>{
-      const q = this.qById(ids[0]);
+      const q = this.sessionQ(ids[0]);
       if(this.state.settings.autoRead && q) this.speakQFull(q);
     });
   }
-  // Only bank questions exist (issue #44): the signs quiz used to make up 20 "What does this sign
-  // mean?" questions in code (ids sg-…); it now draws bank questions that carry a picture
-  // (TTSigns.quizIds). Old answers to those made-up questions simply no longer show anywhere.
+  // Road Signs' quizzes (issue #48): sign questions from signs.js in a practice session, so they
+  // look and count like practice (signs: true marks the session). cat: one category, or null for all.
+  signQuiz(cat, label){ if(window.TTSigns) this.buildSession(TTSigns.quizIds(cat), label, {signs:true}); }
+  // Road Signs: scroll to a category's heading (id), or back up to the category chips (null), and
+  // move keyboard focus there too. Only scrolling and focus: if it fails, the page is all still there.
+  signJump(id){
+    try {
+      const to = id ? document.querySelector('[data-sign-cat="' + id + '"]') : document.querySelector('[data-sign-top] button');
+      if(!to) return;
+      to.scrollIntoView({block: id ? 'start' : 'center', behavior: this.state.settings.reducedMotion ? 'auto' : 'smooth'});
+      to.focus({preventScroll: true});
+    } catch(e) { /* an old browser: she can still scroll to it */ }
+  }
+  // The question a practice session shows: a sign question (issue #48: signs.js builds it from the
+  // official picture and captions, id "sign:<key>"), or else a bank question. Only the session's
+  // own paths use this; everything else asks qById, so Flagged, Focus Drill, My answers and the
+  // coach only ever see the bank. (Issue #44 removed an older made-up signs quiz, ids sg-…: old
+  // answers to those show nowhere.)
+  sessionQ(id){ return (window.TTSigns && TTSigns.question(id)) || this.qById(id); }
+  // Is this id a sign question (issue #48)? Its answers count toward her goal, XP and streak but
+  // stay out of the bank's records: no Leitner box, no topic, no flag, no readiness.
+  isSignQ(id){ return !!(window.TTSigns && TTSigns.isQuizId(id)); }
   qById(id){ return this.questions().find(q=>q.id===id); }
   // A flag stays until she takes it off — getting the question right doesn't remove it.
   setRevFlag(id, on, src){
@@ -3424,17 +3475,24 @@ class Component extends DCLogic {
   }
   answerLearn(i){
     const s = this.state.session; if(!s || s.picked>=0) return;
-    const q = this.qById(s.ids[s.i]); if(!q) return;
+    const q = this.sessionQ(s.ids[s.i]); if(!q) return;
     const vq = this.viewQ(q);
     const ok = i===vq.correctIndex;
-    const r = Object.assign({}, this.rec(q.id));
-    r.seen++; if(ok){ r.correct++; r.box = Math.min(3, r.box+1); } else { r.wrong=(r.wrong||0)+1; r.box = 1; }
-    const leitner = Object.assign({}, this.state.leitner); leitner[q.id]=r;
+    // A sign question (issue #48) counts like any answer below (attempts, XP, her goal and streak)
+    // but has no bank record: no Leitner box, no topic, and src 'signs' says where it came from.
+    const isSign = this.isSignQ(q.id);
+    const leitner = Object.assign({}, this.state.leitner);
+    if(!isSign){
+      const r = Object.assign({}, this.rec(q.id));
+      r.seen++; if(ok){ r.correct++; r.box = Math.min(3, r.box+1); } else { r.wrong=(r.wrong||0)+1; r.box = 1; }
+      leitner[q.id]=r;
+    }
     // p = the option she picked, as its index in the question's own order (the
     // screen shuffles options), so "My answers" can show what she said.
-    const attempts = this.state.attempts.concat([{q:q.id, t:Date.now(), ok, topic:q.topic, p:this.seedPerm(q.id)[i]}]).slice(-3000);
+    const attempt = isSign ? {q:q.id, t:Date.now(), ok, p:this.seedPerm(q.id)[i], src:'signs'} : {q:q.id, t:Date.now(), ok, topic:q.topic, p:this.seedPerm(q.id)[i]};
+    const attempts = this.state.attempts.concat([attempt]).slice(-3000);
     const again = (!ok && s.drill && window.TTCoach) ? TTCoach.requeue(s.ids, s.i, s.repeats) : null;
-    this.setState(Object.assign({session: Object.assign({}, s, again ? {ids: again.ids, repeats: again.repeats} : {}, {picked:i, correct: s.correct + (ok?1:0), wrongTopics: ok ? (s.wrongTopics||[]) : (s.wrongTopics||[]).concat([q.topic]), log:(s.log||[]).concat([{t:q.topic, ok, q:q.id}])}), leitner, attempts}, this.award(1, ok?1:0)), ()=>{
+    this.setState(Object.assign({session: Object.assign({}, s, again ? {ids: again.ids, repeats: again.repeats} : {}, {picked:i, correct: s.correct + (ok?1:0), wrongTopics: (ok || isSign) ? (s.wrongTopics||[]) : (s.wrongTopics||[]).concat([q.topic]), log:(s.log||[]).concat([{t: isSign ? null : q.topic, ok, q:q.id}])}), leitner, attempts}, this.award(1, ok?1:0)), ()=>{
       this.persist();
       if(this.state.settings.autoRead) this.speak((ok?'Correct. ':'The answer is ' + 'ABCD'[vq.correctIndex] + ', ' + vq.options[vq.correctIndex] + '. ') + q.explanation);
       if(ok && this.state.settings.autoAdvance){
@@ -3449,7 +3507,7 @@ class Component extends DCLogic {
     const s = this.state.session;
     if(s.i+1 >= s.ids.length){ this.setState({view:'learnDone'}); return; }
     this.setState({session: Object.assign({}, s, {i:s.i+1, picked:-1, hint:null})}, ()=>{
-      const q = this.qById(this.state.session.ids[this.state.session.i]);
+      const q = this.sessionQ(this.state.session.ids[this.state.session.i]);
       if(this.state.settings.autoRead && q) this.speakQFull(q);
     });
   }
@@ -3480,7 +3538,8 @@ class Component extends DCLogic {
     const box3 = seen.length ? seen.filter(r=>r.box===3).length/seen.length : 0;
     // Practice answers only: mock answers are logged too (for My answers), but the
     // mock score already counts below — including them here would count it twice.
-    const at = this.state.attempts.filter(a=>a.src!=='test').slice(-120);
+    // Sign questions (issue #48) are left out too: readiness is about the bank's questions.
+    const at = this.state.attempts.filter(a=>a.src!=='test' && !this.isSignQ(a.q)).slice(-120);
     const totSeen = seen.reduce((a,r)=>a+r.seen,0);
     const recentAcc = at.length>=10 ? at.filter(a=>a.ok).length/at.length : (totSeen ? seen.reduce((a,r)=>a+r.correct,0)/totSeen : 0);
     const mocks = this.state.tests.slice(-3).map(t=>t.score/(t.total||50));
@@ -3723,7 +3782,8 @@ class Component extends DCLogic {
     const go = ()=>{ location.href = 'adventure.html'; };      // this tab: see the card on Home
     const out = {goAdventure: go, advHead:'', advSub:'', advStars:'', advStarsShow:false, advLabel:'Adventure'};
     if(view!=='home' || !C || !C.adventureRoute) return out;   // coach.js missing: the card just says Adventure
-    const route = C.adventureRoute(this.bankQuestions());
+    // The same route adventure.html plays: the topic worlds, then the sign worlds (issue #48).
+    const route = C.adventureRoute(this.bankQuestions(), {signs: window.TTSigns ? TTSigns.worlds() : []});
     const card = TTAdv.card(route, C.adventureStatus(route, this.state.adventure || {}), C.ADVENTURE.stars.length);
     return Object.assign(out, {advHead: card.head, advSub: card.sub, advStars: card.stars, advStarsShow: !!card.stars, advLabel: card.label});
   }
@@ -3990,7 +4050,10 @@ class Component extends DCLogic {
     let learnVals = {};
     const sess = s.session;
     if(view==='learnQ' && sess){
-      const q = this.qById(sess.ids[sess.i]) || {question:'', options:['','','',''], correctIndex:0, explanation:'', ruleRef:''};
+      const q = this.sessionQ(sess.ids[sess.i]) || {question:'', options:['','','',''], correctIndex:0, explanation:'', ruleRef:''};
+      // A sign question (issue #48): its picture always shows (it IS the question), and it has no
+      // flag or "More like this" (both belong to the bank's questions).
+      const isSign = this.isSignQ(q.id);
       const vq = this.viewQ(q);
       const picked = sess.picked, answered = picked>=0;
       // The right padding leaves room for the read-aloud button laid over the option's end.
@@ -4022,7 +4085,7 @@ class Component extends DCLogic {
       learnVals = {
         qNum: sess.i+1, qTotal: sess.ids.length,
         learnBarStyle: 'height:100%;background:#0E7C6B;border-radius:6px;width:'+Math.round(100*(sess.i+(answered?1:0))/sess.ids.length)+'%;transition:width .3s',
-        qText: q.question, hasSign: !!q.imageHint && (this.props.showSignImages !== false), qSignHint: q.imageHint || '',
+        qText: q.question, hasSign: isSign || (!!q.imageHint && (this.props.showSignImages !== false)), qSignHint: q.imageHint || '',
         opts: vq.options.map((text,i)=>{
           const hidden = (sess.hint||[]).indexOf(i)>=0 && !answered;
           // mark: after she answers, the right option and hers say which they are, in words
@@ -4065,11 +4128,12 @@ class Component extends DCLogic {
         tipLabel: q.memoryTip ? 'Memory tip:' : 'Remember:',
         nextLabel: sess.i+1>=sess.ids.length ? 'Finish' : 'Next question',
         nextQ: ()=>this.nextLearn(),
+        qFlagShow: !isSign,
         qFlagLabel: s.revisionFlags[q.id] ? 'Flagged' : 'Tricky?', qFlagPressed: s.revisionFlags[q.id] ? 'true' : 'false',
         qFlagStyle: 'flex:none;display:flex;align-items:center;gap:6px;height:44px;padding:0 12px;border-radius:12px;cursor:pointer;font-size:13.5px;font-weight:700;'+(s.revisionFlags[q.id]?'background:#F2A93B;color:#2A2C33;border:none':'background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);color:var(--tt-fg-6e6a5e)'),
         toggleQFlag: ()=>this.toggleRevFlag(q.id),
         // "More like this" shows once answered; after a tap it says what it added.
-        moreShow: answered && sess.moreFor!==q.id,
+        moreShow: answered && !isSign && sess.moreFor!==q.id,
         moreDone: answered && sess.moreFor===q.id,
         moreMsg: sess.moreN ? (sess.moreN + ' more like this added — they’re up next.') : 'No more like this in the question sets that are switched on.',
         moreLike: ()=>this.moreLikeThis([q.id]),
@@ -4081,11 +4145,13 @@ class Component extends DCLogic {
     const doneTitle = frac>=0.9?'Superstar!':frac>=0.7?'Really good work!':frac>=0.5?'Good effort!':'Every go makes you stronger';
     const slog = (sess && sess.log) || [];
     const sessAgg = {};
-    slog.forEach(e=>{ sessAgg[e.t] = sessAgg[e.t]||{c:0,n:0}; sessAgg[e.t].n++; if(e.ok) sessAgg[e.t].c++; });
+    // "This session by topic": a sign answer (issue #48) has no topic (t null), so it is left out.
+    slog.forEach(e=>{ if(e.t==null) return; sessAgg[e.t] = sessAgg[e.t]||{c:0,n:0}; sessAgg[e.t].n++; if(e.ok) sessAgg[e.t].c++; });
     const sessRows = Object.keys(sessAgg).map(k=>{ const p = sessAgg[k], pct = Math.round(100*p.c/p.n);
       return {name:T[k-1], label:p.c+'/'+p.n, barStyle:'display:block;height:100%;border-radius:5px;width:'+pct+'%;background:'+(pct>=80?'#2E9E5B':pct>=50?'#F2A93B':'#D14B45')}; }).sort((a,b)=>a.name.localeCompare(b.name));
     const doneMsg = frac>=0.7? 'Keep this up and the real test will feel easy.' : 'The ones you missed will come round again soon \u2014 that\u2019s how the boxes work.';
-    const doneMissed = Array.from(new Set(slog.filter(e=>!e.ok && e.q).map(e=>e.q)));
+    // "More like the ones I missed" finds bank questions: from bank questions she missed only.
+    const doneMissed = Array.from(new Set(slog.filter(e=>!e.ok && e.q && !this.isSignQ(e.q)).map(e=>e.q)));
 
     // ----- test -----
     let testVals = {};
@@ -4292,8 +4358,9 @@ class Component extends DCLogic {
         radioStyle: 'flex:none;width:40px;height:40px;border-radius:12px;cursor:pointer;font-size:16px;font-weight:900;'+(draft && draft.correctIndex===i?'background:#1C6B3C;color:#fff;border:none':'background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);color:var(--tt-fg-6e6a5e)'),
         pickCorrect: ()=>this.setState({edDraft: Object.assign({}, s.edDraft, {correctIndex:i})})
       })),
-      // The editor's "Sign image" list: every picture in the map, named with where it is from.
-      signOpts: [{v:'', label:'none'}].concat((window.TTSigns ? TTSigns.list : []).map(m=>({v:m.key, label: m.name + ' (' + (m.diagram ? 'DfT ' + m.diagram : 'Highway Code') + ')'}))),
+      // The editor's "Sign image" list: every picture in the map, in the map's (page) order, named by
+      // its official meaning (cut to 60 characters so the list stays narrow) and where it is from.
+      signOpts: [{v:'', label:'none'}].concat((window.TTSigns ? TTSigns.list : []).map(m=>({v:m.key, label: (m.meaning.length > 60 ? m.meaning.slice(0, 59) + '…' : m.meaning) + ' (' + (m.diagram ? 'DfT ' + m.diagram : 'Highway Code') + ')'}))),
       edCancel: ()=>this.setState({edDraft:null, edId:null}),
       edSave: ()=>{
         const d = s.edDraft; if(!d.question.trim()) return;
@@ -4614,13 +4681,30 @@ class Component extends DCLogic {
       loginAdmin: ()=>{ this.setState({profile:'parent', view:'dash'}); },
       parentInitial: (st.parentName||'A')[0].toUpperCase(),
       goSigns: nav('signs'), signTileSize: 92,
-      // Road Signs: one tile per official picture in the map (signs.js), with its official
-      // meaning; tapping a tile reads both out. The credit lines the licence asks for sit below.
-      signTiles: (window.TTSigns ? TTSigns.list : []).map(m=>({hint:m.key, label:m.name, meaning:m.meaning, say: 'Hear what it means: ' + m.name, speak:()=>this.speak(m.name+'. '+m.meaning)})),
-      signCredits: (window.TTSigns ? TTSigns.credits() : []).map(c=>({text:c})),
+      // Road Signs (issues #44, #48): the map's sections (signs.js), built only while the screen
+      // shows (renderVals runs on every change, and there are 200+ pictures). Each category: its
+      // chip, its count, its quiz and its pictures under the page's sub-headings, each shown once
+      // where it starts. A tile reads its official meaning out. The credit the licence asks for sits
+      // below.
+      signSections: (view!=='signs' || !window.TTSigns) ? [] : TTSigns.sections().map(c=>({
+        id: c.id, name: c.name, count: c.count, countLabel: c.count + ' pictures', quiz: c.quiz,
+        quizLabel: 'Quiz me on this category: ' + c.name, startQuiz: ()=>this.signQuiz(c.id, c.name), jump: ()=>this.signJump(c.id),
+        groups: c.groups.map((g, gi)=>({
+          head: g.sub || '', hasHead: !!g.sub && (gi===0 || c.groups[gi-1].sub!==g.sub), head2: g.sub2 || '', hasHead2: !!g.sub2,
+          tiles: g.keys.map(k=>{ const m = TTSigns.get(k); return {hint:k, meaning:m.meaning, say:'Hear what it means: ' + m.meaning, speak:()=>this.speak(m.meaning)}; })
+        }))
+      })),
+      // How many pictures there are, counted from the map (never typed in).
+      signIntro: (view!=='signs' || !window.TTSigns) ? '' : (()=>{
+        const secs = TTSigns.sections(), n = x=>x.reduce((a, c)=>a + c.count, 0);
+        return 'Every sign, road marking, light signal and vehicle marking in The Highway Code, with its official meaning: '
+          + n(secs.filter(c=>c.quiz)) + ' pictures, and ' + n(secs.filter(c=>!c.quiz)) + ' more signs from the Department for Transport. Tap a picture to hear what it means.';
+      })(),
+      signCredit: window.TTSigns ? TTSigns.credit : '',
       signLicenceUrl: window.TTSigns ? TTSigns.licenceUrl : '',
-      // The quiz: bank questions that carry a picture, shuffled, at most TTSigns.quizSize.
-      startSignPractice: ()=>{ if(window.TTSigns) this.buildSession(TTSigns.quizIds(this.questions()), 'Road signs'); },
+      // "Quiz me on all signs": 20 of every category's sign questions (signs.js), at random.
+      startSignPractice: ()=>this.signQuiz(null, 'Road signs'),
+      signToTop: ()=>this.signJump(null),
       hasFlagged: revRows.length>0, flaggedCount: revRows.length,
       packRows: this.packList().map(p=>({
         name: p.name, meta: p.count + ' questions' + (p.imported ? ' \u00b7 imported' : ''),
@@ -4743,7 +4827,8 @@ class Component extends DCLogic {
       testModeChoices: [{v:'balanced', name:'Like the real test', sub:'even spread across all topics'}, {v:'random', name:'Surprise mix', sub:'50 pulled at random from everything'}, {v:'custom', name:'Build your own', sub:'pick topics and how many'}].map(m=>({name:m.name, sub:m.sub, on: TTScreen.pressed((s.testMode||'balanced')===m.v), pick:()=>this.setState({testMode:m.v}), style:'flex:1;text-align:left;padding:13px 14px;border-radius:14px;cursor:pointer;'+((s.testMode||'balanced')===m.v?'background:var(--tt-bg-e4f2ef);border:2px solid var(--tt-bd-0e7c6b)':'background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2)')})),
       doneScore, doneTotal: doneAsked, doneTitle, doneMsg, hasSessRows: sessRows.length>1, sessRows,
       doneTip: sess ? this.tipAt((sess.wrongTopics&&sess.wrongTopics[0]) || weak[0] || 1, doneAsked + (sess.wrongTopics? sess.wrongTopics.length:0)) : '',
-      doneTipShow: !!(sess && doneAsked>0),
+      // A topic tip after practice; not after a signs quiz (issue #48), which has no topic.
+      doneTipShow: !!(sess && doneAsked>0 && !sess.signs),
       signSize: 132,
       rangeLabel: s.range==='all'? 'All time' : 'Last 7 days',
       rangeChipStyle: 'padding:10px 16px;border-radius:12px;border:1px solid var(--tt-bd-e8e1d2);background:var(--tt-bg-fff);cursor:pointer;font-size:14px;font-weight:700;color:var(--tt-fg-0e7c6b)',

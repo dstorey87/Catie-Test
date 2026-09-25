@@ -791,7 +791,8 @@ test('#10: pictures have text: every <img> an alt, the road sign one named image
   for (const { tag } of tags(/<img\b[^>]*>/g)) assert.match(tag, /\balt="/, tag);
   const signs = fs.readFileSync(path.join(root, 'signs.js'), 'utf8');
   // The name says what it is, never what the sign means: on a question that is the answer.
-  assert.match(signs, /role:'img', 'aria-label':'Road sign picture'/);
+  assert.match(signs, /role:'img', 'aria-label':ALT/);
+  assert.match(signs, /var ALT = 'Road sign picture';/);
   // The mock-score chart is one image whose name is the scores (TTScreen.chartSay).
   const charts = tpl.match(/<svg viewBox="0 0 340 130"[^>]*>/g) || [];
   assert.equal(charts.length, 2, 'My Progress and the dashboard');
@@ -1170,6 +1171,13 @@ test('adventure: the Home card says the world she is on and her stars, counted f
   // Everything passed: done, with more stars to collect or none left.
   assert.deepEqual([card(passed(all.map(s => s.id), 1)).head, card(passed(all.map(s => s.id), 1)).sub], ['Every world done', 'Replay any stage for more stars']);
   assert.equal(card(passed(all.map(s => s.id), max)).sub, 'Every star earned');
+  // With the sign worlds (issue #48) on the route: still "through 14 topics" (they are not topics),
+  // and their stars count in the total.
+  const signs = [{ id: 'orders', name: 'Signs giving orders', qids: ['sign:a', 'sign:b', 'sign:c', 'sign:d'] }];
+  const withSigns = coach.adventureRoute(bank, { signs });
+  c = plain(ADV.card(withSigns, coach.adventureStatus(withSigns, {}), max));
+  assert.equal(c.sub, 'Start your road trip through ' + route.length + ' topics');
+  assert.equal(c.stars, '0 / ' + withSigns.flatMap(w => w.stages).length * max);
   // No questions loaded yet: says what Adventure is, with no numbers.
   c = plain(ADV.card([], coach.adventureStatus([], {}), max));
   assert.equal(c.stars, '');
@@ -1188,7 +1196,8 @@ test('adventure: Home has the card under Today\'s lesson, opening adventure.html
   assert.ok(fs.existsSync(path.join(root, 'adventure.html')));
   // Worked out by coach.js from the questions adventure.html uses, and her saved progress.
   const vals = method('adventureVals(view){', 'insightVals(view){');
-  assert.match(vals, /C\.adventureRoute\(this\.bankQuestions\(\)\)/);
+  // The same route adventure.html plays: the topic worlds, then the sign worlds (issue #48).
+  assert.match(vals, /C\.adventureRoute\(this\.bankQuestions\(\), \{signs: window\.TTSigns \? TTSigns\.worlds\(\) : \[\]\}\)/);
   assert.match(vals, /C\.adventureStatus\(route, this\.state\.adventure/);
   assert.match(vals, /C\.ADVENTURE\.stars\.length/);
   assert.match(app, /adventure: saved\.adventure/, 'the first load reads her Adventure progress');
