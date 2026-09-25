@@ -28,7 +28,10 @@ window.SignImage = function(props){
   const svg = S[props.hint];
   if(!svg) return null;
   const size = props.size || 120;
-  return React.createElement('div', {style:{width:size, height:size, flex:'none', filter:'drop-shadow(0 2px 4px rgba(0,0,0,.12))'}, 'aria-label':'sign illustration', dangerouslySetInnerHTML:{__html:svg}});
+  // role "img" makes the picture one thing with one name for a screen reader (a plain div may not
+  // carry a name). The name says what it is, not what the sign means: on a question the meaning
+  // is the answer, so naming it would give the answer away (WCAG 1.1.1 allows this for a test).
+  return React.createElement('div', {style:{width:size, height:size, flex:'none', filter:'drop-shadow(0 2px 4px rgba(0,0,0,.12))'}, role:'img', 'aria-label':'Road sign picture', dangerouslySetInnerHTML:{__html:svg}});
 };
 window.__signKeys = Object.keys(S);
 })();
