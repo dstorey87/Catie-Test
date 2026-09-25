@@ -122,11 +122,16 @@
   // True when the question at position i is a missed one coming back.
   function isComeback(play, i) { return (i === undefined ? play.i : i) >= play.qids.length; }
   // Records an answer to the current question; returns a NEW play (the queue may grow by one).
+  // combo (the "in a row" counter) and bestCombo (the results' best run) count first tries only,
+  // like the score: a second chance neither adds to the run nor carries it on (#38 item 6, where
+  // "0 / 7 right first time" sat next to "Best run: 7 in a row"). Second chances all come after
+  // the first tries, so the counter simply goes back to 0 for them.
   function answerStep(play, qid, ok) {
     var p = Object.assign({}, play, { first: Object.assign({}, play.first), back: Object.assign({}, play.back), queue: play.queue.slice() });
+    var comeback = isComeback(play);
     if (!(qid in p.first)) p.first[qid] = !!ok;
-    if (!ok && !p.back[qid] && !isComeback(play)) { p.back[qid] = true; p.queue.push(qid); }
-    p.combo = ok ? p.combo + 1 : 0;
+    if (!ok && !p.back[qid] && !comeback) { p.back[qid] = true; p.queue.push(qid); }
+    p.combo = ok && !comeback ? p.combo + 1 : 0;
     p.bestCombo = Math.max(p.bestCombo, p.combo);
     p.xp = p.xp + (ok ? APP.xpPerRight : 0);
     return p;
@@ -614,7 +619,8 @@
         '<div class="big-stars" aria-label="' + sc.stars + ' of ' + max + ' stars">' + starsHtml(sc.stars, max, 'bst') + '</div>' +
         '<p class="score"><b>' + r.correct + ' / ' + r.total + '</b> right first time <span class="dot">·</span> <b>' + Math.round(sc.pct * 100) + '%</b></p>' +
         '<p class="line">' + line + '</p>' +
-        '<ul class="chips"><li>+' + p.xp + ' XP</li><li>Best run: ' + p.bestCombo + ' in a row</li><li>Pass mark ' + Math.round(A.passPct * 100) + '%</li></ul>' +
+        // Best run: first tries right in a row, named only when there is one (2 or more, as the counter)
+        '<ul class="chips"><li>+' + p.xp + ' XP</li>' + (p.bestCombo >= 2 ? '<li>Best run: ' + p.bestCombo + ' in a row</li>' : '') + '<li>Pass mark ' + Math.round(A.passPct * 100) + '%</li></ul>' +
         (opened ? '<p class="opened">' + ICON.trophy + ' World ' + opened.world + ' unlocked: <b>' + esc(opened.name) + '</b></p>' : '') +
         '<div class="actions">' + btns + '</div>' +
       '</div>';

@@ -205,6 +205,28 @@ test('play: combo counts right answers in a row; XP adds up like the app', () =>
   assert.equal(p.xp, 3 * adv.APP.xpPerRight);
 });
 
+test('#38 item 6: the best run counts first tries only, so it never beats "right first time"', () => {
+  // v13: a stage missed first time and answered right on every second chance showed
+  // "0 / 7 right first time" next to "Best run: 7 in a row" (the run counted second chances).
+  const qids = ['a', 'b', 'c', 'd', 'e', 'f', 'g'];
+  let p = adv.newPlay({ id: 's', kind: 'lesson', qids }, () => 0.5);
+  qids.forEach(() => { p = adv.answerStep(p, p.queue[p.i], false); p.i++; });        // every first try wrong
+  while (p.i < p.queue.length) { p = adv.answerStep(p, p.queue[p.i], true); p.i++; }  // every second chance right
+  assert.deepEqual(adv.tally(p), { correct: 0, total: 7 });
+  assert.equal(p.bestCombo, 0, 'second chances are not part of the run');
+  assert.equal(p.combo, 0, 'nor of the counter on screen');
+  assert.equal(p.xp, 7 * adv.APP.xpPerRight, 'a right second chance still earns its XP, as in the app');
+  // Any mix of answers: the best run is never more than the first tries she got right.
+  const rnd = seeded(38);
+  for (let n = 0; n < 300; n++) {
+    let q = adv.newPlay({ id: 's', kind: 'lesson', qids }, rnd);
+    while (q.i < q.queue.length) { q = adv.answerStep(q, q.queue[q.i], rnd() < 0.6); q.i++; }
+    assert.ok(q.bestCombo <= adv.tally(q).correct, 'best run ' + q.bestCombo + ' but only ' + adv.tally(q).correct + ' right first time');
+  }
+  // The results name a run only when there is one: 2 or more, as the counter shows.
+  assert.match(js, /\(p\.bestCombo >= 2 \? '<li>Best run: ' \+ p\.bestCombo \+ ' in a row<\/li>' : ''\)/);
+});
+
 test('play: right answers needed to pass come from the pass mark', () => {
   const pct = coach.ADVENTURE.passPct;
   for (const total of [1, 5, 7, 10]) {
