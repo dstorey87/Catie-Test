@@ -54,7 +54,9 @@ branch: that happens once, at promotion.
   the copy it re-mounts into `document.head` (SyntaxError on every load). Inline
   scripts go in the real `<head>` before `</head>`; helmet is for meta/link/src-scripts.
 - **Bump `VERSION` in `sw.js`** in any deploy that changes a file in its CORE list —
-  the cache name is the only update signal existing installs get.
+  the cache name is the only update signal existing installs get. In the same change,
+  rewrite `TTWelcome.NEWS` (top of `Theory Trainer.dc.html`, the What's new card's words)
+  for the new VERSION: `node --test` fails until you do.
 - **This app's `componentDidUpdate` gets no previous state** (`support.js` passes only
   previous props). Compare against a copy you keep yourself (see `this._seen`).
 - **Only questions and answers from the bank** (Darren's standing rule, REQUIREMENTS.md top).

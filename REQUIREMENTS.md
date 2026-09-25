@@ -2,13 +2,19 @@
 
 Master list. Everything asked for, plus the gaps a paid consumer app needs.
 
-**Standing rule (Darren, 2026-09-24): only questions and answers that are in the bank.** Nothing the app shows a learner may be a question, answer or fact it made up. The coach picks and orders bank questions; AI-written memory tips are drafted from their own question's text, machine-checked, and shown only after the admin approves them.
+**Standing rule (Darren, 2026-09-24): only questions and answers that are in the bank.** Nothing the app shows a learner may be a question, answer or fact it made up. The coach picks and orders bank questions; AI-written memory tips and plain explanations are drafted from their own question's text, machine-checked, and shown only after the admin approves them.
+
+**Darren's decisions, 2026-09-24:**
+- **Guardian consent under 16.** A learner who may be younger than 16 needs a parent's or guardian's agreement. That is stricter than the UK GDPR's own age of 13 (Article 8(1)); it is his choice, and one value in `config.js` (`age.guardianUnder`).
+- **Mock legal details until there is a business.** He has no business, so the legal pages carry clearly-labelled mock operator details (`support@example.com`, a mock address, all-zero company and ICO numbers) under a sample-policy banner. Real details and a legal review come before charging anyone.
+- **UK answers.** Every bank answer checked against current UK/GB rules: 44 corrected, each with its official source (issue #20, PR #24).
+
 States: ✅ built · 🟡 partly built, or built but only tested against a simulated server · ⛔ not built · 📋 your account/keys needed
 
 ---
 
 ## 1. Learning content and modes
-- ✅ 378 original questions, 14 DVSA topics, 4 options, explanation + Highway Code reference
+- ✅ 378 original questions, 14 DVSA topics, 4 options, explanation + Highway Code reference. *Checked against current UK rules 2026-09-24 (issue #20): 44 corrected, each with its source; `tests/bank.test.js` guards the shape and each corrected fact*
 - ✅ 20 road signs with spoken meanings, sign learning screen, signs quiz
 - ✅ Practise mode: read-aloud, Leitner boxes, 50:50, auto-advance
 - ✅ Mock test: 50 questions, 57 minutes, flag/review grid, pass mark 43
@@ -28,12 +34,12 @@ States: ✅ built · 🟡 partly built, or built but only tested against a simul
 - ✅ **Stuck detection** (2026-09-24: 3+ misses, or misses on 2 different days, until right twice running; shown as "Keeps tripping you up" with her usual wrong pick, and drilled first): spot a question or topic a learner keeps failing (3+ misses, or repeated misses across sessions) and change tactics instead of repeating the same card
 - 🟡 **Tailored micro-lessons**: when stuck, a short explainer for that exact concept, then re-test it. *Built as an approved memory tip per question plus the drill's re-test. The "easier scaffolding questions" part is dropped: it would mean inventing questions, which the standing rule above forbids*
 - ✅ **Tailored test generator** (2026-09-24: Today's lesson, from `coach.js`; distractor types not used yet): build a test on demand from the learner's own error pattern (topic mix, difficulty, distractor types they fall for), not a fixed template. *Hand-picked version done (My answers); automatic version not built*
-- 🟡 **Distractor analysis**: record which wrong option was chosen, cluster the misconception, address that specifically. *The chosen option is now recorded on every answer; the analysis is not built*
-- ⛔ **Improvement suggestions on Home**: "You lose most marks on stopping distances — 10 minutes here would move your readiness 6%", ranked by predicted gain
-- ⛔ **Pass prediction**: estimate mock score and probability of passing, with what would raise it
-- ⛔ **Study plan to test date**: given the test date, a day-by-day plan that adapts when a day is missed
-- ⛔ **Explain-it-differently**: ask for another explanation of a question in plainer terms, or an analogy
-- ✅ AI layer, decided 2026-09-24: **local** AI (Ollama on the home PC) drafts memory tips once, offline, for the admin to approve; the test-building runs as fixed rules on the phone, so everything works offline and costs nothing. No Claude API
+- 🟡 **Distractor analysis**: record which wrong option was chosen, cluster the misconception, address that specifically. *The chosen option is recorded on every answer, and `TTCoach.misconceptions` finds the wrong answer she keeps choosing, per question and per topic. On screen since v12: "Keeps tripping you up", My answers and its "Same wrong answer again" filter. Grouping similar misconceptions by meaning is not built*
+- ✅ **Improvement suggestions on Home**: "You lose most marks on stopping distances — 10 minutes here would move your readiness 6%", ranked by predicted gain. *v12: Home's "What to work on" card, ranked by predicted gain, with a drill button. Measured as "N more right answers → expected score", not minutes or readiness %*
+- ✅ **Pass prediction**: estimate mock score and probability of passing, with what would raise it. *v12, on My Progress. Not checked against real test results: not verified*
+- ✅ **Study plan to test date**: given the test date, a day-by-day plan that adapts when a day is missed. *v12: the Study plan screen, which adapts when a day is missed*
+- 🟡 **Explain-it-differently**: ask for another explanation of a question in plainer terms, or an analogy. *Built: drafts by local AI (377 of 378 passing the checks), the database columns with approved-only delivery, the admin review (Admin → Memory tips → Plain explanations) and the learner's button, browser-checked with faked rows. Not yet: the drafts loaded into the live server as `draft` and approved, so no learner sees it; not seen working with real rows*
+- ✅ AI layer, decided 2026-09-24: **local** AI (Ollama on the home PC) drafts memory tips once, offline, for the admin to approve; the test-building runs as fixed rules on the phone, so everything works offline and costs nothing. No Claude API. *The same local AI also drafts plain explanations ("Explain it differently"), under the same checks*
 
 ## 3. Accounts and the login experience
 - ✅ Email + password sign-up, sign-in, password reset, email confirmation
@@ -41,8 +47,8 @@ States: ✅ built · 🟡 partly built, or built but only tested against a simul
 - ✅ Automatic sync — pulls on open, pushes after answers, retries offline; no sync button
 - ✅ Admin role flag
 - 🟡 All of the above against a real Supabase project
-- ⛔ **Standard paid-service account controls**, all missing:
-  - Change email, change password while signed in, delete my account (GDPR), export my data
+- ⛔ **Standard paid-service account controls**, missing unless marked:
+  - 🟡 Change email, change password while signed in, delete my account (GDPR), export my data. *Delete my account and export my data are built (Settings → Your data, v12; the server functions were proven on the live database inside rolled-back transactions). Change email and change password while signed in are not built*
   - Active sessions list + sign out everywhere
   - Two-factor authentication (TOTP) for admins at minimum
   - Sign in with Apple / Google (Apple sign-in is required by App Store rules if any social login is offered)
@@ -83,7 +89,7 @@ Today's "admin" is device-local: it edits the local snapshot on that one phone. 
 - ⛔ Dunning: retry schedule, "your payment failed" email + in-app banner, grace period before lock
 - ⛔ Proration when switching monthly → annual mid-term
 - ⛔ Receipts and VAT: invoices with your business details, UK VAT handling, Stripe Tax
-- ⛔ Refund policy and a self-serve refund request path
+- 🟡 Refund policy and a self-serve refund request path. *Sample refund rules written (`legal/refunds.html`, with mock business details; for Darren to confirm). No self-serve path*
 - ⛔ Cancellation flow that asks why (churn reasons feed §4 metrics), with a save offer
 - ⛔ Apple's rule 3.1.1: Stripe can't sell digital subscriptions inside a native iOS app. Decide: web-only purchase, or add Apple in-app purchase + Google Play Billing
 
@@ -94,8 +100,8 @@ Today's "admin" is device-local: it edits the local snapshot on that one phone. 
 - ✅ Daily reminder per learner: time of day, own timezone, only on days with no practice
 - 🟡 Server reminders (needs push keypair + hourly cron)
 - ⛔ Native push on iOS/Android (Firebase + Apple push key; a WebView doesn't get web push)
-- ⛔ Streak freeze / repair, weekly summary email, "you're close to a badge" nudge
-- ⛔ Leaderboard or family comparison (opt-in)
+- 🟡 Streak freeze / repair, weekly summary email, "you're close to a badge" nudge. *Streak freezes and the badge nudge are built (v12); streak repair and the weekly summary email are not*
+- ✅ Leaderboard or family comparison (opt-in). *As the family board (v12): opt-in, this account's learners only, no server. No public leaderboard, by design*
 - ⛔ Email lifecycle: welcome, day-3 nudge, abandoned checkout, test-day good luck, post-pass
 
 ## 7. Platforms
@@ -108,21 +114,21 @@ Today's "admin" is device-local: it edits the local snapshot on that one phone. 
 - ⛔ Store assets: screenshots per device size, description, keywords, privacy questionnaire, age rating
 
 ## 8. Legal, trust and operations — required before charging strangers
-- ⛔ Privacy policy, terms of service, cookie/consent notice, refund policy
-- ⛔ GDPR: data export, deletion, lawful basis, processor list (Supabase, Stripe), retention policy
-- ⛔ Age handling: under-16 sign-ups need parental consent in the UK
-- ⛔ "Not affiliated with DVSA" disclaimer, and accuracy/liability wording
-- ⛔ Support: contact route, FAQ, response expectation
+- 🟡 Privacy policy, terms of service, cookie/consent notice, refund policy. *Complete sample pages (`legal/`, v12) with clearly-marked mock business details, written from the code and schema; the app links to them. Still needed before charging anyone: real details and a legal review*
+- 🟡 GDPR: data export, deletion, lawful basis, processor list (Supabase, Stripe), retention policy. *Export and deletion built (server, `backend.js`, Settings → Your data). The lawful basis, the processor list with the storage region (Supabase, Frankfurt) and the retention rule (kept while the account exists, deleted with it) are written in `legal/privacy.html`; the lawful bases are sample choices for Darren to confirm*
+- 🟡 Age handling: under-16 sign-ups need parental consent in the UK. *16 is Darren's decision (above); the UK GDPR's own age is 13. Built: storage, the rule in `config.js`, `saveAge`, and the age question with the guardian's consent and email, browser-checked against the fake server; the rule and the manual process are in the privacy notice and terms. Not yet run from the app against the live Supabase project: not verified there*
+- 🟡 "Not affiliated with DVSA" disclaimer, and accuracy/liability wording. *The disclaimer is in the app (both sign-in screens and Settings), on the about page, the guide and every legal page; accuracy and liability wording is in the terms. Left: Darren to confirm the liability wording, and a legal review*
+- 🟡 Support: contact route, FAQ, response expectation. *FAQ in `help.html#faq`, and Help is one tap away in the app. Response times written: data requests within one month, refund emails within 5 working days. The contact address is a mock (`support@example.com`)*
 - ⛔ Error monitoring (Sentry or similar) and uptime alerting
 - 🟡 Product analytics: funnel, retention, feature use — privacy-respecting. *Per-learner activity is built (every answer, session, mock, hint, read-aloud, flag and screen, in the `events` table; Admin → Activity). Funnel and retention across learners are not*
 - ⛔ Database backups and a restore you've actually tested
 - ⛔ Rate limits on Edge Functions; abuse protection on the bank endpoint
-- ⛔ Accessibility audit against WCAG 2.2 AA (the controls exist; the audit doesn't)
-- 🟡 Automated tests (the scoring, Leitner, entitlement and sync logic at minimum) and CI. *`tests/` covers question picking and two page checks; scoring, Leitner, entitlements, sync and CI are not done*
+- ⛔ Accessibility audit against WCAG 2.2 AA (the controls exist; the audit doesn't). *Three reflow failures (WCAG 1.4.10) fixed in v12: the two topic lists and the Voice speed row on a 390px phone*
+- 🟡 Automated tests (the scoring, Leitner, entitlement and sync logic at minimum) and CI. *CI runs `node --test` on every pull request and every push to `develop` and `main` (`.github/workflows/test.yml`). 291 tests cover question picking, the coach, sign-in and email links, the activity queue, memory tips, plain explanations, export/delete/age, the question bank, the help/about/legal pages and the app's own files. No tests found for the Leitner boxes, entitlements or the progress-snapshot sync (searched `tests/` 2026-09-25)*
 - ⛔ Staging environment separate from live, and a rollback path
-- 🟡 Versioning + changelog; a "what's new" card in the app. *`CHANGELOG.md` + the `sw.js` VERSION exist; no in-app card*
-- ⛔ Onboarding: first-run flow that sets test date, goal and reminder in under a minute
-- ⛔ Marketing page with pricing, screenshots and SEO (the app is not a landing page)
+- ✅ Versioning + changelog; a "what's new" card in the app. *`CHANGELOG.md` + the `sw.js` VERSION; since v12 the What's new card on Home reads that VERSION, and a test keeps its words in step with it*
+- ✅ Onboarding: first-run flow that sets test date, goal and reminder in under a minute. *v12: the quick setup, checked in a browser. "Under a minute" was not timed with a real learner: not verified. It is one date field and two taps*
+- ✅ Marketing page with pricing, screenshots and SEO (the app is not a landing page). *`about.html` (v12), browser-checked at 390px and 1280px, light and dark*
 
 ---
 
@@ -151,7 +157,7 @@ These came out of going back through everything we've done. All are real, all ar
   real test covers far more. Open-licensed Highway Code sets exist; I can't generate images.
 - ⛔ **No diagrams** for junction-layout or road-marking questions.
 - ⛔ **Bank size vs claims**: 378 questions against a published pool roughly double that.
-  Marketing copy must not overstate it.
+  Marketing copy must not overstate it. *The about page complies: it states no bank size at all*
 - ⛔ **Support load**: a support address at the domain, and somewhere to answer from.
 - ⛔ **Price changes later** need existing subscribers grandfathered rather than repriced.
 - ⛔ **Paywall funnel analytics** — without them, "why isn't anyone paying" is unanswerable.
@@ -159,4 +165,4 @@ These came out of going back through everything we've done. All are real, all ar
 ---
 
 ## Honest summary
-Everything in §1, and most of §3 and §6, is built. §2's clever coaching is mostly built (spacing, stuck detection, the tailored drill, approved memory tips); distractor analysis, pass prediction and the study plan are not. §4's real admin console does not exist — what's there is device-local. §5 works in code but has never seen a real card. §7 has the project but no native build. §8 is almost entirely outstanding, and it is what actually blocks charging the public.
+Everything in §1, and most of §3 and §6, is built. §2's clever coaching is mostly built (spacing, stuck detection, the tailored drill, approved memory tips, pass prediction, what to work on, the study plan); explain-it-differently is built but has nothing approved on the live server yet, and misconceptions are not grouped by meaning. §4's real admin console does not exist — what's there is device-local. §5 works in code but has never seen a real card. §7 has the project but no native build. §8 is under way: sample legal pages with mock details, data export and deletion, the age question, onboarding, the What's new card and the about page are built; real business details, a legal review, error monitoring, backups, staging and the accessibility audit are not, and they are what actually block charging the public.

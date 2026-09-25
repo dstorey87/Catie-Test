@@ -1,7 +1,7 @@
 // The about page (about.html + about/): its script's behaviour, and checks on its HTML and CSS
 // that don't need a browser. Run with:  node --test
 // (What it looks like is checked in a real browser at 390px and 1280px, light and dark,
-// with tests/browser/harness.js — see changes/section-about-page.md.)
+// with tests/browser/harness.js — see STATUS.md, "Pages".)
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
