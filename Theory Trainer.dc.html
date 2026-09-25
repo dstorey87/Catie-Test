@@ -421,6 +421,30 @@ window.TTScreen = (function(){
   // The chart's scale in words, under the drawing (it has no axis numbers), so a line starting
   // at 30 is not read as starting at 0.
   S.chartScale = function(lo){ return 'The chart runs from ' + lo + ' to ' + S.CHART.top + '.'; };
+  // The chart's moving parts: the dashed pass line and its label, the line through her scores and
+  // a dot for each mock, as a plain list of SVG elements {tag, attrs, text}; the app turns each
+  // into an element (issue #38). They used to be {{ values }} in the page's SVG attributes, such as
+  // y1="{{ passLineY }}", and the browser reads the page before the app fills those in, so every
+  // load logged errors like: <line> attribute y1: Expected length, "{{ passLineY }}".
+  //   tests: her saved mocks [{score, total, pass}] (total missing means 50), oldest first
+  //   lo:    the chart's lowest line (chartFloor); pass: the score the pass line is drawn at
+  // The drawing is 340 x 130 (the SVG's viewBox); scores are plotted in the box BOX, with a score
+  // of lo at its bottom and 50 at its top, and a shorter mock drawn out of 50.
+  S.CHART.BOX = {x: 12, y: 10, w: 316, h: 110};
+  S.chartMarks = function(tests, lo, pass){
+    tests = tests || [];
+    var B = S.CHART.BOX, top = S.CHART.top;
+    var px = function(i){ return tests.length < 2 ? B.x + B.w/2 : B.x + i*(B.w/(tests.length-1)); };
+    var py = function(v){ return B.y + (1 - (v - lo)/(top - lo))*B.h; };
+    var at = function(r){ return r.score / (r.total || top) * top; };      // her score out of 50
+    var marks = [
+      {tag:'line', attrs:{x1:B.x, y1:py(pass), x2:B.x + B.w, y2:py(pass), stroke:'#C77E14', 'stroke-width':1.5, 'stroke-dasharray':'5 4'}},
+      {tag:'text', attrs:{x:B.x + B.w, y:py(pass) - 5, 'text-anchor':'end', 'font-size':9, 'font-family':'sans-serif', style:{fill:'var(--tt-fg-8a5a0b)'}}, text:'pass ' + pass},
+      {tag:'polyline', attrs:{points: tests.map(function(r, i){ return px(i) + ',' + py(at(r)); }).join(' '), fill:'none', stroke:'#0E7C6B', 'stroke-width':2.5, 'stroke-linejoin':'round'}}
+    ];
+    tests.forEach(function(r, i){ marks.push({tag:'circle', attrs:{cx:px(i), cy:py(at(r)), r:4, fill: r.pass ? '#2E9E5B' : '#D14B45'}}); });
+    return marks;
+  };
 
   // The line under Home's Today's lesson: what is in it, from coach.js's reasons (counts of
   // questions she keeps missing, flagged, due again, and new). answered: she has answered at least
@@ -1447,14 +1471,9 @@ html{scroll-padding-bottom:160px}
   <sc-if value="{{ hasTests }}" hint-placeholder-val="{{ false }}">
     <h2 style="font-family:'Nunito',sans-serif;font-weight:800;font-size:18px;margin:26px 0 10px">Your mock tests</h2>
     <div style="background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);border-radius:20px;padding:16px">
-      <svg viewBox="0 0 340 130" role="img" aria-label="{{ chartSay }}" style="width:100%;display:block">
-        <line x1="12" y1="{{ passLineY }}" x2="328" y2="{{ passLineY }}" stroke="#C77E14" stroke-width="1.5" stroke-dasharray="5 4"></line>
-        <text x="328" y="{{ passLabelY }}" text-anchor="end" font-size="9" font-family="sans-serif" style="fill:var(--tt-fg-8a5a0b)">pass 43</text>
-        <polyline points="{{ chartPts }}" fill="none" stroke="#0E7C6B" stroke-width="2.5" stroke-linejoin="round"></polyline>
-        <sc-for list="{{ chartDots }}" as="d" hint-placeholder-count="3">
-          <circle cx="{{ d.x }}" cy="{{ d.y }}" r="4" fill="{{ d.fill }}"></circle>
-        </sc-for>
-      </svg>
+      <!-- The pass line, her scores and their dots are elements the app makes (TTScreen.chartMarks):
+           as {{ values }} in these SVG attributes the browser read them as bad numbers (#38) -->
+      <svg viewBox="0 0 340 130" role="img" aria-label="{{ chartSay }}" style="width:100%;display:block">{{ chartMarks }}</svg>
       <!-- The chart starts near her lowest score, not 0 (TTScreen.chartFloor), so it says its scale -->
       <div style="font-size:13px;color:var(--tt-fg-6e6a5e);margin-top:6px;text-align:right">{{ chartScale }}</div>
     </div>
@@ -1951,14 +1970,9 @@ html{scroll-padding-bottom:160px}
   <h2 style="font-family:'Nunito',sans-serif;font-weight:800;font-size:18px;margin:28px 0 10px">Mock test scores</h2>
   <sc-if value="{{ hasTests }}" hint-placeholder-val="{{ false }}">
     <div style="background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);border-radius:20px;padding:16px">
-      <svg viewBox="0 0 340 130" role="img" aria-label="{{ chartSay }}" style="width:100%;display:block">
-        <line x1="12" y1="{{ passLineY }}" x2="328" y2="{{ passLineY }}" stroke="#C77E14" stroke-width="1.5" stroke-dasharray="5 4"></line>
-        <text x="328" y="{{ passLabelY }}" text-anchor="end" font-size="9" font-family="sans-serif" style="fill:var(--tt-fg-8a5a0b)">pass 43</text>
-        <polyline points="{{ chartPts }}" fill="none" stroke="#0E7C6B" stroke-width="2.5" stroke-linejoin="round"></polyline>
-        <sc-for list="{{ chartDots }}" as="d" hint-placeholder-count="3">
-          <circle cx="{{ d.x }}" cy="{{ d.y }}" r="4" fill="{{ d.fill }}"></circle>
-        </sc-for>
-      </svg>
+      <!-- The pass line, her scores and their dots are elements the app makes (TTScreen.chartMarks):
+           as {{ values }} in these SVG attributes the browser read them as bad numbers (#38) -->
+      <svg viewBox="0 0 340 130" role="img" aria-label="{{ chartSay }}" style="width:100%;display:block">{{ chartMarks }}</svg>
       <!-- The chart starts near her lowest score, not 0 (TTScreen.chartFloor), so it says its scale -->
       <div style="font-size:13px;color:var(--tt-fg-6e6a5e);margin-top:6px;text-align:right">{{ chartScale }}</div>
     </div>
@@ -4102,16 +4116,11 @@ class Component extends DCLogic {
       .map(x=>({name:x.name, label: x.n? (x.pct+'% ('+x.n+')') : 'not tried',
         barStyle:'display:block;height:100%;border-radius:5px;width:'+(x.n?x.pct:0)+'%;background:'+(x.pct>=80?'#2E9E5B':x.pct>=50?'#F2A93B':'#D14B45')}));
     const tests = s.tests;
-    const W=316, H=110, X0=12, Y0=10;
-    const px = i => tests.length<2 ? X0+W/2 : X0 + i*(W/(tests.length-1));
-    // The dashed pass line on the chart (out of 50; its label "pass 43" is written in the SVG,
-    // where a {{ value }} would not draw). chartSay is the same chart in words.
+    // The dashed pass line on the chart (out of 50), drawn with its label "pass 43" by
+    // TTScreen.chartMarks. chartSay is the same chart in words.
     const chartPass = 43;
     // The chart's lowest line: a little under her lowest score, not 0 (TTScreen.chartFloor, #32).
     const lo = TTScreen.chartFloor(tests, chartPass);
-    const py = v => Y0 + (1 - (v - lo)/(50 - lo))*H;
-    const chartPts = tests.map((r,i)=>px(i)+','+py(r.score/(r.total||50)*50)).join(' ');
-    const chartDots = tests.map((r,i)=>({x:px(i), y:py(r.score/(r.total||50)*50), fill: r.pass?'#2E9E5B':'#D14B45'}));
     const chartSay = TTScreen.chartSay(tests, chartPass);
     const historyRows = tests.map((r,i)=>({
       date: this.fmtDate(r.date), score: r.score+'/'+(r.total||50),
@@ -4637,7 +4646,9 @@ class Component extends DCLogic {
       toggleRange: ()=>this.setState({range: s.range==='all'?'7d':'all'}),
       topicBars,
       hasTests: tests.length>0, noTests: tests.length===0,
-      chartPts, chartDots, chartSay, chartScale: TTScreen.chartScale(lo), passLineY: py(chartPass), passLabelY: py(chartPass)-5,
+      // The chart's drawing, as SVG elements (TTScreen.chartMarks, #38)
+      chartMarks: TTScreen.chartMarks(tests, lo, chartPass).map((m, i)=>React.createElement(m.tag, Object.assign({key:i}, m.attrs), m.text)),
+      chartSay, chartScale: TTScreen.chartScale(lo),
       historyRows,
       hasHard: hardRows.length>0, noHard: hardRows.length===0, hardRows,
       exportData: ()=>this.download('theory-trainer-backup.json', {settings:st, leitner:s.leitner, attempts:s.attempts, tests:s.tests, overrides:s.overrides, custom:s.custom, deleted:s.deleted}),
