@@ -357,7 +357,15 @@
     }
   };
 
+  // Payments are OFF until config.js says `payments: true`, which is only right once Stripe is
+  // set up (SETUP.md §3: the webhook that switches access on, plus a Payment Link or the
+  // create-checkout and billing-portal functions). Off, the app offers no Subscribe, Manage
+  // subscription or "I've paid" buttons, which could only fail (issue #42).
+  function paymentsOn() { var b = window.TT_CONFIG || {}, o = override || {}; return !!(b.payments || o.payments); }
+  var PAYMENTS_OFF = 'Payments are not switched on in this app yet. Ask the admin for free access.';
+
   window.TTBill = {
+    enabled: paymentsOn,
     status: async function () {
       var rows = await rest('/entitlements?select=status,plan,current_period_end,cancel_at_period_end&limit=1');
       var e = (rows && rows[0]) || null;
@@ -371,6 +379,7 @@
     // account id so the webhook knows whose access to switch on.
     // Route B: the create-checkout Edge Function (needed for plan switching).
     checkout: async function (plan) {
+      if (!paymentsOn()) throw new Error(PAYMENTS_OFF);
       await fresh();
       var uid = (sess && sess.user && sess.user.id) || '';
       var link = payLink(plan === 'annual' ? 'annual' : 'monthly');
@@ -386,10 +395,41 @@
       return d.url;
     },
     portal: async function () {
+      if (!paymentsOn()) throw new Error(PAYMENTS_OFF);
       await fresh();
       var d = await call('/functions/v1/billing-portal', { method: 'POST', body: JSON.stringify({ origin: location.origin + location.pathname }) });
       if (!d || !d.url) throw new Error('Subscription management needs the billing-portal function (SETUP.md §3, route B).');
       return d.url;
+    }
+  };
+
+  // The admin giving an account free access (issue #42): Admin → Progress dashboard →
+  // Accounts. The server decides everything and refuses anyone but the admin, a date
+  // already gone, and an account paying through Stripe (supabase/schema.sql,
+  // admin_accounts and admin_set_access); its refusal is a sentence this passes on.
+  window.TTAdmin = {
+    // Every account: {id, email, name, admin, status, freeUntil, paying, lastSeen}.
+    // status is the server's: 'comp' = free access, 'active'/'trialing' = paying, 'none'.
+    accounts: async function () {
+      var rows = (await rest('/rpc/admin_accounts', { method: 'POST', body: '{}' })) || [];
+      return rows.map(function (r) {
+        return { id: r.id, email: r.email || '', name: r.name || '', admin: r.role === 'admin',
+          status: r.status || 'none', freeUntil: r.free_until || '', paying: !!r.paying, lastSeen: r.last_seen || '' };
+      });
+    },
+    // free: true gives free access, false takes it away. untilDay: '' for good, or the
+    // last day included as 'YYYY-MM-DD' (a date input's value). Access ends when the
+    // NEXT day starts on this device, so the admin's own time zone decides "the day".
+    setAccess: async function (id, free, untilDay) {
+      var until = null;
+      if (free && untilDay) {
+        var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(untilDay));
+        var day = m && new Date(+m[1], +m[2] - 1, +m[3]);
+        if (!day || day.getMonth() !== +m[2] - 1) throw new Error('That date could not be read. Pick it again from the calendar.');
+        until = new Date(+m[1], +m[2] - 1, +m[3] + 1).toISOString();
+      }
+      await rest('/rpc/admin_set_access', { method: 'POST', body: JSON.stringify({ target: id, free: !!free, until: until }) });
+      return true;
     }
   };
 

@@ -9,6 +9,12 @@
 <script src="./picker.js"></script>
 <!-- The coach: flag merging, drills and "keeps getting wrong" (window.TTCoach). -->
 <script src="./coach.js"></script>
+<!-- The server connection (window.TT_CONFIG) and the Supabase adapter (TTAuth, TTSync, TTBill,
+     TTBank, TTTrack, TTAccount). Here in the real head, never in <helmet>: support.js re-mounts
+     helmet into the head, which runs a src script a SECOND time, and a second backend.js
+     replaces TTAuth mid-sign-in with a copy that has no user (issue #42). -->
+<script src="./config.js"></script>
+<script src="./backend.js"></script>
 <script>
 // ---------- Colour themes (light / dark / follow the device) ----------
 // The app's colours are written as var(--tt-<role>-<hex>) where light and dark differ:
@@ -76,12 +82,11 @@ window.TTWelcome = (function(){
   // sw.js VERSION moves on and these don't, so every promotion rewrites them: the newest
   // features, in plain words, written to the learner ("you"). No markdown.
   W.NEWS = {
-    version: 'v14-2026-09-25',
+    version: 'v15-2026-09-25',
     items: [
-      'Adventure stars are safe on every device now: using the app on a second phone or computer never wipes the stages you passed on another.',
-      'On a computer, all 14 Adventure worlds fit on one row of tabs.',
-      'On a phone, the Adventure top bar shows your name in full and just your stars.',
-      '“Best run” and the in-a-row counter in Adventure count first tries only, the same as your score.'
+      'Signing in from an email link now works properly: you arrive signed in, with your progress, straight away.',
+      'No more payment buttons that could not work: if the full question bank is locked, the screen tells you to ask the admin for free access.',
+      'For the admin: Progress dashboard → Accounts shows every account and gives free access for good, or until a day you pick.'
     ]
   };
 
@@ -690,8 +695,6 @@ window.TTAdv = (function(){
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Theory Trainer">
 <link rel="apple-touch-icon" href="icon-180.png">
-<script src="config.js"></script>
-<script src="backend.js"></script>
 <style>
 body{margin:0;background:var(--tt-bg-faf6ef);background-image:radial-gradient(1100px 520px at 50% -180px, var(--tt-bg-fffdf8), var(--tt-bg-faf6ef))}
 button{transition:transform .08s ease}
@@ -859,19 +862,28 @@ html{scroll-padding-bottom:160px}
         <span>{{ payAnnualLabel }}</span>
         <span style="font-size:12.5px;font-weight:700;color:var(--tt-fg-8a5a0b)">Best value until test day</span>
       </button>
-      <sc-if value="{{ trialAvailable }}" hint-placeholder-val="{{ true }}">
-        <button onClick="{{ startTrial }}" style="background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);border-radius:18px;min-height:52px;font-size:16px;cursor:pointer;font-weight:700">{{ trialLabel }}</button>
-      </sc-if>
+    </sc-if>
+    <sc-if value="{{ trialAvailable }}" hint-placeholder-val="{{ true }}">
+      <button onClick="{{ startTrial }}" style="background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);border-radius:18px;min-height:52px;font-size:16px;cursor:pointer;font-weight:700">{{ trialLabel }}</button>
     </sc-if>
     <sc-if value="{{ payHasMsg }}" hint-placeholder-val="{{ false }}">
-      <div style="font-size:13.5px;color:var(--tt-fg-b8433d);line-height:1.45">{{ payMsgLive }}</div>
+      <div role="status" style="font-size:13.5px;color:var(--tt-fg-b8433d);line-height:1.45">{{ payMsgLive }}</div>
     </sc-if>
-    <div style="display:flex;gap:10px">
-      <button onClick="{{ manageSub }}" style="flex:1;background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);border-radius:16px;min-height:48px;font-size:14.5px;cursor:pointer">Manage subscription</button>
-      <button onClick="{{ recheckSub }}" style="flex:1;background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);border-radius:16px;min-height:48px;font-size:14.5px;cursor:pointer">{{ recheckLabel }}</button>
-    </div>
+    <!-- Payments on (config.js payments: true): Stripe's buttons. Off: only "check again",
+         because the way in is free access from the admin (issue #42). -->
+    <sc-if value="{{ payOn }}" hint-placeholder-val="{{ false }}">
+      <div style="display:flex;gap:10px">
+        <button onClick="{{ manageSub }}" style="flex:1;background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);border-radius:16px;min-height:48px;font-size:14.5px;cursor:pointer">Manage subscription</button>
+        <button onClick="{{ recheckSub }}" style="flex:1;background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);border-radius:16px;min-height:48px;font-size:14.5px;cursor:pointer">{{ recheckLabel }}</button>
+      </div>
+    </sc-if>
+    <sc-if value="{{ payOff }}" hint-placeholder-val="{{ true }}">
+      <button onClick="{{ recheckSub }}" style="background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);border-radius:16px;min-height:48px;font-size:14.5px;cursor:pointer">{{ recheckLabel }}</button>
+    </sc-if>
     <button onClick="{{ goLogin }}" style="background:none;border:none;color:var(--tt-fg-6e6a5e);font-size:14px;cursor:pointer;min-height:44px;text-decoration:underline">Switch learner</button>
-    <div style="font-size:13px;color:var(--tt-fg-6e6a5e);line-height:1.5">Payment is handled by Stripe. Access switches on by itself the moment it goes through — nothing to wait for.</div>
+    <sc-if value="{{ payOn }}" hint-placeholder-val="{{ false }}">
+      <div style="font-size:13px;color:var(--tt-fg-6e6a5e);line-height:1.5">Payment is handled by Stripe. Access switches on by itself the moment it goes through — nothing to wait for.</div>
+    </sc-if>
   </div>
 </div>
 </sc-if>
@@ -2063,6 +2075,44 @@ html{scroll-padding-bottom:160px}
   <label class="tt-file" style="display:flex;align-items:center;justify-content:center;width:100%;box-sizing:border-box;margin-top:12px;background:var(--tt-bg-e4f2ef);border:2px dashed var(--tt-bd-0e7c6b);color:var(--tt-fg-0a5d50);border-radius:16px;min-height:52px;font-size:15.5px;cursor:pointer;font-weight:700">Load a question pack (JSON file)…<input type="file" accept=".json,application/json" onChange="{{ importPack }}" class="tt-sr"></label>
   <div style="font-size:13px;color:var(--tt-fg-6e6a5e);margin-top:8px;line-height:1.5">A pack is a JSON list using the same fields as the exported bank (question, options ×4, correctIndex, explanation, ruleRef, topic 1–14). Questions you write or have a licence for can be loaded here, then switched on or off for practise and tests separately. Packs can also carry a <b>testType</b> field (car, motorcycle, LGV…), so other theory tests drop in later as packs — no redesign needed.</div>
 
+  <!-- Accounts (issue #42): who can use the full question bank, and free access given from
+       here, for good or until a day. The server (admin_accounts / admin_set_access) does the
+       deciding and refuses anyone but the admin; backend.js TTAdmin is the thin layer. -->
+  <sc-if value="{{ acctsVisible }}" hint-placeholder-val="{{ false }}">
+  <h2 style="font-family:'Nunito',sans-serif;font-weight:800;font-size:18px;margin:28px 0 10px">Accounts</h2>
+  <div style="background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);border-radius:20px;padding:18px">
+    <div style="font-size:14px;color:var(--tt-fg-6e6a5e);line-height:1.55">{{ acctsIntro }}</div>
+    <sc-if value="{{ acctsHasErr }}" hint-placeholder-val="{{ false }}">
+      <div role="alert" style="font-size:14px;color:var(--tt-fg-b8433d);line-height:1.5;margin-top:10px">{{ acctsErr }}</div>
+    </sc-if>
+    <sc-for list="{{ acctRows }}" as="a" hint-placeholder-count="3">
+      <div style="border-top:1px solid var(--tt-bd-e8e1d2);margin-top:14px;padding-top:14px">
+        <div style="font-weight:700;font-size:15.5px;overflow-wrap:anywhere">{{ a.title }}</div>
+        <div style="font-size:13px;color:var(--tt-fg-6e6a5e);line-height:1.5;overflow-wrap:anywhere">{{ a.sub }}</div>
+        <div style="{{ a.accessStyle }}">{{ a.access }}</div>
+        <sc-if value="{{ a.canChange }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px">
+            <sc-if value="{{ a.canGiveForGood }}" hint-placeholder-val="{{ true }}">
+              <button onClick="{{ a.giveFree }}" aria-label="{{ a.giveLabel }}" style="background:#0E7C6B;color:#fff;border:none;border-radius:12px;min-height:44px;padding:0 14px;font-size:14px;font-weight:700;cursor:pointer">Free for good</button>
+            </sc-if>
+            <sc-if value="{{ a.isFree }}" hint-placeholder-val="{{ false }}">
+              <button onClick="{{ a.takeAway }}" aria-label="{{ a.takeLabel }}" style="background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);border-radius:12px;min-height:44px;padding:0 14px;font-size:14px;cursor:pointer;color:inherit">Take free access away</button>
+            </sc-if>
+          </div>
+          <div style="display:flex;flex-wrap:wrap;align-items:flex-end;gap:8px;margin-top:8px">
+            <label style="font-size:13.5px;color:var(--tt-fg-6e6a5e)">Free until (last day included)<input type="date" onChange="{{ a.dayChange }}" aria-label="{{ a.dayLabel }}" style="display:block;margin-top:4px;padding:10px;border:1px solid var(--tt-bd-e8e1d2);border-radius:10px;font-size:14px;background:var(--tt-bg-fff);color:inherit"></label>
+            <button onClick="{{ a.giveUntil }}" aria-label="{{ a.untilLabel }}" style="background:var(--tt-bg-e4f2ef);color:var(--tt-fg-0a5d50);border:none;border-radius:12px;min-height:44px;padding:0 14px;font-size:14px;font-weight:700;cursor:pointer">Free until that day</button>
+          </div>
+        </sc-if>
+      </div>
+    </sc-for>
+    <div style="display:flex;align-items:center;gap:12px;margin-top:14px">
+      <button onClick="{{ reloadAccounts }}" style="flex:none;background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);border-radius:12px;min-height:44px;padding:0 14px;cursor:pointer;font-size:14px;font-weight:700;color:inherit">{{ acctsReloadLabel }}</button>
+      <div role="status" style="font-size:13.5px;color:var(--tt-fg-0a5d50);line-height:1.45">{{ acctsMsg }}</div>
+    </div>
+  </div>
+  </sc-if>
+
   <h2 style="font-family:'Nunito',sans-serif;font-weight:800;font-size:18px;margin:28px 0 10px">Subscription</h2>
   <div style="background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);border-radius:20px;padding:18px">
     <div style="font-size:14px;color:var(--tt-fg-6e6a5e);line-height:1.55;margin-bottom:12px">{{ subStatus }}</div>
@@ -2071,8 +2121,8 @@ html{scroll-padding-bottom:160px}
       <button onClick="{{ subToggle }}" role="switch" aria-checked="{{ subOn }}" aria-label="Require subscription" style="{{ subTrackStyle }}"><span style="{{ subKnobStyle }}"></span></button>
     </div>
     <label style="font-size:13.5px;color:var(--tt-fg-6e6a5e)">Price wording shown on the lock screen<input value="{{ subPrice }}" onChange="{{ subPriceChange }}" placeholder="£4.99 a month" style="display:block;width:100%;box-sizing:border-box;margin-top:4px;padding:11px;border:1px solid var(--tt-bd-e8e1d2);border-radius:10px;font-size:14px"></label>
-    <div style="font-size:13px;color:var(--tt-fg-6e6a5e);line-height:1.5;margin-top:10px">Charging is handled by Stripe on the server: subscribers pay in the app, access switches on by itself, and cancelling or a failed payment switches it off again. The amounts come from your Stripe prices (SETUP.md §3) — this field is only the wording.</div>
-    <div style="font-family:'Nunito',sans-serif;font-weight:800;font-size:15px;margin:16px 0 8px">Access for {{ learnerName }}</div>
+    <div style="font-size:13px;color:var(--tt-fg-6e6a5e);line-height:1.5;margin-top:10px">{{ subCharging }}</div>
+    <div style="font-family:'Nunito',sans-serif;font-weight:800;font-size:15px;margin:16px 0 8px">On this device: access for {{ learnerName }}</div>
     <div style="display:flex;flex-wrap:wrap;gap:8px">
       <sc-for list="{{ planChoices }}" as="p" hint-placeholder-count="5"><button onClick="{{ p.pick }}" aria-pressed="{{ p.on }}" style="{{ p.style }}">{{ p.label }}</button></sc-for>
     </div>
@@ -2080,7 +2130,7 @@ html{scroll-padding-bottom:160px}
       <label style="font-size:13.5px;color:var(--tt-fg-6e6a5e);display:block;margin-top:10px">Free until<input type="date" value="{{ planUntil }}" onChange="{{ planUntilChange }}" style="display:block;margin-top:4px;padding:11px;border:1px solid var(--tt-bd-e8e1d2);border-radius:10px;font-size:14px;background:var(--tt-bg-fff)"></label>
     </sc-if>
     <button onClick="{{ showPayScreen }}" style="background:var(--tt-bg-efe9dc);border:none;border-radius:12px;min-height:46px;font-size:14.5px;font-weight:700;color:var(--tt-fg-686458);cursor:pointer;width:100%;margin-top:14px">Show me the subscribe screen</button>
-    <div style="font-size:13px;color:var(--tt-fg-6e6a5e);line-height:1.5;margin-top:12px">Use these for family and testers — Always free or Free until a date give access without paying. Suspended and Blocked lock a learner out until you change it back. Switch learner with the chips at the top of this page. Paying subscribers need nothing here.</div>
+    <div style="font-size:13px;color:var(--tt-fg-6e6a5e);line-height:1.5;margin-top:12px">These work for the learners on this device only. To open the full question bank for someone’s own account (on their own phone), use Accounts above. Suspended and Blocked lock a learner out until you change it back. Switch learner with the chips at the top of this page.</div>
   </div>
 
   <h2 style="font-family:'Nunito',sans-serif;font-weight:800;font-size:18px;margin:28px 0 10px">Account</h2>
@@ -2089,10 +2139,14 @@ html{scroll-padding-bottom:160px}
     <div style="display:flex;flex-direction:column;gap:10px">
       <div style="display:flex;gap:10px">
         <button onClick="{{ syncNow }}" style="flex:1;background:var(--tt-bg-e4f2ef);color:var(--tt-fg-0a5d50);border:none;border-radius:12px;min-height:46px;font-size:15px;font-weight:700;cursor:pointer">Sync now</button>
-        <button onClick="{{ manageSub }}" style="flex:1;background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);border-radius:12px;min-height:46px;font-size:15px;cursor:pointer">Manage subscription</button>
+        <sc-if value="{{ acctPayVisible }}" hint-placeholder-val="{{ false }}">
+          <button onClick="{{ manageSub }}" style="flex:1;background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);border-radius:12px;min-height:46px;font-size:15px;cursor:pointer">Manage subscription</button>
+        </sc-if>
       </div>
       <div style="display:flex;gap:10px">
-        <button onClick="{{ recheckSub }}" style="flex:1;background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);border-radius:12px;min-height:46px;font-size:15px;cursor:pointer">{{ recheckLabel }}</button>
+        <sc-if value="{{ acctPayVisible }}" hint-placeholder-val="{{ false }}">
+          <button onClick="{{ recheckSub }}" style="flex:1;background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);border-radius:12px;min-height:46px;font-size:15px;cursor:pointer">{{ recheckLabel }}</button>
+        </sc-if>
         <button onClick="{{ cloudSignOutBtn }}" style="flex:1;background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);border-radius:12px;min-height:46px;font-size:15px;cursor:pointer">Sign out</button>
       </div>
       <sc-if value="{{ bankFromCache }}" hint-placeholder-val="{{ false }}">
@@ -2568,6 +2622,7 @@ class Component extends DCLogic {
       authView: 'signin', authEmail: '', authPw: '', authName: '', authMsg: '', authOk: false, authCode: '',
       theme: (()=>{ try { return localStorage.getItem('tt.theme') || 'auto'; } catch(e) { return 'auto'; } })(),
       cfgUrl: '', cfgKey: '', access: null, isAdminAccount: false, bankSource: '', payMsgLive: '', accessBusy: false, uploadBusy: false,
+      accts: [], acctsBusy: false, acctsErr: '', acctsMsg: '',
       test: saved.testInProgress || null, testView: 'run', now: Date.now(),
       range: 'all', openTest: -1, showLogForm: false,
       logDate: new Date().toISOString().slice(0,10), logScore: '', logPT: {},
@@ -2935,6 +2990,7 @@ class Component extends DCLogic {
     if(window.TTScreen && TTScreen.key(prev) !== TTScreen.key(s)) { try { window.scrollTo(0, 0); } catch(e) { /* no window to scroll */ } }
     const secs = t=>Math.round((now - (t||now))/1000);
     if(s.view !== prev.view) this.track('screen', null, {view: s.view, from: prev.view});
+    if(s.view==='dash' && s.isAdminAccount && (prev.view!=='dash' || !prev.isAdminAccount)) this.loadAccounts();
     // A different learner (or a sync reloading this one) isn't something she did:
     // compare sessions and tests only within the same learner.
     if(s.userId !== prev.userId){ this.track('learner_opened', null, {}); return; }
@@ -3037,6 +3093,27 @@ class Component extends DCLogic {
       if(gained || (a.active && this.state.bankSource!=='server')) this.loadBank();
     }).catch(()=>this.setState({accessBusy:false}));
     TTAuth.isAdmin().then(v=>this.setState({isAdminAccount:v})).catch(()=>{});
+  }
+  // ---------- Admin → Progress dashboard → Accounts (issue #42) ----------
+  // Every account and its access, from the server (backend.js TTAdmin). Loaded when the admin
+  // opens the dashboard, and after every change, so the list always shows what the server has.
+  loadAccounts(){
+    if(!(window.TTAdmin && window.TTAuth && TTAuth.signedIn())) return;
+    this.setState({acctsBusy:true, acctsErr:''});
+    TTAdmin.accounts()
+      .then(rows=>this.setState({accts:rows, acctsBusy:false}))
+      .catch(e=>this.setState({acctsBusy:false, acctsErr:'Could not load the accounts: ' + String(e.message||e) + ' Check the connection and press Refresh.'}));
+  }
+  // free: true gives free access (day '' = for good, else the last day included); false takes
+  // it away. The server refuses what it must (not the admin, a day gone, a Stripe payer) and
+  // its sentence is shown as it is.
+  setAccountAccess(a, free, day){
+    const who = a.name || a.email || 'That account';
+    const last = day ? new Date(day + 'T12:00:00').toLocaleDateString('en-GB', {weekday:'short', day:'numeric', month:'short', year:'numeric'}) : '';
+    this.setState({acctsBusy:true, acctsErr:'', acctsMsg:''});
+    TTAdmin.setAccess(a.id, free, day||'')
+      .then(()=>{ this.setState({acctsMsg: !free ? who + ' no longer has free access.' : day ? who + ' has free access until the end of ' + last + '.' : who + ' has free access for good.'}); this.loadAccounts(); })
+      .catch(e=>this.setState({acctsBusy:false, acctsErr:String(e.message||e)}));
   }
   // ---------- your data and your age (issue #9; words in TTPrivacy) ----------
   // Asks the server for this account's age answer. Until it answers (or if it can't, e.g.
@@ -3145,7 +3222,7 @@ class Component extends DCLogic {
   }
   doSignOut(){
     if(!window.TTAuth) return;
-    TTAuth.signOut().then(()=>this.setState({view:'auth', access:null, isAdminAccount:false, authPw:'', authMsg:'', bank:[], bankSource:'', loaded:false, cloudPulled:false, ageInfo:null, ageChecked:false, ageLater:false, delOpen:false, delTyped:'', dlMsg:''}, ()=>this.loadBank()));
+    TTAuth.signOut().then(()=>this.setState({view:'auth', access:null, isAdminAccount:false, accts:[], acctsErr:'', acctsMsg:'', authPw:'', authMsg:'', bank:[], bankSource:'', loaded:false, cloudPulled:false, ageInfo:null, ageChecked:false, ageLater:false, delOpen:false, delTyped:'', dlMsg:''}, ()=>this.loadBank()));
   }
   saveServerConfig(){
     const u = (this.state.cfgUrl||'').trim(), k = (this.state.cfgKey||'').trim();
@@ -3844,11 +3921,18 @@ class Component extends DCLogic {
     const prices = (window.TTBackend && TTBackend.prices) ? TTBackend.prices() : {monthly:'\u00a34.99 a month', annual:'\u00a350 a year', trial:20};
     const acc = s.access || null;
     const serverOk = backendOn ? (!!(acc && acc.active) || !!s.isAdminAccount) : !subCfg.required;
-    const accessLine = !acc ? 'no subscription yet'
-      : acc.status==='comp' ? 'free access'
+    // Is paying possible at all? config.js payments (backend.js TTBill.enabled). Off, nothing
+    // offers Subscribe, Manage subscription or "I've paid" (issue #42).
+    const payOn = !!(window.TTBill && TTBill.enabled && TTBill.enabled());
+    // A day as the admin reads it; free access ends when the NEXT day starts, so the last
+    // day included is the moment before (TTAdmin.setAccess).
+    const lastDay = iso => new Date(new Date(iso).getTime() - 1).toLocaleDateString('en-GB', {weekday:'short', day:'numeric', month:'short', year:'numeric'});
+    const accessLine = s.isAdminAccount ? 'admin account: full access, never charged'
+      : !acc ? (payOn ? 'no subscription yet' : 'no access yet \u2014 ask the admin for free access')
+      : acc.status==='comp' ? (acc.endsAt ? 'free access until the end of ' + lastDay(acc.endsAt) : 'free access')
       : acc.status==='past_due' ? 'last payment failed'
       : acc.active ? ('subscription active' + (acc.endsAt ? (acc.cancelling? ' until ' : ', renews ') + new Date(acc.endsAt).toLocaleDateString('en-GB') : ''))
-      : 'no subscription yet';
+      : (payOn ? 'no subscription yet' : 'no access yet \u2014 ask the admin for free access');
     const locked = !isParent && (hardLock || (!serverOk && s.plan!=='granted' && myPlan.type!=='free' && !compOk));
     const forceAuth = backendOn && !signedIn;
     const view = forceAuth ? (s.view==='setup' ? 'setup' : s.view==='login' ? 'login' : 'auth') : (s.printPreview ? 'printPreview' : s.view);
@@ -4486,8 +4570,12 @@ class Component extends DCLogic {
       payMsgLive: s.payMsgLive||'',
       payHasMsg: !!s.payMsgLive,
       manageSub: ()=>this.openPortal(),
-      recheckSub: ()=>{ this.setState({payMsgLive:'Checking with Stripe\u2026'}); this.refreshAccess(); setTimeout(()=>{ if(!(this.state.access && this.state.access.active)) this.setState({payMsgLive:'No active subscription on this account yet.'}); }, 1600); },
-      recheckLabel: s.accessBusy? 'Checking\u2026' : 'I\u2019ve paid',
+      // Re-reads this account's access from the server (the entitlements row). It does not
+      // talk to Stripe: a payment reaches that row through Stripe's webhook.
+      recheckSub: ()=>{ this.setState({payMsgLive:'Checking your access\u2026'}); this.refreshAccess(); setTimeout(()=>{ if(!(this.state.access && this.state.access.active)) this.setState({payMsgLive: payOn ? 'No active subscription on this account yet.' : 'Still no free access on this account. Ask the admin to give it (Progress dashboard \u2192 Accounts).'}); }, 1600); },
+      recheckLabel: s.accessBusy? 'Checking\u2026' : payOn ? 'I\u2019ve paid' : 'Check my access again',
+      payOn, payOff: !payOn,
+      acctPayVisible: payOn && !s.isAdminAccount,
       trialAvailable: !hardLock && s.bankSource!=='server' && (this.state.bank||[]).length>0,
       trialLabel: 'Try ' + (s.bankSource==='free'? (this.state.bank||[]).length : prices.trial) + ' free questions',
       startTrial: ()=>this.setState({view:'learnSetup'}),
@@ -4503,8 +4591,39 @@ class Component extends DCLogic {
       planUntilChange: e=>{ const plans = Object.assign({}, subCfg.plans); plans[s.userId] = Object.assign({}, plans[s.userId], {until: e.target.value}); this.set({sub: Object.assign({}, subCfg, {plans})}); },
       subStatus: st.learnerName + (myPlan.type==='blocked'? ' is blocked \u2014 they cannot use the app.' : myPlan.type==='suspended'? ' is suspended \u2014 practise is paused.' : (myPlan.type==='free' || s.plan==='granted')? ' has full access, free.' : compOk? (' is free until ' + (myPlan.until||'\u2014') + '.') : (subCfg.required? (' is locked until you set access here or they subscribe' + (subCfg.price? (' ('+subCfg.price+')') : '') + '.') : ' has free access \u2014 subscriptions are off.')),
       payTitle: myPlan.type==='blocked'? 'This account is blocked' : myPlan.type==='suspended'? 'This account is paused' : (acc && acc.status==='past_due')? 'That payment didn\u2019t go through' : 'Unlock the full question bank',
-      payMsg: myPlan.type==='blocked'? 'Ask the admin to unblock it from the dashboard.' : myPlan.type==='suspended'? 'The admin has paused practise for a while \u2014 ask them to switch it back on.' : (acc && acc.status==='past_due')? 'Stripe couldn\u2019t take the last payment. Update the card and everything comes straight back.' : ('All 14 topics, mock tests, progress tracking and read-aloud \u2014 ' + prices.monthly + ' or ' + prices.annual + '.'),
-      paySubVisible: !hardLock,
+      payMsg: myPlan.type==='blocked'? 'Ask the admin to unblock it from the dashboard.' : myPlan.type==='suspended'? 'The admin has paused practise for a while \u2014 ask them to switch it back on.' : (acc && acc.status==='past_due')? 'Stripe couldn\u2019t take the last payment. Update the card and everything comes straight back.' : !payOn ? 'Payments aren\u2019t switched on in this app yet, so the full question bank opens with free access from the admin. Ask them: it\u2019s one tap on their Progress dashboard, under Accounts.' : ('All 14 topics, mock tests, progress tracking and read-aloud \u2014 ' + prices.monthly + ' or ' + prices.annual + '.'),
+      paySubVisible: !hardLock && payOn,
+      subCharging: payOn ? 'Charging is handled by Stripe on the server: subscribers pay in the app, access switches on by itself, and cancelling or a failed payment switches it off again. The amounts come from your Stripe prices (SETUP.md \u00a73) \u2014 this field is only the wording.'
+        : 'Payments are switched off (config.js, payments: false), so nobody can subscribe yet and the lock screen shows no Subscribe buttons. Give free access in Accounts above. Switching payments on needs Stripe set up first (SETUP.md \u00a73).',
+      // Accounts (issue #42): the admin's list of every account and its access.
+      acctsVisible: backendOn && signedIn && !!s.isAdminAccount,
+      acctsIntro: payOn ? 'Who can use the full question bank. Give free access to family and testers here \u2014 for good, or until a day you pick. Paying subscribers are handled by Stripe.'
+        : 'Who can use the full question bank. Payments are switched off, so free access given here is the only way in for anyone but you \u2014 for good, or until a day you pick.',
+      acctsHasErr: !!s.acctsErr, acctsErr: s.acctsErr||'', acctsMsg: s.acctsMsg||'',
+      acctsReloadLabel: s.acctsBusy ? 'Loading\u2026' : 'Refresh',
+      reloadAccounts: ()=>this.loadAccounts(),
+      acctRows: (s.accts||[]).map(a=>{
+        const who = a.name || a.email || 'This account';
+        const seen = a.lastSeen ? 'last signed in ' + new Date(a.lastSeen).toLocaleDateString('en-GB', {day:'numeric', month:'short', year:'numeric'}) : 'never signed in';
+        const ended = !!a.freeUntil && new Date(a.freeUntil).getTime() <= Date.now();
+        const access = a.admin ? 'Admin \u2014 always has the full question bank'
+          : a.paying ? 'Pays by subscription (Stripe) \u2014 change it in Stripe'
+          : a.status==='comp' ? (!a.freeUntil ? 'Free access, for good' : ended ? 'Free access ended on ' + lastDay(a.freeUntil) : 'Free access until the end of ' + lastDay(a.freeUntil))
+          : 'No access \u2014 sees the free sample questions only';
+        const good = a.admin || a.paying || (a.status==='comp' && !ended);
+        return {
+          title: who, sub: (a.name && a.email ? a.email + ' \u00b7 ' : '') + seen,
+          access, accessStyle: 'font-size:14px;font-weight:700;line-height:1.45;margin-top:4px;color:' + (good ? 'var(--tt-fg-0a5d50)' : 'var(--tt-fg-b8433d)'),
+          canChange: !a.admin && !a.paying, isFree: a.status==='comp', canGiveForGood: !(a.status==='comp' && !a.freeUntil),
+          giveFree: ()=>this.setAccountAccess(a, true, ''), giveLabel: 'Free access for good for ' + who,
+          takeAway: ()=>this.setAccountAccess(a, false, ''), takeLabel: 'Take free access away from ' + who,
+          // The date box is left to the browser; the day picked is kept here until the button.
+          dayChange: e=>{ this._acctDays = Object.assign({}, this._acctDays, {[a.id]: e.target.value}); },
+          dayLabel: 'Last day of free access for ' + who,
+          giveUntil: ()=>{ const d = (this._acctDays||{})[a.id]; if(!d){ this.setState({acctsMsg:'', acctsErr:'Pick the last day for ' + who + ' in the calendar first, then press Free until that day.'}); return; } this.setAccountAccess(a, true, d); },
+          untilLabel: 'Free access for ' + who + ' until the day picked'
+        };
+      }),
       syncNow: ()=>{ if(!signedIn){ this.setState({cloudMsg:'Sign in to back up progress.'}); return; } this._dirty = true; this.pullCloud(); this.refreshAccess(); },
       cloudSignOutBtn: ()=>this.doSignOut(),
       cloudStatus: !backendOn? 'Running on this device only \u2014 no account server connected yet (Server settings).' : !signedIn? 'Signed out \u2014 progress stays on this device until you sign in.' : ('Signed in as ' + (TTAuth.email()||'') + ' \u00b7 ' + accessLine + (s.cloudMsg? (' \u00b7 ' + s.cloudMsg) : '')),

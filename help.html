@@ -727,18 +727,16 @@
         <h2 id="h-paying"><span class="num"></span>Subscription</h2>
         <div class="step">
           <div>
-            <p>The full question bank needs a subscription: <strong data-config="priceMonthly">£4.99 a month</strong> or <strong data-config="priceAnnual">£50 a year</strong>. Without one, the app shows a lock screen with:</p>
+            <p>The full question bank needs access. Card payments aren't switched on yet, so for now the admin gives it (<a href="#access">Accounts</a>). Without access, the app shows a lock screen that says so, with:</p>
             <ul>
-              <li><strong>Subscribe</strong> or <strong>Or … a year</strong> — pay on a page run by Stripe, the payment company. Access switches on by itself as soon as the payment goes through.</li>
               <li><strong>Try <span data-config="trialCount">20</span> free questions</strong> — a free sample, where it's offered.</li>
-              <li><strong>Manage subscription</strong> — change your card or plan, or cancel, on Stripe's page.</li>
-              <li><strong>I've paid</strong> — checks again straight away if access hasn't switched on yet.</li>
+              <li><strong>Check my access again</strong> — looks again straight away, for example once the admin has given free access.</li>
             </ul>
-            <p>If a payment fails, the lock screen says so and asks you to update the card; access comes straight back once it's paid. Family members and testers can be given free access by the admin instead.</p>
-            <p class="known"><strong>Not live yet:</strong> card payments still need setting up, so for now access is given by the admin.</p>
+            <p>Once payments are switched on, the lock screen also offers <strong>Subscribe</strong> (<span data-config="priceMonthly">£4.99 a month</span>) or <strong>Or … a year</strong> (<span data-config="priceAnnual">£50 a year</span>) on a page run by Stripe, the payment company; <strong>Manage subscription</strong> to change the card or plan, or cancel; and <strong>I've paid</strong>. If a payment fails, the lock screen says so; access comes straight back once it's paid.</p>
+            <p class="known"><strong>Not live yet:</strong> card payments. They are switched on in <code>config.js</code> (<code>payments</code>) only once Stripe is set up.</p>
           </div>
           <figure class="shot">
-            <a href="help/img/paywall.png"><img src="help/img/paywall.png" width="390" height="844" alt="The lock screen: Unlock the full question bank, a Subscribe button for £4.99 a month, Or £50 a year, Manage subscription, I've paid, Switch learner and the My notes button." loading="lazy"></a>
+            <a href="help/img/paywall.png"><img src="help/img/paywall.png" width="390" height="844" alt="The lock screen: Unlock the full question bank, saying payments aren't switched on yet and to ask the admin for free access, with Try 20 free questions, Check my access again and Switch learner." loading="lazy"></a>
             <figcaption>The lock screen</figcaption>
           </figure>
         </div>
@@ -840,8 +838,10 @@
         <h2 id="h-access"><span class="num"></span>Access and account tools</h2>
         <div class="step">
           <div>
-            <h3>Access for a learner</h3>
-            <p>Under <strong>Subscription</strong>, <strong>Access for …</strong> sets how the learner shown at the top gets in:</p>
+            <h3>Accounts</h3>
+            <p>Every account that has signed up, with its access: admin, free for good, free until a day, pays by subscription, or no access (the free sample only). <strong>Free for good</strong>, <strong>Free until that day</strong> (pick the last day in the calendar first; that day is included) and <strong>Take free access away</strong> change it straight away on the server, so it works on that person's own phone too. <strong>Refresh</strong> reloads the list. Only the admin account sees it.</p>
+            <h3>On this device: access for a learner</h3>
+            <p>Under <strong>Subscription</strong>, <strong>On this device: access for …</strong> sets how the learner shown at the top gets in on this phone or computer only:</p>
             <ul>
               <li><strong>Default</strong> — a subscription is needed as normal.</li>
               <li><strong>Always free</strong> or <strong>Free until…</strong> a date — for family and testers.</li>
@@ -849,13 +849,13 @@
             </ul>
             <p><strong>Show me the subscribe screen</strong> previews what a learner without access sees. Paying subscribers need nothing here.</p>
             <h3>Account</h3>
-            <p>Shows who is signed in and their access, with <strong>Sync now</strong>, <strong>Manage subscription</strong>, <strong>I've paid</strong> and <strong>Sign out</strong>. An admin account also sees <strong>Upload question bank to server</strong> and <strong>Server settings</strong> (the one-time link to the database; learners never need it).</p>
+            <p>Shows who is signed in and their access, with <strong>Sync now</strong> and <strong>Sign out</strong> (plus <strong>Manage subscription</strong> and <strong>I've paid</strong> once payments are switched on, for accounts that pay). An admin account also sees <strong>Upload question bank to server</strong> and <strong>Server settings</strong> (the one-time link to the database; learners never need it).</p>
             <h3>Data</h3>
             <p><strong>Export backup</strong> downloads a file with this learner's settings, memory boxes, answers and mock tests, plus any question edits. <strong>Import backup</strong> loads one back. (For everything the server keeps for the account, use <a href="#yourdata">Settings → Your data → Download my data</a>.) <strong>Edit questions</strong> and <strong>Print</strong> open those screens.</p>
           </div>
           <figure class="shot">
-            <a href="help/img/admin-access.png"><img src="help/img/admin-access.png" width="390" height="844" alt="Access for Catie with Default, Always free, Free until, Suspended and Blocked, Show me the subscribe screen, and the Account section with Sync now, Manage subscription, I've paid, Sign out and Upload question bank to server." loading="lazy"></a>
-            <figcaption>Access and Account</figcaption>
+            <a href="help/img/admin-access.png"><img src="help/img/admin-access.png" width="390" height="844" alt="Accounts: each account with its access (Admin, Free access for good, No access), and Free for good, Take free access away, a Free until date box and Free until that day." loading="lazy"></a>
+            <figcaption>Accounts</figcaption>
           </figure>
         </div>
       </section>

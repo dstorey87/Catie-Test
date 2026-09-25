@@ -3,6 +3,25 @@
 Newest first. The version is the service-worker `VERSION` in `sw.js` — it changes on every
 deploy that touches the app's cached files. Earlier history: `git log`.
 
+## v15-2026-09-25
+Fixes for what Darren hit on v14 live (issue #42, PR #43). 389 tests (9 new, each seen failing first).
+- **Signing in from an email link no longer shows the admin a paywall.** `config.js` and `backend.js`
+  sat in `<helmet>`, so they ran twice; the second `backend.js` replaced the sign-in half-way with a
+  copy that had no user, and until a reload the app skipped the admin check, the age check and sync.
+  Both now load once, from the page head. A test fails if any script goes back into `<helmet>`.
+- **No payment buttons that can only fail.** Stripe isn't set up (no Payment Links, no server
+  functions), so `config.js` now has `payments: false`: the lock screen shows no Subscribe, Manage
+  subscription or "I've paid", says to ask the admin for free access, and "Check my access again"
+  says what it found. Nothing claims to be "checking with Stripe".
+- **The admin gives an account free access from the app:** Progress dashboard → Accounts lists every
+  account and its access, with Free for good, Free until a day and Take free access away. The server
+  decides and refuses anyone but the admin, a day already gone and a Stripe payer (`admin_accounts`,
+  `admin_set_access`; `has_access` honours a free-until day; migration `admin_free_access`).
+- The admin's account line says "admin account: full access, never charged"; the per-learner access
+  chips are labelled "On this device".
+- Catie's managed login was rotated again (Vault first, proven by signing in): its password had been
+  changed outside Vault after 2026-09-23.
+
 ## v14-2026-09-25
 Fixes from the v13 live browser check (issue #38, PR #39). 380 tests (13 new, each seen failing first).
 - **Adventure progress is no longer lost when two devices sync.** The sync kept the newer copy of a

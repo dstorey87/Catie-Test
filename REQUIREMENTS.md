@@ -15,7 +15,7 @@ States: ✅ built · 🟡 partly built, or built but only tested against a simul
 
 ## 1. Learning content and modes
 - ✅ 378 original questions, 14 DVSA topics, 4 options, explanation + Highway Code reference. *Checked against current UK rules 2026-09-24 (issue #20): 44 corrected, each with its source; `tests/bank.test.js` guards the shape and each corrected fact*
-- ✅ 20 road signs with spoken meanings, sign learning screen, signs quiz
+- 🟡 20 road signs with spoken meanings, sign learning screen, signs quiz. *23 bank questions describe a sign, marking or light with no picture, and the signs quiz makes its questions in code rather than taking them from the bank (issue #44, in progress: official DfT images)*
 - ✅ Practise mode: read-aloud, Leitner boxes, 50:50, auto-advance
 - ✅ Mock test: 50 questions, 57 minutes, flag/review grid, pass mark 43
 - ✅ Build-your-own test, surprise mix, focus drill
@@ -34,7 +34,7 @@ States: ✅ built · 🟡 partly built, or built but only tested against a simul
 - ✅ "Today's lesson" is a drill built from her own answers (`coach.js`): stuck, then flagged, then due by spacing (1/3/7/14/30 days), then new; topics interleaved; a missed question comes back 4 later, up to twice (2026-09-24)
 - ✅ **Stuck detection** (2026-09-24: 3+ misses, or misses on 2 different days, until right twice running; shown as "Keeps tripping you up" with her usual wrong pick, and drilled first): spot a question or topic a learner keeps failing (3+ misses, or repeated misses across sessions) and change tactics instead of repeating the same card
 - 🟡 **Tailored micro-lessons**: when stuck, a short explainer for that exact concept, then re-test it. *Built as an approved memory tip per question plus the drill's re-test. The "easier scaffolding questions" part is dropped: it would mean inventing questions, which the standing rule above forbids*
-- ✅ **Tailored test generator** (2026-09-24: Today's lesson, from `coach.js`; distractor types not used yet): build a test on demand from the learner's own error pattern (topic mix, difficulty, distractor types they fall for), not a fixed template. *Hand-picked version done (My answers); automatic version not built*
+- 🟡 **Tailored test generator** (2026-09-24: Today's lesson, from `coach.js`; difficulty and distractor types not used yet — the audit of 2026-09-25 found the drill uses neither): build a test on demand from the learner's own error pattern (topic mix, difficulty, distractor types they fall for), not a fixed template. *Hand-picked version done (My answers); automatic version not built*
 - 🟡 **Distractor analysis**: record which wrong option was chosen, cluster the misconception, address that specifically. *The chosen option is recorded on every answer, and `TTCoach.misconceptions` finds the wrong answer she keeps choosing, per question and per topic. On screen since v12: "Keeps tripping you up", My answers and its "Same wrong answer again" filter. Grouping similar misconceptions by meaning is not built*
 - ✅ **Improvement suggestions on Home**: "You lose most marks on stopping distances — 10 minutes here would move your readiness 6%", ranked by predicted gain. *v12: Home's "What to work on" card, ranked by predicted gain, with a drill button. Measured as "N more right answers → expected score", not minutes or readiness %*
 - ✅ **Pass prediction**: estimate mock score and probability of passing, with what would raise it. *v12, on My Progress. Not checked against real test results: not verified*
@@ -61,10 +61,11 @@ States: ✅ built · 🟡 partly built, or built but only tested against a simul
 ## 4. Owner / admin console — currently the biggest gap
 Today's "admin" is device-local: it edits the local snapshot on that one phone. It cannot see other customers.
 - ✅ Local: grant a learner free access, free-until-a-date, suspend, block; question editor; pack toggles; bank upload
+- ✅ **Server-side free access** (v15, #42): Progress dashboard → Accounts lists every account with its access; the admin gives free access for good or until a day, or takes it away, written to `entitlements` by the server (`admin_set_access`), refused for anyone but the admin and for a Stripe payer
 - ⛔ **A real admin console, server-side**, signed in as admin, seeing every customer:
   - Customer list: email, signed-up date, plan, status, last active, lifetime value, search and filter
   - Customer detail: their learners, progress, mock history, sessions, devices, payment history, notes
-  - **Exempt from paying**: mark an account comp/free, with reason and optional expiry, written to `entitlements` server-side (not the device)
+  - ✅ **Exempt from paying** (v15): mark an account free, with optional expiry, written to `entitlements` server-side (Accounts). *No reason field yet*
   - Suspend, block, restore, force sign-out, delete account with data
   - Refund or cancel a subscription from the console (via Stripe), and see failed payments
   - Change a customer's plan, extend a trial, add free days
@@ -80,9 +81,9 @@ Today's "admin" is device-local: it edits the local snapshot on that one phone. 
   - Support inbox or at least a "contact support" thread per customer
 
 ## 5. Billing and money
-- ✅ £4.99/month and £50/year in the app; Stripe hosts the card page
-- ✅ Payment-link checkout with account id attached; Stripe billing portal; free 20-question sample
-- ✅ Access granted/revoked by webhook on payment, cancellation and failure
+- 🟡 £4.99/month and £50/year in the app; Stripe hosts the card page. *Code only: payments are switched OFF (`config.js payments: false`, v15) because Stripe is not set up — no Payment Links, no edge functions, no webhook deployed (checked 2026-09-25). Until then the lock screen sends people to the admin for free access*
+- 🟡 Payment-link checkout with account id attached; Stripe billing portal; free 20-question sample. *The sample works; checkout and portal are off (above)*
+- 🟡 Access granted/revoked by webhook on payment, cancellation and failure. *The webhook is written (SETUP.md) but not deployed*
 - 🟡 Never tested against real Stripe
 - 📋 Your Stripe prices, links and webhook
 - ⛔ Coupons and codes at checkout (see §4)
