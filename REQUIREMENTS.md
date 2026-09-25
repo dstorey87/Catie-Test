@@ -15,7 +15,7 @@ States: ✅ built · 🟡 partly built, or built but only tested against a simul
 
 ## 1. Learning content and modes
 - ✅ 378 original questions, 14 DVSA topics, 4 options, explanation + Highway Code reference. *Checked against current UK rules 2026-09-24 (issue #20): 44 corrected, each with its source; `tests/bank.test.js` guards the shape and each corrected fact*
-- 🟡 20 road signs with spoken meanings, sign learning screen, signs quiz. *23 bank questions describe a sign, marking or light with no picture, and the signs quiz makes its questions in code rather than taking them from the bank (issue #44, in progress: official DfT images)*
+- 🟡 Road signs with spoken meanings, sign learning screen, signs quiz. *v16 (#44): 37 official GOV.UK pictures (DfT signs, Highway Code markings and lights); the quiz asks bank questions that have a picture. Every Highway Code sign, marking and signal, by category, in the screen, a quiz and Adventure: issue #48, in progress*
 - ✅ Practise mode: read-aloud, Leitner boxes, 50:50, auto-advance
 - ✅ Mock test: 50 questions, 57 minutes, flag/review grid, pass mark 43
 - ✅ Build-your-own test, surprise mix, focus drill
@@ -24,7 +24,7 @@ States: ✅ built · 🟡 partly built, or built but only tested against a simul
 - ✅ Notes on any screen, question flagging, revision list. Flags stay until the learner un-flags them (getting it right doesn't clear one); her own Flagged screen; flags merge per question across devices (2026-09-24)
 - ✅ Printable answer book, flashcards, test paper
 - ✅ Test-date countdown
-- ✅ **Adventure mode** (Darren asked 2026-09-24, issue #27): a Duolingo-style learning route. Each of the 14 topics is a world of short lessons and a checkpoint, drawn as a winding road; a stage needs 80% to pass and opens the next; 1 to 3 stars; any passed stage can be replayed; questions can be flagged. *v13: `adventure.html`, the route in `coach.js`, a Home card, progress kept when the app saves, a guide section. Left: Adventure answers don't count toward the daily goal or streak; the page doesn't follow the app's text size, dyslexia font or read-aloud; with the app open in another tab, answers, XP and flags from Adventure can be saved over until the app is reopened (Adventure progress itself is safe); the 80% and star levels are choices from Darren's brief, not measurements* Progress survives syncing between devices (merged stage by stage) and Best run counts first tries (v14, #38).
+- ✅ **Adventure mode** (Darren asked 2026-09-24, issue #27): a Duolingo-style learning route. Each of the 14 topics is a world of short lessons and a checkpoint, drawn as a winding road; a stage needs 80% to pass and opens the next; 1 to 3 stars; any passed stage can be replayed; questions can be flagged. *v13: `adventure.html`, the route in `coach.js`, a Home card, progress kept when the app saves, a guide section. v16 (#47): answers count toward the daily goal and streak; follows text size, easy-reading font, contrast, reduce motion and read-aloud. Left: with the app open in another tab, the app tab still shows its old numbers until reloaded, and if Adventure is closed before that tab saves again, that save can still drop Adventure's answers, XP and flags (Adventure puts them back while it is open; the app half is not built yet); the 80% and star levels are choices from Darren's brief, not measurements* Progress survives syncing between devices (merged stage by stage) and Best run counts first tries (v14, #38).
 - ⛔ Hazard perception (the second half of the real test) — needs video clips
 - ⛔ Case-study questions (the DVSA scenario format)
 - ⛔ Licensed DVSA bank — refused; pack import exists so a bought set can be loaded
@@ -155,9 +155,11 @@ These came out of going back through everything we've done. All are real, all ar
   20-question sample, or a whole class sharing one paid account. Needs seat and device limits.
 - 🟡 **Snapshot merge risk**: progress is one blob per account with newest-wins. Two devices
   syncing out of order can overwrite a learner's day. *Flags now merge per question, and every answer is also kept in the `events` table, so nothing is lost for good; the snapshot itself is still newest-wins*
-- ⛔ **Road signs are thin**: 20 signs, drawn as hints rather than real sign artwork. The
-  real test covers far more. Open-licensed Highway Code sets exist; I can't generate images.
-- ⛔ **No diagrams** for junction-layout or road-marking questions.
+- 🟡 **Road signs**: 37 official pictures since v16 (#44), credited under the Open Government
+  Licence v3.0; 36 bank questions show one, and none shows a picture that gives its answer away. The real
+  test covers far more signs: every Highway Code sign, marking and signal is issue #48.
+- 🟡 **Diagrams**: road-marking questions show the Highway Code's marking pictures (centre line,
+  double white lines, double yellow lines, box junction) since v16; junction layouts still have none.
 - ⛔ **Bank size vs claims**: 378 questions against a published pool roughly double that.
   Marketing copy must not overstate it. *The about page complies: it states no bank size at all*
 - ⛔ **Support load**: a support address at the domain, and somewhere to answer from.
