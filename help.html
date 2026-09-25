@@ -47,6 +47,7 @@
           <li><a href="#home">Home</a></li>
           <li class="toc-group">Learning</li>
           <li><a href="#lesson">Today's lesson</a></li>
+          <li><a href="#adventure">Adventure mode</a></li>
           <li><a href="#tripping">Keeps tripping you up</a></li>
           <li><a href="#practise">Practise</a></li>
           <li><a href="#mock">Mock test</a></li>
@@ -193,6 +194,7 @@
               <li><strong>Close to a badge</strong> — once you're most of the way to a badge, the level card says what's left, for example "2 more right answers in a row earns Ten in a row".</li>
               <li><strong>Countdown</strong> — if you've set your theory test date, Home shows the days left and how many questions today's plan asks. Tap it for your <a href="#plan">study plan</a>.</li>
               <li><strong>Today's lesson</strong> — the best thing to do next, built from your answers. <a href="#lesson">More below.</a></li>
+              <li><strong>Adventure</strong> — the topics as worlds on a map, with the world you're on and the stars you've earned. <a href="#adventure">More below.</a></li>
               <li><strong>What to work on</strong> — the topic where more right answers would lift your mock score most, with a button to drill it. <a href="#workon">More below.</a></li>
               <li><strong>Keeps tripping you up</strong> — appears once there are questions you keep getting wrong. <a href="#tripping">More below.</a></li>
               <li><strong>Family board</strong> — only if you switch it on in Settings. <a href="#family">More below.</a></li>
@@ -264,6 +266,33 @@
           <figure class="shot">
             <a href="help/img/lesson-question.png"><img src="help/img/lesson-question.png" width="390" height="844" alt="A lesson question: What is the typical stopping distance at 30 mph? Four answers, each with a speaker button, a Hint button and a Tricky? flag button at the top." loading="lazy"></a>
             <figcaption>A lesson question</figcaption>
+          </figure>
+        </div>
+      </section>
+
+      <!-- ============ 4b. adventure mode (issue #27) ============
+           The numbers here (7, 10, 80/90/100%, 14 topics) come from coach.js TTCoach.ADVENTURE
+           and TOPIC_NAMES; tests/app-files.test.js fails if the two ever disagree. -->
+      <section id="adventure" aria-labelledby="h-adventure">
+        <h2 id="h-adventure"><span class="num"></span>Adventure mode</h2>
+        <div class="step">
+          <div>
+            <p>Adventure mode is another way to learn: the topics become a road trip. Tap the <strong>Adventure</strong> card on Home, just under Today's lesson. It opens its own page and plays as the learner chosen in the app, with the same questions. Tap <strong>Theory Trainer</strong> at the top to go back.</p>
+            <ul>
+              <li><strong>Worlds.</strong> There is one world for each of the 14 theory test topics, in the usual topic order, starting with Alertness. Each world is drawn as a winding road with its stages on it. The arrows and the numbered circles move between worlds.</li>
+              <li><strong>Stages.</strong> The round stops are lessons of 7 questions (the last lesson in a world can be a little shorter or longer). The flag at the end of the road is the world's checkpoint: 10 questions picked from across the whole world.</li>
+              <li><strong>How stages unlock.</strong> At the start only the first stage is open. Pass a stage and the next one opens; pass a world's checkpoint and the next world opens. Locked stages are grey with a padlock and say what to pass first. The stage you're up to has the little car on it and says <strong>Start</strong>.</li>
+              <li><strong>Passing and stars.</strong> Get 80% or more right to pass. Stars come with a pass: 1 star at 80%, 2 at 90% and 3 at 100%. Only your first try at each question counts towards the score.</li>
+              <li><strong>Replay.</strong> Any stage you've passed can be played again. Your best score and your most stars are kept, and a pass stays a pass even if a replay goes worse.</li>
+            </ul>
+            <p><strong>Playing a stage.</strong> One question at a time, with a progress bar. After each answer you see straight away whether it was right, with the question's explanation (and its memory tip, once the admin has approved one). You earn 10 XP for each right answer, the same as in the rest of the app, and a counter shows how many you've got right in a row. A question you get wrong comes back once before the stage ends, so you finish on a right answer. On a keyboard, press 1 to 4 (or A to D) to answer and Enter to go on. The <strong>✕</strong> at the top quits the stage, after asking first.</p>
+            <p><strong>Flag</strong> on a question works like Tricky? in practice: the question goes on your <a href="#flagged">Flagged</a> list in the app and stays there until you take it off.</p>
+            <p>Your Adventure progress, answers and XP are saved with the rest of your progress, and the app sends them to your account the next time it's open (see <a href="#offline">Offline and syncing</a>). The Adventure card on Home shows the world you're on and your stars.</p>
+            <p class="note"><strong>Only real questions.</strong> Every stage is made from the app's question bank. Adventure mode never writes a question or an answer of its own.</p>
+          </div>
+          <figure class="shot">
+            <a href="help/img/adventure-map.png"><img src="help/img/adventure-map.png" width="390" height="844" alt="The Adventure map for World 1, Alertness: 2 of 5 stages passed and 4 of 15 stars. A winding road with two passed lessons, one with 3 stars and one with 1 star, then the lesson she is up to with a little car and a Start label, and locked stages with padlocks further down." loading="lazy"></a>
+            <figcaption>The Adventure map</figcaption>
           </figure>
         </div>
       </section>

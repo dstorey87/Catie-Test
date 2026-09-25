@@ -542,6 +542,64 @@ try{
   }
 }catch(e){}
 </script>
+<script>
+// ---------- Adventure mode on Home, and keeping its progress (window.TTAdv, issue #27) ----------
+// adventure.html (its own page) saves her progress in the learner's own data,
+// theoryTrainer.d.<learnerId>, under 'adventure'. The app never changes that progress, but
+// persist() writes the learner's whole record from the app's state, so it must carry the
+// page's part over (keep) or opening the app would wipe her Adventure. card() turns coach.js's
+// route and status into the words on Home's Adventure card. Plain data and pure functions only
+// (no page, no storage), so tests/app-files.test.js runs this very block in node.
+// Real head, not <helmet> (see the note above).
+window.TTAdv = (function(){
+  var A = {};
+
+  // Parts of the learner's record that another page owns. persist() keeps each one exactly as
+  // it is saved, because the app itself never changes them.
+  A.KEEP = ['adventure'];
+
+  // keep(saved, next) -> a NEW record: next, plus each KEEP part from the saved copy.
+  //   saved: the learner's record as it is in storage right now (may be missing or junk)
+  //   next:  the record persist() is about to write from the app's state
+  A.keep = function(saved, next){
+    var out = Object.assign({}, next);
+    if(saved && typeof saved === 'object'){
+      A.KEEP.forEach(function(k){ if(saved[k] !== undefined && out[k] === undefined) out[k] = saved[k]; });
+    }
+    return out;
+  };
+
+  // card(route, status, maxStars) -> the words on Home's Adventure card:
+  //   {head, sub, stars, label}
+  //   route:    TTCoach.adventureRoute(bank)   [{world, name, stages: [{id, kind}]}]
+  //   status:   TTCoach.adventureStatus(route, her progress)   {stages: {<id>: {passed, stars}}, current}
+  //   maxStars: the stars one stage can earn (TTCoach.ADVENTURE.stars.length)
+  // No number is made up here: worlds, stages and stars are all counted from route and status.
+  A.card = function(route, status, maxStars){
+    var worlds = route || [], st = (status && status.stages) || {}, earned = 0, available = 0;
+    // Stars: what she has earned, out of every star on the route.
+    worlds.forEach(function(w){ (w.stages || []).forEach(function(s){ available += maxStars; earned += (st[s.id] && st[s.id].stars) || 0; }); });
+    // No questions loaded yet (first open, offline with no copy): just say what it is.
+    if(!worlds.length) return {head:'The topics as worlds on a map', sub:'Pass each stage to open the next', stars:'', label:'Adventure: the topics as worlds on a map'};
+    var stars = earned + ' / ' + available, starsSay = earned + ' of ' + available + ' stars';
+    var cur = status && status.current;
+    // Every stage passed: nothing left to open, only stars to collect.
+    if(!cur){
+      var sub = earned < available ? 'Replay any stage for more stars' : 'Every star earned';
+      return {head:'Every world done', sub:sub, stars:stars, label:'Adventure: every world done, ' + starsSay};
+    }
+    // The world holding the stage she is up to, and how far through it she is.
+    var w = worlds.filter(function(x){ return (x.stages || []).some(function(s){ return s.id === cur; }); })[0] || worlds[0];
+    var passed = w.stages.filter(function(s){ return st[s.id] && st[s.id].passed; }).length;
+    var head = 'World ' + w.world + ' · ' + w.name;     // as the Adventure page writes it
+    var fresh = earned === 0 && passed === 0 && worlds[0] === w;
+    var sub2 = fresh ? 'Start your road trip through ' + worlds.length + ' topics' : passed + ' of ' + w.stages.length + ' stages passed';
+    return {head:head, sub:sub2, stars:stars, label:'Adventure: ' + head + '. ' + sub2 + '. ' + starsSay};
+  };
+
+  return A;
+})();
+</script>
 </head>
 <body>
 <x-dc>
@@ -936,6 +994,32 @@ html{scroll-padding-bottom:160px}
     <button onClick="{{ startDailyLesson }}" style="grid-column:1/-1;display:flex;align-items:center;gap:16px;background:var(--tt-bg-2a2c33);color:#fff;border:none;border-radius:22px;padding:18px 22px;cursor:pointer;text-align:left">
       <svg width="34" height="34" viewBox="0 0 24 24" style="flex:none"><circle cx="12" cy="12" r="9.4" fill="none" stroke="#F2A93B" stroke-width="2"/><path d="M10 8.2 L16 12 L10 15.8 Z" fill="#F2A93B"/></svg>
       <span><span style="display:block;font-family:'Nunito',sans-serif;font-weight:900;font-size:19px">Today's lesson</span><span style="display:block;font-size:14.5px;margin-top:2px">{{ dailyDesc }}</span></span>
+    </button>
+    <!-- Adventure mode (issue #27): the topics as worlds on a map, on its own page (adventure.html).
+         It shows the world she is up to and her stars (adventureVals: coach.js route and status,
+         TTAdv.card words). A button, not a link, so it opens in this tab: an app left open in
+         another tab would save over what the Adventure page saves. -->
+    <button onClick="{{ goAdventure }}" aria-label="{{ advLabel }}" style="grid-column:1/-1;display:flex;align-items:center;gap:14px;background:var(--tt-bg-e4f2ef);border:2px solid var(--tt-bd-bfe0d8);border-radius:22px;padding:14px 16px;cursor:pointer;text-align:left;color:var(--tt-fg-2a2c33)">
+      <!-- the picture: a winding road with a passed stop, the car, the stop she is up to and a flag -->
+      <svg width="60" height="60" viewBox="0 0 60 60" aria-hidden="true" style="flex:none">
+        <rect width="60" height="60" rx="17" fill="#0E7C6B"/>
+        <circle cx="47" cy="47" r="6" fill="#2E9E5B"/><circle cx="11" cy="15" r="5" fill="#2E9E5B"/>
+        <path d="M12 60 C12 44 46 42 45 30 C44 18 16 22 18 0" fill="none" stroke="#2A2C33" stroke-width="9"/>
+        <path d="M12 60 C12 44 46 42 45 30 C44 18 16 22 18 0" fill="none" stroke="#fff" stroke-width="1.4" stroke-dasharray="3 3.4" opacity=".8"/>
+        <circle cx="19" cy="45" r="6.5" fill="#F2A93B" stroke="#fff" stroke-width="2"/>
+        <path d="M16.2 45.2 l2 2 l3.8 -4" fill="none" stroke="#fff" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/>
+        <circle cx="45" cy="30" r="6.5" fill="#fff" stroke="#F2A93B" stroke-width="2.4"/>
+        <path d="M22 17 v-9 M22 8 h8 l-2 2.6 l2 2.6 h-8" fill="#F2A93B" stroke="#fff" stroke-width="1.6" stroke-linejoin="round"/>
+        <g transform="translate(26 21)"><rect x="0" y="4" width="15" height="5" rx="2" fill="#F2A93B"/><path d="M3 4 L5 1 H10 L12.5 4 Z" fill="#F2A93B"/><circle cx="4" cy="9.5" r="1.8" fill="#2A2C33"/><circle cx="11.5" cy="9.5" r="1.8" fill="#2A2C33"/></g>
+      </svg>
+      <span style="flex:1;min-width:0">
+        <span style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+          <span style="font-family:'Nunito',sans-serif;font-weight:900;font-size:19px;color:var(--tt-fg-0a5d50)">Adventure</span>
+          <sc-if value="{{ advStarsShow }}" hint-placeholder-val="{{ false }}"><span style="flex:none;display:flex;align-items:center;gap:4px;background:var(--tt-bg-fff);border-radius:99px;padding:3px 9px;font-weight:800;font-size:14px;white-space:nowrap"><svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24"><path d="M12 2.5l2.9 6 6.6.8-4.9 4.6 1.3 6.6L12 17.2l-5.9 3.3 1.3-6.6-4.9-4.6 6.6-.8z" fill="#F2A93B"/></svg>{{ advStars }}</span></sc-if>
+        </span>
+        <span style="display:block;font-size:14.5px;font-weight:700;margin-top:2px">{{ advHead }}</span>
+        <span style="display:block;font-size:13.5px;color:var(--tt-fg-6e6a5e);margin-top:1px">{{ advSub }}</span>
+      </span>
     </button>
     <!-- What to work on: the topic where more right answers would lift her expected mock
          score most (coach.js improvements), with a button that drills it -->
@@ -2414,7 +2498,7 @@ class Component extends DCLogic {
       leitner: saved.leitner || {}, attempts: saved.attempts || [], tests: saved.tests || [],
       overrides: content.overrides || {}, custom: content.custom || [], deleted: content.deleted || [],
       revisionFlags: saved.revisionFlags || {}, flagCleared: saved.flagCleared || {},
-      xp: saved.xp || 0, streak: saved.streak || {count:0, last:'', todayDate:'', todayN:0}, notes: saved.notes || {}, avatar: saved.avatar || '',
+      xp: saved.xp || 0, streak: saved.streak || {count:0, last:'', todayDate:'', todayN:0}, notes: saved.notes || {}, avatar: saved.avatar || '', adventure: saved.adventure || {},
       notesOpen: false, notesKey: '', testMix: {}, customTimer: true,
       ansSel: {}, ansFilter: 'all', ansShow: 40,   // My answers: ticked ids, which filter, how many rows shown
       packLearn: content.packLearn || {}, packTest: content.packTest || {}, packNames: content.packNames || {},
@@ -2631,6 +2715,10 @@ class Component extends DCLogic {
     this.tick = setInterval(()=>{ if(this.state.test && !this.state.test.ended) this.setState({now: Date.now()}); }, 500);
     if(window.speechSynthesis){ speechSynthesis.getVoices(); speechSynthesis.onvoiceschanged = ()=>this.forceUpdate(); }
     window.addEventListener('online', ()=>this.flushCloud());
+    // Back from another page (Adventure) with the browser's Back button: the browser can show this
+    // page as it was, without reloading it. Re-read her record then, so what the other page saved
+    // (answers, XP, flags) is not saved over by this page's older copy.
+    window.addEventListener('pageshow', e=>{ if(e.persisted && this.state.userId) this.loadUser(this.state.userId, true); });
     setTimeout(()=>this.pullCloud(), 800);
     this.syncA11y(null);                                  // the tab's title for the first screen
   }
@@ -2826,7 +2914,11 @@ class Component extends DCLogic {
     const u = this.users.find(x=>x.id===s.userId);
     if(u && s.settings.learnerName && u.name!==s.settings.learnerName){ u.name = s.settings.learnerName; try{ localStorage.setItem(this.BASE+'.users', JSON.stringify(this.users)); }catch(e){} }
     if(u && (u.avatar||'')!==(s.avatar||'')){ u.avatar = s.avatar||''; try{ localStorage.setItem(this.BASE+'.users', JSON.stringify(this.users)); }catch(e){} }
-    try { localStorage.setItem(this.BASE+'.d.'+s.userId, JSON.stringify(user)); localStorage.setItem(this.BASE+'.content', JSON.stringify(content)); } catch(e) {}
+    // Keep what other pages save in her record (Adventure progress: TTAdv.KEEP). The stored copy
+    // is read just before writing, so the page's latest save is carried over, never a stale one.
+    let stored = null;
+    try { stored = JSON.parse(localStorage.getItem(this.BASE+'.d.'+s.userId)); } catch(e) { stored = null; /* unreadable: nothing to keep */ }
+    try { localStorage.setItem(this.BASE+'.d.'+s.userId, JSON.stringify(TTAdv.keep(stored, user))); localStorage.setItem(this.BASE+'.content', JSON.stringify(content)); } catch(e) {}
     this._dirty = true;
     if(window.TTSync && TTSync.configured()){ clearTimeout(this._pushT); this._pushT = setTimeout(()=>this.flushCloud(), 2500); }
   }
@@ -2837,7 +2929,7 @@ class Component extends DCLogic {
     const u = this.users.find(x=>x.id===id);
     const st = Object.assign({textSize:1, dyslexiaFont:false, highContrast:false, autoRead:false, reducedMotion:false, learnerName:(u&&u.name)||'Learner', parentName:'Admin', voiceName:'', voiceRate:0.95, fiftyFifty:true, autoAdvance:false}, blob.settings);
     if(!blob.settings || !blob.settings.learnerName) st.learnerName = (u&&u.name)||st.learnerName;
-    this.setState({userId:id, settings:st, plan: blob.plan||'', leitner:blob.leitner||{}, attempts:blob.attempts||[], tests:blob.tests||[], revisionFlags:blob.revisionFlags||{}, flagCleared:blob.flagCleared||{}, xp:blob.xp||0, streak:blob.streak||{count:0, last:'', todayDate:'', todayN:0}, notes:blob.notes||{}, avatar:blob.avatar||'', notesOpen:false, test:blob.testInProgress||null, session: keepSession ? this.state.session : null, openTest:-1}, ()=>this.persist());
+    this.setState({userId:id, settings:st, plan: blob.plan||'', leitner:blob.leitner||{}, attempts:blob.attempts||[], tests:blob.tests||[], revisionFlags:blob.revisionFlags||{}, flagCleared:blob.flagCleared||{}, xp:blob.xp||0, streak:blob.streak||{count:0, last:'', todayDate:'', todayN:0}, notes:blob.notes||{}, avatar:blob.avatar||'', adventure:blob.adventure||{}, notesOpen:false, test:blob.testInProgress||null, session: keepSession ? this.state.session : null, openTest:-1}, ()=>this.persist());
   }
   addLearner(){
     const name = prompt('New learner\u2019s name?'); if(!name || !name.trim()) return;
@@ -3060,9 +3152,15 @@ class Component extends DCLogic {
       .catch(e=>{ this._pushing = false; this.setState({cloudMsg: navigator.onLine? ('Sync problem: ' + String(e.message||e)) : 'Offline \u2014 will sync when back online'}); });
   }
   // ---------- bank ----------
-  questions(){
+  // The bank as the admin left it: deleted questions out, corrected ones corrected. Adventure mode
+  // uses exactly these (adventure.html's withContent does the same); questions() adds hand-added ones.
+  bankQuestions(){
     const del = new Set(this.state.deleted), ov = this.state.overrides;
-    return this.state.bank.filter(q=>!del.has(q.id)).map(q=> ov[q.id] ? Object.assign({}, q, ov[q.id]) : q).concat(this.state.custom.filter(q=>!del.has(q.id)));
+    return this.state.bank.filter(q=>!del.has(q.id)).map(q=> ov[q.id] ? Object.assign({}, q, ov[q.id]) : q);
+  }
+  questions(){
+    const del = new Set(this.state.deleted);
+    return this.bankQuestions().concat(this.state.custom.filter(q=>!del.has(q.id)));
   }
   rec(id){ return this.state.leitner[id] || {box:1, seen:0, correct:0, wrong:0}; }
   seedPerm(id){
@@ -3471,6 +3569,19 @@ class Component extends DCLogic {
       goal: st.dailyGoal || C.coachDefaults.planGoal, start: st.planStart, practised: C.dayCounts(s.attempts),
       topics: list.length ? list.map(x=>x.topic) : this.TOPICS.map((_, i)=>i + 1),
       unseen: this.questionsFor('learn').filter(q=>!seen.has(q.id)).length});
+  }
+  // ---------- Adventure card on Home (issue #27) ----------
+  // The world she is up to and her stars: coach.js builds the route from the same questions
+  // adventure.html uses (bankQuestions) and reads her saved progress; TTAdv.card has the words.
+  // Worked out only on Home, where the card shows, because renderVals runs on every change.
+  adventureVals(view){
+    const C = window.TTCoach;
+    const go = ()=>{ location.href = 'adventure.html'; };      // this tab: see the card on Home
+    const out = {goAdventure: go, advHead:'', advSub:'', advStars:'', advStarsShow:false, advLabel:'Adventure'};
+    if(view!=='home' || !C || !C.adventureRoute) return out;   // coach.js missing: the card just says Adventure
+    const route = C.adventureRoute(this.bankQuestions());
+    const card = TTAdv.card(route, C.adventureStatus(route, this.state.adventure || {}), C.ADVENTURE.stars.length);
+    return Object.assign(out, {advHead: card.head, advSub: card.sub, advStars: card.stars, advStarsShow: !!card.stars, advLabel: card.label});
   }
   insightVals(view){
     const s = this.state, st = s.settings, T = this.TOPICS, C = window.TTCoach, I = window.TTInsights;
@@ -4462,7 +4573,7 @@ class Component extends DCLogic {
         rd.readAsText(f);
         e.target.value = '';
       }
-    }, learnVals, testVals, resultVals, ansVals, edVals, printVals, settingsVals, logVals, welcomeVals, privacyVals, this.insightVals(view));
+    }, learnVals, testVals, resultVals, ansVals, edVals, printVals, settingsVals, logVals, welcomeVals, privacyVals, this.insightVals(view), this.adventureVals(view));
   }
 }
 </script>
