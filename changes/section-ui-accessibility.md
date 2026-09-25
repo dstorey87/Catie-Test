@@ -47,6 +47,7 @@
    - `help.html`: contents-group labels in `--faint` `#B5AE9E` (2.2:1 light, 4.0:1 dark).
    - `help.html`: the `.hero` block sits outside any landmark.
    - `legal/cookies.html`: `<code>` in muted grey on the chip colour (4.47:1).
+   - `adventure.html` (merged during this section): no axe failures, but on its "Open the app first" screen an SVG drawing runs 46px past the right edge at 390px and 1280px, so the page scrolls sideways (1.4.10). Only that screen was checked; its route screens need the app's saved data.
    - `about.html` and the other legal pages pass.
 3. **320px with the app's own biggest text (1.25×).** Some screens scroll sideways slightly: Road signs 14px, Mock test intro 12px, Practise setup 7px, Question editor 6px, Settings 2px, My Progress and the dashboard 1px. This is past WCAG's 320px benchmark, which uses browser zoom (that passes).
 4. **Flagged and answered mock square.** On screen it shows only the flag; its spoken name says both.
