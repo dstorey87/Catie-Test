@@ -1,6 +1,6 @@
 # Theory Trainer — request checklist
 
-Last updated: 2026-09-25 (v14).
+Last updated: 2026-09-25 (v15).
 
 States: ✅ done & verified · 🟡 built, not yet seen working for real · ⚠️ built, needs your account/keys to go live · 📋 your step (minutes) · ❌ not possible, honest alternative given.
 
@@ -56,20 +56,21 @@ States: ✅ done & verified · 🟡 built, not yet seen working for real · ⚠�
 - 🟡 **The age question**: once, after an account's first sign-in; under 16 (`config.js`, Darren's decision 2026-09-24) a parent or guardian agrees and adds their email. Only the year is kept. Same checks as above: not yet run against the live project
 - ✅ Supabase project `catiedriving` set up 2026-09-23: both schema files applied, 378 questions loaded into the server bank, security advisor clean apart from the two access-check functions the rules need
 - ✅ Server privacy functions live (project `njajxuzhgxqcjfhjpkyp`, migration `privacy_export_delete_age_plain_explanations`): `export_my_data()`, `delete_my_account()` (the privileged part in `private`, which the API doesn't expose); signed-out callers refused. Proven inside rolled-back transactions with a throwaway account; no new security-advisor warnings. Profiles hold `birth_year`, `guardian_consent`, `guardian_email`; questions hold `plain_explanation`, `plain_status`
-- ✅ Two accounts, 2026-09-23: the admin (Darren's Gmail) and Catie's (`darrenstorey87+catie@gmail.com` — a Gmail "+" address, so her emails reach Darren's inbox), both confirmed, Catie on free family access. Both proven to sign in and read the paid bank. Their passwords were generated straight into Vault and never shown: Vault UI → sign in as `darren` → secret → logins → `theory-trainer-admin` / `theory-trainer-catie`
+- ✅ A third account, `catiegreaves123@gmail.com` ("Caitlin"), signed itself up on 2026-09-24; no free access until the admin gives it (Accounts)
+- ✅ Two accounts, 2026-09-23: the admin (Darren's Gmail) and Catie's (`darrenstorey87+catie@gmail.com` — a Gmail "+" address, so her emails reach Darren's inbox), both confirmed, Catie on free family access. Both proven to sign in and read the paid bank. Their passwords were generated straight into Vault and never shown: Vault UI → sign in as `darren` → secret → logins → `theory-trainer-admin` / `theory-trainer-catie`. **Catie's was rotated again on 2026-09-25 (Vault version 4, proven by signing in)**: her password had been changed outside Vault after 2026-09-23. **The admin's Vault copy is out of date**: Darren reset the admin password himself from the email link on 2026-09-25 20:13 BST, so the one he chose is the live one
 - ✅ Supabase Authentication → URL Configuration set 2026-09-23: Site URL is the app page, `https://dstorey87.github.io/Catie-Test/**` is an allowed redirect. Checked: a reset request from the app was redirected back to the app, not `localhost:3000`
 - ⚠️ Free tier: the project pauses after about a week with no use, and sign-in then hangs. Found paused 2026-09-23 and restored. Daily use keeps it awake
 - ⚠️ Confirmation and password-reset emails go through Supabase's built-in mailer, which is rate-limited and for testing only — add an SMTP provider before strangers sign up (ROADMAP item 3)
 - ✅ Every account's data is private at the database level, not by app-side checking
 
 ## Paying, enforced on the server
-- ✅ £4.99/month and £50/year, both in the app; Stripe hosts the card page
-- ✅ Access switches on the moment Stripe confirms, and off when a subscription is cancelled or a payment fails — no admin action, no emails to watch
-- ✅ Subscribers manage card, plan and cancellation themselves (Stripe portal, opened from the app)
+- ⚠️ **Payments are switched OFF** (`config.js payments: false`, v15). Stripe is not set up: no Payment Links in `config.js`, and the project has no edge functions (`create-checkout`, `billing-portal`, `stripe-webhook`), checked 2026-09-25. The lock screen shows no Subscribe / Manage subscription / "I've paid" buttons and tells people to ask the admin for free access
+- ✅ **The admin gives free access from the app** (v15, #42): Progress dashboard → Accounts. Free for good, free until a day (that day included), or take it away. Server functions `admin_accounts` and `admin_set_access` (migration `admin_free_access`), proven as the admin, a learner and a signed-out visitor inside rolled-back transactions; no new security-advisor warnings
+- 🟡 Written but not running until Stripe is set up: £4.99/month and £50/year with Stripe hosting the card page; access switching on when Stripe confirms and off on cancellation or a failed payment; subscribers managing card, plan and cancellation in the Stripe portal
 - ✅ **The question bank lives on the server and is only readable by an account with access** — so the paywall isn't a screen someone can skip in browser code. Editing the app in DevTools gets them nothing
 - ✅ 20-question free sample for trying before paying
-- ✅ Admin can still grant free access by hand (family, testers) and suspend or block a learner
-- ⚠️ Needs your Stripe prices + 3 server functions deployed (SETUP.md §3, ~15 min). The about page shows the prices in `config.js`; paying only works once this is done
+- ✅ The admin can also suspend or block a learner, and give free access to learners on one device (Progress dashboard → Subscription → On this device)
+- ⚠️ To take money: Stripe set up end to end (SETUP.md steps 0–8, including Stripe's own identity checks), then `payments: true` in `config.js`. The about page shows the prices in `config.js`
 - ⚠️ Known effect, read from the code and not run: once `stripe-webhook` is deployed, a late Stripe event for an account already deleted can't be written, so the webhook answers 500 and Stripe retries. Deletion is refused while a subscription renews, so this can only follow one that was already cancelling
 - ❌ Nothing stops someone screenshotting questions they've paid for. That's true of every app
 
@@ -94,8 +95,8 @@ States: ✅ done & verified · 🟡 built, not yet seen working for real · ⚠�
 - 📋 One-time per iPhone/iPad: Settings → Accessibility → Spoken Content → Voices → English (UK) → download an Enhanced voice
 
 ## How to test
-- `node --test` runs every test (367 at v13); CI runs it on every pull request and every push to `develop` and `main`
-- In a browser: serve the repo (`python -m http.server <port> --bind 127.0.0.1`, never port 8765) and drive it with `tests/browser/harness.js` at 390px and 1280px, light and dark. The harness learner has no answers, so tapping Catie opens the quick setup: tap Skip, or seed her as set up with `seed: {'theoryTrainer.d.u1': JSON.stringify({settings: {learnerName: 'Catie', onboardedAt: '2026-09-24'}})}`. Pass `birthYear: null` to see the age question; route `/rest/v1/rpc/export_my_data` and `/rest/v1/rpc/delete_my_account` to fake the server's answers; give bank rows `plain_explanation` + `plain_status: 'approved'` to see Explain it differently; seed a learner with answers to see the prediction, the study plan and the "you keep choosing" lines. For Adventure: open the app through the harness (it seeds a signed-in learner), then tap Adventure on Home or go to `/adventure.html`
+- `node --test` runs every test (389 at v15); CI runs it on every pull request and every push to `develop` and `main`
+- In a browser: serve the repo (`python -m http.server <port> --bind 127.0.0.1`, never port 8765) and drive it with `tests/browser/harness.js` at 390px and 1280px, light and dark. The harness learner has no answers, so tapping Catie opens the quick setup: tap Skip, or seed her as set up with `seed: {'theoryTrainer.d.u1': JSON.stringify({settings: {learnerName: 'Catie', onboardedAt: '2026-09-24'}})}`. Pass `birthYear: null` to see the age question; route `/rest/v1/rpc/admin_accounts` and `/rest/v1/rpc/admin_set_access` (with `role: 'admin'`) to see Accounts; route `/rest/v1/rpc/export_my_data` and `/rest/v1/rpc/delete_my_account` to fake the server's answers; give bank rows `plain_explanation` + `plain_status: 'approved'` to see Explain it differently; seed a learner with answers to see the prediction, the study plan and the "you keep choosing" lines. For Adventure: open the app through the harness (it seeds a signed-in learner), then tap Adventure on Home or go to `/adventure.html`
 
 ## What's left
 - 📋 Approve or reject the plain-explanation drafts in Admin → Memory tips → Plain explanations (377 loaded as `draft` on 2026-09-25; t09q24 has none). Until then no learner sees Explain it differently
@@ -121,6 +122,7 @@ States: ✅ done & verified · 🟡 built, not yet seen working for real · ⚠�
 Tracked as GitHub issues, one per section: https://github.com/dstorey87/Catie-Test/issues (lanes and rules in `CLAUDE.md`).
 
 ## Timeline
+- 2026-09-25 — v15 (`v15-2026-09-25`): #42 — email-link sign-in no longer shows the admin a paywall (backend.js ran twice), payments switched off honestly until Stripe is set up, the admin gives any account free access from Progress dashboard → Accounts, Catie's managed login rotated and proven. 389 tests.
 - 2026-09-25 — v14 (`v14-2026-09-25`): fixes from the v13 live check (#38) — Adventure progress merged stage by stage across devices (no more lost stars), map tabs on one row, phone top bar, Best run counts first tries, no console errors on load, help pictures retaken. 380 tests.
 - 2026-09-25 — v12 (`v12-2026-09-25`): quick setup, What's new, the help, about and sample legal pages, pass prediction, what to work on, study plan, streak freezes, family board, Your data and the age question, Explain it differently (waiting for approved text), 44 bank answers corrected to UK rules, and the #12 layout bugs fixed. Earlier versions: `CHANGELOG.md`
 - 2026-09-25 — v13 (`v13-2026-09-25`): Adventure mode (14 worlds and 70 stages, a Home card, works offline), the WCAG 2.2 AA accessibility audit with every automated finding fixed (no screen-reader check by a person yet), the notes button no longer covering controls, and the #32 wording, chart and page fixes. 367 tests
