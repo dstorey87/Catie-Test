@@ -9,8 +9,9 @@ update public.questions set sign = 'speed50' where qid = 't09q26';  -- DfT 670 5
 update public.questions set sign = 'clearway' where qid = 't10q18';  -- DfT 642 no stopping on main carriageway
 update public.questions set sign = 'cyclesOnly' where qid = 't11q18';  -- DfT 955 route for pedal cycles only
 update public.questions set sign = 'turnLeft' where qid = 't11q23';  -- DfT 606 arrow pointing left
-update public.questions set sign = 'speedCamera' where qid = 't11q22';  -- DfT 880 speed camera ahead
-update public.questions set sign = 'tourist' where qid = 't11q14';  -- DfT 2203 tourist attraction
+update public.questions set sign = null where qid = 't11q22';  -- no picture: the camera sign says the answer, and it isn't the yellow box asked about
+update public.questions set sign = null where qid = 't11q14';  -- no picture: the brown sign's words say the answer
+update public.questions set sign = null where qid = 't11q20';  -- was zebra: the zebra sign shows no zigzag lines, which the question is about
 update public.questions set sign = 'motorwayAdvised' where qid = 't09q13';  -- Highway Code: temporary maximum speed advised
 update public.questions set sign = 'levelCrossingLights' where qid = 't11q26';  -- Highway Code: alternately flashing red lights
 update public.questions set sign = 'motorwayLimit' where qid = 't09q22';  -- Highway Code: temporary mandatory maximum speed limit

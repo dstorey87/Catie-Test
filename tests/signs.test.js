@@ -70,7 +70,10 @@ test('#44: every entry says where it came from, what it means officially, and wh
 test('#44: a picture that would give the answer away is not on its question', () => {
   // Each asks for a sign's shape or colour, or where coloured studs are, or its picture would
   // carry the answer's own words (SCHOOL KEEP CLEAR; the times plate on a single yellow line).
-  for (const id of ['t11q03', 't11q12', 't11q13', 't11q21', 't11q24', 't09q18', 't09q05', 't09q06', 't09q07', 't11q27', 't10q22']) {
+  // Lead review: t11q22's speed-camera sign says the answer and isn't the yellow box it asks
+  // about; t11q14's brown "Model village" sign says "tourist"; t11q20 asks about zigzag lines
+  // and the zebra sign shows none.
+  for (const id of ['t11q03', 't11q12', 't11q13', 't11q21', 't11q24', 't09q18', 't09q05', 't09q06', 't09q07', 't11q27', 't10q22', 't11q22', 't11q14', 't11q20']) {
     assert.ok(byId[id], id + ' is not in the bank');
     assert.equal(byId[id].imageHint, undefined, id + ' must not have a picture: it would show the answer');
   }
@@ -78,7 +81,7 @@ test('#44: a picture that would give the answer away is not on its question', ()
 
 test('#44: the questions that describe a sign now show it (official DfT or Highway Code picture)', () => {
   const want = { t08q17: 'ford', t09q26: 'speed50', t10q18: 'clearway', t11q18: 'cyclesOnly', t11q23: 'turnLeft',
-    t11q22: 'speedCamera', t11q14: 'tourist', t09q13: 'motorwayAdvised', t11q26: 'levelCrossingLights',
+    t09q13: 'motorwayAdvised', t11q26: 'levelCrossingLights',
     t09q22: 'motorwayLimit', t10q04: 'doubleYellow', t10q10: 'centreLine', t05q26: 'roadWorks',
     t10q27: 'levelCrossing', t10q24: 'zebra', t10q13: 'lightAmber', t11q10: 'lightGreen', t11q11: 'lightRedAmber' };
   for (const [id, key] of Object.entries(want)) assert.equal(byId[id].imageHint, key, id);
