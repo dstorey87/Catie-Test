@@ -374,3 +374,55 @@ test('age() reads this account\'s own row and says whether a guardian is needed'
   assert.deepEqual({ ...(await win.TTAccount.age()) }, { birthYear: y, guardianConsent: true, guardianEmail: 'mum@example.com', needsGuardian: true });
   assert.equal(new URL(calls[0].url).searchParams.get('id'), 'eq.u1');
 });
+
+// ---------- issue #42: payments switch, and the admin giving an account free access ----------
+test('payments are off unless config.js switches them on', () => {
+  const { win } = tracker(() => null);
+  assert.equal(win.TTBill.enabled(), false, 'no payments key: off');
+  win.TT_CONFIG.payments = true;
+  assert.equal(win.TTBill.enabled(), true);
+});
+
+test('Manage subscription and checkout say payments are off instead of calling a missing function', async () => {
+  const { win, calls } = tracker(() => ({ status: 404, body: { message: 'Requested function was not found' } }), SIGNED_IN);
+  await assert.rejects(win.TTBill.portal(), /not switched on/i);
+  await assert.rejects(win.TTBill.checkout('monthly'), /not switched on/i);
+  assert.equal(calls.length, 0, 'nothing is sent to a function that does not exist');
+});
+
+test('the accounts list comes from admin_accounts, one plain row per account', async () => {
+  const { win, calls } = tracker(() => ({ status: 200, body: [
+    { id: 'a1', email: 'dad@example.com', name: 'Darren', role: 'admin', status: 'none', free_until: null, paying: false, last_seen: '2026-09-25T19:13:07Z' },
+    { id: 'c1', email: 'kid@example.com', name: '', role: 'user', status: 'comp', free_until: '2026-10-02T23:00:00Z', paying: false, last_seen: null }] }), SIGNED_IN);
+  const rows = await win.TTAdmin.accounts();
+  assert.equal(new URL(calls[0].url).pathname, '/rest/v1/rpc/admin_accounts');
+  assert.equal(calls[0].opts.method, 'POST');
+  assert.deepEqual(rows.map(r => ({ ...r })), [
+    { id: 'a1', email: 'dad@example.com', name: 'Darren', admin: true, status: 'none', freeUntil: '', paying: false, lastSeen: '2026-09-25T19:13:07Z' },
+    { id: 'c1', email: 'kid@example.com', name: '', admin: false, status: 'comp', freeUntil: '2026-10-02T23:00:00Z', paying: false, lastSeen: '' }]);
+});
+
+test('free access: for good, until the start of the day after the date picked, or taken away', async () => {
+  const { win, calls } = tracker(() => ({ status: 204, body: null }), SIGNED_IN);
+  await win.TTAdmin.setAccess('c1', true, '');
+  await win.TTAdmin.setAccess('c1', true, '2026-10-02');
+  await win.TTAdmin.setAccess('c1', false);
+  calls.forEach(c => assert.equal(new URL(c.url).pathname, '/rest/v1/rpc/admin_set_access'));
+  const sent = calls.map(c => JSON.parse(c.opts.body));
+  assert.deepEqual(sent[0], { target: 'c1', free: true, until: null });
+  // 2 October is included: access ends at midnight starting 3 October, this device's time
+  assert.equal(sent[1].until, new Date(2026, 9, 3).toISOString());
+  assert.deepEqual(sent[2], { target: 'c1', free: false, until: null });
+});
+
+test('free access refuses a date it cannot read before asking the server', async () => {
+  const { win, calls } = tracker(() => ({ status: 204, body: null }), SIGNED_IN);
+  await assert.rejects(win.TTAdmin.setAccess('c1', true, '2 Oct'), /date/i);
+  assert.equal(calls.length, 0);
+});
+
+test('the server\'s refusal reaches the screen as its own sentence', async () => {
+  const { win } = tracker(() => ({ status: 400, body: { code: 'P0001', hint: 'paying',
+    message: 'This account pays through Stripe, so its access follows the subscription. Cancel the subscription in Stripe first, then give free access.' } }), SIGNED_IN);
+  await assert.rejects(win.TTAdmin.setAccess('c1', true, ''), (e) => { assert.match(e.message, /pays through Stripe/); assert.equal(e.hint, 'paying'); return true; });
+});

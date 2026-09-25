@@ -52,7 +52,12 @@ branch: that happens once, at promotion.
   `Theory Trainer.dc.html`: the dc compiler's attribute-preservation pass rewrites
   camelCase tokens in helmet content (`ttHadSW` → `sc-camel-tt-had-s-w`), corrupting
   the copy it re-mounts into `document.head` (SyntaxError on every load). Inline
-  scripts go in the real `<head>` before `</head>`; helmet is for meta/link/src-scripts.
+  scripts go in the real `<head>` before `</head>`.
+- **Never put a `<script src>` inside `<helmet>` either**: the browser runs it while
+  reading the page, then the re-mount runs it a SECOND time. A second `backend.js`
+  replaced `TTAuth` mid-sign-in and showed the admin the paywall (issue #42). Every
+  script goes in the real `<head>`; helmet is for meta and link tags only
+  (`tests/app-files.test.js` checks it).
 - **Bump `VERSION` in `sw.js`** in any deploy that changes a file in its CORE list —
   the cache name is the only update signal existing installs get. In the same change,
   rewrite `TTWelcome.NEWS` (top of `Theory Trainer.dc.html`, the What's new card's words)

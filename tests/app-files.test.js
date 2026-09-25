@@ -31,6 +31,22 @@ test('every script the page loads is precached by the service worker', () => {
   for (const s of srcs) assert.ok(core.includes("'./" + s + "'"), s + ' is not in sw.js CORE');
 });
 
+test('#42: every script file runs once — none sits in <helmet>, none is listed twice', () => {
+  // Bug found 2026-09-25: config.js and backend.js were <script src> tags inside <helmet>.
+  // The browser ran them while reading the page, then support.js re-mounted <helmet> into
+  // <head> and they ran AGAIN. Arriving from an email link, the second backend.js replaced
+  // window.TTAuth mid-sign-in with a copy that had no user, so the admin was shown the
+  // paywall and the age check and sync were skipped until a reload.
+  const helmet = app.slice(app.indexOf('\n<helmet>\n'), app.indexOf('\n</helmet>'));
+  assert.ok(helmet.length > 0, '<helmet> block not found');
+  assert.deepEqual([...helmet.matchAll(/<script[^>]*\bsrc=/g)].map(m => m[0]), [], 'a <script src> in <helmet> runs twice');
+  const srcs = [...app.matchAll(/<script src="\.?\/?([^"]+)"/g)].map(m => m[1]);
+  for (const s of new Set(srcs)) assert.equal(srcs.filter(x => x === s).length, 1, s + ' is loaded more than once');
+  for (const s of ['config.js', 'backend.js']) assert.ok(srcs.includes(s), s + ' is not loaded at all');
+  // config.js before backend.js: backend.js reads window.TT_CONFIG when it is called.
+  assert.ok(app.indexOf('<script src="./config.js">') < app.indexOf('<script src="./backend.js">'));
+});
+
 // ---------- Quick setup, What's new, help and legal links (window.TTWelcome) ----------
 // TTWelcome is a <script> in the page head holding plain data and pure functions. Run
 // that exact block in a sandbox, so these tests check the code the app really runs.
@@ -1359,4 +1375,31 @@ test('#38 item 5: the mock chart draws the pass line, her scores and a dot for e
   // One mock sits in the middle; no mocks draws only the pass line and its label.
   assert.equal(plain(TS.chartMarks([{ score: 40, pass: false }], 30, 43))[3].attrs.cx, 170);
   assert.deepEqual(plain(TS.chartMarks([], 30, 43)).map(m => m.tag), ['line', 'text', 'polyline']);
+});
+
+// ---------- issue #42: no payment buttons that can only fail; the admin's Accounts list ----------
+test('#42: the lock screen offers Subscribe, Manage subscription and "I\'ve paid" only when payments are on', () => {
+  const pay = screen('PAYWALL');
+  // Each Stripe button sits inside an <sc-if> whose value is payOn (or paySubVisible, which needs payOn).
+  const inside = (html, needle, flag) => {
+    const at = html.indexOf(needle); assert.ok(at > 0, needle + ' not found');
+    const open = html.lastIndexOf('<sc-if value="{{ ' + flag + ' }}"', at);
+    return open >= 0 && html.indexOf('</sc-if>', open) > at;
+  };
+  assert.ok(inside(pay, '{{ buyMonthly }}', 'paySubVisible'));
+  assert.ok(inside(pay, '{{ manageSub }}', 'payOn'));
+  assert.ok(inside(pay, 'Payment is handled by Stripe', 'payOn'));
+  assert.match(app, /paySubVisible: !hardLock && payOn,/);
+  // With payments off the one button re-reads access, and says so; it never claims to ask Stripe.
+  assert.ok(!app.includes('Checking with Stripe'), 'nothing may say it is checking with Stripe: it reads the access row');
+  assert.match(app, /'Check my access again'/);
+});
+
+test('#42: the admin\'s Account card shows no subscription buttons, and Accounts loads on the dashboard', () => {
+  const dash = screen('DASHBOARD');
+  const manage = dash.indexOf('{{ manageSub }}');
+  assert.ok(dash.lastIndexOf('<sc-if value="{{ acctPayVisible }}"', manage) > dash.lastIndexOf('</sc-if>', manage), 'Manage subscription is not inside acctPayVisible');
+  assert.match(app, /acctPayVisible: payOn && !s\.isAdminAccount,/);
+  assert.ok(dash.includes('<sc-if value="{{ acctsVisible }}"') && dash.includes('{{ reloadAccounts }}') && dash.includes('{{ a.giveFree }}'));
+  assert.match(app, /if\(s\.view==='dash' && s\.isAdminAccount && \(prev\.view!=='dash' \|\| !prev\.isAdminAccount\)\) this\.loadAccounts\(\);/);
 });
