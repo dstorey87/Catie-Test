@@ -3181,12 +3181,22 @@ class Component extends DCLogic {
       let loc = {}; try { loc = JSON.parse(localStorage.getItem(this.BASE+'.d.'+id)) || {}; } catch(e) {}
       const remote = data[id];
       const m = TTCoach.mergeFlags({flags:loc.revisionFlags, cleared:loc.flagCleared}, {flags:remote.revisionFlags, cleared:remote.flagCleared});
+      // Adventure progress (adventure.html) is joined stage by stage too (#38): the newer record may
+      // come from a device that never played Adventure, and must not wipe the stars saved here.
+      // Only when either copy has some, so a learner who never played gets no entry.
+      const hasAdv = loc.adventure !== undefined || remote.adventure !== undefined;
+      const adv = hasAdv ? TTCoach.mergeAdventure(loc.adventure, remote.adventure) : undefined;
       const win = (remote.updatedAt||0) > (loc.updatedAt||0) ? remote : loc;
       const flagsMoved = JSON.stringify(m.flags) !== JSON.stringify(loc.revisionFlags||{});
-      if(win===remote || flagsMoved){
-        try { localStorage.setItem(this.BASE+'.d.'+id, JSON.stringify(Object.assign({}, win, {revisionFlags:m.flags, flagCleared:m.cleared}))); } catch(e) {}
+      const advMoved = hasAdv && JSON.stringify(adv) !== JSON.stringify(loc.adventure);
+      if(win===remote || flagsMoved || advMoved){
+        const merged = Object.assign({}, win, {revisionFlags:m.flags, flagCleared:m.cleared});
+        if(hasAdv) merged.adventure = adv;
+        try { localStorage.setItem(this.BASE+'.d.'+id, JSON.stringify(merged)); } catch(e) {}
         if(id===this.state.userId) reloadMe = true;
-        if(win===loc) this._dirty = true;   // our copy gained the other device's flags: send it back
+        // Our copy gained the other device's flags, or has Adventure progress the server's copy
+        // lacks: send it back.
+        if(win===loc || (hasAdv && JSON.stringify(adv) !== JSON.stringify(remote.adventure))) this._dirty = true;
       }
     });
     let locC = {}; try { locC = JSON.parse(localStorage.getItem(this.BASE+'.content')) || {}; } catch(e) {}

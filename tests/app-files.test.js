@@ -1001,17 +1001,20 @@ function method(start, next) {
   assert.ok(a >= 0 && b > a, 'method not found in the page: ' + start);
   return app.slice(a, b);
 }
-// A stand-in for the app: its real persist() and loadUser() over a fake localStorage (store).
+// A stand-in for the app: its real persist(), loadUser() and mergeSnapshot() (the cloud sync's
+// merge, with the real coach.js as TTCoach) over a fake localStorage (store).
 function fakeApp(store) {
   const localStorage = { getItem: k => (k in store ? store[k] : null), setItem: (k, v) => { store[k] = String(v); } };
-  const ctx = { window: {}, localStorage, JSON, Date, Object };
+  const ctx = { window: {}, localStorage, JSON, Date, Object, TTCoach: coach };
   vm.runInNewContext(advSrc, ctx);
   ctx.TTAdv = ctx.window.TTAdv;
-  vm.runInNewContext('var me = {' + method('persist(extra){', 'set(patch){') + ',' + method('loadUser(id, keepSession){', 'addLearner(){') + '};', ctx);
+  vm.runInNewContext('var me = {' + method('persist(extra){', 'set(patch){') + ',' + method('loadUser(id, keepSession){', 'addLearner(){') +
+    ',' + method('mergeSnapshot(b){', 'pullCloud(){') + '};', ctx);
   return Object.assign(ctx.me, {
     BASE: 'theoryTrainer', users: [{ id: 'u1', name: 'Catie' }],
     state: { userId: 'u1', settings: {}, overrides: {}, custom: [], deleted: [], packNames: {}, packLearn: {}, packTest: {}, sub: {} },
-    setState(patch, cb) { Object.assign(this.state, patch); if (cb) cb(); }
+    setState(patch, cb) { Object.assign(this.state, patch); if (cb) cb(); },
+    forceUpdate() {}
   });
 }
 // What adventure.html leaves in her record after one stage (the shape adventure.js writes).
@@ -1065,6 +1068,63 @@ test('adventure: a learner who never played gets no adventure entry, and junk is
   assert.deepEqual(plain(out), { attempts: ['new'], adventure: { stages: {} } });
   assert.deepEqual(next, { attempts: ['new'] }, 'next is not changed');
   for (const junk of [null, undefined, 'text', 5]) assert.deepEqual(plain(ADV.keep(junk, next)), { attempts: ['new'] });
+});
+
+// ---------- Issue #38 item 1: Adventure progress lost across devices ----------
+// mergeSnapshot() is the cloud sync's merge. It took the newer copy of each learner's whole
+// record and merged only flags question by question. A device that had never played Adventure
+// saved a newer record with no 'adventure', and the sync then replaced the stars on this device.
+// These tests run the app's real mergeSnapshot() (lifted out of the page, as above).
+// The other device's copy of her record as the server hands it over: newer than this device's
+// (whose persist() stamps the time now) unless extra gives an older updatedAt.
+const otherDevice = (id, extra) => ({ users: [{ id: 'u1', name: 'Catie' }, { id: 'u2', name: 'Sam' }],
+  data: { [id]: Object.assign({ settings: { learnerName: 'Catie' }, xp: 90, updatedAt: Date.now() + 3600000, attempts: [], revisionFlags: {}, flagCleared: {} }, extra) } });
+
+test('#38 item 1: a newer record from a device that never played Adventure keeps her stars', () => {
+  const store = { 'theoryTrainer.d.u1': JSON.stringify(pageSaved()) };      // this device: w1s1, 3 stars
+  const me = fakeApp(store);
+  me.loadUser('u1');
+  me.mergeSnapshot(otherDevice('u1'));                                       // newer, with no 'adventure'
+  const saved = JSON.parse(store['theoryTrainer.d.u1']);
+  assert.deepEqual(saved.adventure, pageSaved().adventure, 'the sync wiped her Adventure progress');
+  assert.deepEqual(plain(me.state.adventure), pageSaved().adventure, 'the app shows it after the sync');
+  assert.equal(saved.xp, 90, 'the rest of the newer record still wins');
+});
+
+test('#38 item 1: stages played on each device are joined stage by stage, whichever record is newer', () => {
+  const w1s2 = { best: 6 / 7, stars: 1, passed: true, plays: 1, lastAt: 4 };
+  // The other device is newer and played lesson 2; this one played lesson 1.
+  let store = { 'theoryTrainer.d.u1': JSON.stringify(pageSaved()) };
+  let me = fakeApp(store);
+  me.loadUser('u1');
+  me.mergeSnapshot(otherDevice('u1', { adventure: { stages: { w1s2 } } }));
+  assert.deepEqual(Object.keys(JSON.parse(store['theoryTrainer.d.u1']).adventure.stages).sort(), ['w1s1', 'w1s2']);
+  // This device is newer: the other device's lesson 2 still comes in (before, nothing was written).
+  store = { 'theoryTrainer.d.u1': JSON.stringify(pageSaved()) };
+  me = fakeApp(store);
+  me.loadUser('u1');
+  me.mergeSnapshot(otherDevice('u1', { updatedAt: 5, adventure: { stages: { w1s2 } } }));
+  const saved = JSON.parse(store['theoryTrainer.d.u1']);
+  assert.deepEqual(Object.keys(saved.adventure.stages).sort(), ['w1s1', 'w1s2']);
+  assert.equal(saved.xp, 70, 'this newer record keeps its own XP');
+});
+
+test('#38 item 1: progress the server lacks is sent back; a learner who never played gets no entry', () => {
+  // Sam (u2) is not the learner on screen, so nothing reloads: only the merge can ask to send.
+  const sams = { settings: { learnerName: 'Sam' }, updatedAt: 1, adventure: { stages: { w1s1: { best: 1, stars: 3, passed: true, plays: 1, lastAt: 1 } } } };
+  const store = { 'theoryTrainer.d.u2': JSON.stringify(sams) };
+  const me = fakeApp(store);
+  me.users.push({ id: 'u2', name: 'Sam' });
+  me._dirty = false;
+  me.mergeSnapshot(otherDevice('u2'));
+  assert.deepEqual(JSON.parse(store['theoryTrainer.d.u2']).adventure, sams.adventure);
+  assert.equal(me._dirty, true, 'the server\'s copy has no stars: this device must push its merged copy back');
+  // Neither copy has Adventure progress: none is made up.
+  const store2 = { 'theoryTrainer.d.u2': JSON.stringify({ updatedAt: 1 }) };
+  const me2 = fakeApp(store2);
+  me2.mergeSnapshot(otherDevice('u2'));
+  assert.equal(JSON.parse(store2['theoryTrainer.d.u2']).adventure, undefined);
+  assert.match(method('mergeSnapshot(b){', 'pullCloud(){'), /TTCoach\.mergeAdventure\(loc\.adventure, ?remote\.adventure\)/, 'uses the one coach.js rule');
 });
 
 test('adventure: the Home card says the world she is on and her stars, counted from coach.js', () => {
