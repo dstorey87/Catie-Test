@@ -11,7 +11,24 @@ const C = 'theory-trainer-' + VERSION;
 const CORE = ['./', './index.html', './Theory%20Trainer.dc.html', './support.js', './signs.js',
   './config.js', './backend.js', './picker.js', './coach.js', './manifest.json', './questions-free.json',
   './adventure.html', './adventure/adventure.js', './adventure/adventure.css'];
-const EXTRAS = ['./icon-180.png', './icon-192.png', './icon-512.png', './icon.png'];
+// EXTRAS are best-effort: each is cached if it arrives, and a missing one never fails the install.
+// After the icons come the road-sign pictures (issue #44), so questions keep their pictures
+// offline. That list mirrors signs.js (TTSigns.list); tests/signs.test.js fails if they differ.
+const EXTRAS = ['./icon-180.png', './icon-192.png', './icon-512.png', './icon.png',
+  './signs/601.1.jpg', './signs/602.jpg', './signs/616.jpg', './signs/632.jpg',
+  './signs/670V20.jpg', './signs/670V30.jpg', './signs/670V50.jpg', './signs/671.jpg',
+  './signs/672.jpg', './signs/606.jpg', './signs/955.jpg', './signs/642.jpg', './signs/512L.jpg',
+  './signs/516.jpg', './signs/543.jpg', './signs/544.jpg', './signs/545.jpg', './signs/554.jpg',
+  './signs/557.jpg', './signs/770.jpg', './signs/652.jpg', './signs/880.jpg', './signs/2901.jpg',
+  './signs/2203.jpg', './signs/7001.jpg', './signs/hc-traffic-light-red.jpg',
+  './signs/hc-traffic-light-red-amber.jpg', './signs/hc-traffic-light-green.jpg',
+  './signs/hc-traffic-light-amber.jpg', './signs/hc-flashing-red-lights.jpg',
+  './signs/hc-motorway-signal-red-cross.jpg', './signs/hc-motorway-signal-temporary-speed.jpg',
+  './signs/hc-motorway-signal-mandatory-speed-limit.jpg',
+  './signs/hc-along-carriageway-centre-line.jpg',
+  './signs/hc-along-carriageway-double-white-line.jpg',
+  './signs/hc-along-edge-carriageway-double-yellow.jpg',
+  './signs/hc-other-road-markings-box-junction.jpg'];
 
 // The paid bank must never enter this cache: once the public files are removed
 // from the repo, a cached copy would keep serving it to accountless installs.
