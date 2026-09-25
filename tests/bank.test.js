@@ -7,7 +7,7 @@
 //      sample (questions-free.json) is an exact copy of its bank questions.
 //   2. UK-rules corrections (issue #20): one check per corrected question, so a later edit
 //      cannot quietly put a wrong fact back. Each names the source that proved the fix; the
-//      full list with links is in changes/section-bank-uk.md.
+//      full list with links: CHANGELOG.md v12, or `git show 8834baa:changes/section-bank-uk.md`.
 'use strict';
 const test = require('node:test');
 const assert = require('node:assert/strict');

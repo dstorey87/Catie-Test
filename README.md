@@ -16,11 +16,19 @@ native sources live in folders and are not served.
 - `picker.js` — picks questions for **My answers** and **More like this** (pure logic;
   tests in `tests/`, run with `node --test "tests/*.test.js"` — Node 22, nothing to install)
 - `coach.js` — the coach: builds Today's lesson from her answers, spots what she keeps
-  missing, merges flags across devices, summarises Activity (pure logic, tested)
+  missing, merges flags across devices, summarises Activity, predicts her mock score, ranks
+  what to work on, builds the study plan and works out streak freezes (pure logic, tested)
 - `backend.js` — accounts, progress sync, billing checks, reminders, the activity log
-  (`TTTrack`) and memory tips (talks to Supabase)
+  (`TTTrack`), memory tips, plain explanations, data export, account deletion and the age
+  question (talks to Supabase)
 - `tools/write-memory-tips.js` — run on the home PC: local AI drafts a memory tip per
   question for the admin to approve (drafts land in `tools/out/`, never committed)
+- `tools/write-plain-explanations.js` — run on the home PC: local AI drafts a plainer
+  explanation per question ("Explain it differently") for the admin to approve (drafts land
+  in `tools/out/`, never committed); `tools/ai-checks.js` / `tools/ai-drafts.js` — the checks
+  and the ask / retry / resume loop both AI tools share
+- `help.html`, `about.html`, `legal/` — the how-to guide, the about page and the sample legal
+  pages (shared look in `help/site.css` and `help/site.js`)
 - `config.js` — your Supabase URL and publishable key, Stripe payment links, push key.
   Safe to be public
 - `questions-free.json` — the 20-question free sample
@@ -29,7 +37,8 @@ native sources live in folders and are not served.
 - `supabase/` — `schema.sql`, `schema-notifications.sql`, and four Edge Functions
   (checkout, webhook, billing portal, reminder sweep). Pasted into the Supabase dashboard
 - `capacitor/` — project and instructions for native iOS and Android builds
-- `SETUP.md` — every setup step in order · `STATUS.md` — feature checklist
+- `SETUP.md` — every setup step in order · `STATUS.md` — feature checklist ·
+  `CHANGELOG.md` — what changed in each version
 
 ## How the paid side works
 

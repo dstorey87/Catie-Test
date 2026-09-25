@@ -1,28 +1,45 @@
 # Theory Trainer — request checklist
 
-States: ✅ done & verified · ⚠️ built, needs your account/keys to go live · 📋 your step (minutes) · ❌ not possible, honest alternative given.
+Last updated: 2026-09-25 (v12).
+
+States: ✅ done & verified · 🟡 built, not yet seen working for real · ⚠️ built, needs your account/keys to go live · 📋 your step (minutes) · ❌ not possible, honest alternative given.
 
 ## The app
 - ✅ 378 original questions, 14 DVSA topics, 4 options, explanation + Highway Code ref; 20 signs with spoken meanings
+- ✅ **Every question checked against current UK rules** (2026-09-24, issue #20, PR #24): 44 corrected, each with its official source, in `questions-1..5.json` and the live Supabase bank (all 378 live rows read back and match the files). Test: `tests/bank.test.js`. The list with sources: https://github.com/dstorey87/Catie-Test/blob/8834baa/changes/section-bank-uk.md
 - ❌ The actual DVSA question bank — licensed and not published; ✅ same format and facts, and licensed sets you buy load in as packs
 - ✅ Practise (read-aloud, Leitner boxes, 50:50, auto-advance), mock test (50q/57min, flags, review grid, pass 43), build-your-own test, surprise mix, focus drill, signs quiz
-- ✅ **My answers**: every question she has answered (practice and mock), newest first, with what she said and the right answer; filter wrong/right; tick any → practise them, make a timed or untimed test from them, or get more like them
+- ✅ **My answers**: every question she has answered (practice and mock), newest first, with what she said and the right answer; filter wrong/right, or **Same wrong answer again**; tick any → practise them, make a timed or untimed test from them, or get more like them
 - ✅ **More like this**: after any practice answer (slots similar questions in next), on each wrong mock answer, on every My answers row, and "More like the ones I missed" at the end of a session
 - ✅ Duolingo-style loop: daily goal, day streak, XP + levels, "Today's lesson" remix
-- ✅ Insights after every session, readiness dial, topic traffic-lights, mock trend, 20 hardest, external mock logging
-- ✅ Notes on any screen, question flagging (kept until she un-flags; her own Flagged screen), revision list, printable answer book / flashcards / test paper
-- ✅ The coach (`coach.js`): Today's lesson is a drill built from her answers; "Keeps tripping you up" shows what she keeps missing, the answer she tends to pick, and a memory tip
-- ✅ Memory tips: drafted by local AI from each question's own text, checked for invented numbers, live only once approved in Admin → Memory tips
-- ✅ Everything she does is recorded (`events` table) and shown in Admin → Activity. To delete an account's history: `delete from public.events where user_id = '<uuid>';`
+- ✅ Insights after every session, readiness dial (its number shows again since v12), topic traffic-lights, mock trend, 20 hardest, external mock logging
+- ✅ Notes on any screen (on question screens it is a "My notes" button under the answers), question flagging (kept until she un-flags; her own Flagged screen), revision list, printable answer book / flashcards / test paper
+- ✅ The coach (`coach.js`): Today's lesson is a drill built from her answers; "Keeps tripping you up" shows what she keeps missing, the wrong answer she keeps choosing (and how often), and a memory tip
+- ✅ **Quick setup** on a learner's first open: test date, questions a day, reminder time. Settings → Quick setup → Run it again. It stores the existing settings (`examDate`, `dailyGoal`, `remindHour`/`remindOn`) plus `onboardedAt`
+- ✅ **What's new** card on Home, once per `sw.js` VERSION, for learners who were here before it (Got it stores `settings.seenVersion`). At every release rewrite `TTWelcome.NEWS` (top of `Theory Trainer.dc.html`); `node --test` fails until you do
+- ✅ **Pass prediction** (My Progress, under the dial): expected mock score out of 50 and the chance of 43 or more; "Not enough answers yet" below 50 answers. Not checked against real test results: not verified
+- ✅ **What to work on** (Home): the topic that would lift her expected score most, with a Drill button
+- ✅ **Study plan** (tap the test countdown on Home, or My Progress → Study plan): today's target and two focus topics, catches up after a missed day, the next 14 days. Stores `settings.planStart`
+- ✅ **Close to a badge** nudge on the Level card; **streak freezes** (tap the streak tile): one per 7 goal days, hold up to 2, a missed day uses one. Goal days are kept in `streak.goalDays`
+- ✅ **Family board** (Settings → Family board, off by default): compares this account's learners who switched it on, worked out on the device
+- 🟡 **Explain it differently**: under a wrong practice answer, a button shows the approved plainer explanation. Built and browser-checked with faked rows; nobody sees it until the drafts are loaded into Supabase and approved (see What's left)
+- ✅ Memory tips: drafted by local AI from each question's own text, checked for invented numbers, live only once approved in Admin → Memory tips. The 44 corrected questions' tips were re-drafted and are live as `draft`, waiting for approval
+- ✅ Everything she does is recorded (`events` table) and shown in Admin → Activity (including "Asked for it explained differently"). To delete only an account's history: `delete from public.events where user_id = '<uuid>';` — Delete my account (below) removes it all
 - ✅ Question editor with search, sign picker, pack import, bank export
-- ✅ Test-date countdown; accessibility (text size, dyslexia font, high contrast, reduced motion)
+- ✅ Test-date countdown (it also says "Today's plan: N questions"); accessibility (text size, dyslexia font, high contrast, reduced motion)
 - ✅ Dark mode: Settings → Appearance (match device / light / dark), per device; printing stays light
 - ✅ Works offline; a test in progress survives a reload or a flat battery
+- ✅ Help, About, Privacy and Terms links on both sign-in screens and in Settings → Help and legal (Help on Home too); the "not affiliated with the DVSA" line on both sign-in screens and in Settings
+
+## Pages (outside the app; live on the site from v12)
+- ✅ How-to guide: https://dstorey87.github.io/Catie-Test/help.html — every feature, screenshots of the real app (`help/img/`), FAQ. To refresh a screenshot after a UI change: drive the app with `tests/browser/harness.js` at 390px and replace the file of the same name; `node --test` fails if a picture's size or alt text is wrong or a file is unused
+- ✅ About page: https://dstorey87.github.io/Catie-Test/about.html — for a parent or learner who has never seen the app; prices and free-sample size come from `config.js`. To refresh its pictures: serve the repo, then `BASE=http://127.0.0.1:<port>/ node about/capture.js`
+- ⚠️ Legal pages: https://dstorey87.github.io/Catie-Test/legal/privacy.html, and `/legal/terms.html`, `/legal/cookies.html`, `/legal/refunds.html` — complete sample pages with clearly-marked mock business details under a sample-policy banner (Darren has no business yet, 2026-09-24). To go live with real details: replace every highlighted "(mock)" value and delete the `<div class="draft" role="note">` banner from all four pages in the same change (the tests refuse one without the other)
 
 ## Duolingo-style habit loop
 - ✅ Levels with names (Provisional → Full Licence), XP bar on Home showing progress to the next level, level-up card at the end of a session
 - ✅ 10 badges earned from real activity: first go, ten in a row, century, five hundred, week/month streaks, mock passed, three mocks, topic mastered, every topic tried — with progress counts on the locked ones
-- ✅ Daily goal (10/20/30), day streak with flame, "Today's lesson" smart remix, XP for correct answers and mock passes
+- ✅ Daily goal (10/20/30), day streak with flame (now counted in her local days, with freezes), "Today's lesson" smart remix, XP for correct answers and mock passes
 - ✅ Daily reminders: each learner picks 8am / midday / 5pm / 8pm; the server nudges only on days with no practice, in their own timezone, once a day
 - ⚠️ Reminders while the app is closed need one keypair + one scheduled function (SETUP.md §5, ~10 min). Until then the app nudges in-app
 - ✅ iPhone/iPad handled honestly: Apple only allows notifications for home-screen apps, and the Reminders card says so
@@ -33,7 +50,10 @@ States: ✅ done & verified · ⚠️ built, needs your account/keys to go live 
 - ✅ One account covers every learner in a family and every device; progress merges (newest wins per learner)
 - ✅ Sign out / switch learner; profile photos; admin role
 - ✅ Progress syncs by itself: pulls on open, pushes a few seconds after answers, retries when signal returns. Learners never see a sync control
+- 🟡 **Settings → Your data**: Download my data (one JSON file of everything the server keeps), Your age, Delete my account (off until DELETE is typed; refuses the admin account and a subscription that still renews). Browser-checked against the fake server; the server side is proven live. Not yet run from the app against the live project: not verified there
+- 🟡 **The age question**: once, after an account's first sign-in; under 16 (`config.js`, Darren's decision 2026-09-24) a parent or guardian agrees and adds their email. Only the year is kept. Same checks as above: not yet run against the live project
 - ✅ Supabase project `catiedriving` set up 2026-09-23: both schema files applied, 378 questions loaded into the server bank, security advisor clean apart from the two access-check functions the rules need
+- ✅ Server privacy functions live (project `njajxuzhgxqcjfhjpkyp`, migration `privacy_export_delete_age_plain_explanations`): `export_my_data()`, `delete_my_account()` (the privileged part in `private`, which the API doesn't expose); signed-out callers refused. Proven inside rolled-back transactions with a throwaway account; no new security-advisor warnings. Profiles hold `birth_year`, `guardian_consent`, `guardian_email`; questions hold `plain_explanation`, `plain_status`
 - ✅ Two accounts, 2026-09-23: the admin (Darren's Gmail) and Catie's (`darrenstorey87+catie@gmail.com` — a Gmail "+" address, so her emails reach Darren's inbox), both confirmed, Catie on free family access. Both proven to sign in and read the paid bank. Their passwords were generated straight into Vault and never shown: Vault UI → sign in as `darren` → secret → logins → `theory-trainer-admin` / `theory-trainer-catie`
 - ✅ Supabase Authentication → URL Configuration set 2026-09-23: Site URL is the app page, `https://dstorey87.github.io/Catie-Test/**` is an allowed redirect. Checked: a reset request from the app was redirected back to the app, not `localhost:3000`
 - ⚠️ Free tier: the project pauses after about a week with no use, and sign-in then hangs. Found paused 2026-09-23 and restored. Daily use keeps it awake
@@ -47,8 +67,15 @@ States: ✅ done & verified · ⚠️ built, needs your account/keys to go live 
 - ✅ **The question bank lives on the server and is only readable by an account with access** — so the paywall isn't a screen someone can skip in browser code. Editing the app in DevTools gets them nothing
 - ✅ 20-question free sample for trying before paying
 - ✅ Admin can still grant free access by hand (family, testers) and suspend or block a learner
-- ⚠️ Needs your Stripe prices + 3 server functions deployed (SETUP.md §3, ~15 min)
+- ⚠️ Needs your Stripe prices + 3 server functions deployed (SETUP.md §3, ~15 min). The about page shows the prices in `config.js`; paying only works once this is done
+- ⚠️ Known effect, read from the code and not run: once `stripe-webhook` is deployed, a late Stripe event for an account already deleted can't be written, so the webhook answers 500 and Stripe retries. Deletion is refused while a subscription renews, so this can only follow one that was already cancelling
 - ❌ Nothing stops someone screenshotting questions they've paid for. That's true of every app
+
+## Local AI (home PC)
+- ✅ Memory tips: `node tools/write-memory-tips.js`. Plain explanations ("Explain it differently"): `node tools/write-plain-explanations.js`. Both run with Ollama (`qwen3:14b`) on the home PC, resume where they stopped and retry the rejected ones; drafts land in `tools/out/` (git-ignored). Tests: `tests/memory-tips.test.js`, `plain-explanations.test.js`, `ai-checks.test.js`, `ai-drafts.test.js`
+- ⚠️ The newest drafts exist only in `Catie-Test-wt-bank-uk/tools/out/`: `memory-tips.json` (372 of 378; rejected by the checks: t02q13, t02q24, t03q16, t04q01, t05q19, t09q24) and `plain-explanations.json` (377 of 378; rejected: t09q24). Counted 2026-09-25. Copy them to the hub's `tools/out/` (it doesn't exist yet) before that worktree is removed
+- Review these first: they passed the checks but say something not in their question, so reject them — the memory tips for t13q03 ("30 compressions as a full minute"), t01q03 ("use hands-free") and t11q17 ("just like a stop sign"), and the plain explanation for t13q26 (a bike with hazard lights). The first plain-explanation run also flagged these for naming something their question doesn't (some were re-drafted since): t01q03, t03q01, t04q18, t11q01, t11q03, t11q09, t11q11, t12q02, t12q04, t12q12, t02q24, t08q23, t09q26, t10q21, t11q24, t12q23
+- The stricter checks now reject five older tips: t02q13, t02q24 and t05q19 are still live as `draft`; t03q16 and t04q01 were already rejected in Admin. Reject or re-draft them before approving
 
 ## All devices
 - ✅ Browser (any), plus installable to the home screen on iPhone, iPad, Android and desktop — fullscreen, own icon, works offline
@@ -64,18 +91,25 @@ States: ✅ done & verified · ⚠️ built, needs your account/keys to go live 
 - ✅ Best-voice auto-pick (Enhanced/Premium en-GB preferred), voice picker, speed control, sample
 - 📋 One-time per iPhone/iPad: Settings → Accessibility → Spoken Content → Voices → English (UK) → download an Enhanced voice
 
-## Work sections (parallel agents — rules in CLAUDE.md)
+## How to test
+- `node --test` runs every test (291 at v12); CI runs it on every pull request and every push to `develop` and `main`
+- In a browser: serve the repo (`python -m http.server <port> --bind 127.0.0.1`, never port 8765) and drive it with `tests/browser/harness.js` at 390px and 1280px, light and dark. The harness learner has no answers, so tapping Catie opens the quick setup: tap Skip, or seed her as set up with `seed: {'theoryTrainer.d.u1': JSON.stringify({settings: {learnerName: 'Catie', onboardedAt: '2026-09-24'}})}`. Pass `birthYear: null` to see the age question; route `/rest/v1/rpc/export_my_data` and `/rest/v1/rpc/delete_my_account` to fake the server's answers; give bank rows `plain_explanation` + `plain_status: 'approved'` to see Explain it differently; seed a learner with answers to see the prediction, the study plan and the "you keep choosing" lines
 
-States: unclaimed · in progress @ wt-a / wt-b · merged to develop · live on main.
-Seeded from the Phase-0 plan; add rows as later roadmap phases are broken into sections.
+## What's left
+- 📋 Load the plain-explanation drafts into Supabase as `draft`, then approve them in Admin → Memory tips → Plain explanations. Until then no learner sees Explain it differently
+- 📋 Approve or reject the 44 re-drafted memory tips (and the ones listed under Local AI)
+- Run the delete-account and age flows once from the app against the live project with a throwaway account (not verified there yet)
+- `legal/privacy.html` still says the export and delete buttons and the age question are "not built yet", and `legal/terms.html` says the same about the age question; all three are built since v12. The privacy page's activity-log list also doesn't name "Explain it differently" taps or plain-explanation reviews. Needs a Pages-lane fix
+- ⚠️ Before charging anyone: a real operator name, address and contact email (and company and ICO numbers, if they apply), a legal review, and Darren's yes or no on the sample choices: lawful bases, liability wording, 30 days' notice of price changes, a full refund within 14 days of the first payment until checkout asks for the waiver, full refunds for wrong charges, a 5-working-day reply to refund emails
+- Not built: change email and change password while signed in; streak repair; the weekly summary email; grouping misconceptions by meaning
+- t13q22's explanation says "come off the gas" (US wording; UK: accelerator). It needs a confirmed finding before it is changed
+- Known: the default reminder hour is 6pm, which isn't one of the four time buttons, so a reminder switched on in Settings without picking a time lights no button (the quick setup always sets one of the four)
+- The about page's pictures leave out the readiness dial because its number didn't show; it shows since v12, so they can be re-taken with it
+- The tuning values (14-day half-life, 50-answer minimum, 10-answer what-if, 7-day freeze, hold 2, 70% for the badge nudge, pass-chance colours at 70% and 40%) are choices, not measurements
+- Not started, and not yet GitHub issues (carried over from the old sections table): React and Babel copied to this site and precached, for true offline; manifest polish (maskable icon, id/scope, viewport tags, offline fallback page); removing the public `questions-1..5.json` and the app's `local()` path (note `tests/bank.test.js` reads those files)
 
-| Section | Lane | Branch | Status |
-|---|---|---|---|
-| SW caching fixes: per-deploy cache name, network-first navigations, update banner, stop caching `questions-*.json`, purge on activate | Platform/PWA | `phase0-app-fixes` | **live on main** (2026-08-19, adversarially reviewed; done before this table existed — `section/pwa-caching` is stale, delete it) |
-| Supabase backend fixes: schema S1–S4 (trigger, backfill, RPC grants, null period end) + edge functions W1–W8 (auth header, fail-closed webhook, r.ok checks, Stripe API version, origin sanitiser) | Backend | `phase0-server-fixes` | **live on main** (2026-08-19; also re-runnable alter-table upgrades — `section/supabase-backend` is stale, delete it) |
-| App bug batch B1–B6: topic type, sign field, `pack`, mock length, endTest double-fire, forceAuth trap | App/UI (serialized) | `phase0-app-fixes` | **live on main** (2026-08-19; plus editor sign-clear fix) |
-| Vendor React/Babel same-origin + precache (true offline) | App/UI (serialized) | `section/vendor-react` | unclaimed |
-| Manifest/PWA polish: maskable icon, id/scope, viewport tags, offline fallback page | Platform/PWA | `section/manifest-polish` | unclaimed |
-| Sign-in fixes (unconfirmed email, email links, reset landing) + dark mode | App/UI + Backend | `section/signin-darkmode` | **live on main** (2026-09-23) |
-| Remove public question bank after Supabase upload (delete `questions-1..5.json`, remove `local()` path, delete dead `sync.js`) | App/UI + data (serialized) | `section/bank-removal` | partial: `sync.js` deleted, live on main. JSON deletion + `local()` removal MUST wait until the bank is uploaded to Supabase (the upload reads these files from the live site) |
-| My answers (tick past questions → make a test / practise them) + "More like this" | App/UI (serialized) + Platform (`sw.js` bump) | `section/answer-picker` | merged to develop (2026-09-23; 16 tests pass; browser-checked on a local server) |
+## Work in progress
+Tracked as GitHub issues, one per section: https://github.com/dstorey87/Catie-Test/issues (lanes and rules in `CLAUDE.md`).
+
+## Timeline
+- 2026-09-25 — v12 (`v12-2026-09-25`): quick setup, What's new, the help, about and sample legal pages, pass prediction, what to work on, study plan, streak freezes, family board, Your data and the age question, Explain it differently (waiting for approved text), 44 bank answers corrected to UK rules, and the #12 layout bugs fixed. Earlier versions: `CHANGELOG.md`
