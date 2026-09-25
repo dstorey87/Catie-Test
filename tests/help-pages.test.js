@@ -386,7 +386,8 @@ test('#32 pages: words on the teal panels, the contents group labels and code ch
   // chip inside grey text on the cookies page took the grey, 4.47:1 on the chip colour.
   // [selector, the background it sits on]. Each must set its own colour: an inherited one
   // changes with whatever the chip or label happens to be put in.
-  const PAIRS = [['.note strong:first-child', 'tint'], ['.num', 'tint'], ['.toc .toc-group', 'card'], ['code', 'chip'], ['.path', 'chip']];
+  // (A link in a teal panel, 4.43:1, showed up once the first ones were fixed.)
+  const PAIRS = [['.note strong:first-child', 'tint'], ['.note a', 'tint'], ['.num', 'tint'], ['.toc .toc-group', 'card'], ['code', 'chip'], ['.path', 'chip']];
   for (const [sel, bg] of PAIRS) {
     const fg = (cssRule(sel).match(/[{;\s]color:\s*var\(--([\w-]+)\)/) || [])[1];
     assert.ok(fg, sel + ' sets no colour of its own, so it takes the colour of whatever it sits in');
