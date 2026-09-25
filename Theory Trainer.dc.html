@@ -1,7 +1,8 @@
 <!DOCTYPE html>
-<html>
+<html lang="en-GB">
 <head>
 <meta charset="utf-8">
+<title>Theory Trainer</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <script src="./support.js"></script>
 <!-- Question picking for "My answers" and "More like this" (window.TTPicker). -->
@@ -380,6 +381,34 @@ window.TTScreen = (function(){
   // clear of it.
   S.bottomPad = function(floating){ return floating ? S.NOTES.edge + S.NOTES.size + S.NOTES.gap : S.PAD; };
 
+  // ----- Accessibility words (issue #10, WCAG 2.2 AA) -----
+  // The browser tab's title for the screen showing (2.4.2 Page titled). label is the
+  // screen's data-screen-label; none (e.g. before the first screen draws) gives the app name.
+  S.APP = 'Theory Trainer';
+  S.title = function(label){ label = n(label).trim(); return label ? label + ' · ' + S.APP : S.APP; };
+
+  // After a practice answer: which option is right and which one she picked, in words, so it
+  // never rests on green and red alone (1.4.1 Use of colour). i: this option; correct: the
+  // right option; picked: hers (-1 before she answers). null means nothing to say; otherwise
+  // say: the words, glyph: a tick or a cross drawn beside them, ok: whether it is the right one.
+  S.optionMark = function(i, correct, picked){
+    if(picked < 0) return null;
+    if(i === correct) return {say: i === picked ? 'Your answer, right' : 'Right answer', glyph: '✓', ok: true};
+    return i === picked ? {say: 'Your answer', glyph: '✗', ok: false} : null;
+  };
+
+  // What a screen reader says straight after she answers (4.1.3 Status messages). The words
+  // are the bank's own option text, never made up: ok, and the right option's letter and text.
+  S.answerSay = function(ok, letter, text){
+    return (ok ? 'Right. ' : 'Not quite. The right answer is ') + n(letter) + ': ' + n(text);
+  };
+
+  // A square on the mock's review grid, in words: its number, answered or not, and flagged.
+  // On screen the same facts are a colour and a border.
+  S.reviewCellLabel = function(num, answered, flagged){
+    return 'Question ' + num + ', ' + (answered ? 'answered' : 'not answered') + (flagged ? ', flagged' : '');
+  };
+
   return S;
 })();
 </script>
@@ -505,12 +534,26 @@ a{color:var(--tt-fg-0e7c6b)}a:hover{color:var(--tt-fg-0a5d50)}
 button{font-family:inherit}
 input,select{font-family:inherit}
 @keyframes ttpop{0%{transform:scale(.97)}60%{transform:scale(1.015)}100%{transform:scale(1)}}
+/* Accessibility (issue #10, WCAG 2.2 AA). Keyboard focus is always visible (2.4.7): a teal ring
+   that reads on light and dark pages alike, only for keyboard focus (:focus-visible). */
+:focus-visible{outline:3px solid var(--tt-fg-0e7c6b);outline-offset:2px}
+/* A heading the app moves focus to on a new screen is not a control: no ring there. */
+[tabindex="-1"]:focus{outline:none}
+/* Keeps a control focused from the keyboard clear of the floating notes button and the
+   My answers action bar at the bottom of the screen (2.4.11 Focus not obscured). */
+html{scroll-padding-bottom:160px}
+/* Hidden on screen, still read by screen readers (headings, live announcements). */
+.tt-sr{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}
+/* The photo upload is a <label> round a hidden file input: show the ring on the label. */
+.tt-file:focus-within{outline:3px solid var(--tt-fg-0e7c6b);outline-offset:2px}
+/* Motion only for those who have not asked their device for less (2.3.3). */
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}button:active{transform:none}}
 @media print{.app-chrome{display:none!important}body{background:var(--tt-bg-fff)}.pbreak{page-break-after:always}}
 @page{size:A4;margin:8mm}
 </style>
 </helmet>
 <div style="min-height:100vh;background:var(--tt-bg-faf6ef);color:var(--tt-fg-2a2c33);font-family:'Atkinson Hyperlegible',system-ui,sans-serif">
-<div style="{{ dynStyle }}">
+<main style="{{ dynStyle }}">
 
 <div class="app-chrome">
 <!-- pageStyle: the bottom padding leaves room for the floating notes button (TTScreen.bottomPad) -->
@@ -522,7 +565,7 @@ input,select{font-family:inherit}
   <div style="width:72px;height:72px;border-radius:22px;background:#0E7C6B;display:flex;align-items:center;justify-content:center">
     <svg width="42" height="42" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="#fff" stroke-width="2.4"/><circle cx="12" cy="12" r="2.4" fill="#fff"/><path d="M12 14.2 L12 21 M10 12.6 L3.6 10.4 M14 12.6 L20.4 10.4" stroke="#fff" stroke-width="2.2"/></svg>
   </div>
-  <div style="font-family:'Nunito',sans-serif;font-weight:900;font-size:30px;margin-top:8px">Theory Trainer</div>
+  <h1 tabindex="-1" style="margin:0;font-family:'Nunito',sans-serif;font-weight:900;font-size:30px;margin-top:8px">Theory Trainer</h1>
   <div style="font-size:17px;color:var(--tt-fg-6e6a5e);margin-bottom:18px">Who's here today?</div>
   <div style="display:flex;flex-direction:column;gap:12px;width:100%;max-width:340px">
     <sc-for list="{{ loginUsers }}" as="u" hint-placeholder-count="1">
@@ -561,7 +604,7 @@ input,select{font-family:inherit}
     <div style="width:64px;height:64px;border-radius:20px;background:#0E7C6B;display:flex;align-items:center;justify-content:center">
       <svg width="36" height="36" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="#fff" stroke-width="2.4"/><circle cx="12" cy="12" r="2.4" fill="#fff"/><path d="M12 14.2 L12 21 M10 12.6 L3.6 10.4 M14 12.6 L20.4 10.4" stroke="#fff" stroke-width="2.2"/></svg>
     </div>
-    <div style="font-family:'Nunito',sans-serif;font-weight:900;font-size:26px">{{ authTitle }}</div>
+    <h1 tabindex="-1" style="margin:0;font-family:'Nunito',sans-serif;font-weight:900;font-size:26px">{{ authTitle }}</h1>
     <div style="font-size:15px;color:var(--tt-fg-6e6a5e);line-height:1.5">{{ authSub }}</div>
   </div>
   <div style="background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);border-radius:20px;padding:20px;display:flex;flex-direction:column;gap:12px">
@@ -614,8 +657,8 @@ input,select{font-family:inherit}
 <sc-if value="{{ vSetup }}" hint-placeholder-val="{{ false }}">
 <div data-screen-label="Server settings" style="max-width:380px;margin:0 auto;padding-top:30px">
   <div style="display:flex;align-items:center;gap:10px;margin-bottom:18px">
-    <button onClick="{{ goAuthScreen }}" style="background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);border-radius:12px;width:44px;height:44px;cursor:pointer;font-size:18px">←</button>
-    <div style="font-family:'Nunito',sans-serif;font-weight:900;font-size:24px">Server settings</div>
+    <button onClick="{{ goAuthScreen }}" aria-label="Back to sign in" style="background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);border-radius:12px;width:44px;height:44px;cursor:pointer;font-size:18px">←</button>
+    <h1 tabindex="-1" style="margin:0;font-family:'Nunito',sans-serif;font-weight:900;font-size:24px">Server settings</h1>
   </div>
   <div style="background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);border-radius:20px;padding:20px;display:flex;flex-direction:column;gap:12px">
     <div style="font-size:13px;color:var(--tt-fg-6e6a5e);line-height:1.5">Only needed once, and only by you. Both values come from Supabase → Settings → API Keys. Learners never see this screen. Full steps: SETUP.md §2.</div>
@@ -636,7 +679,7 @@ input,select{font-family:inherit}
   <div style="width:64px;height:64px;border-radius:20px;background:#0E7C6B;display:flex;align-items:center;justify-content:center;margin:0 auto 14px">
     <svg width="36" height="36" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="#fff" stroke-width="2.4"/><circle cx="12" cy="12" r="2.4" fill="#fff"/><path d="M12 14.2 L12 21 M10 12.6 L3.6 10.4 M14 12.6 L20.4 10.4" stroke="#fff" stroke-width="2.2"/></svg>
   </div>
-  <div style="font-family:'Nunito',sans-serif;font-weight:900;font-size:26px">{{ payTitle }}</div>
+  <h1 tabindex="-1" style="margin:0;font-family:'Nunito',sans-serif;font-weight:900;font-size:26px">{{ payTitle }}</h1>
   <div style="font-size:16px;color:var(--tt-fg-6e6a5e);margin-top:8px;line-height:1.5">{{ payMsg }}</div>
   <div style="display:flex;flex-direction:column;gap:12px;max-width:320px;margin:26px auto 0">
     <sc-if value="{{ paySubVisible }}" hint-placeholder-val="{{ true }}">
@@ -669,8 +712,8 @@ input,select{font-family:inherit}
 <sc-if value="{{ vBadges }}" hint-placeholder-val="{{ false }}">
 <div data-screen-label="Badges">
   <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
-    <button onClick="{{ goHome }}" style="background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);border-radius:12px;width:44px;height:44px;cursor:pointer;font-size:18px">←</button>
-    <div style="font-family:'Nunito',sans-serif;font-weight:900;font-size:24px;flex:1">Badges</div>
+    <button onClick="{{ goHome }}" aria-label="Back to home" style="background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);border-radius:12px;width:44px;height:44px;cursor:pointer;font-size:18px">←</button>
+    <h1 tabindex="-1" style="margin:0;font-family:'Nunito',sans-serif;font-weight:900;font-size:24px;flex:1">Badges</h1>
   </div>
   <div style="background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);border-radius:18px;padding:14px 16px;margin:12px 0 16px;display:flex;flex-direction:column;gap:8px">
     <div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px">
@@ -706,7 +749,7 @@ input,select{font-family:inherit}
   <div aria-hidden="true" style="display:flex;gap:6px;margin:6px 0 24px">
     <sc-for list="{{ onbDots }}" as="d" hint-placeholder-count="3"><span style="{{ d.style }}"></span></sc-for>
   </div>
-  <div style="font-family:'Nunito',sans-serif;font-weight:900;font-size:27px;line-height:1.2">{{ onbTitle }}</div>
+  <h1 tabindex="-1" style="margin:0;font-family:'Nunito',sans-serif;font-weight:900;font-size:27px;line-height:1.2">{{ onbTitle }}</h1>
   <div style="font-size:16px;color:var(--tt-fg-6e6a5e);margin:8px 0 20px;line-height:1.5">{{ onbSub }}</div>
   <!-- step 1: test date (Settings' own date field and handler) -->
   <sc-if value="{{ onbStepDate }}" hint-placeholder-val="{{ true }}">
@@ -749,7 +792,7 @@ input,select{font-family:inherit}
     <sc-if value="{{ ageFromSettings }}" hint-placeholder-val="{{ false }}">
       <button onClick="{{ ageBack }}" aria-label="Back to Settings" style="flex:none;background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);border-radius:12px;width:44px;height:44px;cursor:pointer;font-size:18px">←</button>
     </sc-if>
-    <div style="font-family:'Nunito',sans-serif;font-weight:900;font-size:26px;line-height:1.2">What year were you born?</div>
+    <h1 tabindex="-1" style="margin:0;font-family:'Nunito',sans-serif;font-weight:900;font-size:26px;line-height:1.2">What year were you born?</h1>
   </div>
   <div style="font-size:16px;color:var(--tt-fg-6e6a5e);line-height:1.5;margin-bottom:18px">{{ ageSub }}</div>
   <label style="display:block;font-size:14px;font-weight:700;color:var(--tt-fg-6e6a5e)">Year you were born<input value="{{ ageYear }}" name="year" onChange="{{ ageChange }}" inputMode="numeric" maxLength="4" autoComplete="bday-year" placeholder="{{ agePlaceholder }}" style="display:block;width:100%;box-sizing:border-box;margin-top:6px;padding:12px 14px;min-height:54px;border:2px solid var(--tt-bd-e8e1d2);border-radius:14px;font-size:18px;background:var(--tt-bg-fff);color:var(--tt-fg-2a2c33)"></label>
@@ -791,7 +834,7 @@ input,select{font-family:inherit}
       <button onClick="{{ setParentProfile }}" style="{{ parentChipStyle }}">{{ parentName }}</button>
     </div>
   </div>
-  <div style="font-family:'Nunito',sans-serif;font-weight:900;font-size:30px;margin:22px 0 4px">{{ greeting }}</div>
+  <h1 tabindex="-1" style="margin:0;font-family:'Nunito',sans-serif;font-weight:900;font-size:30px;margin:22px 0 4px">{{ greeting }}</h1>
   <div style="font-size:17px;color:var(--tt-fg-6e6a5e);margin-bottom:16px">{{ homeSub }}</div>
   <!-- What's new: once per app version, for a learner who was here before it (TTWelcome.newsDue) -->
   <sc-if value="{{ newsShow }}" hint-placeholder-val="{{ false }}">
@@ -956,10 +999,10 @@ input,select{font-family:inherit}
 <sc-if value="{{ vLearnSetup }}" hint-placeholder-val="{{ false }}">
 <div data-screen-label="Practise setup">
   <div style="display:flex;align-items:center;gap:10px;margin-bottom:18px">
-    <button onClick="{{ goHome }}" style="background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);border-radius:12px;width:44px;height:44px;cursor:pointer;font-size:18px">←</button>
-    <div style="font-family:'Nunito',sans-serif;font-weight:900;font-size:24px">Practise</div>
+    <button onClick="{{ goHome }}" aria-label="Back to home" style="background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);border-radius:12px;width:44px;height:44px;cursor:pointer;font-size:18px">←</button>
+    <h1 tabindex="-1" style="margin:0;font-family:'Nunito',sans-serif;font-weight:900;font-size:24px">Practise</h1>
   </div>
-  <div style="font-family:'Nunito',sans-serif;font-weight:800;font-size:17px;margin:14px 0 10px">What shall we practise?</div>
+  <h2 style="font-family:'Nunito',sans-serif;font-weight:800;font-size:17px;margin:14px 0 10px">What shall we practise?</h2>
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
     <sc-for list="{{ topicChoices }}" as="t" hint-placeholder-count="4">
       <button onClick="{{ t.pick }}" style="{{ t.style }}">
@@ -969,7 +1012,7 @@ input,select{font-family:inherit}
     </sc-for>
   </div>
   <sc-if value="{{ showLen }}" hint-placeholder-val="{{ true }}">
-    <div style="font-family:'Nunito',sans-serif;font-weight:800;font-size:17px;margin:20px 0 10px">How many questions?</div>
+    <h2 style="font-family:'Nunito',sans-serif;font-weight:800;font-size:17px;margin:20px 0 10px">How many questions?</h2>
     <div style="display:flex;gap:10px">
       <sc-for list="{{ lenChoices }}" as="l" hint-placeholder-count="3">
         <button onClick="{{ l.pick }}" style="{{ l.style }}">{{ l.label }}</button>
@@ -977,7 +1020,7 @@ input,select{font-family:inherit}
     </div>
   </sc-if>
   <sc-if value="{{ showMix }}" hint-placeholder-val="{{ false }}">
-    <div style="font-family:'Nunito',sans-serif;font-weight:800;font-size:17px;margin:20px 0 10px">How many from each topic? <span style="color:var(--tt-fg-6e6a5e);font-weight:400;font-size:14px">({{ mixTotal }} picked)</span></div>
+    <h2 style="font-family:'Nunito',sans-serif;font-weight:800;font-size:17px;margin:20px 0 10px">How many from each topic? <span style="color:var(--tt-fg-6e6a5e);font-weight:400;font-size:14px">({{ mixTotal }} picked)</span></h2>
     <div style="background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);border-radius:18px;padding:4px 16px">
       <sc-for list="{{ mixRows }}" as="m" hint-placeholder-count="5">
         <div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--tt-bd-f2ede1)">
@@ -996,8 +1039,9 @@ input,select{font-family:inherit}
 <!-- ============ LEARN QUESTION ============ -->
 <sc-if value="{{ vLearnQ }}" hint-placeholder-val="{{ false }}">
 <div data-screen-label="Practise question">
+  <h1 class="tt-sr" tabindex="-1">Practice question {{ qNum }} of {{ qTotal }}</h1>
   <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">
-    <button onClick="{{ quitLearn }}" style="background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);border-radius:12px;width:44px;height:44px;cursor:pointer;font-size:17px;color:var(--tt-fg-6e6a5e)">✕</button>
+    <button onClick="{{ quitLearn }}" aria-label="Stop this practice session" style="background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);border-radius:12px;width:44px;height:44px;cursor:pointer;font-size:17px;color:var(--tt-fg-6e6a5e)">✕</button>
     <div style="flex:1;height:10px;background:var(--tt-bg-efe9dc);border-radius:6px;overflow:hidden"><div style="{{ learnBarStyle }}"></div></div>
     <div style="font-size:15px;color:var(--tt-fg-6e6a5e);white-space:nowrap">{{ qNum }} of {{ qTotal }}</div>
     <button onClick="{{ toggleQFlag }}" aria-label="Flag this question to revise later" aria-pressed="{{ qFlagPressed }}" style="{{ qFlagStyle }}">
@@ -1077,7 +1121,7 @@ input,select{font-family:inherit}
 <sc-if value="{{ vLearnDone }}" hint-placeholder-val="{{ false }}">
 <div data-screen-label="Practise finished" style="text-align:center;padding-top:40px">
   <div style="font-size:56px;font-family:'Nunito',sans-serif;font-weight:900;color:var(--tt-fg-0e7c6b)">{{ doneScore }} / {{ doneTotal }}</div>
-  <div style="font-family:'Nunito',sans-serif;font-weight:900;font-size:24px;margin-top:10px">{{ doneTitle }}</div>
+  <h1 tabindex="-1" style="margin:0;font-family:'Nunito',sans-serif;font-weight:900;font-size:24px;margin-top:10px">{{ doneTitle }}</h1>
   <div style="font-size:17px;color:var(--tt-fg-6e6a5e);margin-top:8px;max-width:400px;margin-left:auto;margin-right:auto">{{ doneMsg }}</div>
   <sc-if value="{{ hasLevelUp }}" hint-placeholder-val="{{ false }}">
     <div style="max-width:420px;margin:18px auto 0;background:#0E7C6B;color:#fff;border-radius:18px;padding:14px 18px;display:flex;align-items:center;gap:12px;text-align:left">
@@ -1134,8 +1178,8 @@ input,select{font-family:inherit}
 <sc-if value="{{ vProgress }}" hint-placeholder-val="{{ false }}">
 <div data-screen-label="My progress">
   <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
-    <button onClick="{{ goHome }}" style="background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);border-radius:12px;width:44px;height:44px;cursor:pointer;font-size:18px">←</button>
-    <div style="font-family:'Nunito',sans-serif;font-weight:900;font-size:24px;flex:1">My Progress</div>
+    <button onClick="{{ goHome }}" aria-label="Back to home" style="background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);border-radius:12px;width:44px;height:44px;cursor:pointer;font-size:18px">←</button>
+    <h1 tabindex="-1" style="margin:0;font-family:'Nunito',sans-serif;font-weight:900;font-size:24px;flex:1">My Progress</h1>
   </div>
   <div style="background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);border-radius:22px;padding:20px;display:flex;align-items:center;gap:20px">
     <!-- The number is HTML laid over the ring: a {{ value }} inside SVG <text> becomes an HTML
@@ -1193,7 +1237,7 @@ input,select{font-family:inherit}
   <button onClick="{{ goAnswers }}" style="width:100%;margin-top:10px;background:var(--tt-bg-fff);border:2px solid var(--tt-bd-0e7c6b);border-radius:16px;min-height:56px;font-family:'Nunito',sans-serif;font-weight:900;font-size:18px;cursor:pointer;color:var(--tt-fg-0a5d50)">My answers: tick some, make a test</button>
   <!-- The study plan to her test date (or where to set the date) -->
   <button onClick="{{ goPlan }}" style="width:100%;margin-top:10px;background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);border-radius:16px;min-height:56px;padding:8px 14px;font-family:'Nunito',sans-serif;font-weight:900;font-size:17px;cursor:pointer;color:var(--tt-fg-2a2c33)">{{ planProgressLabel }}</button>
-  <div style="font-family:'Nunito',sans-serif;font-weight:800;font-size:18px;margin:26px 0 10px">Your topics</div>
+  <h2 style="font-family:'Nunito',sans-serif;font-weight:800;font-size:18px;margin:26px 0 10px">Your topics</h2>
   <div style="background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);border-radius:20px;padding:8px 18px">
     <sc-for list="{{ progTopics }}" as="t" hint-placeholder-count="6">
       <div style="padding:10px 0;border-bottom:1px solid var(--tt-bd-f2ede1)">
@@ -1215,7 +1259,7 @@ input,select{font-family:inherit}
     </sc-for>
   </div>
   <sc-if value="{{ hasTests }}" hint-placeholder-val="{{ false }}">
-    <div style="font-family:'Nunito',sans-serif;font-weight:800;font-size:18px;margin:26px 0 10px">Your mock tests</div>
+    <h2 style="font-family:'Nunito',sans-serif;font-weight:800;font-size:18px;margin:26px 0 10px">Your mock tests</h2>
     <div style="background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);border-radius:20px;padding:16px">
       <svg viewBox="0 0 340 130" style="width:100%;display:block">
         <line x1="12" y1="{{ passLineY }}" x2="328" y2="{{ passLineY }}" stroke="#F2A93B" stroke-width="1.5" stroke-dasharray="5 4"></line>
@@ -1227,7 +1271,7 @@ input,select{font-family:inherit}
       </svg>
     </div>
   </sc-if>
-  <div style="font-family:'Nunito',sans-serif;font-weight:800;font-size:18px;margin:26px 0 10px">Worth remembering</div>
+  <h2 style="font-family:'Nunito',sans-serif;font-weight:800;font-size:18px;margin:26px 0 10px">Worth remembering</h2>
   <div style="display:flex;flex-direction:column;gap:10px">
     <sc-for list="{{ progTips }}" as="t" hint-placeholder-count="3">
       <div style="background:var(--tt-bg-fbf1dc);border:1px solid var(--tt-bd-f0d9a8);border-radius:16px;padding:13px 16px">
@@ -1247,7 +1291,7 @@ input,select{font-family:inherit}
 <div data-screen-label="Study plan">
   <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
     <button onClick="{{ goHome }}" aria-label="Back to home" style="background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);border-radius:12px;width:44px;height:44px;cursor:pointer;font-size:18px">←</button>
-    <div style="font-family:'Nunito',sans-serif;font-weight:900;font-size:24px;flex:1">Study plan</div>
+    <h1 tabindex="-1" style="margin:0;font-family:'Nunito',sans-serif;font-weight:900;font-size:24px;flex:1">Study plan</h1>
   </div>
   <div style="background:var(--tt-bg-e4f2ef);border:1px solid var(--tt-bd-bfe0d8);border-radius:16px;padding:12px 16px;font-size:15.5px;font-weight:700;color:var(--tt-fg-0a5d50);line-height:1.45">{{ planHeadline }}</div>
   <sc-if value="{{ planOk }}" hint-placeholder-val="{{ false }}">
@@ -1265,7 +1309,7 @@ input,select{font-family:inherit}
     </sc-if>
     <div style="font-size:13.5px;color:var(--tt-fg-6e6a5e);margin-top:12px;line-height:1.5">{{ planWorkload }}</div>
     <!-- the days ahead -->
-    <div style="font-family:'Nunito',sans-serif;font-weight:800;font-size:18px;margin:22px 0 10px">Day by day</div>
+    <h2 style="font-family:'Nunito',sans-serif;font-weight:800;font-size:18px;margin:22px 0 10px">Day by day</h2>
     <div style="background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);border-radius:20px;padding:4px 18px">
       <sc-for list="{{ planRows }}" as="d" hint-placeholder-count="5">
         <div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--tt-bd-f2ede1)">
@@ -1289,8 +1333,8 @@ input,select{font-family:inherit}
 <sc-if value="{{ vSigns }}" hint-placeholder-val="{{ false }}">
 <div data-screen-label="Road signs">
   <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
-    <button onClick="{{ goHome }}" style="background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);border-radius:12px;width:44px;height:44px;cursor:pointer;font-size:18px">←</button>
-    <div style="font-family:'Nunito',sans-serif;font-weight:900;font-size:24px;flex:1">Road Signs</div>
+    <button onClick="{{ goHome }}" aria-label="Back to home" style="background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);border-radius:12px;width:44px;height:44px;cursor:pointer;font-size:18px">←</button>
+    <h1 tabindex="-1" style="margin:0;font-family:'Nunito',sans-serif;font-weight:900;font-size:24px;flex:1">Road Signs</h1>
   </div>
   <button onClick="{{ startSignPractice }}" style="width:100%;background:#0E7C6B;color:#fff;border:none;border-radius:18px;min-height:60px;font-family:'Nunito',sans-serif;font-weight:900;font-size:19px;cursor:pointer;margin-bottom:8px">Quiz me on the signs</button>
   <div style="font-size:14.5px;color:var(--tt-fg-6e6a5e);margin:6px 0 16px;text-align:center">Or tap any sign to hear what it means.</div>
@@ -1309,8 +1353,8 @@ input,select{font-family:inherit}
 <sc-if value="{{ vTestIntro }}" hint-placeholder-val="{{ false }}">
 <div data-screen-label="Mock test intro">
   <div style="display:flex;align-items:center;gap:10px;margin-bottom:18px">
-    <button onClick="{{ goHome }}" style="background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);border-radius:12px;width:44px;height:44px;cursor:pointer;font-size:18px">←</button>
-    <div style="font-family:'Nunito',sans-serif;font-weight:900;font-size:24px">Mock Test</div>
+    <button onClick="{{ goHome }}" aria-label="Back to home" style="background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);border-radius:12px;width:44px;height:44px;cursor:pointer;font-size:18px">←</button>
+    <h1 tabindex="-1" style="margin:0;font-family:'Nunito',sans-serif;font-weight:900;font-size:24px">Mock Test</h1>
   </div>
   <div style="background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);border-radius:22px;padding:24px">
     <div style="display:flex;flex-direction:column;gap:16px;font-size:18px;line-height:1.5">
@@ -1320,7 +1364,7 @@ input,select{font-family:inherit}
     </div>
     <div style="font-size:15.5px;color:var(--tt-fg-6e6a5e);margin-top:18px;line-height:1.5">No feedback until the end, just like the real test. You can flag a question and come back to it. The speaker buttons still work — the real test has a voiceover option too.</div>
   </div>
-  <div style="font-family:'Nunito',sans-serif;font-weight:800;font-size:16px;margin:18px 0 8px">Which kind of test?</div>
+  <h2 style="font-family:'Nunito',sans-serif;font-weight:800;font-size:16px;margin:18px 0 8px">Which kind of test?</h2>
   <div style="display:flex;gap:10px">
     <sc-for list="{{ testModeChoices }}" as="m" hint-placeholder-count="2">
       <button onClick="{{ m.pick }}" style="{{ m.style }}"><span style="display:block;font-weight:800;font-size:15.5px">{{ m.name }}</span><span style="display:block;font-size:13px;color:var(--tt-fg-6e6a5e);margin-top:2px">{{ m.sub }}</span></button>
@@ -1328,7 +1372,7 @@ input,select{font-family:inherit}
   </div>
   <sc-if value="{{ showTestMix }}" hint-placeholder-val="{{ false }}">
     <button onClick="{{ goAnswers }}" style="width:100%;margin-top:14px;background:var(--tt-bg-e4f2ef);border:1px solid var(--tt-bd-bfe0d8);border-radius:14px;min-height:48px;padding:10px 14px;font-size:15px;font-weight:700;color:var(--tt-fg-0a5d50);cursor:pointer;text-align:left">Want exact questions? Tick them in My answers →</button>
-    <div style="font-family:'Nunito',sans-serif;font-weight:800;font-size:16px;margin:18px 0 8px">Your test: {{ testMixTotal }} questions <span style="color:var(--tt-fg-6e6a5e);font-weight:400;font-size:13.5px">· {{ testMixPass }} to pass</span></div>
+    <h2 style="font-family:'Nunito',sans-serif;font-weight:800;font-size:16px;margin:18px 0 8px">Your test: {{ testMixTotal }} questions <span style="color:var(--tt-fg-6e6a5e);font-weight:400;font-size:13.5px">· {{ testMixPass }} to pass</span></h2>
     <div style="background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);border-radius:18px;padding:4px 16px">
       <sc-for list="{{ testMixRows }}" as="m" hint-placeholder-count="5">
         <div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--tt-bd-f2ede1)">
@@ -1351,6 +1395,7 @@ input,select{font-family:inherit}
 <!-- ============ TEST RUNNING ============ -->
 <sc-if value="{{ vTestRun }}" hint-placeholder-val="{{ false }}">
 <div data-screen-label="Mock test question">
+  <h1 class="tt-sr" tabindex="-1">Mock test, {{ tQNum }} of {{ tTotal }}</h1>
   <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
     <div style="{{ timerStyle }}">{{ testTimer }}</div>
     <div style="flex:1;text-align:center;font-size:15px;color:var(--tt-fg-6e6a5e)">{{ tQNum }} of {{ tTotal }}</div>
@@ -1398,7 +1443,7 @@ input,select{font-family:inherit}
 <div data-screen-label="Mock test review">
   <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
     <div style="{{ timerStyle }}">{{ testTimer }}</div>
-    <div style="font-family:'Nunito',sans-serif;font-weight:900;font-size:22px">Review</div>
+    <h1 tabindex="-1" style="margin:0;font-family:'Nunito',sans-serif;font-weight:900;font-size:22px">Review</h1>
   </div>
   <div style="font-size:15.5px;color:var(--tt-fg-6e6a5e);margin-bottom:14px">{{ reviewSummary }}</div>
   <div style="display:grid;grid-template-columns:repeat(10,1fr);gap:7px">
@@ -1427,11 +1472,11 @@ input,select{font-family:inherit}
 <div data-screen-label="Mock test results">
   <div style="{{ resultBannerStyle }}">
     <div style="font-family:'Nunito',sans-serif;font-weight:900;font-size:44px">{{ resultScore }} / {{ resultTotal }}</div>
-    <div style="font-family:'Nunito',sans-serif;font-weight:900;font-size:26px;margin-top:4px">{{ resultLabel }}</div>
+    <h1 tabindex="-1" style="margin:0;font-family:'Nunito',sans-serif;font-weight:900;font-size:26px;margin-top:4px">{{ resultLabel }}</h1>
     <div style="font-size:16px;margin-top:6px;opacity:.85">{{ resultMsg }}</div>
   </div>
   <sc-if value="{{ hasWrong }}" hint-placeholder-val="{{ false }}">
-    <div style="font-family:'Nunito',sans-serif;font-weight:800;font-size:18px;margin:24px 0 10px">Worth another look ({{ wrongN }})</div>
+    <h2 style="font-family:'Nunito',sans-serif;font-weight:800;font-size:18px;margin:24px 0 10px">Worth another look ({{ wrongN }})</h2>
     <div style="display:flex;flex-direction:column;gap:10px">
       <sc-for list="{{ wrongRows }}" as="w" hint-placeholder-count="3">
         <div style="background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);border-radius:18px;padding:16px;display:flex;gap:14px">
@@ -1453,7 +1498,7 @@ input,select{font-family:inherit}
     </div>
     <button onClick="{{ goAnswersWrong }}" style="width:100%;margin-top:12px;background:var(--tt-bg-fff);border:2px solid var(--tt-bd-0e7c6b);border-radius:16px;min-height:54px;font-family:'Nunito',sans-serif;font-weight:900;font-size:17px;cursor:pointer;color:var(--tt-fg-0a5d50)">Pick ones to try again (My answers)</button>
   </sc-if>
-  <div style="font-family:'Nunito',sans-serif;font-weight:800;font-size:18px;margin:24px 0 10px">By topic</div>
+  <h2 style="font-family:'Nunito',sans-serif;font-weight:800;font-size:18px;margin:24px 0 10px">By topic</h2>
   <div style="background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);border-radius:20px;padding:6px 18px">
     <sc-for list="{{ resultTopicRows }}" as="r" hint-placeholder-count="5">
       <div style="display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid var(--tt-bd-f2ede1)">
@@ -1476,7 +1521,7 @@ input,select{font-family:inherit}
 <div data-screen-label="Activity">
   <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
     <button onClick="{{ goDash }}" aria-label="Back to the dashboard" style="background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);border-radius:12px;width:44px;height:44px;cursor:pointer;font-size:18px">←</button>
-    <div style="font-family:'Nunito',sans-serif;font-weight:900;font-size:24px;flex:1">Activity</div>
+    <h1 tabindex="-1" style="margin:0;font-family:'Nunito',sans-serif;font-weight:900;font-size:24px;flex:1">Activity</h1>
     <button onClick="{{ reloadActivity }}" style="background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);border-radius:12px;min-height:44px;padding:0 14px;cursor:pointer;font-size:14px;font-weight:700;color:var(--tt-fg-0e7c6b)">Refresh</button>
   </div>
   <div style="font-size:13px;color:var(--tt-fg-6e6a5e);line-height:1.5;margin-bottom:12px">{{ actNote }}</div>
@@ -1492,14 +1537,14 @@ input,select{font-family:inherit}
       </sc-for>
     </div>
 
-    <div style="font-family:'Nunito',sans-serif;font-weight:800;font-size:18px;margin:24px 0 10px">Day by day</div>
+    <h2 style="font-family:'Nunito',sans-serif;font-weight:800;font-size:18px;margin:24px 0 10px">Day by day</h2>
     <div style="background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);border-radius:20px;padding:4px 18px">
       <sc-for list="{{ actDays }}" as="d" hint-placeholder-count="4">
         <div style="padding:11px 0;border-bottom:1px solid var(--tt-bd-f2ede1)"><div style="font-weight:700;font-size:15px">{{ d.label }}</div><div style="font-size:13px;color:var(--tt-fg-6e6a5e);margin-top:2px">{{ d.detail }}</div></div>
       </sc-for>
     </div>
 
-    <div style="font-family:'Nunito',sans-serif;font-weight:800;font-size:18px;margin:24px 0 10px">Missed most</div>
+    <h2 style="font-family:'Nunito',sans-serif;font-weight:800;font-size:18px;margin:24px 0 10px">Missed most</h2>
     <div style="background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);border-radius:20px;padding:4px 18px">
       <sc-for list="{{ actMissed }}" as="m" hint-placeholder-count="4">
         <div style="padding:11px 0;border-bottom:1px solid var(--tt-bd-f2ede1)">
@@ -1510,14 +1555,14 @@ input,select{font-family:inherit}
       </sc-for>
     </div>
 
-    <div style="font-family:'Nunito',sans-serif;font-weight:800;font-size:18px;margin:24px 0 10px">Time to answer, by topic</div>
+    <h2 style="font-family:'Nunito',sans-serif;font-weight:800;font-size:18px;margin:24px 0 10px">Time to answer, by topic</h2>
     <div style="background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);border-radius:20px;padding:4px 18px">
       <sc-for list="{{ actTopicTime }}" as="t" hint-placeholder-count="4">
         <div style="padding:11px 0;border-bottom:1px solid var(--tt-bd-f2ede1);display:flex;justify-content:space-between;gap:10px"><span style="font-size:15px">{{ t.name }}</span><span style="font-size:13px;color:var(--tt-fg-6e6a5e);white-space:nowrap">{{ t.detail }}</span></div>
       </sc-for>
     </div>
 
-    <div style="font-family:'Nunito',sans-serif;font-weight:800;font-size:18px;margin:24px 0 10px">Latest</div>
+    <h2 style="font-family:'Nunito',sans-serif;font-weight:800;font-size:18px;margin:24px 0 10px">Latest</h2>
     <div style="background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);border-radius:20px;padding:4px 18px">
       <sc-for list="{{ actRecent }}" as="r" hint-placeholder-count="6">
         <div style="padding:11px 0;border-bottom:1px solid var(--tt-bd-f2ede1);display:flex;gap:12px"><span style="font-size:13px;color:var(--tt-fg-6e6a5e);flex:none;width:92px">{{ r.when }}</span><span style="font-size:14.5px;line-height:1.35">{{ r.text }}</span></div>
@@ -1536,7 +1581,7 @@ input,select{font-family:inherit}
 <div data-screen-label="Memory tips">
   <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
     <button onClick="{{ goDash }}" aria-label="Back to the dashboard" style="background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);border-radius:12px;width:44px;height:44px;cursor:pointer;font-size:18px">←</button>
-    <div style="font-family:'Nunito',sans-serif;font-weight:900;font-size:24px;flex:1">{{ tipsTitle }}</div>
+    <h1 tabindex="-1" style="margin:0;font-family:'Nunito',sans-serif;font-weight:900;font-size:24px;flex:1">{{ tipsTitle }}</h1>
   </div>
   <!-- which kind of AI text -->
   <div role="group" aria-label="Which AI text to check" style="display:flex;gap:8px;margin-bottom:10px">
@@ -1576,7 +1621,7 @@ input,select{font-family:inherit}
 <div data-screen-label="Flagged">
   <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
     <button onClick="{{ goHome }}" aria-label="Back to home" style="background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);border-radius:12px;width:44px;height:44px;cursor:pointer;font-size:18px">←</button>
-    <div style="font-family:'Nunito',sans-serif;font-weight:900;font-size:24px;flex:1">Flagged</div>
+    <h1 tabindex="-1" style="margin:0;font-family:'Nunito',sans-serif;font-weight:900;font-size:24px;flex:1">Flagged</h1>
   </div>
   <div style="font-size:15.5px;color:var(--tt-fg-6e6a5e);line-height:1.5;margin-bottom:14px">Questions you flagged stay here until you un-flag them, even when you get them right.</div>
   <sc-if value="{{ hasRevFlags }}" hint-placeholder-val="{{ false }}">
@@ -1607,7 +1652,7 @@ input,select{font-family:inherit}
 <div data-screen-label="My answers">
   <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
     <button onClick="{{ goHome }}" aria-label="Back to home" style="background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);border-radius:12px;width:44px;height:44px;cursor:pointer;font-size:18px">←</button>
-    <div style="font-family:'Nunito',sans-serif;font-weight:900;font-size:24px;flex:1">My answers</div>
+    <h1 tabindex="-1" style="margin:0;font-family:'Nunito',sans-serif;font-weight:900;font-size:24px;flex:1">My answers</h1>
   </div>
   <div style="font-size:15.5px;color:var(--tt-fg-6e6a5e);line-height:1.5;margin-bottom:14px">Tick the questions you want, then practise them or make them into a test.</div>
   <sc-if value="{{ ansNone }}" hint-placeholder-val="{{ false }}">
@@ -1672,8 +1717,8 @@ input,select{font-family:inherit}
 <sc-if value="{{ vDash }}" hint-placeholder-val="{{ false }}">
 <div data-screen-label="Progress dashboard">
   <div style="display:flex;align-items:center;gap:10px;margin-bottom:18px">
-    <button onClick="{{ goHome }}" style="background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);border-radius:12px;width:44px;height:44px;cursor:pointer;font-size:18px">←</button>
-    <div style="font-family:'Nunito',sans-serif;font-weight:900;font-size:24px;flex:1">Progress</div>
+    <button onClick="{{ goHome }}" aria-label="Back to home" style="background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);border-radius:12px;width:44px;height:44px;cursor:pointer;font-size:18px">←</button>
+    <h1 tabindex="-1" style="margin:0;font-family:'Nunito',sans-serif;font-weight:900;font-size:24px;flex:1">Progress</h1>
     <button onClick="{{ toggleRange }}" style="{{ rangeChipStyle }}">{{ rangeLabel }}</button>
   </div>
   <sc-if value="{{ hasManyUsers }}" hint-placeholder-val="{{ false }}">
@@ -1696,7 +1741,7 @@ input,select{font-family:inherit}
       </sc-for>
     </div>
   </div>
-  <div style="font-family:'Nunito',sans-serif;font-weight:800;font-size:18px;margin:6px 0 10px">Topics — weakest first</div>
+  <h2 style="font-family:'Nunito',sans-serif;font-weight:800;font-size:18px;margin:6px 0 10px">Topics — weakest first</h2>
   <div style="background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);border-radius:20px;padding:8px 18px">
     <sc-for list="{{ topicBars }}" as="t" hint-placeholder-count="6">
       <!-- Wraps on a phone like My Progress's rows: a fixed 150px bar made this 421px wide at
@@ -1712,7 +1757,7 @@ input,select{font-family:inherit}
   </div>
   <button onClick="{{ startFocusDrill }}" style="width:100%;margin-top:14px;display:flex;align-items:center;justify-content:center;gap:10px;background:var(--tt-bg-fbf1dc);border:2px solid #F2A93B;border-radius:16px;min-height:56px;font-family:'Nunito',sans-serif;font-weight:900;font-size:18px;cursor:pointer;color:var(--tt-fg-2a2c33)">Focus Drill: {{ focusDesc }}</button>
 
-  <div style="font-family:'Nunito',sans-serif;font-weight:800;font-size:18px;margin:28px 0 10px">Mock test scores</div>
+  <h2 style="font-family:'Nunito',sans-serif;font-weight:800;font-size:18px;margin:28px 0 10px">Mock test scores</h2>
   <sc-if value="{{ hasTests }}" hint-placeholder-val="{{ false }}">
     <div style="background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);border-radius:20px;padding:16px">
       <svg viewBox="0 0 340 130" style="width:100%;display:block">
@@ -1770,15 +1815,15 @@ input,select{font-family:inherit}
     </div>
   </sc-if>
 
-  <div style="font-family:'Nunito',sans-serif;font-weight:800;font-size:18px;margin:28px 0 10px">Everything she does</div>
+  <h2 style="font-family:'Nunito',sans-serif;font-weight:800;font-size:18px;margin:28px 0 10px">Everything she does</h2>
   <button onClick="{{ goActivity }}" style="width:100%;background:var(--tt-bg-e4f2ef);border:1px solid var(--tt-bd-bfe0d8);border-radius:16px;min-height:52px;padding:12px 16px;font-size:15.5px;font-weight:700;color:var(--tt-fg-0a5d50);cursor:pointer;text-align:left">Activity: every answer, session and mock, day by day →</button>
 
   <button onClick="{{ goTips }}" style="width:100%;margin-top:10px;background:var(--tt-bg-fbf1dc);border:1px solid var(--tt-bd-f0d9a8);border-radius:16px;min-height:52px;padding:12px 16px;font-size:15.5px;font-weight:700;color:var(--tt-fg-2a2c33);cursor:pointer;text-align:left">Memory tips and plain explanations: check the AI's words before Catie sees them →</button>
 
-  <div style="font-family:'Nunito',sans-serif;font-weight:800;font-size:18px;margin:28px 0 10px">Flagged for extra revision</div>
+  <h2 style="font-family:'Nunito',sans-serif;font-weight:800;font-size:18px;margin:28px 0 10px">Flagged for extra revision</h2>
   <button onClick="{{ goFlagged }}" style="width:100%;background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);border-radius:16px;min-height:52px;padding:12px 16px;font-size:15.5px;font-weight:700;color:var(--tt-fg-2a2c33);cursor:pointer;text-align:left">{{ flaggedLine }} →</button>
 
-  <div style="font-family:'Nunito',sans-serif;font-weight:800;font-size:18px;margin:28px 0 10px">20 hardest questions</div>
+  <h2 style="font-family:'Nunito',sans-serif;font-weight:800;font-size:18px;margin:28px 0 10px">20 hardest questions</h2>
   <sc-if value="{{ hasHard }}" hint-placeholder-val="{{ false }}">
     <div style="background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);border-radius:20px;padding:4px 18px">
       <sc-for list="{{ hardRows }}" as="h" hint-placeholder-count="5">
@@ -1796,7 +1841,7 @@ input,select{font-family:inherit}
     <div style="background:var(--tt-bg-fff);border:1px dashed var(--tt-bd-d8d0bf);border-radius:20px;padding:22px;text-align:center;color:var(--tt-fg-6e6a5e);font-size:15.5px">Answer some questions first and the tricky ones will show up here.</div>
   </sc-if>
 
-  <div style="font-family:'Nunito',sans-serif;font-weight:800;font-size:18px;margin:28px 0 10px">Question packs</div>
+  <h2 style="font-family:'Nunito',sans-serif;font-weight:800;font-size:18px;margin:28px 0 10px">Question packs</h2>
   <div style="background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);border-radius:20px;padding:4px 18px">
     <div style="display:flex;gap:12px;padding:10px 0 2px;font-size:11.5px;color:var(--tt-fg-b5ae9e);font-weight:700;text-transform:uppercase;letter-spacing:.04em"><span style="flex:1"></span><span style="width:66px;text-align:center">Practise</span><span style="width:66px;text-align:center">Tests</span><span style="width:26px"></span></div>
     <sc-for list="{{ packRows }}" as="p" hint-placeholder-count="4">
@@ -1811,7 +1856,7 @@ input,select{font-family:inherit}
   <label style="display:flex;align-items:center;justify-content:center;width:100%;box-sizing:border-box;margin-top:12px;background:var(--tt-bg-e4f2ef);border:2px dashed var(--tt-bd-0e7c6b);color:var(--tt-fg-0a5d50);border-radius:16px;min-height:52px;font-size:15.5px;cursor:pointer;font-weight:700">Load a question pack (JSON file)…<input type="file" accept=".json,application/json" onChange="{{ importPack }}" style="display:none"></label>
   <div style="font-size:13px;color:var(--tt-fg-6e6a5e);margin-top:8px;line-height:1.5">A pack is a JSON list using the same fields as the exported bank (question, options ×4, correctIndex, explanation, ruleRef, topic 1–14). Questions you write or have a licence for can be loaded here, then switched on or off for practise and tests separately. Packs can also carry a <b>testType</b> field (car, motorcycle, LGV…), so other theory tests drop in later as packs — no redesign needed.</div>
 
-  <div style="font-family:'Nunito',sans-serif;font-weight:800;font-size:18px;margin:28px 0 10px">Subscription</div>
+  <h2 style="font-family:'Nunito',sans-serif;font-weight:800;font-size:18px;margin:28px 0 10px">Subscription</h2>
   <div style="background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);border-radius:20px;padding:18px">
     <div style="font-size:14px;color:var(--tt-fg-6e6a5e);line-height:1.55;margin-bottom:12px">{{ subStatus }}</div>
     <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:6px 0 12px">
@@ -1831,7 +1876,7 @@ input,select{font-family:inherit}
     <div style="font-size:13px;color:var(--tt-fg-6e6a5e);line-height:1.5;margin-top:12px">Use these for family and testers — Always free or Free until a date give access without paying. Suspended and Blocked lock a learner out until you change it back. Switch learner with the chips at the top of this page. Paying subscribers need nothing here.</div>
   </div>
 
-  <div style="font-family:'Nunito',sans-serif;font-weight:800;font-size:18px;margin:28px 0 10px">Account</div>
+  <h2 style="font-family:'Nunito',sans-serif;font-weight:800;font-size:18px;margin:28px 0 10px">Account</h2>
   <div style="background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);border-radius:20px;padding:18px">
     <div style="font-size:14px;color:var(--tt-fg-6e6a5e);line-height:1.55;margin-bottom:12px">{{ cloudStatus }}</div>
     <div style="display:flex;flex-direction:column;gap:10px">
@@ -1856,7 +1901,7 @@ input,select{font-family:inherit}
     </div>
   </div>
 
-  <div style="font-family:'Nunito',sans-serif;font-weight:800;font-size:18px;margin:28px 0 10px">Data</div>
+  <h2 style="font-family:'Nunito',sans-serif;font-weight:800;font-size:18px;margin:28px 0 10px">Data</h2>
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
     <button onClick="{{ exportData }}" style="background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);border-radius:14px;min-height:50px;font-size:15px;cursor:pointer">Export backup</button>
     <label style="background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);border-radius:14px;min-height:50px;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center">Import backup<input type="file" accept=".json,application/json" onChange="{{ importFile }}" style="display:none"></label>
@@ -1870,8 +1915,8 @@ input,select{font-family:inherit}
 <sc-if value="{{ vEditor }}" hint-placeholder-val="{{ false }}">
 <div data-screen-label="Question editor">
   <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
-    <button onClick="{{ goDash }}" style="background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);border-radius:12px;width:44px;height:44px;cursor:pointer;font-size:18px">←</button>
-    <div style="font-family:'Nunito',sans-serif;font-weight:900;font-size:24px;flex:1">Questions</div>
+    <button onClick="{{ goDash }}" aria-label="Back to the dashboard" style="background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);border-radius:12px;width:44px;height:44px;cursor:pointer;font-size:18px">←</button>
+    <h1 tabindex="-1" style="margin:0;font-family:'Nunito',sans-serif;font-weight:900;font-size:24px;flex:1">Questions</h1>
     <button onClick="{{ exportBank }}" style="background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);border-radius:12px;padding:0 14px;height:44px;cursor:pointer;font-size:14px;color:var(--tt-fg-0e7c6b);font-weight:700">Export bank</button>
   </div>
   <select value="{{ edTopic }}" onChange="{{ setEdTopic }}" style="width:100%;padding:12px;border:1px solid var(--tt-bd-e8e1d2);border-radius:12px;font-size:16px;background:var(--tt-bg-fff);margin-bottom:12px">
@@ -1919,10 +1964,10 @@ input,select{font-family:inherit}
 <sc-if value="{{ vPrint }}" hint-placeholder-val="{{ false }}">
 <div data-screen-label="Print">
   <div style="display:flex;align-items:center;gap:10px;margin-bottom:18px">
-    <button onClick="{{ goHome }}" style="background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);border-radius:12px;width:44px;height:44px;cursor:pointer;font-size:18px">←</button>
-    <div style="font-family:'Nunito',sans-serif;font-weight:900;font-size:24px">Print</div>
+    <button onClick="{{ goHome }}" aria-label="Back to home" style="background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);border-radius:12px;width:44px;height:44px;cursor:pointer;font-size:18px">←</button>
+    <h1 tabindex="-1" style="margin:0;font-family:'Nunito',sans-serif;font-weight:900;font-size:24px">Print</h1>
   </div>
-  <div style="font-family:'Nunito',sans-serif;font-weight:800;font-size:17px;margin:8px 0 10px">What would you like?</div>
+  <h2 style="font-family:'Nunito',sans-serif;font-weight:800;font-size:17px;margin:8px 0 10px">What would you like?</h2>
   <div style="display:flex;flex-direction:column;gap:10px">
     <sc-for list="{{ printFormatChoices }}" as="f" hint-placeholder-count="2">
       <button onClick="{{ f.pick }}" style="{{ f.style }}">
@@ -1932,7 +1977,7 @@ input,select{font-family:inherit}
     </sc-for>
   </div>
   <sc-if value="{{ printIsCards }}" hint-placeholder-val="{{ false }}">
-    <div style="font-family:'Nunito',sans-serif;font-weight:800;font-size:17px;margin:18px 0 10px">Which questions?</div>
+    <h2 style="font-family:'Nunito',sans-serif;font-weight:800;font-size:17px;margin:18px 0 10px">Which questions?</h2>
     <select value="{{ printScope }}" onChange="{{ setPrintScope }}" style="width:100%;padding:12px;border:1px solid var(--tt-bd-e8e1d2);border-radius:12px;font-size:16px;background:var(--tt-bg-fff)">
       <sc-for list="{{ printScopeOpts }}" as="s" hint-placeholder-count="3">
         <option value="{{ s.v }}">{{ s.label }}</option>
@@ -1948,8 +1993,8 @@ input,select{font-family:inherit}
 <sc-if value="{{ vSettings }}" hint-placeholder-val="{{ false }}">
 <div data-screen-label="Settings">
   <div style="display:flex;align-items:center;gap:10px;margin-bottom:18px">
-    <button onClick="{{ goHome }}" style="background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);border-radius:12px;width:44px;height:44px;cursor:pointer;font-size:18px">←</button>
-    <div style="font-family:'Nunito',sans-serif;font-weight:900;font-size:24px">Settings</div>
+    <button onClick="{{ goHome }}" aria-label="Back to home" style="background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);border-radius:12px;width:44px;height:44px;cursor:pointer;font-size:18px">←</button>
+    <h1 tabindex="-1" style="margin:0;font-family:'Nunito',sans-serif;font-weight:900;font-size:24px">Settings</h1>
   </div>
   <div style="background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);border-radius:20px;padding:6px 18px">
     <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 0;border-bottom:1px solid var(--tt-bd-f2ede1)">
@@ -1994,7 +2039,7 @@ input,select{font-family:inherit}
     <div style="background:var(--tt-bg-fbeae9);border:1px solid var(--tt-bd-e8b7b4);border-radius:16px;padding:14px 16px;margin-top:12px;font-size:13.5px;color:var(--tt-fg-6e6a5e);line-height:1.55"><b style="color:var(--tt-fg-b8433d)">Why it sounds robotic here:</b> {{ voiceNotice }}</div>
   </sc-if>
   <div style="background:var(--tt-bg-fbf1dc);border:1px solid var(--tt-bd-f0d9a8);border-radius:16px;padding:14px 16px;margin-top:12px;font-size:13.5px;color:var(--tt-fg-6e6a5e);line-height:1.55"><b style="color:var(--tt-fg-2a2c33)">Get a much nicer voice on iPhone or iPad:</b> in the device's Settings app go to Accessibility → Spoken Content → Voices → English (UK) and download an <b>Enhanced</b> or <b>Premium</b> voice such as Kate or Serena. It will then appear in the Voice list above — marked with a ★.</div>
-  <div style="font-family:'Nunito',sans-serif;font-weight:800;font-size:18px;margin:24px 0 10px">My profile</div>
+  <h2 style="font-family:'Nunito',sans-serif;font-weight:800;font-size:18px;margin:24px 0 10px">My profile</h2>
   <div style="background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);border-radius:20px;padding:18px;display:flex;align-items:center;gap:16px">
     <sc-if value="{{ hasAvatar }}" hint-placeholder-val="{{ false }}"><span role="img" aria-label="Profile photo" style="width:64px;height:64px;border-radius:50%;background-image:url({{ avatarSrc }});background-size:cover;background-position:center;flex:none;border:2px solid var(--tt-bd-e8e1d2);display:block"></span></sc-if>
     <sc-if value="{{ noAvatar }}" hint-placeholder-val="{{ true }}"><span style="width:64px;height:64px;border-radius:50%;background:#0E7C6B;color:#fff;display:flex;align-items:center;justify-content:center;font-family:'Nunito',sans-serif;font-weight:900;font-size:26px;flex:none">{{ learnerInitial }}</span></sc-if>
@@ -2030,7 +2075,7 @@ input,select{font-family:inherit}
       <button onClick="{{ redoOnboarding }}" style="flex:none;background:var(--tt-bg-e4f2ef);color:var(--tt-fg-0a5d50);border:none;border-radius:12px;min-height:44px;padding:0 16px;font-size:14.5px;font-weight:700;cursor:pointer">Run it again</button>
     </div>
   </div>
-  <div style="font-family:'Nunito',sans-serif;font-weight:800;font-size:18px;margin:24px 0 10px">Profiles</div>
+  <h2 style="font-family:'Nunito',sans-serif;font-weight:800;font-size:18px;margin:24px 0 10px">Profiles</h2>
   <div style="background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);border-radius:20px;padding:18px;display:flex;gap:12px">
     <label style="flex:1;font-size:13.5px;color:var(--tt-fg-6e6a5e)">Learner's name<input value="{{ learnerName }}" name="learner" onChange="{{ nameChange }}" style="display:block;width:100%;box-sizing:border-box;margin-top:4px;padding:11px;border:1px solid var(--tt-bd-e8e1d2);border-radius:10px;font-size:16px"></label>
     <label style="flex:1;font-size:13.5px;color:var(--tt-fg-6e6a5e)">Parent's name<input value="{{ parentName }}" name="parent" onChange="{{ nameChange }}" style="display:block;width:100%;box-sizing:border-box;margin-top:4px;padding:11px;border:1px solid var(--tt-bd-e8e1d2);border-radius:10px;font-size:16px"></label>
@@ -2040,7 +2085,7 @@ input,select{font-family:inherit}
   <!-- Your data (issue #9): a copy of everything the server keeps for this account, the age
        answer, and deleting the account. TTPrivacy has the words; backend.js TTAccount does the
        work, and the server's own sentence is shown when it refuses. -->
-  <div style="font-family:'Nunito',sans-serif;font-weight:800;font-size:18px;margin:24px 0 10px">Your data</div>
+  <h2 style="font-family:'Nunito',sans-serif;font-weight:800;font-size:18px;margin:24px 0 10px">Your data</h2>
   <section aria-label="Your data" style="background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);border-radius:20px;padding:6px 18px">
     <sc-if value="{{ privSignedOut }}" hint-placeholder-val="{{ false }}">
       <div style="padding:14px 0;font-size:14.5px;color:var(--tt-fg-6e6a5e);line-height:1.5">Sign in to download or delete what the server keeps for your account. Without an account, progress is kept on this device only.</div>
@@ -2091,7 +2136,7 @@ input,select{font-family:inherit}
   </section>
   <div style="font-size:13px;color:var(--tt-fg-6e6a5e);line-height:1.5;margin-top:8px">What is kept, and why: <a href="legal/privacy.html#your-data" target="_blank" rel="noopener">Privacy</a></div>
   <!-- Help and legal pages (TTWelcome.LINKS), each in its own tab, and the DVSA line -->
-  <div style="font-family:'Nunito',sans-serif;font-weight:800;font-size:18px;margin:24px 0 10px">Help and legal</div>
+  <h2 style="font-family:'Nunito',sans-serif;font-weight:800;font-size:18px;margin:24px 0 10px">Help and legal</h2>
   <nav aria-label="Help and legal" style="background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);border-radius:20px;padding:4px 18px;display:flex;flex-direction:column">
     <sc-for list="{{ infoLinks }}" as="l" hint-placeholder-count="4"><a href="{{ l.href }}" target="_blank" rel="noopener" style="{{ l.rowStyle }}"><span>{{ l.label }}</span><span aria-hidden="true" style="color:var(--tt-fg-b5ae9e)">›</span></a></sc-for>
   </nav>
@@ -2129,6 +2174,7 @@ input,select{font-family:inherit}
 <!-- ============ PRINT AREA ============ -->
 <sc-if value="{{ printPreview }}" hint-placeholder-val="{{ false }}">
 <div data-screen-label="Print preview" style="background:var(--tt-bg-fff);color:var(--tt-fg-111);font-family:'Atkinson Hyperlegible',sans-serif">
+  <h1 class="tt-sr" tabindex="-1">Print preview</h1>
   <div class="app-chrome" style="max-width:680px;margin:0 auto;padding:14px 20px;display:flex;gap:10px;align-items:center">
     <button onClick="{{ printBack }}" style="background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);border-radius:12px;padding:10px 16px;cursor:pointer;font-size:15px">← Back</button>
     <button onClick="{{ printNow }}" style="background:#0E7C6B;color:#fff;border:none;border-radius:12px;padding:10px 20px;cursor:pointer;font-size:15px;font-weight:700">Print</button>
@@ -2207,7 +2253,7 @@ input,select{font-family:inherit}
 </div>
 </sc-if>
 
-</div>
+</main>
 
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props="{&quot;defaultSessionLength&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[10,20,30],&quot;default&quot;:10,&quot;tsType&quot;:&quot;number&quot;,&quot;section&quot;:&quot;Behaviour&quot;},&quot;speechRate&quot;:{&quot;editor&quot;:&quot;range&quot;,&quot;min&quot;:0.7,&quot;max&quot;:1.3,&quot;step&quot;:0.05,&quot;default&quot;:0.95,&quot;unit&quot;:&quot;x&quot;,&quot;tsType&quot;:&quot;number&quot;,&quot;section&quot;:&quot;Behaviour&quot;},&quot;showSignImages&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Behaviour&quot;}}">
