@@ -753,3 +753,56 @@ test('adventure record: also takes an adventureScore result', () => {
   const p = coach.adventureRecord({}, 'w2c', coach.adventureScore({ correct: 9, total: 10 }), 7);
   assert.deepEqual(p.stages.w2c, { best: 0.9, stars: 2, passed: true, plays: 1, lastAt: 7 });
 });
+
+// ---------- Adventure progress across devices (issue #38 item 1) ----------
+// The bug: syncing kept the newer copy of her whole record, so a device that had never played
+// Adventure (a newer record with no stars) wiped the stars saved on the other device.
+// mergeAdventure joins the two copies stage by stage instead, like mergeFlags does for flags.
+
+test('adventure merge: a stage played on either device survives a sync', () => {
+  const phone = { stages: { w1s1: { best: 1, stars: 3, passed: true, plays: 1, lastAt: 100 } } };
+  const ipad = { stages: { w1s2: { best: 6 / 7, stars: 1, passed: true, plays: 2, lastAt: 200 } } };
+  const m = coach.mergeAdventure(phone, ipad);
+  assert.deepEqual(Object.keys(m.stages).sort(), ['w1s1', 'w1s2']);
+  assert.deepEqual(m.stages.w1s1, phone.stages.w1s1, 'a stage on one device only comes across as it was');
+  assert.deepEqual(m.stages.w1s2, ipad.stages.w1s2);
+  // A device that never played (no progress at all) takes nothing away.
+  assert.deepEqual(coach.mergeAdventure(undefined, phone), phone);
+  assert.deepEqual(coach.mergeAdventure(phone, {}), phone);
+});
+
+test('adventure merge: the same stage keeps the best of both copies', () => {
+  // The phone did better and passed; the iPad played it more often, and more recently, but failed.
+  const phone = { stages: { w1s1: { best: 1, stars: 3, passed: true, plays: 2, lastAt: 100 } } };
+  const ipad = { stages: { w1s1: { best: 4 / 7, stars: 0, passed: false, plays: 5, lastAt: 300 } } };
+  const want = { best: 1, stars: 3, passed: true, plays: 5, lastAt: 300 };
+  assert.deepEqual(coach.mergeAdventure(phone, ipad).stages.w1s1, want, 'best score, most stars, passed once passed, most plays, latest play');
+  assert.deepEqual(coach.mergeAdventure(ipad, phone).stages.w1s1, want, 'the same whichever device syncs first');
+  // Merging a copy with itself changes nothing.
+  assert.deepEqual(coach.mergeAdventure(phone, phone), phone);
+});
+
+test('adventure merge: the merged progress opens the stages either device passed', () => {
+  const route = coach.adventureRoute(advBank({ 1: 14 }));   // w1s1, w1s2, w1c
+  const phone = coach.adventureRecord({}, 'w1s1', { correct: 7, total: 7 }, 1);
+  const ipad = coach.adventureRecord({}, 'w1s1', { correct: 2, total: 7 }, 2);
+  assert.equal(coach.adventureStatus(route, ipad).current, 'w1s1', 'on its own the iPad is still on lesson 1');
+  assert.equal(coach.adventureStatus(route, coach.mergeAdventure(phone, ipad)).current, 'w1s2', 'merged, lesson 2 is open');
+});
+
+test('adventure merge: missing or junk progress is survived, and neither input is changed', () => {
+  for (const junk of [undefined, null, 'text', 5, [], { stages: 'x' }, { stages: null }]) {
+    assert.deepEqual(coach.mergeAdventure(junk, junk), { stages: {} }, 'junk: ' + JSON.stringify(junk));
+  }
+  const phone = { stages: { w1s1: { best: 1, stars: 3, passed: true, plays: 1, lastAt: 100 } }, note: 'kept' };
+  const ipad = { stages: { w1s1: { best: 0.5, stars: 0, passed: false, plays: 3, lastAt: 50 } } };
+  const before = JSON.stringify([phone, ipad]);
+  const m = coach.mergeAdventure(phone, ipad);
+  assert.equal(JSON.stringify([phone, ipad]), before, 'the inputs are not changed');
+  m.stages.w1s1.stars = 0;
+  assert.equal(phone.stages.w1s1.stars, 3, 'the result is a new object, not the input');
+  assert.equal(m.note, 'kept', 'other keys in her progress are kept');
+  // A stage record with a missing or junk number reads as 0 (like adventureStatus does).
+  assert.deepEqual(coach.mergeAdventure({ stages: { w1s1: { stars: 'x' } } }, { stages: { w1s1: { plays: 1, lastAt: 9 } } }).stages.w1s1,
+    { best: 0, stars: 0, passed: false, plays: 1, lastAt: 9 });
+});
