@@ -81,7 +81,10 @@ returns boolean language sql security definer stable set search_path = public as
   select exists (
     select 1 from public.entitlements e
     where e.user_id = uid
-      and ( e.status = 'comp'
+      and ( ( e.status = 'comp'
+              -- Free access given by the admin: for good (no end) or until a moment
+              -- (admin_set_access below, issue #42).
+              and ( e.current_period_end is null or e.current_period_end > now() ) )
             or ( e.status in ('active','trialing')
                  -- A null period end is only honoured briefly: it means the webhook
                  -- couldn't read the renewal date, and must not grant access forever.
@@ -172,8 +175,8 @@ create policy "read own events" on public.events for select
 -- The Activity screen names each account, so the admin may read every profile.
 create policy "admin reads profiles" on public.profiles for select using (public.is_admin(auth.uid()));
 
--- Entitlements are never written from the app — only by the Stripe webhook,
--- which uses the service-role key and bypasses these policies.
+-- Nobody writes entitlements through these tables' policies: the Stripe webhook uses the
+-- service-role key, and the admin's free access goes through admin_set_access (below).
 
 -- ---------- privacy: age, data export, account deletion (issue #4) ----------
 -- Expand-only: new nullable/defaulted columns and new functions. Nothing is dropped.
@@ -280,6 +283,99 @@ end $$;
 revoke execute on function public.delete_my_account() from public, anon;
 grant  execute on function public.delete_my_account() to authenticated;
 
+-- ---------- the admin gives an account free access (issue #42) ----------
+-- Admin → Progress dashboard → Accounts calls these. Until Stripe is set up, free access
+-- is the only way into the full question bank for anyone but the admin.
+-- Same shape as delete_my_account: the work is a SECURITY DEFINER function in "private"
+-- (not exposed by the API) behind a SECURITY INVOKER wrapper in public. Both refuse
+-- anyone but the admin. Applied to the live project as migration admin_free_access.
+--
+-- admin_accounts(): every account with its access, for the list.
+--   paying = a Stripe subscription that is still running (the webhook owns that row).
+create or replace function private.admin_accounts()
+returns table (id uuid, email text, name text, role text, status text,
+               free_until timestamptz, paying boolean, last_seen timestamptz)
+language plpgsql security definer stable set search_path = '' as $$
+begin
+  if not public.is_admin(auth.uid()) then
+    raise exception using errcode = 'P0001', hint = 'not_admin',
+      message = 'Only the admin account can see the accounts list. Sign in as the admin.';
+  end if;
+  return query
+    select p.id, p.email, p.name, p.role, coalesce(e.status, 'none'),
+           case when e.status = 'comp' then e.current_period_end end,
+           coalesce(e.stripe_subscription_id is not null
+                    and e.status not in ('canceled', 'incomplete_expired'), false),
+           u.last_sign_in_at
+    from public.profiles p
+    left join public.entitlements e on e.user_id = p.id
+    left join auth.users u on u.id = p.id
+    order by p.created_at;
+end $$;
+revoke execute on function private.admin_accounts() from public, anon;
+grant  execute on function private.admin_accounts() to authenticated;
+
+create or replace function public.admin_accounts()
+returns table (id uuid, email text, name text, role text, status text,
+               free_until timestamptz, paying boolean, last_seen timestamptz)
+language plpgsql security invoker stable set search_path = '' as $$
+begin
+  return query select * from private.admin_accounts();
+end $$;
+revoke execute on function public.admin_accounts() from public, anon;
+grant  execute on function public.admin_accounts() to authenticated;
+
+-- admin_set_access(target, free, until):
+--   free = true  -> free access, for good (until null) or until that moment. The app sends
+--                   the start of the day AFTER the date picked, in the admin's own time,
+--                   so the day picked is included and no time zone is guessed here.
+--   free = false -> takes free access away (only a 'comp' row changes; nothing else).
+-- Refuses: anyone but the admin; an account that no longer exists; an end already past;
+-- an account paying through Stripe (its access follows the subscription).
+create or replace function private.admin_set_access(target uuid, free boolean, until timestamptz default null)
+returns void language plpgsql security definer set search_path = '' as $$
+begin
+  if not public.is_admin(auth.uid()) then
+    raise exception using errcode = 'P0001', hint = 'not_admin',
+      message = 'Only the admin account can change who has access. Sign in as the admin.';
+  end if;
+  if not exists (select 1 from auth.users u where u.id = target) then
+    raise exception using errcode = 'P0001', hint = 'no_account',
+      message = 'That account no longer exists. Press Refresh to reload the list.';
+  end if;
+  if free and until is not null and until <= now() then
+    raise exception using errcode = 'P0001', hint = 'past_date',
+      message = 'That date has already gone. Pick today or a later day.';
+  end if;
+  if exists (select 1 from public.entitlements e
+             where e.user_id = target and e.stripe_subscription_id is not null
+               and e.status not in ('canceled', 'incomplete_expired')) then
+    raise exception using errcode = 'P0001', hint = 'paying',
+      message = 'This account pays through Stripe, so its access follows the subscription. Cancel the subscription in Stripe first, then give free access.';
+  end if;
+  if free then
+    insert into public.entitlements (user_id, status, plan, current_period_end, cancel_at_period_end, updated_at)
+    values (target, 'comp', 'comp', until, false, now())
+    on conflict (user_id) do update
+      set status = 'comp', plan = 'comp', current_period_end = excluded.current_period_end,
+          cancel_at_period_end = false, updated_at = now();
+  else
+    update public.entitlements
+      set status = 'none', plan = null, current_period_end = null, updated_at = now()
+      where user_id = target and status = 'comp';
+  end if;
+end $$;
+revoke execute on function private.admin_set_access(uuid, boolean, timestamptz) from public, anon;
+grant  execute on function private.admin_set_access(uuid, boolean, timestamptz) to authenticated;
+
+create or replace function public.admin_set_access(target uuid, free boolean, until timestamptz default null)
+returns void language plpgsql security invoker set search_path = '' as $$
+begin
+  perform private.admin_set_access(target, free, until);
+end $$;
+revoke execute on function public.admin_set_access(uuid, boolean, timestamptz) from public, anon;
+grant  execute on function public.admin_set_access(uuid, boolean, timestamptz) to authenticated;
+
 -- ---------- backfill: repair rows for accounts that existed before this ran ----------
 -- The sign-up trigger only covers NEW accounts. This is idempotent — safe to
 -- re-run any time (and the fallback if the trigger couldn't be attached above).
@@ -295,6 +391,7 @@ insert into public.entitlements (user_id)
 -- update public.profiles set role = 'admin' where email = 'you@example.com';
 
 -- ---------- give someone free access by hand (family, testers) ----------
+-- Easier: Admin → Progress dashboard → Accounts (admin_set_access above). By hand:
 -- insert into public.entitlements (user_id, status, plan)
 --   select id, 'comp', 'comp' from auth.users where email = 'kid@example.com'
 --   on conflict (user_id) do update set status = 'comp', plan = 'comp', updated_at = now();

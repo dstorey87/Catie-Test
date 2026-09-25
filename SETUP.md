@@ -97,7 +97,9 @@ When you buy the product domain later, swap the sender address.
 
 ## Step 6 — [CLAUDE] Verify and close the paywall
 
-Claude then: smoke-tests the live site with Playwright; confirms the server bank
+Claude then: sets `payments: true` in `config.js` (until then the app offers no
+Subscribe, Manage subscription or "I've paid" buttons: the only way in is free access
+from Admin → Progress dashboard → Accounts); smoke-tests the live site with Playwright; confirms the server bank
 is gated (anonymous and unpaid accounts get nothing); deletes the public
 `questions-1..5.json` + the local fallback (Deploy 2 — after this, the full bank
 exists only behind the paywall); then drives the full end-to-end in test mode:

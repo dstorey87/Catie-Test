@@ -7,6 +7,12 @@ window.TT_CONFIG = {
   url: "https://njajxuzhgxqcjfhjpkyp.supabase.co",        // e.g. https://abcdefghijklm.supabase.co
   anonKey: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5qYWp4dXpoZ3hxY2pmaGpwa3lwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODcwODM1OTgsImV4cCI6MjEwMjY1OTU5OH0.nybVC3d3z1BMa4TwAvUI46pHZB01iCCggGRrvix-srg",    // sb_publishable_… (or a legacy anon key)
 
+  // Payments master switch. false = no Subscribe, Manage subscription or "I've paid"
+  // buttons anywhere (they could only fail): the paywall says to ask the admin, who gives
+  // free access from Admin → Progress dashboard → Accounts. Set true ONLY once Stripe is set
+  // up end to end (SETUP.md §3: the webhook, plus a Payment Link or the edge functions).
+  payments: false,
+
   // Stripe Payment Links — the quick way to charge (SETUP.md §3, route A).
   // Leave blank to use the create-checkout Edge Function instead (route B).
   payLinkMonthly: "",
