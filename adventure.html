@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<!-- ===== Adventure mode (issue #27) =====
+     A Duolingo-style route through the 14 DVSA topics: each topic is a world, each world is a
+     road of short lessons and a checkpoint. It is its own page, but it plays the SAME bank and
+     saves into the SAME learner as the app (see adventure/adventure.js for how). -->
+<title>Adventure: Theory Trainer</title>
+<meta name="description" content="Adventure mode: drive through the 14 theory test topics one stage at a time.">
+<meta name="theme-color" content="#0E7C6B">
+<meta name="robots" content="noindex">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon.png">
+<!-- ===== The app's fonts: Nunito for headings, Atkinson Hyperlegible for reading ===== -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@700;800;900&family=Atkinson+Hyperlegible:wght@400;700&display=swap">
+<link rel="stylesheet" href="adventure/adventure.css">
+<!-- ===== Scripts =====
+     adventure.js runs first, here in the head, so the light/dark choice saved in the app is
+     applied before anything is drawn. The rest are "defer": they load without blocking, run
+     in this order, and are all ready before adventure.js starts the page.
+       config.js  - which server the app talks to
+       backend.js - TTBank (the question bank, same server + offline copy as the app), TTTrack (events)
+       coach.js   - TTCoach: the adventure route, unlocking, scoring and stars (every number)
+       signs.js   - the app's road-sign drawings, for questions about a sign -->
+<script src="adventure/adventure.js"></script>
+<script src="config.js" defer></script>
+<script src="backend.js" defer></script>
+<script src="coach.js" defer></script>
+<script src="signs.js" defer></script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to the adventure</a>
+
+<!-- ===== Top bar: back to the app, who is playing, stars so far ===== -->
+<header class="top">
+  <a class="back" href="Theory%20Trainer.dc.html">
+    <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    <span>Theory Trainer</span>
+  </a>
+  <div class="who" id="who" hidden>
+    <span class="avatar" id="who-initial" aria-hidden="true"></span>
+    <span id="who-name"></span>
+  </div>
+  <div class="stat" id="stars-total" hidden></div>
+</header>
+
+<!-- ===== Everything below is drawn by adventure/adventure.js =====
+     One of these views shows at a time: loading, a message (no learner / no questions),
+     the map, a stage being played, or the results of a stage. -->
+<main id="main" tabindex="-1">
+  <section id="view-loading" class="view center">
+    <div class="spinner" aria-hidden="true"></div>
+    <p>Loading your adventure…</p>
+  </section>
+  <section id="view-message" class="view center" hidden></section>
+  <section id="view-map" class="view" hidden></section>
+  <section id="view-play" class="view" hidden></section>
+  <section id="view-results" class="view" hidden></section>
+</main>
+
+<!-- Confetti for a passed stage (not drawn when the learner prefers less movement) -->
+<canvas id="confetti" aria-hidden="true"></canvas>
+<!-- Short spoken-style messages for screen readers (locked stage, flagged, and so on) -->
+<div id="announce" class="sr-only" aria-live="polite"></div>
+<noscript><p class="noscript">Adventure mode needs JavaScript turned on. <a href="Theory%20Trainer.dc.html">Open the app</a> instead.</p></noscript>
+</body>
+</html>
