@@ -62,7 +62,7 @@ branch: that happens once, at promotion.
 - **Only questions and answers from the bank** (Darren's standing rule, REQUIREMENTS.md top).
   Nothing may invent a question, answer or fact. AI text (memory tips) is drafted from the
   question's own words, machine-checked, and shown only once the admin approves it.
-- Answer options are `div role="button"` (they contain a read-aloud button): find them in
+- Answer options are `div role="button"` (their read-aloud button sits beside them, not inside): find them in
   browser checks by name, `getByRole('button', {name: /^Answer A:/})`.
 - The `?paid=1` Stripe return URL and the `%20` in `Theory%20Trainer.dc.html` are
   load-bearing: edge functions allowlist `origin + pathname` and must keep the `%20`.

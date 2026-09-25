@@ -1,6 +1,6 @@
 # Theory Trainer — request checklist
 
-Last updated: 2026-09-25 (v12).
+Last updated: 2026-09-25 (v13).
 
 States: ✅ done & verified · 🟡 built, not yet seen working for real · ⚠️ built, needs your account/keys to go live · 📋 your step (minutes) · ❌ not possible, honest alternative given.
 
@@ -12,8 +12,9 @@ States: ✅ done & verified · 🟡 built, not yet seen working for real · ⚠�
 - ✅ **My answers**: every question she has answered (practice and mock), newest first, with what she said and the right answer; filter wrong/right, or **Same wrong answer again**; tick any → practise them, make a timed or untimed test from them, or get more like them
 - ✅ **More like this**: after any practice answer (slots similar questions in next), on each wrong mock answer, on every My answers row, and "More like the ones I missed" at the end of a session
 - ✅ Duolingo-style loop: daily goal, day streak, XP + levels, "Today's lesson" remix
+- ✅ **Adventure mode** (v13, issue #27): https://dstorey87.github.io/Catie-Test/adventure.html — a Duolingo-style route through the 14 topics, drawn as a winding road. Each topic is a world of 7-question lessons and a 10-question checkpoint (70 stages with today's bank). 80% right passes a stage and opens the next; stars at 80%, 90% and 100%; any passed stage can be replayed; a missed question comes back once; flags show in her Flagged screen. How to use it: choose the learner in the app, then Home → **Adventure** (just under Today's lesson) → tap the stop with the car on it → Start. Progress is saved in her record under `adventure` (best score, stars, plays) and the app keeps it when it saves; answers and XP join her normal ones. It opens offline (in `sw.js` CORE). On the free sample it says "Sign in to the app to unlock every world". Test: `node --test tests/coach.test.js tests/adventure-page.test.js`; in a browser, see How to test
 - ✅ Insights after every session, readiness dial (its number shows again since v12), topic traffic-lights, mock trend, 20 hardest, external mock logging
-- ✅ Notes on any screen (on question screens it is a "My notes" button under the answers), question flagging (kept until she un-flags; her own Flagged screen), revision list, printable answer book / flashcards / test paper
+- ✅ Notes on any screen (the **My notes** button: on a phone, and on every question, it is at the bottom of the screen; on a wide screen it floats beside the page; since v13 it never covers a control), question flagging (kept until she un-flags; her own Flagged screen), revision list, printable answer book / flashcards / test paper
 - ✅ The coach (`coach.js`): Today's lesson is a drill built from her answers; "Keeps tripping you up" shows what she keeps missing, the wrong answer she keeps choosing (and how often), and a memory tip
 - ✅ **Quick setup** on a learner's first open: test date, questions a day, reminder time. Settings → Quick setup → Run it again. It stores the existing settings (`examDate`, `dailyGoal`, `remindHour`/`remindOn`) plus `onboardedAt`
 - ✅ **What's new** card on Home, once per `sw.js` VERSION, for learners who were here before it (Got it stores `settings.seenVersion`). At every release rewrite `TTWelcome.NEWS` (top of `Theory Trainer.dc.html`); `node --test` fails until you do
@@ -28,6 +29,7 @@ States: ✅ done & verified · 🟡 built, not yet seen working for real · ⚠�
 - ✅ Question editor with search, sign picker, pack import, bank export
 - ✅ Test-date countdown (it also says "Today's plan: N questions"); accessibility (text size, dyslexia font, high contrast, reduced motion)
 - ✅ Dark mode: Settings → Appearance (match device / light / dark), per device; printing stays light
+- 🟡 **Accessibility, WCAG 2.2 AA** (v13, issues #10 and #32): every app screen (learner and admin) and the help, about and legal pages pass axe-core's automated WCAG 2.0, 2.1 and 2.2 A and AA checks at 390px and 1280px, light and dark. It works by keyboard alone; ticks and crosses show right and wrong; all text reaches 4.5:1 in both themes. Not done: a check by a person using a real screen reader (VoiceOver, TalkBack or NVDA), so not verified. Test: `node --test tests/app-files.test.js` (the `#10` tests); in a browser, switch the device to dark mode or reduce motion, or Tab through a practice session and a mock
 - ✅ Works offline; a test in progress survives a reload or a flat battery
 - ✅ Help, About, Privacy and Terms links on both sign-in screens and in Settings → Help and legal (Help on Home too); the "not affiliated with the DVSA" line on both sign-in screens and in Settings
 
@@ -92,20 +94,26 @@ States: ✅ done & verified · 🟡 built, not yet seen working for real · ⚠�
 - 📋 One-time per iPhone/iPad: Settings → Accessibility → Spoken Content → Voices → English (UK) → download an Enhanced voice
 
 ## How to test
-- `node --test` runs every test (291 at v12); CI runs it on every pull request and every push to `develop` and `main`
-- In a browser: serve the repo (`python -m http.server <port> --bind 127.0.0.1`, never port 8765) and drive it with `tests/browser/harness.js` at 390px and 1280px, light and dark. The harness learner has no answers, so tapping Catie opens the quick setup: tap Skip, or seed her as set up with `seed: {'theoryTrainer.d.u1': JSON.stringify({settings: {learnerName: 'Catie', onboardedAt: '2026-09-24'}})}`. Pass `birthYear: null` to see the age question; route `/rest/v1/rpc/export_my_data` and `/rest/v1/rpc/delete_my_account` to fake the server's answers; give bank rows `plain_explanation` + `plain_status: 'approved'` to see Explain it differently; seed a learner with answers to see the prediction, the study plan and the "you keep choosing" lines
+- `node --test` runs every test (367 at v13); CI runs it on every pull request and every push to `develop` and `main`
+- In a browser: serve the repo (`python -m http.server <port> --bind 127.0.0.1`, never port 8765) and drive it with `tests/browser/harness.js` at 390px and 1280px, light and dark. The harness learner has no answers, so tapping Catie opens the quick setup: tap Skip, or seed her as set up with `seed: {'theoryTrainer.d.u1': JSON.stringify({settings: {learnerName: 'Catie', onboardedAt: '2026-09-24'}})}`. Pass `birthYear: null` to see the age question; route `/rest/v1/rpc/export_my_data` and `/rest/v1/rpc/delete_my_account` to fake the server's answers; give bank rows `plain_explanation` + `plain_status: 'approved'` to see Explain it differently; seed a learner with answers to see the prediction, the study plan and the "you keep choosing" lines. For Adventure: open the app through the harness (it seeds a signed-in learner), then tap Adventure on Home or go to `/adventure.html`
 
 ## What's left
 - 📋 Load the plain-explanation drafts into Supabase as `draft`, then approve them in Admin → Memory tips → Plain explanations. Until then no learner sees Explain it differently
 - 📋 Approve or reject the 44 re-drafted memory tips (and the ones listed under Local AI)
 - Run the delete-account and age flows once from the app against the live project with a throwaway account (not verified there yet)
-- `legal/privacy.html` still says the export and delete buttons and the age question are "not built yet", and `legal/terms.html` says the same about the age question; all three are built since v12. The privacy page's activity-log list also doesn't name "Explain it differently" taps or plain-explanation reviews. Needs a Pages-lane fix
+- `legal/privacy.html`'s activity-log list doesn't name "Explain it differently" taps, plain-explanation reviews, or Adventure stages started and finished (its old "not built yet" wording was fixed at v12). Needs a Pages-lane fix
+- Adventure (#27): with the app open in another tab, the app doesn't notice an Adventure save until it is reopened, so answers, XP and flags from Adventure can be saved over (Adventure progress itself is safe). Adventure answers don't count toward the daily goal or streak yet. The page doesn't follow the app's text size, dyslexia font or read-aloud yet
+- Adventure: if a learner unlocks more packs, lessons are recut, and saved progress (kept by stage id) then belongs to lessons whose questions have partly changed. With the full bank the route is fixed
+- Two copies to make one (Coach lane, `coach.js`): the Adventure stars total is counted by the page (`starsSummary`) and by the Home card; the scaled mock pass mark is worked out in `coach.js` (`Math.ceil(total * passMark / mockSize)`) and in the app's `TTScreen.passMark`. The 14 topic names are in both `TTCoach.TOPIC_NAMES` and the app's `TOPICS` on purpose (the app keeps its names if `coach.js` fails to load); a test fails if they ever differ
+- The chart's "pass 43" label and the dashboard's "Log a mock" check (`score>=43`) use 43 as a fixed number; that is right for 50-question mocks
+- `help/img`: the 390px screenshots other than `settings.png` and `mock-intro.png` (Home, My Progress and others) still show the old round notes button in the corner. Retaking them needs the guide's example learner, whose seeded data is not in the repo (not verified that it exists anywhere)
+- Accessibility: no screen-reader check by a person (above). At 320px with the app's biggest text size, a few screens scroll sideways slightly (Road signs 14px, Mock test intro 12px, Practise setup 7px, Question editor 6px, Settings 2px, My Progress and the dashboard 1px); WCAG's 320px benchmark uses browser zoom, which passes. A flagged, answered mock square shows only the flag on screen (its spoken name says both)
 - ⚠️ Before charging anyone: a real operator name, address and contact email (and company and ICO numbers, if they apply), a legal review, and Darren's yes or no on the sample choices: lawful bases, liability wording, 30 days' notice of price changes, a full refund within 14 days of the first payment until checkout asks for the waiver, full refunds for wrong charges, a 5-working-day reply to refund emails
 - Not built: change email and change password while signed in; streak repair; the weekly summary email; grouping misconceptions by meaning
 - t13q22's explanation says "come off the gas" (US wording; UK: accelerator). It needs a confirmed finding before it is changed
 - Known: the default reminder hour is 6pm, which isn't one of the four time buttons, so a reminder switched on in Settings without picking a time lights no button (the quick setup always sets one of the four)
 - The about page's pictures leave out the readiness dial because its number didn't show; it shows since v12, so they can be re-taken with it
-- The tuning values (14-day half-life, 50-answer minimum, 10-answer what-if, 7-day freeze, hold 2, 70% for the badge nudge, pass-chance colours at 70% and 40%) are choices, not measurements
+- The tuning values (14-day half-life, 50-answer minimum, 10-answer what-if, 7-day freeze, hold 2, 70% for the badge nudge, pass-chance colours at 70% and 40%; Adventure's 7-question lessons, 10-question checkpoint, 80% pass and stars at 80/90/100%) are choices, not measurements
 - Not started, and not yet GitHub issues (carried over from the old sections table): React and Babel copied to this site and precached, for true offline; manifest polish (maskable icon, id/scope, viewport tags, offline fallback page); removing the public `questions-1..5.json` and the app's `local()` path (note `tests/bank.test.js` reads those files)
 
 ## Work in progress
@@ -113,3 +121,4 @@ Tracked as GitHub issues, one per section: https://github.com/dstorey87/Catie-Te
 
 ## Timeline
 - 2026-09-25 — v12 (`v12-2026-09-25`): quick setup, What's new, the help, about and sample legal pages, pass prediction, what to work on, study plan, streak freezes, family board, Your data and the age question, Explain it differently (waiting for approved text), 44 bank answers corrected to UK rules, and the #12 layout bugs fixed. Earlier versions: `CHANGELOG.md`
+- 2026-09-25 — v13 (`v13-2026-09-25`): Adventure mode (14 worlds and 70 stages, a Home card, works offline), the WCAG 2.2 AA accessibility audit with every automated finding fixed (no screen-reader check by a person yet), the notes button no longer covering controls, and the #32 wording, chart and page fixes. 367 tests

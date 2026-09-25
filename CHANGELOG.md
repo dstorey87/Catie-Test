@@ -3,6 +3,137 @@
 Newest first. The version is the service-worker `VERSION` in `sw.js` — it changes on every
 deploy that touches the app's cached files. Earlier history: `git log`.
 
+## v13-2026-09-25
+The number after a line is the GitHub issue where the work is described.
+
+### Adventure mode
+- **A new Adventure page**, `adventure.html` (https://dstorey87.github.io/Catie-Test/adventure.html):
+  a Duolingo-style route through the 14 theory test topics. Each topic is a world, drawn as a
+  winding road with its stages on it: round lesson stops and a checkpoint flag (a trophy once
+  passed). World tabs and arrows move between worlds; the top bar shows her stars out of all
+  there are. It links back to the app. (#27)
+- **An Adventure card on Home**, just under Today's lesson: a little map picture, the world she
+  is on ("World 3 · Safety and your vehicle"), how many of its stages she has passed, and her
+  stars out of every star on the route. Tapping it opens the Adventure page. Before she has
+  played it says "Start your road trip through 14 topics"; once every stage is passed, "Every
+  world done". (#27)
+- **The route** (`coach.js` `adventureRoute`): one world per topic that has questions, in topic
+  order. Inside a world the questions are sorted by id and cut into lessons of 7; a last lesson
+  shorter than 4 joins the one before it. Each world ends with a 10-question checkpoint picked
+  evenly across the whole world, so it tests every lesson. Only bank questions are used, and the
+  same bank always gives the same route: with today's bank, 14 worlds of 4 lessons (7, 7, 7 and
+  6 questions) and a checkpoint, 70 stages in all. (#27)
+- **Unlocking and replaying** (`adventureStatus`): the first stage is always open; every other
+  stage opens once the one before it is passed, across worlds too. A passed stage stays open to
+  replay. Locked stages are grey with a padlock and say what to pass first; the stage she is up
+  to pulses, with a little car on it and a "Start" label. (#27)
+- **Pass mark and stars** (`adventureScore`, `adventureRecord`): 80% right passes. Stars: 1 at
+  80%, 2 at 90%, 3 at 100%, and only with a pass. A replay keeps her best score and most stars,
+  and a pass stays a pass. Every Adventure number is in `TTCoach.ADVENTURE`; the page types
+  none of them. They are choices from Darren's brief, not measurements. (#27)
+- **Playing a stage**: a progress bar, one question at a time with its options in a new order
+  each play, and instant feedback: green "Nice!" with +10 XP, or red "Not quite" with the right
+  answer. Both show the bank's explanation and rule reference, and the memory tip when the admin
+  has approved one. A combo counter shows right answers in a row. A question she gets wrong
+  comes back once before the stage ends; the score counts first tries only. Answer with a tap or
+  the keys 1-4 or A-D; Enter moves on. Quit asks first ("Keep going" / "Leave"). (#27)
+- **Results**: her score, stars that pop in, pass or fail with encouraging words, confetti on a
+  pass (none when the device or the app's Reduce motion setting asks for less movement), and
+  Next stage / Try again / Map. A pass that opens the next world says so. (#27)
+- **Flags**: a Flag button on every question uses the app's own flags, so a question flagged in
+  Adventure is on her Flagged screen and syncs the same way. (#27)
+- **Saved with her learner**: each answer joins her answers (`src: 'adventure'`), +10 XP for each
+  right answer as in the app, and her route progress under `adventure`. Activity gets the same
+  events as the app, plus `adventure_stage_start` and `adventure_stage_end`. It uses the app's
+  bank (server, then the offline copy, then the free sample) with the admin's deletions and
+  corrections. On the free sample it says "Sign in to the app to unlock every world"; with no
+  learner chosen yet it sends her to the app first. (#27)
+- **Opens offline**: `adventure.html`, `adventure/adventure.js` and `adventure/adventure.css` are
+  now in `sw.js` CORE, beside the four scripts it shares with the app, so any change to them now
+  needs a VERSION bump. (#27)
+- Light and dark follow the app's Appearance choice or the device. It works at 390px and
+  1280px, with real buttons, a visible focus ring, a skip link and screen-reader messages. (#27)
+- **Guide**: `help.html` has an Adventure mode section (what it is, how stages and worlds
+  unlock, the pass mark and stars, replaying, flags and where progress is saved), with a
+  screenshot of the map at 390px. (#27)
+
+### Accessibility (WCAG 2.2 AA audit)
+- **Every app screen checked and fixed**, for learner and admin, at 390px and 1280px, light and
+  dark. On v12, axe-core found 10 rules failing; now it finds none against WCAG 2.0, 2.1 and 2.2
+  A and AA (and its best-practice rules) on 34 app states. The help, about and legal pages pass
+  too, and so does `adventure.html`, though the audit notes name only its "Open the app first"
+  screen. A person using a real screen reader has not checked any of it yet. (#10, #32)
+- **Right and wrong without colour**: after a practice answer the right option shows a tick and
+  her wrong pick a cross. A screen reader is told the result straight away ("Not quite. The
+  right answer is B: …", in the bank's own words), and each option's name says "Right answer"
+  or "Your answer". The read-aloud button sits beside the option, not inside it. The two options
+  the 50:50 hint takes away leave the Tab order. In a mock, the chosen option and the flag are
+  announced as selected. (#10)
+- **Keyboard**: the road-sign tiles, the dashboard's mock-history rows and the editor's question
+  list are real buttons now. "Upload a photo", "Import backup" and "Load a question pack" can be
+  reached with Tab. The notes sheet works as a dialog: focus moves into it, Tab stays inside,
+  Escape closes it and focus goes back to the notes button. On a new screen or question, focus
+  moves to its heading, and the browser tab shows the screen's name. (#10)
+- **Names and states**: every form field has a name. Switches say on or off; choice buttons say
+  which one is picked; the three Text size buttons, which all read "A", have their own names.
+  Each mock review square says, for example, "Question 7, not answered, flagged". The mock-score
+  chart is described with her real scores. The road-sign picture is named "Road sign picture",
+  because naming the sign would give the answer away. (#10)
+- **Contrast, light and dark**: all words reach at least 4.5:1 against their background (faint
+  greys, grey words on beige chips, status words, white letters on the green and red answer
+  squares, dark words on amber buttons in dark mode, the print preview's greys, amber topic
+  labels). Switch tracks when off, the flagged-square border and the chart's pass line reach
+  3:1. In the colour map (`TT_DARK`), `bg-d8d0bf` became `bg-8c8779`, `fg-686458` was added and
+  six unused colours were removed. (#10)
+- **The help and legal pages**: the teal panels' bold words, links and section numbers use a new
+  darker teal, `--on-tint`; the guide's contents labels use `--muted` (`--faint` is for
+  decoration only); code and path chips set their own text colour; and on `help.html` the title
+  and introduction are inside `<main>`, so the skip link lands on the title. (#10, #32)
+- **Narrow screens**: the Home header, the My Progress readiness card, the mock results topic
+  bars and a flagged mock question's header no longer run off a 320px screen. (#10)
+- **Kept on purpose**: "Like the real test" and "Surprise mix" keep the 57-minute limit,
+  because matching the real test is their point; "Build your own" and tests from My answers can
+  switch it off with "Timer for tests". (#10)
+
+### Fixed
+- **The My notes button never covers anything.** On a phone, and on every question, it is part
+  of the page, at the bottom of the screen. On a wide screen it floats in the bottom-right
+  corner, only in the empty space beside the page. On v12 at 390px it covered Reduce motion as
+  Settings opened, Start the test, a Practise topic, a My answers row, Home's cards and the Home
+  button after a session. Turning a tablet, resizing a window or changing the text size moves
+  it straight away. (#32)
+- **Opening the app no longer wipes Adventure progress.** The app's save rebuilt her record
+  without `adventure`; it now carries the stored copy over, so the Adventure page's latest save
+  survives, even with the app open in another tab. Coming back with the browser's Back button
+  now re-reads her record, so the app doesn't save over what the page added. (#27)
+- **My Progress wording**: "1 more right answer gets you there" (it said "1 more right answers
+  gets"). After a shorter mock the line uses that mock's own size and pass mark, not "/50" and
+  43. The readiness dial says "Based on your mocks", not "her mocks", and two more lines were
+  fixed the same way. (#32)
+- **The mock chart** starts a little under her lowest score instead of at 0, so the scores no
+  longer bunch at the top. It always shows at least 30 to 50, so the pass line shows, and a
+  line under it gives the range ("The chart runs from 30 to 50."). (#32)
+- **Today's lesson for a brand-new learner** says "Your first 20 questions, to get you started",
+  not "Built from your answers: 20 new". (#32)
+- **After a wrong answer**, the memory tip and "Explain it differently" boxes use the answer
+  card's full width instead of the narrow column beside the read-aloud button. (#32)
+- **The legal pages at 1280px** are one centred reading column; they left 424px empty on the
+  right. (#32)
+- **Adventure's "Open the app first" message**: its car no longer runs 46px off the right edge
+  and makes the page scroll sideways. (#10, #32)
+- **Guide**: the Notes section says where the button is on a phone and on a wide screen; Today's
+  lesson and My Progress match the fixes above; `help/img/settings.png` and
+  `help/img/mock-intro.png` are retaken (both showed the old button covering controls). (#32)
+
+### Tests
+- `node --test`: 367 tests, all passing (291 at v12). New: 15 for the Adventure route in
+  `tests/coach.test.js` (one fails if `TTCoach.TOPIC_NAMES` ever differs from the app's topic
+  list); 21 in the new `tests/adventure-page.test.js` (saving, flags, comebacks, scoring, map
+  maths, no Adventure number typed into the page), and 1 more there at this release: every file
+  the page loads is precached; 8 in `tests/app-files.test.js` for the Home card and the app keeping Adventure progress; 19
+  for accessibility, each failing on v12; 12 for the #32 fixes, each failing before its fix.
+- The WCAG contrast sum is in one shared file, `tests/contrast.js`.
+
 ## v12-2026-09-25
 The number after a line is the GitHub issue where the work is described.
 

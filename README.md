@@ -17,7 +17,8 @@ native sources live in folders and are not served.
   tests in `tests/`, run with `node --test "tests/*.test.js"` — Node 22, nothing to install)
 - `coach.js` — the coach: builds Today's lesson from her answers, spots what she keeps
   missing, merges flags across devices, summarises Activity, predicts her mock score, ranks
-  what to work on, builds the study plan and works out streak freezes (pure logic, tested)
+  what to work on, builds the study plan, works out streak freezes and builds the Adventure
+  route (pure logic, tested)
 - `backend.js` — accounts, progress sync, billing checks, reminders, the activity log
   (`TTTrack`), memory tips, plain explanations, data export, account deletion and the age
   question (talks to Supabase)
@@ -29,6 +30,8 @@ native sources live in folders and are not served.
   and the ask / retry / resume loop both AI tools share
 - `help.html`, `about.html`, `legal/` — the how-to guide, the about page and the sample legal
   pages (shared look in `help/site.css` and `help/site.js`)
+- `adventure.html` + `adventure/` — Adventure mode: the topics as worlds on a map, opened from
+  the Adventure card on Home (precached by `sw.js`, like the app)
 - `config.js` — your Supabase URL and publishable key, Stripe payment links, push key.
   Safe to be public
 - `questions-free.json` — the 20-question free sample
