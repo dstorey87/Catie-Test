@@ -530,3 +530,226 @@ test('dayCounts: answers per local day, for the plan and the streak', () => {
   assert.deepEqual(coach.dayCounts([{ t: t(23, 9) }, { t: t(24, 8) }, { t: t(24, 20) }, { q: 'no time' }]),
     { '2026-09-23': 1, '2026-09-24': 2 });
 });
+
+// ---------- Adventure mode: the route of worlds and stages (issue #27) ----------
+const fs = require('node:fs');
+const path = require('node:path');
+
+// A made-up bank: `n` questions in topic `t`, ids like 't03q07' (the bank's own id shape).
+// Handed over back to front on purpose, so the tests prove the route sorts by id itself.
+function advBank(sizes) {
+  const qs = [];
+  Object.keys(sizes).forEach((t) => {
+    for (let i = 1; i <= sizes[t]; i++) {
+      const id = 't' + String(t).padStart(2, '0') + 'q' + String(i).padStart(2, '0');
+      qs.push({ id, topic: Number(t), question: 'Q ' + id, options: ['a', 'b', 'c', 'd'], correctIndex: 0 });
+    }
+  });
+  return qs.reverse();
+}
+// Every stage of a route, in order, across worlds.
+const allStages = (route) => route.flatMap((w) => w.stages);
+// Progress where each listed stage is passed with 3 stars.
+const passedAll = (ids) => ({ stages: Object.fromEntries(ids.map((id) => [id, { best: 1, stars: 3, passed: true, plays: 1, lastAt: 1 }])) });
+
+test('adventure: TOPIC_NAMES is exactly the app TOPICS array, in order', () => {
+  const html = fs.readFileSync(path.join(__dirname, '..', 'Theory Trainer.dc.html'), 'utf8');
+  const m = /this\.TOPICS = (\[[^\]]*\]);/.exec(html);
+  assert.ok(m, 'TOPICS array found in Theory Trainer.dc.html');
+  assert.deepEqual(coach.TOPIC_NAMES, JSON.parse(m[1]));
+  assert.equal(coach.TOPIC_NAMES.length, 14);
+});
+
+test('adventure: every number lives in ADVENTURE with the agreed defaults', () => {
+  assert.equal(coach.ADVENTURE.lessonSize, 7);
+  assert.equal(coach.ADVENTURE.checkpointSize, 10);
+  assert.equal(coach.ADVENTURE.passPct, 0.8);
+  assert.deepEqual(coach.ADVENTURE.stars, [0.8, 0.9, 1]);
+});
+
+test('adventure route: one world per topic in topic order, lessons then a checkpoint', () => {
+  const route = coach.adventureRoute(advBank({ 2: 14, 1: 21 }));
+  assert.deepEqual(route.map((w) => w.world), [1, 2]);
+  assert.deepEqual(route.map((w) => w.name), ['Alertness', 'Attitude']);
+  assert.deepEqual(route[0].stages.map((s) => s.id), ['w1s1', 'w1s2', 'w1s3', 'w1c']);
+  assert.deepEqual(route[0].stages.map((s) => s.kind), ['lesson', 'lesson', 'lesson', 'checkpoint']);
+  assert.deepEqual(route[1].stages.map((s) => s.id), ['w2s1', 'w2s2', 'w2c']);
+  // Lessons hold the world's questions sorted by id, in fixed chunks of 7.
+  assert.deepEqual(route[0].stages[0].qids, ['t01q01', 't01q02', 't01q03', 't01q04', 't01q05', 't01q06', 't01q07']);
+  assert.equal(route[0].stages[2].qids[6], 't01q21');
+});
+
+test('adventure route: the same bank always gives the same route, whatever order it comes in', () => {
+  const a = coach.adventureRoute(advBank({ 1: 29, 5: 12 }));
+  const b = coach.adventureRoute(advBank({ 1: 29, 5: 12 }).reverse());
+  assert.deepEqual(a, b);
+  // A bank passed as {id: question} gives the same route as the array.
+  const map = Object.fromEntries(advBank({ 1: 29, 5: 12 }).map((q) => [q.id, q]));
+  assert.deepEqual(coach.adventureRoute(map), a);
+});
+
+test('adventure route: a short last lesson (under 4) joins the lesson before it', () => {
+  const lessons = (n) => coach.adventureRoute(advBank({ 1: n }))[0].stages.filter((s) => s.kind === 'lesson');
+  // 29 = 7+7+7+7+1: the lone 1 joins the fourth lesson, making 8.
+  assert.deepEqual(lessons(29).map((s) => s.qids.length), [7, 7, 7, 8]);
+  // 10 = 7+3: the 3 joins, one lesson of 10.
+  assert.deepEqual(lessons(10).map((s) => s.qids.length), [10]);
+  // 11 = 7+4: 4 is not short, so it stays its own lesson.
+  assert.deepEqual(lessons(11).map((s) => s.qids.length), [7, 4]);
+  // 28 = 7 x 4 exactly: nothing to merge.
+  assert.deepEqual(lessons(28).map((s) => s.qids.length), [7, 7, 7, 7]);
+  // A world smaller than a short lesson still gets one lesson (there is nothing to join).
+  const w2 = coach.adventureRoute(advBank({ 1: 2 }))[0].stages;
+  assert.deepEqual(w2.map((s) => s.id), ['w1s1', 'w1c']);
+  assert.equal(w2[0].qids.length, 2);
+});
+
+test('adventure route: the checkpoint is 10 questions spread evenly across the whole world', () => {
+  const w = coach.adventureRoute(advBank({ 1: 29 }))[0];
+  const cp = w.stages[w.stages.length - 1];
+  assert.equal(cp.id, 'w1c');
+  assert.equal(cp.qids.length, 10);
+  assert.equal(new Set(cp.qids).size, 10, 'no question twice');
+  // Every 2.9th by id (rounded down): positions 0, 2, 5, 8, 11, 14, 17, 20, 23, 26.
+  assert.deepEqual(cp.qids, ['t01q01', 't01q03', 't01q06', 't01q09', 't01q12', 't01q15', 't01q18', 't01q21', 't01q24', 't01q27']);
+  // It reaches every lesson, not just the first.
+  w.stages.filter((s) => s.kind === 'lesson').forEach((s) => {
+    assert.ok(s.qids.some((id) => cp.qids.includes(id)), s.id + ' is sampled by the checkpoint');
+  });
+  // A world of 10 or fewer uses all of its questions.
+  const small = coach.adventureRoute(advBank({ 3: 6 }))[0].stages;
+  assert.equal(small[small.length - 1].qids.length, 6);
+});
+
+test('adventure route: only ids from the bank, each question in exactly one lesson, empty topics have no world', () => {
+  const bank = advBank({ 1: 29, 4: 9, 14: 15 });
+  const ids = new Set(bank.map((q) => q.id));
+  const route = coach.adventureRoute(bank);
+  assert.deepEqual(route.map((w) => w.world), [1, 4, 14], 'topics with no questions have no world');
+  assert.equal(route[2].name, 'Vehicle loading');
+  const inLessons = [];
+  route.forEach((w) => w.stages.forEach((s) => {
+    s.qids.forEach((id) => {
+      assert.ok(ids.has(id), id + ' is a bank id');
+      assert.equal(bank.find((q) => q.id === id).topic, w.world, id + ' belongs to its world');
+    });
+    if (s.kind === 'lesson') inLessons.push(...s.qids);
+  }));
+  assert.equal(inLessons.length, bank.length);
+  assert.equal(new Set(inLessons).size, bank.length);
+  // Nothing in, nothing out.
+  assert.deepEqual(coach.adventureRoute([]), []);
+  assert.deepEqual(coach.adventureRoute(null), []);
+});
+
+test('adventure route: the real bank makes 14 worlds, every question used, names from the app', () => {
+  const root = path.join(__dirname, '..');
+  const files = fs.readdirSync(root).filter((f) => /^questions-.*\.json$/.test(f));
+  const bank = files.flatMap((f) => JSON.parse(fs.readFileSync(path.join(root, f), 'utf8')));
+  const route = coach.adventureRoute(bank);
+  assert.deepEqual(route.map((w) => w.world), [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]);
+  assert.deepEqual(route.map((w) => w.name), coach.TOPIC_NAMES);
+  // The free pack repeats some pack-1 ids, so count distinct ids.
+  const unique = new Set(bank.map((q) => q.id));
+  const lessonIds = allStages(route).filter((s) => s.kind === 'lesson').flatMap((s) => s.qids);
+  assert.equal(lessonIds.length, unique.size, 'each bank question sits in exactly one lesson');
+  allStages(route).forEach((s) => {
+    if (s.kind === 'lesson') assert.ok(s.qids.length >= 4 && s.qids.length <= 10, s.id + ' has ' + s.qids.length);
+    else assert.ok(s.qids.length <= 10, s.id + ' has ' + s.qids.length);
+  });
+});
+
+test('adventure status: a new learner has only the first stage open, and it is current', () => {
+  const route = coach.adventureRoute(advBank({ 1: 14, 2: 14 }));
+  for (const p of [{}, undefined, null, { stages: {} }]) {
+    const st = coach.adventureStatus(route, p);
+    assert.equal(st.current, 'w1s1');
+    assert.equal(st.worldsDone, 0);
+    assert.deepEqual(st.stages.w1s1, { unlocked: true, passed: false, stars: 0, best: 0, plays: 0 });
+    assert.equal(st.stages.w1s2.unlocked, false);
+    assert.equal(st.stages.w2s1.unlocked, false);
+  }
+});
+
+test('adventure status: each stage opens when the one before is passed, across worlds', () => {
+  const route = coach.adventureRoute(advBank({ 1: 14, 2: 14 }));
+  // Lessons of world 1 passed, checkpoint not yet: the checkpoint is current, world 2 shut.
+  let st = coach.adventureStatus(route, passedAll(['w1s1', 'w1s2']));
+  assert.equal(st.current, 'w1c');
+  assert.equal(st.stages.w1c.unlocked, true);
+  assert.equal(st.stages.w2s1.unlocked, false);
+  assert.equal(st.worldsDone, 0);
+  // World 1's checkpoint passed: world 2's first lesson opens and is current.
+  st = coach.adventureStatus(route, passedAll(['w1s1', 'w1s2', 'w1c']));
+  assert.equal(st.stages.w2s1.unlocked, true);
+  assert.equal(st.stages.w2s2.unlocked, false);
+  assert.equal(st.current, 'w2s1');
+  assert.equal(st.worldsDone, 1);
+  // Everything passed: nothing is current, both worlds done, every stage open to replay.
+  st = coach.adventureStatus(route, passedAll(allStages(route).map((s) => s.id)));
+  assert.equal(st.current, null);
+  assert.equal(st.worldsDone, 2);
+  assert.ok(Object.values(st.stages).every((s) => s.unlocked && s.passed));
+});
+
+test('adventure status: a stage played but not passed stays current, and blocks the next', () => {
+  const route = coach.adventureRoute(advBank({ 1: 14 }));
+  const p = { stages: { w1s1: { best: 0.5, stars: 0, passed: false, plays: 2, lastAt: 5 } } };
+  const st = coach.adventureStatus(route, p);
+  assert.equal(st.current, 'w1s1');
+  assert.deepEqual(st.stages.w1s1, { unlocked: true, passed: false, stars: 0, best: 0.5, plays: 2 });
+  assert.equal(st.stages.w1s2.unlocked, false);
+});
+
+test('adventure score: pass and stars land exactly on 80%, 90% and 100%', () => {
+  assert.deepEqual(coach.adventureScore({ correct: 7, total: 10 }), { pct: 0.7, passed: false, stars: 0 });
+  assert.deepEqual(coach.adventureScore({ correct: 8, total: 10 }), { pct: 0.8, passed: true, stars: 1 });
+  assert.deepEqual(coach.adventureScore({ correct: 9, total: 10 }), { pct: 0.9, passed: true, stars: 2 });
+  assert.deepEqual(coach.adventureScore({ correct: 10, total: 10 }), { pct: 1, passed: true, stars: 3 });
+  // Just under each line misses it.
+  assert.equal(coach.adventureScore({ correct: 79, total: 100 }).passed, false);
+  assert.equal(coach.adventureScore({ correct: 80, total: 100 }).passed, true);
+  assert.equal(coach.adventureScore({ correct: 89, total: 100 }).stars, 1);
+  assert.equal(coach.adventureScore({ correct: 90, total: 100 }).stars, 2);
+  assert.equal(coach.adventureScore({ correct: 99, total: 100 }).stars, 2);
+  // A 7-question lesson: 5/7 (71%) fails, 6/7 (86%) is 1 star, 7/7 is 3.
+  assert.equal(coach.adventureScore({ correct: 5, total: 7 }).passed, false);
+  assert.equal(coach.adventureScore({ correct: 6, total: 7 }).stars, 1);
+  assert.equal(coach.adventureScore({ correct: 7, total: 7 }).stars, 3);
+  // Nothing answered, or junk: 0, never a pass.
+  assert.deepEqual(coach.adventureScore({ correct: 0, total: 0 }), { pct: 0, passed: false, stars: 0 });
+  assert.deepEqual(coach.adventureScore(null), { pct: 0, passed: false, stars: 0 });
+  assert.equal(coach.adventureScore({ correct: 12, total: 10 }).pct, 1, 'correct is capped at total');
+  // A test can pass its own thresholds.
+  assert.equal(coach.adventureScore({ correct: 7, total: 10 }, { passPct: 0.7, stars: [0.7, 0.9, 1] }).stars, 1);
+});
+
+test('adventure record: keeps the best score and stars when a replay goes worse', () => {
+  const p = coach.adventureRecord({}, 'w1s1', { correct: 10, total: 10 }, 1000);
+  assert.deepEqual(p, { stages: { w1s1: { best: 1, stars: 3, passed: true, plays: 1, lastAt: 1000 } } });
+  const before = JSON.stringify(p);
+  const next = coach.adventureRecord(p, 'w1s1', { correct: 3, total: 10 }, 2000);
+  assert.equal(JSON.stringify(p), before, 'the old progress is not changed');
+  assert.deepEqual(next.stages.w1s1, { best: 1, stars: 3, passed: true, plays: 2, lastAt: 2000 });
+});
+
+test('adventure record: a better replay raises best and stars; a fail then a pass unlocks', () => {
+  let p = coach.adventureRecord(undefined, 'w1s1', { correct: 5, total: 7 }, 1);
+  assert.deepEqual(p.stages.w1s1, { best: 5 / 7, stars: 0, passed: false, plays: 1, lastAt: 1 });
+  p = coach.adventureRecord(p, 'w1s1', { correct: 6, total: 7 }, 2);
+  assert.deepEqual(p.stages.w1s1, { best: 6 / 7, stars: 1, passed: true, plays: 2, lastAt: 2 });
+  p = coach.adventureRecord(p, 'w1s1', { correct: 7, total: 7 }, 3);
+  assert.equal(p.stages.w1s1.stars, 3);
+  const route = coach.adventureRoute(advBank({ 1: 14 }));
+  assert.equal(coach.adventureStatus(route, p).current, 'w1s2');
+  // Other stages and other keys in the progress are left alone.
+  const q = coach.adventureRecord({ stages: { w1s2: { best: 0.9, stars: 2, passed: true, plays: 1, lastAt: 9 } }, note: 'x' },
+    'w1s1', { correct: 1, total: 1 }, 10);
+  assert.equal(q.stages.w1s2.stars, 2);
+  assert.equal(q.note, 'x');
+});
+
+test('adventure record: also takes an adventureScore result', () => {
+  const p = coach.adventureRecord({}, 'w2c', coach.adventureScore({ correct: 9, total: 10 }), 7);
+  assert.deepEqual(p.stages.w2c, { best: 0.9, stars: 2, passed: true, plays: 1, lastAt: 7 });
+});

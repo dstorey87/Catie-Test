@@ -340,17 +340,29 @@ test('the cookies and privacy pages name every outside website the app loads fro
   }
 });
 
+// site.css's colour tokens, as {name: '#hex'}, in each of its three blocks: light, dark by the
+// device's setting, and dark by the app's saved choice.
+const CSS = read('help/site.css');
+const cssTokens = block => Object.fromEntries([...block.matchAll(/--([\w-]+):\s*(#[0-9A-Fa-f]{3,6})/g)].map(m => [m[1], m[2].toLowerCase()]));
+const cssBetween = (a, b) => CSS.slice(CSS.indexOf(a), CSS.indexOf(b, CSS.indexOf(a)));
+const THEME = {
+  light: cssTokens(CSS.slice(CSS.indexOf(':root {'), CSS.indexOf('}', CSS.indexOf(':root {')))),
+  darkMedia: cssTokens(cssBetween(':root:not([data-theme="light"]) {', '}')),
+  darkSaved: cssTokens(cssBetween(':root[data-theme="dark"] {', '}'))
+};
+// The body of the first rule written exactly "<selector> {" in site.css.
+function cssRule(sel) {
+  const at = CSS.indexOf('\n' + sel + ' {');
+  assert.ok(at >= 0, 'site.css has no rule "' + sel + ' {"');
+  return CSS.slice(at, CSS.indexOf('}', at));
+}
+
 test('site.css uses the app\'s own dark colours, in both dark-mode rules', () => {
-  const css = read('help/site.css');
-  const tokens = block => Object.fromEntries([...block.matchAll(/--([\w-]+):\s*(#[0-9A-Fa-f]{3,6})/g)].map(m => [m[1], m[2].toLowerCase()]));
-  const light = tokens(css.slice(css.indexOf(':root {'), css.indexOf('}', css.indexOf(':root {'))));
-  const between = (a, b) => css.slice(css.indexOf(a), css.indexOf(b, css.indexOf(a)));
-  const darkMedia = tokens(between(':root:not([data-theme="light"]) {', '}'));
-  const darkSaved = tokens(between(':root[data-theme="dark"] {', '}'));
+  const { light, darkMedia, darkSaved } = THEME;
   const map = app.slice(app.indexOf('var TT_DARK = {'), app.indexOf('};', app.indexOf('var TT_DARK = {')));
   const TT_DARK = Object.fromEntries([...map.matchAll(/'((?:bg|fg|bd)-[0-9a-f]+)':'(#[0-9a-f]+)'/g)].map(m => [m[1], m[2]]));
   // Which of the app's roles each token plays: borders are bd, text colours fg, the rest bg.
-  const FG = ['fg', 'muted', 'faint', 'link', 'link-hover', 'good', 'bad', 'amber'];
+  const FG = ['fg', 'muted', 'faint', 'link', 'link-hover', 'on-tint', 'good', 'bad', 'amber'];
   const role = t => (t.startsWith('border') ? 'bd' : FG.includes(t) ? 'fg' : 'bg');
   let checked = 0;
   for (const [t, hex] of Object.entries(light)) {
@@ -362,4 +374,61 @@ test('site.css uses the app\'s own dark colours, in both dark-mode rules', () =>
     checked++;
   }
   assert.ok(checked >= 15, 'only ' + checked + ' colours checked');
+});
+
+// ---------- Issue #32: the findings the #10 accessibility audit handed to the Pages lane (axe-core
+// on every page at 390px and 1280px, light and dark). Each test failed before its fix. ----------
+const { contrast } = require('./contrast.js');
+
+test('#32 pages: words on the teal panels, the contents group labels and code chips reach 4.5:1, light and dark', () => {
+  // Found by axe: "Tip:" (and every panel's first bold words) teal on the pale teal panel 4.44:1;
+  // "GETTING STARTED" and the other contents labels in --faint 2.2:1 light, 4.0:1 dark; a <code>
+  // chip inside grey text on the cookies page took the grey, 4.47:1 on the chip colour.
+  // [selector, the background it sits on]. Each must set its own colour: an inherited one
+  // changes with whatever the chip or label happens to be put in.
+  // (A link in a teal panel, 4.43:1, showed up once the first ones were fixed.)
+  const PAIRS = [['.note strong:first-child', 'tint'], ['.note a', 'tint'], ['.num', 'tint'], ['.toc .toc-group', 'card'], ['code', 'chip'], ['.path', 'chip']];
+  for (const [sel, bg] of PAIRS) {
+    const fg = (cssRule(sel).match(/[{;\s]color:\s*var\(--([\w-]+)\)/) || [])[1];
+    assert.ok(fg, sel + ' sets no colour of its own, so it takes the colour of whatever it sits in');
+    for (const [theme, t] of Object.entries(THEME)) {
+      const r = contrast(t[fg], t[bg]);
+      assert.ok(r >= 4.5, theme + ': ' + sel + ' (--' + fg + ' on --' + bg + ') is ' + r.toFixed(2) + ':1, under 4.5:1');
+    }
+  }
+});
+
+test('#32 pages: each page\'s title and introduction are inside <main>, so nothing sits outside a landmark', () => {
+  // Found by axe on help.html: the .hero block (the page's <h1> and introduction) came between the
+  // header and <main>, in no landmark, and the skip link jumped past the page's own title.
+  for (const [p, s] of Object.entries(html)) {
+    assert.equal((s.match(/<main\b/g) || []).length, 1, p + ': one <main>');
+    const main = s.indexOf('<main'), end = s.indexOf('</main>'), hero = s.indexOf('class="hero"'), h1 = s.indexOf('<h1');
+    assert.ok(hero > main && hero < end, p + ': .hero is outside <main>');
+    assert.ok(h1 > main && h1 < end, p + ': the <h1> is outside <main>');
+    assert.match(s, /<a class="skip" href="#main">/, p + ': the skip link goes to <main>');
+  }
+});
+
+test('#32 pages: the legal pages are one centred reading column, not a narrow column with a wide empty right side', () => {
+  // v12 at 1280px: the notice was 760px wide at the left of a 1120px frame, 424px empty on its right.
+  // Now the frame of a legal page (header, notice and footer) is the notice's width plus the
+  // frame's own side gutters, centred, so both sides get the same margin.
+  const legal = +(cssRule('.legal').match(/max-width:\s*(\d+)px/) || [])[1];
+  const reading = +(cssRule('.wrap.reading').match(/max-width:\s*(\d+)px/) || [])[1];
+  const gutter = +(cssRule('.wrap').match(/padding:\s*0 (\d+)px/) || [])[1];
+  assert.ok(legal > 0 && gutter > 0, 'expected .legal max-width and .wrap side padding');
+  assert.equal(reading, legal + 2 * gutter, '.wrap.reading must be the .legal column plus both gutters');
+  for (const p of LEGAL) assert.match(html[p], /<div class="wrap reading">/, p + ' does not use the reading frame');
+});
+
+test('#32 guide: the Notes section says where the notes button is on a phone and on a wide screen', () => {
+  // After #32 it is in the page (at the bottom of each screen) on a phone and on question screens,
+  // and floats in the bottom-right corner, beside the page, only on a wide screen. The guide said
+  // "the round dark button in the bottom-right corner (on every screen…)".
+  const sec = words(html['help.html'].slice(html['help.html'].indexOf('<section id="notes"'), html['help.html'].indexOf('</section>', html['help.html'].indexOf('<section id="notes"'))));
+  assert.doesNotMatch(sec, /in the bottom-right corner \(on every screen/);
+  assert.match(sec, /My notes/);
+  assert.match(sec, /bottom of the screen/);
+  assert.match(sec, /wide screen/);
 });

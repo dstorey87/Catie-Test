@@ -28,6 +28,9 @@
     <a class="btn" href="Theory%20Trainer.dc.html">Open the app</a>
   </header>
 
+  <!-- ============ the guide: its title and introduction, then the contents beside the sections.
+       All inside the main landmark, so the skip link lands on the title and nothing sits outside a landmark. ============ -->
+  <main id="main">
   <div class="hero">
     <h1>How to use Theory Trainer</h1>
     <p class="lede">Everything the app does, screen by screen: how to sign in, what Today's lesson is, how mock tests work, what your progress numbers mean, and every setting. There's a short part at the end for the parent or admin.</p>
@@ -47,6 +50,7 @@
           <li><a href="#home">Home</a></li>
           <li class="toc-group">Learning</li>
           <li><a href="#lesson">Today's lesson</a></li>
+          <li><a href="#adventure">Adventure mode</a></li>
           <li><a href="#tripping">Keeps tripping you up</a></li>
           <li><a href="#practise">Practise</a></li>
           <li><a href="#mock">Mock test</a></li>
@@ -77,7 +81,7 @@
       </details>
     </nav>
 
-    <main id="main" class="doc">
+    <div class="doc">
 
       <!-- ============ 1. sign in ============ -->
       <section id="start" aria-labelledby="h-start">
@@ -193,6 +197,7 @@
               <li><strong>Close to a badge</strong> — once you're most of the way to a badge, the level card says what's left, for example "2 more right answers in a row earns Ten in a row".</li>
               <li><strong>Countdown</strong> — if you've set your theory test date, Home shows the days left and how many questions today's plan asks. Tap it for your <a href="#plan">study plan</a>.</li>
               <li><strong>Today's lesson</strong> — the best thing to do next, built from your answers. <a href="#lesson">More below.</a></li>
+              <li><strong>Adventure</strong> — the topics as worlds on a map, with the world you're on and the stars you've earned. <a href="#adventure">More below.</a></li>
               <li><strong>What to work on</strong> — the topic where more right answers would lift your mock score most, with a button to drill it. <a href="#workon">More below.</a></li>
               <li><strong>Keeps tripping you up</strong> — appears once there are questions you keep getting wrong. <a href="#tripping">More below.</a></li>
               <li><strong>Family board</strong> — only if you switch it on in Settings. <a href="#family">More below.</a></li>
@@ -255,15 +260,42 @@
               <li><strong>Questions you keep missing</strong> — ones you've got wrong 3 or more times, or on 2 different days. They stay in this group until you get them right twice running.</li>
               <li><strong>Questions you flagged.</strong></li>
               <li><strong>Questions due again</strong> — spaced out so they come back just as you might forget: after 1 right answer in a row, 1 day later; then 3 days, 7 days, 14 days and 30 days.</li>
-              <li><strong>A few new ones</strong> — at most 4 questions you haven't seen before.</li>
+              <li><strong>A few new ones</strong> — at most 4 questions you haven't seen before, unless there's little to review: then the lesson fills up with new ones, so your very first lesson is all new questions.</li>
             </ol>
             <p>Topics are mixed up rather than done in blocks, and if you get a question wrong in the lesson it comes back 3 questions later (at most twice), so you leave having got it right.</p>
-            <p>The line under the button says what's in today's lesson, for example "3 you keep missing · 4 flagged · 13 due again".</p>
+            <p>The line under the button says what's in today's lesson, for example "3 you keep missing · 4 flagged · 13 due again". Before you've answered any questions it says "Your first 20 questions, to get you started" (the number is the lesson's size).</p>
             <p class="note"><strong>Only real questions.</strong> The lesson only ever picks and orders questions from the app's question bank. It never writes a question or an answer of its own.</p>
           </div>
           <figure class="shot">
             <a href="help/img/lesson-question.png"><img src="help/img/lesson-question.png" width="390" height="844" alt="A lesson question: What is the typical stopping distance at 30 mph? Four answers, each with a speaker button, a Hint button and a Tricky? flag button at the top." loading="lazy"></a>
             <figcaption>A lesson question</figcaption>
+          </figure>
+        </div>
+      </section>
+
+      <!-- ============ 4b. adventure mode (issue #27) ============
+           The numbers here (7, 10, 80/90/100%, 14 topics) come from coach.js TTCoach.ADVENTURE
+           and TOPIC_NAMES; tests/app-files.test.js fails if the two ever disagree. -->
+      <section id="adventure" aria-labelledby="h-adventure">
+        <h2 id="h-adventure"><span class="num"></span>Adventure mode</h2>
+        <div class="step">
+          <div>
+            <p>Adventure mode is another way to learn: the topics become a road trip. Tap the <strong>Adventure</strong> card on Home, just under Today's lesson. It opens its own page and plays as the learner chosen in the app, with the same questions. Tap <strong>Theory Trainer</strong> at the top to go back.</p>
+            <ul>
+              <li><strong>Worlds.</strong> There is one world for each of the 14 theory test topics, in the usual topic order, starting with Alertness. Each world is drawn as a winding road with its stages on it. The arrows and the numbered circles move between worlds.</li>
+              <li><strong>Stages.</strong> The round stops are lessons of 7 questions (the last lesson in a world can be a little shorter or longer). The flag at the end of the road is the world's checkpoint: 10 questions picked from across the whole world.</li>
+              <li><strong>How stages unlock.</strong> At the start only the first stage is open. Pass a stage and the next one opens; pass a world's checkpoint and the next world opens. Locked stages are grey with a padlock and say what to pass first. The stage you're up to has the little car on it and says <strong>Start</strong>.</li>
+              <li><strong>Passing and stars.</strong> Get 80% or more right to pass. Stars come with a pass: 1 star at 80%, 2 at 90% and 3 at 100%. Only your first try at each question counts towards the score.</li>
+              <li><strong>Replay.</strong> Any stage you've passed can be played again. Your best score and your most stars are kept, and a pass stays a pass even if a replay goes worse.</li>
+            </ul>
+            <p><strong>Playing a stage.</strong> One question at a time, with a progress bar. After each answer you see straight away whether it was right, with the question's explanation (and its memory tip, once the admin has approved one). You earn 10 XP for each right answer, the same as in the rest of the app, and a counter shows how many you've got right in a row. A question you get wrong comes back once before the stage ends, so you finish on a right answer. On a keyboard, press 1 to 4 (or A to D) to answer and Enter to go on. The <strong>✕</strong> at the top quits the stage, after asking first.</p>
+            <p><strong>Flag</strong> on a question works like Tricky? in practice: the question goes on your <a href="#flagged">Flagged</a> list in the app and stays there until you take it off.</p>
+            <p>Your Adventure progress, answers and XP are saved with the rest of your progress, and the app sends them to your account the next time it's open (see <a href="#offline">Offline and syncing</a>). The Adventure card on Home shows the world you're on and your stars.</p>
+            <p class="note"><strong>Only real questions.</strong> Every stage is made from the app's question bank. Adventure mode never writes a question or an answer of its own.</p>
+          </div>
+          <figure class="shot">
+            <a href="help/img/adventure-map.png"><img src="help/img/adventure-map.png" width="390" height="844" alt="The Adventure map for World 1, Alertness: 2 of 5 stages passed and 4 of 15 stars. A winding road with two passed lessons, one with 3 stars and one with 1 star, then the lesson she is up to with a little car and a Start label, and locked stages with padlocks further down." loading="lazy"></a>
+            <figcaption>The Adventure map</figcaption>
           </figure>
         </div>
       </section>
@@ -476,7 +508,7 @@
             <h3>Your topics</h3>
             <p>Every topic gets a coloured light, weakest first: <strong>Not tried much</strong> (fewer than 5 answers), <strong>Needs work</strong> (under 50% right), <strong>Shaky</strong> (50–69%), <strong>Good</strong> (70–84%) or <strong>Strong</strong> (85% and over). Needs work and Shaky topics show a tip for that topic.</p>
             <h3>Your mock tests and Worth remembering</h3>
-            <p>A chart of your mock scores against the pass mark of 43, and a few short tips for your weakest topics.</p>
+            <p>A chart of your mock scores against the pass mark of 43, and a few short tips for your weakest topics. The chart starts a little under your lowest score rather than at 0, so your scores are easier to tell apart, and the line under it says where it starts, for example "The chart runs from 30 to 50."</p>
           </div>
           <figure class="shot">
             <a href="help/img/progress.png"><img src="help/img/progress.png" width="390" height="844" alt="My Progress: the readiness dial showing 69% ready, labelled Getting there, and Pass prediction below it." loading="lazy"></a>
@@ -656,7 +688,8 @@
         <h2 id="h-notes"><span class="num"></span>Notes</h2>
         <div class="step">
           <div>
-            <p>The round dark button in the bottom-right corner (on every screen except the sign-in screens and the quick setup) opens <strong>Notes</strong> for the screen you're on — for example, a note on Home, or one on the mock test. Just type; it saves as you go.</p>
+            <p><strong>My notes</strong> opens Notes for the screen you're on — for example, a note on Home, or one on the mock test. Just type; it saves as you go. It's on every screen except the sign-in screens and the quick setup.</p>
+            <p>On a phone, and on every question, the <strong>My notes</strong> button is at the bottom of the screen, under everything else: scroll down to it. That way it never covers a button. On a wide screen, such as a computer, it is the round dark button in the bottom-right corner, in the space beside the page.</p>
             <p>If you have notes on other screens, <strong>Also on:</strong> lists them so you can jump to one. <strong>✕</strong> closes the notes. Notes belong to each learner and sync with the account.</p>
           </div>
           <figure class="shot">
@@ -907,8 +940,9 @@
         <p>The questions, answers and explanations are written for practice and are checked against the Highway Code, but mistakes are possible and rules change. Always check the current <a href="https://www.gov.uk/guidance/the-highway-code">Highway Code on GOV.UK</a> — it is the official source. A good score in the app is a sign you're preparing well, not a promise that you'll pass.</p>
         <p>Found something wrong? Tell the admin, who can correct the question in the question editor.</p>
       </section>
-    </main>
+    </div>
   </div>
+  </main>
 
   <!-- ============ footer ============ -->
   <footer class="foot">

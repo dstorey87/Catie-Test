@@ -562,10 +562,137 @@
       nextFreezeIn: held >= f.max || !(f.every > 0) ? null : f.every - toward };
   }
 
+  // =========================================================================================
+  // ---------- Adventure mode: a learning route of worlds and stages (issue #27) ----------
+  // The 14 DVSA car theory topics, in the app's order: topic 1 = TOPIC_NAMES[0]. Copied
+  // exactly from the TOPICS array in Theory Trainer.dc.html (a test checks they still match).
+  var TOPIC_NAMES = ['Alertness', 'Attitude', 'Safety and your vehicle', 'Safety margins', 'Hazard awareness',
+    'Vulnerable road users', 'Other types of vehicle', 'Vehicle handling', 'Motorway rules', 'Rules of the road',
+    'Road and traffic signs', 'Essential documents', 'Incidents and emergencies', 'Vehicle loading'];
+
+  // Every number Adventure mode uses lives here (like DRILL and COACH above). They are
+  // design choices from Darren's brief (issue #27), not measurements (not verified against
+  // any learning study).
+  var ADVENTURE = {
+    lessonSize: 7,          // questions in a lesson
+    minLesson: 4,           // a last lesson shorter than this joins the lesson before it
+    checkpointSize: 10,     // questions in a world's checkpoint, spread across the whole world
+    passPct: 0.8,           // share right (0-1) needed to pass a stage
+    stars: [0.8, 0.9, 1]    // share right for 1, 2 and 3 stars
+  };
+
+  // adventureRoute(bank, opts) -> [{world, name, stages: [{id, kind, qids}]}]
+  // One world per topic that has questions in the bank, in topic order. Inside a world the
+  // questions are sorted by id and cut into lessons of lessonSize ('w<topic>s1', 's2', ...);
+  // a last lesson shorter than minLesson joins the one before, so nobody gets a 2-question
+  // lesson. Then a checkpoint ('w<topic>c') of checkpointSize questions picked evenly across
+  // the whole world. Same bank in, same route out: no dice. Only ids from the bank are used.
+  function adventureRoute(bank, opts) {
+    var o = Object.assign({}, ADVENTURE, opts || {}), Q = byId(bank), byTopic = {};
+    // Group the bank's question ids by topic number (a question with no number topic is skipped).
+    Object.keys(Q).forEach(function (id) {
+      var t = Number(Q[id] && Q[id].topic);
+      if (!isFinite(t)) return;
+      (byTopic[t] || (byTopic[t] = [])).push(id);
+    });
+    return Object.keys(byTopic).sort(byNumber).map(function (k) {
+      var t = Number(k), ids = byTopic[k].sort(), stages = [];
+      // Lessons: fixed-size chunks of the sorted ids.
+      var chunks = [];
+      for (var i = 0; i < ids.length; i += o.lessonSize) chunks.push(ids.slice(i, i + o.lessonSize));
+      // A short last chunk is folded into the one before it (when there is one).
+      if (chunks.length > 1 && chunks[chunks.length - 1].length < o.minLesson) {
+        var tail = chunks.pop();
+        chunks[chunks.length - 1] = chunks[chunks.length - 1].concat(tail);
+      }
+      chunks.forEach(function (qids, n) {
+        stages.push({ id: 'w' + t + 's' + (n + 1), kind: 'lesson', qids: qids });
+      });
+      // Checkpoint: every k-th question by id, k = world size / checkpoint size (a fraction
+      // is rounded down), so it samples the whole world. A small world uses all of it.
+      var cp = [];
+      if (ids.length <= o.checkpointSize) cp = ids.slice();
+      else for (var j = 0; j < o.checkpointSize; j++) cp.push(ids[Math.floor(j * ids.length / o.checkpointSize)]);
+      stages.push({ id: 'w' + t + 'c', kind: 'checkpoint', qids: cp });
+      return { world: t, name: topicName(TOPIC_NAMES, t), stages: stages };
+    });
+  }
+
+  // One stage's saved record, with safe defaults for a stage never played.
+  // plays: 0 means never played (best and stars are then 0 too).
+  function stageRecord(progress, id) {
+    var r = (progress && progress.stages && progress.stages[id]) || {};
+    return { best: +r.best || 0, stars: +r.stars || 0, passed: r.passed === true, plays: +r.plays || 0 };
+  }
+
+  // adventureStatus(route, progress) -> {stages: {<id>: {unlocked, passed, stars, best, plays}},
+  //                                     current, worldsDone}
+  // Walks the route in order, across worlds. The very first stage is always open; every
+  // other stage opens once the stage before it is passed, so world N+1 opens when world N's
+  // checkpoint is passed. A stage already passed stays open (any passed stage can be redone).
+  // current = the first open stage not yet passed (null once everything is passed);
+  // worldsDone = worlds whose checkpoint is passed.
+  function adventureStatus(route, progress) {
+    var out = { stages: {}, current: null, worldsDone: 0 }, prevPassed = null;
+    (route || []).forEach(function (w) {
+      (w.stages || []).forEach(function (s) {
+        var r = stageRecord(progress, s.id);
+        var unlocked = prevPassed === null || prevPassed || r.passed;   // null = the first stage
+        out.stages[s.id] = { unlocked: unlocked, passed: r.passed, stars: r.stars, best: r.best, plays: r.plays };
+        if (out.current === null && unlocked && !r.passed) out.current = s.id;
+        if (s.kind === 'checkpoint' && r.passed) out.worldsDone++;
+        prevPassed = r.passed;
+      });
+    });
+    return out;
+  }
+
+  // The pass/stars rule for a share right (0-1). Stars only come with a pass.
+  function scorePct(pct, o) {
+    var passed = pct >= o.passPct, stars = 0;
+    if (passed) o.stars.forEach(function (need) { if (pct >= need) stars++; });
+    return { pct: pct, passed: passed, stars: stars };
+  }
+
+  // adventureScore({correct, total}, opts) -> {pct, passed, stars}
+  // pct is the share right, 0-1 (8 of 10 = 0.8). An empty stage (total 0) scores 0.
+  // correct / total with whole numbers lands exactly on 0.8, 0.9 and 1 when it should, so
+  // "exactly 80%" passes.
+  function adventureScore(result, opts) {
+    var o = Object.assign({}, ADVENTURE, opts || {}), r = result || {};
+    var total = Math.max(0, Math.floor(+r.total || 0));
+    var correct = Math.min(total, Math.max(0, Math.floor(+r.correct || 0)));
+    return scorePct(total ? correct / total : 0, o);
+  }
+
+  // adventureRecord(progress, stageId, result, now, opts) -> a NEW progress (the old one is
+  // not changed). result is {correct, total} (or an adventureScore result, {pct, ...}).
+  // Keeps her best: the higher pct, the most stars, and a pass stays a pass even if a replay
+  // goes worse. plays goes up by one; lastAt = now (default: this moment).
+  function adventureRecord(progress, stageId, result, now, opts) {
+    var o = Object.assign({}, ADVENTURE, opts || {});
+    var next = JSON.parse(JSON.stringify(progress || {}));       // a copy, so nothing is mutated
+    if (!next.stages || typeof next.stages !== 'object') next.stages = {};
+    if (stageId == null || stageId === '') return next;          // nothing to record against
+    var r = result || {};
+    var s = r.total != null ? adventureScore(r, o) : scorePct(Math.min(1, Math.max(0, +r.pct || 0)), o);
+    var old = stageRecord(next, stageId);
+    next.stages[stageId] = Object.assign({}, next.stages[stageId], {
+      best: Math.max(old.best, s.pct),
+      stars: Math.max(old.stars, s.stars),
+      passed: old.passed || s.passed,
+      plays: old.plays + 1,
+      lastAt: now == null ? Date.now() : now
+    });
+    return next;
+  }
+
   var api = { mergeFlags: mergeFlags, activity: activity, profile: profile, buildDrill: buildDrill, requeue: requeue, drillDefaults: DRILL,
     passPrediction: passPrediction, improvements: improvements, studyPlan: studyPlan, misconceptions: misconceptions,
     badgeCloseness: badgeCloseness, streakWithFreeze: streakWithFreeze, mockMix: mockMix, dayCounts: dayCounts,
-    coachDefaults: COACH };
+    coachDefaults: COACH,
+    TOPIC_NAMES: TOPIC_NAMES, ADVENTURE: ADVENTURE, adventureRoute: adventureRoute, adventureStatus: adventureStatus,
+    adventureScore: adventureScore, adventureRecord: adventureRecord };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.TTCoach = api;
 })(this);
