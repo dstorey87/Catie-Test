@@ -219,7 +219,9 @@
       mastered: ['topic mastered', 'topics mastered'], topics: ['topic tried', 'topics tried'] },
     // --- streak freeze: how freezes are earned (the one place this lives) ---
     freeze: { every: 7,    // every 7 goal days in a streak earns one freeze …
-      max: 2 }             // … and she can hold at most 2 at once
+      max: 2 },            // … and she can hold at most 2 at once
+    // --- goal days: how many of the days she met her goal are remembered (recordGoalDay) ---
+    goalDaysKept: 400      // a year and a bit; the app's TTInsights.CFG.goalDaysKept (a test checks they match)
   };
   var DAY = 86400000;
 
@@ -562,6 +564,104 @@
       nextFreezeIn: held >= f.max || !(f.every > 0) ? null : f.every - toward };
   }
 
+  // ---------- 7. rules the app and Adventure mode share (issue #47) ----------
+  // Adventure (adventure.html) is its own page, but an answer there must count toward her daily
+  // goal and streak, and the page must follow her reading and read-aloud settings, exactly as the
+  // app does. Each rule lives here once so both pages can use the same copy. The app still has its
+  // own copies today (award, TTInsights.recordGoalDay, renderVals, bestVoice, speakQFull ...);
+  // tests/adventure-page.test.js runs those and checks these give the same answers.
+
+  // Her daily goal: the number she chose in Settings, or the app's default when she has none.
+  function dailyGoal(settings) { return (settings && settings.dailyGoal) || COACH.planGoal; }
+
+  // recordGoalDay(days, today, countToday, goal) -> her list of goal days, with today on it once
+  // her answers today reach her goal. The streak is worked out from this list (plus any day whose
+  // answers reach today's goal), so raising the goal later never takes a day back.
+  //   days: 'YYYY-MM-DD' list (junk is treated as empty) · today: 'YYYY-MM-DD' (her local day)
+  // Returns a new list (sorted, no repeats, the newest goalDaysKept only), or the same list back
+  // when today doesn't count or is already on it.
+  function recordGoalDay(days, today, countToday, goal) {
+    var list = Array.isArray(days) ? days : [];
+    if (!(goal > 0) || !(countToday >= goal) || dayNum(today) === null || list.indexOf(today) >= 0) return list;
+    return list.concat([today]).sort().slice(-COACH.goalDaysKept);
+  }
+
+  // streakAward(streak, attempts, n, goal, now) -> a NEW streak record after n more answers at
+  // time now: the streak half of the app's award(), which runs after every practice answer.
+  //   streak:   her saved record {count, last, todayDate, todayN, goalDays} (may be missing)
+  //   attempts: her answers BEFORE these n (the goal counts them with coach.dayCounts)
+  //   goal:     her daily goal (dailyGoal above)
+  // todayDate/todayN/count/last are the app's older day counter (a UTC day). The app still reads
+  // todayN for its "already practised today" reminder check, so it is kept up exactly as before.
+  function streakAward(streak, attempts, n, goal, now) {
+    var utcToday = new Date(now).toISOString().slice(0, 10);
+    var s = Object.assign({ count: 0, last: '', todayDate: '', todayN: 0 }, streak);
+    // the older counter: today's answers, and a run of days that reached the goal
+    if (s.todayDate !== utcToday) { s.todayDate = utcToday; s.todayN = 0; }
+    s.todayN += n;
+    if (s.todayN >= goal && s.last !== utcToday) {
+      var yesterday = new Date(now - DAY).toISOString().slice(0, 10);
+      s.count = (s.last === yesterday) ? (s.count || 0) + 1 : 1;
+      s.last = utcToday;
+    }
+    // the goal-day list the streak on screen is worked out from (her local day)
+    var today = localDay(now), doneToday = (dayCounts(attempts)[today] || 0) + n;
+    s.goalDays = recordGoalDay(s.goalDays, today, doneToday, goal);
+    return s;
+  }
+
+  // What her reading settings (Settings -> Reading) change on the page. The app's own values.
+  var READING = {
+    zoom: [1, 1.12, 1.25],                     // Text size: normal, bigger, biggest (settings.textSize 0, 1, 2)
+    font: "'Lexend', sans-serif",               // Easy-reading font (settings.dyslexiaFont)
+    contrast: 'contrast(1.3) saturate(1.15)',   // High contrast (settings.highContrast)
+    voiceRate: 0.95                             // read-aloud speed when she hasn't chosen one ("Normal")
+  };
+  // readingStyle(settings) -> the style to put on the page: {zoom, fontFamily, filter}, each only
+  // when her settings change it (an empty object for the defaults). Reduce motion is read straight
+  // from settings.reducedMotion by each page, as it switches animations off rather than styling.
+  function readingStyle(settings) {
+    var st = settings || {}, out = {}, zoom = READING.zoom[st.textSize] || 1;
+    if (zoom !== 1) out.zoom = zoom;
+    if (st.dyslexiaFont) out.fontFamily = READING.font;
+    if (st.highContrast) out.filter = READING.contrast;
+    return out;
+  }
+
+  // Read aloud: which voice. Clearer voices score higher. A map and a loop: [name pattern, points].
+  var VOICE_POINTS = [[/premium/, 3], [/enhanced/, 2.5], [/natural|neural/, 2], [/kate|serena|sonia|martha|stephanie|daniel/, 1],
+    [/google uk english/, 1.2], [/compact/, -2]];
+  var VOICE_UK = 1.5;   // a British English voice (lang en-GB): the test is a UK one
+  function voiceScore(v) {
+    var n = String((v && v.name) || '').toLowerCase(), sc = v && v.lang === 'en-GB' ? VOICE_UK : 0;
+    VOICE_POINTS.forEach(function (p) { if (p[0].test(n)) sc += p[1]; });
+    return sc;
+  }
+  // pickVoice(voices, name) -> the English voice she chose in Settings (by name), else the best
+  // scoring English voice, else null (then the browser reads with its own default voice).
+  //   voices: speechSynthesis.getVoices() · name: settings.voiceName
+  function pickVoice(voices, name) {
+    var en = (voices || []).filter(function (v) { return v && /^en/i.test(v.lang); });
+    if (!en.length) return null;
+    var chosen = en.filter(function (v) { return v.name === name; })[0];
+    return chosen || en.slice().sort(function (a, b) { return voiceScore(b) - voiceScore(a); })[0];
+  }
+  // Read aloud: the words. The question with each option in the order they are on screen.
+  var LETTERS = 'ABCDEFGH';
+  function sayQuestion(question, options) {
+    return question + (options || []).map(function (o, i) { return '. Option ' + LETTERS.charAt(i) + ': ' + o; }).join('');
+  }
+  // After she answers (when "read aloud automatically" is on): right, or the right answer, then why.
+  //   letter/text: the right option's letter on screen and its words
+  function sayAnswer(ok, letter, text, explanation) {
+    return (ok ? 'Correct. ' : 'The answer is ' + letter + ', ' + text + '. ') + explanation;
+  }
+  // The explanation button: why, the plain re-wording when it is open, and the rule it comes from.
+  // A missing part is left out (never read out as "undefined").
+  function sayExplanation(explanation, ruleRef, plain) {
+    return [explanation, plain, ruleRef].filter(function (s) { return s; }).join('. ');
+  }
+
   // =========================================================================================
   // ---------- Adventure mode: a learning route of worlds and stages (issue #27) ----------
   // The 14 DVSA car theory topics, in the app's order: topic 1 = TOPIC_NAMES[0]. Copied
@@ -725,8 +825,10 @@
 
   var api = { mergeFlags: mergeFlags, activity: activity, profile: profile, buildDrill: buildDrill, requeue: requeue, drillDefaults: DRILL,
     passPrediction: passPrediction, improvements: improvements, studyPlan: studyPlan, misconceptions: misconceptions,
-    badgeCloseness: badgeCloseness, streakWithFreeze: streakWithFreeze, mockMix: mockMix, dayCounts: dayCounts,
+    badgeCloseness: badgeCloseness, streakWithFreeze: streakWithFreeze, mockMix: mockMix, dayCounts: dayCounts, localDay: localDay,
     coachDefaults: COACH,
+    dailyGoal: dailyGoal, recordGoalDay: recordGoalDay, streakAward: streakAward, READING: READING, readingStyle: readingStyle,
+    voiceScore: voiceScore, pickVoice: pickVoice, sayQuestion: sayQuestion, sayAnswer: sayAnswer, sayExplanation: sayExplanation,
     TOPIC_NAMES: TOPIC_NAMES, ADVENTURE: ADVENTURE, adventureRoute: adventureRoute, adventureStatus: adventureStatus,
     adventureScore: adventureScore, adventureRecord: adventureRecord, mergeAdventure: mergeAdventure };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;

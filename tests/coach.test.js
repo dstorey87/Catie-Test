@@ -806,3 +806,108 @@ test('adventure merge: missing or junk progress is survived, and neither input i
   assert.deepEqual(coach.mergeAdventure({ stages: { w1s1: { stars: 'x' } } }, { stages: { w1s1: { plays: 1, lastAt: 9 } } }).stages.w1s1,
     { best: 0, stars: 0, passed: false, plays: 1, lastAt: 9 });
 });
+
+// =========================================================================================
+// ---------- rules the app and Adventure share (issue #47) ----------
+// Adventure (adventure.html) must count an answer toward the daily goal and streak, show her
+// reading settings and read aloud exactly as the app does. These rules live here once so both
+// pages can use the same copy. tests/adventure-page.test.js checks they still match the app's
+// own code in Theory Trainer.dc.html until the app switches to these.
+
+// A time on a given local day: noon, so no time zone can move it to another day.
+const noon = s => { const [y, m, d] = s.split('-').map(Number); return new Date(y, m - 1, d, 12).getTime(); };
+
+test('#47 localDay: a time as her own local day, the days dayCounts counts in', () => {
+  assert.equal(coach.localDay(noon('2026-09-25')), '2026-09-25');
+  assert.deepEqual(Object.keys(coach.dayCounts([{ t: noon('2026-09-25') }])), [coach.localDay(noon('2026-09-25'))]);
+});
+
+test('#47 daily goal: her Settings choice, or the app default when she has none', () => {
+  assert.equal(coach.dailyGoal({ dailyGoal: 30 }), 30);
+  assert.equal(coach.dailyGoal({}), coach.coachDefaults.planGoal);
+  assert.equal(coach.dailyGoal(null), coach.coachDefaults.planGoal);
+});
+
+test('#47 goal days: today goes on the list once her answers today reach the goal, once only', () => {
+  assert.deepEqual(coach.recordGoalDay([], '2026-09-25', 19, 20), [], 'not yet');
+  assert.deepEqual(coach.recordGoalDay([], '2026-09-25', 20, 20), ['2026-09-25']);
+  const had = ['2026-09-24', '2026-09-25'];
+  assert.equal(coach.recordGoalDay(had, '2026-09-25', 40, 20), had, 'already on it: the same list back');
+  assert.deepEqual(coach.recordGoalDay(['2026-09-24'], '2026-09-23', 20, 20), ['2026-09-23', '2026-09-24'], 'kept in date order');
+  assert.deepEqual(coach.recordGoalDay('junk', 'not a day', 20, 20), [], 'junk in: an empty list');
+  assert.deepEqual(coach.recordGoalDay([], '2026-09-25', 5, 0), [], 'no goal: no goal day');
+  // only the newest goalDaysKept are remembered
+  const keep = coach.coachDefaults.goalDaysKept;
+  const long = Array.from({ length: keep }, (_, i) => new Date(Date.UTC(2024, 0, 1) + i * 86400000).toISOString().slice(0, 10));
+  const out = coach.recordGoalDay(long, '2026-09-25', 20, 20);
+  assert.equal(out.length, keep);
+  assert.equal(out[out.length - 1], '2026-09-25');
+  assert.equal(out[0], long[1], 'the oldest day drops off');
+});
+
+test('#47 streakAward: answers made now count toward today; the goal day is recorded when they reach the goal', () => {
+  const now = noon('2026-09-25');
+  const today = [1, 2, 3].map(i => ({ q: 'q' + i, t: now - i * 60000, ok: true, topic: 1 }));
+  // 3 answered already today, 1 more now, goal 4: today becomes a goal day
+  const s = coach.streakAward({}, today, 1, 4, now);
+  assert.deepEqual(s.goalDays, ['2026-09-25']);
+  assert.equal(s.todayN, 1, "today's answers on the app's own counter");
+  assert.equal(s.todayDate, new Date(now).toISOString().slice(0, 10));
+  // short of the goal: no goal day yet
+  assert.deepEqual(coach.streakAward({}, today, 0, 4, now).goalDays, []);
+  // the old record is not changed
+  const old = { count: 2, last: 'x', todayDate: 'y', todayN: 5, goalDays: ['2026-09-20'] };
+  const copy = JSON.parse(JSON.stringify(old));
+  coach.streakAward(old, today, 1, 4, now);
+  assert.deepEqual(old, copy);
+});
+
+test('#47 streakAward: the app\'s day counter starts again on a new day and carries a run of goal days', () => {
+  const now = noon('2026-09-25'), day = new Date(now).toISOString().slice(0, 10);
+  const yday = new Date(now - 86400000).toISOString().slice(0, 10);
+  // yesterday was a goal day on the old counter: reaching the goal today makes it 2 in a row
+  const s = coach.streakAward({ count: 1, last: yday, todayDate: yday, todayN: 25 }, [], 20, 20, now);
+  assert.equal(s.todayDate, day);
+  assert.equal(s.todayN, 20, 'yesterday\'s 25 does not carry into today');
+  assert.equal(s.count, 2);
+  assert.equal(s.last, day);
+  // a gap: back to 1
+  assert.equal(coach.streakAward({ count: 5, last: '2026-01-01' }, [], 20, 20, now).count, 1);
+  // already counted today: not counted twice
+  assert.equal(coach.streakAward({ count: 3, last: day, todayDate: day, todayN: 20 }, [], 1, 20, now).count, 3);
+});
+
+test('#47 reading style: text size, easy-reading font and high contrast, as the app draws them', () => {
+  const R = coach.READING;
+  assert.deepEqual(coach.readingStyle({}), {}, 'nothing chosen: nothing changed');
+  assert.deepEqual(coach.readingStyle({ textSize: 0 }), {});
+  assert.deepEqual(coach.readingStyle({ textSize: 2 }), { zoom: R.zoom[2] });
+  assert.deepEqual(coach.readingStyle({ textSize: 1 }), { zoom: R.zoom[1] });
+  assert.deepEqual(coach.readingStyle({ textSize: 9 }), {}, 'an unknown size is the normal size');
+  assert.deepEqual(coach.readingStyle({ dyslexiaFont: true }), { fontFamily: R.font });
+  assert.deepEqual(coach.readingStyle({ highContrast: true }), { filter: R.contrast });
+  assert.deepEqual(Object.keys(coach.readingStyle({ textSize: 2, dyslexiaFont: true, highContrast: true })).sort(), ['filter', 'fontFamily', 'zoom']);
+  assert.equal(coach.readingStyle(null) && typeof coach.readingStyle(null), 'object');
+});
+
+test('#47 voice: her chosen English voice, else the best-sounding English one, else none', () => {
+  const v = (name, lang) => ({ name, lang });
+  const voices = [v('Alex', 'en-US'), v('Google UK English Female', 'en-GB'), v('Thomas', 'fr-FR'), v('Samantha (Premium)', 'en-US')];
+  assert.equal(coach.pickVoice(voices, 'Alex').name, 'Alex', 'her choice wins');
+  assert.equal(coach.pickVoice(voices, '').name, 'Samantha (Premium)', 'premium (3) scores above Google UK English (1.5 + 1.2)');
+  assert.equal(coach.pickVoice(voices, 'Thomas').name, 'Samantha (Premium)', 'a non-English choice is not used');
+  assert.equal(coach.pickVoice([v('Daniel', 'en-GB'), v('Fred', 'en-US')], '').name, 'Daniel', 'a UK voice first');
+  assert.equal(coach.pickVoice([v('Thomas', 'fr-FR')], ''), null, 'no English voice: none (the browser uses its own)');
+  assert.equal(coach.pickVoice(null, 'x'), null);
+  assert.ok(coach.voiceScore(v('Karen (Premium)', 'en-AU')) > coach.voiceScore(v('Karen (Compact)', 'en-AU')));
+});
+
+test('#47 read aloud: the question with its options, the result, and the explanation', () => {
+  assert.equal(coach.sayQuestion('What does it mean?', ['Stop', 'Go', 'Wait', 'Turn']),
+    'What does it mean?. Option A: Stop. Option B: Go. Option C: Wait. Option D: Turn');
+  assert.equal(coach.sayAnswer(true, 'B', 'Go', 'Because.'), 'Correct. Because.');
+  assert.equal(coach.sayAnswer(false, 'B', 'Go', 'Because.'), 'The answer is B, Go. Because.');
+  assert.equal(coach.sayExplanation('Because', 'Rule 1'), 'Because. Rule 1');
+  assert.equal(coach.sayExplanation('Because', 'Rule 1', 'Put simply'), 'Because. Put simply. Rule 1');
+  assert.equal(coach.sayExplanation('Because', ''), 'Because', 'no rule reference: never "undefined" read out');
+});
