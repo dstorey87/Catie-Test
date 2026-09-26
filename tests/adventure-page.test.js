@@ -172,7 +172,7 @@ test('page: no adventure number is typed in - pass mark, stars and sizes all com
 
 test('page: the XP and attempts numbers match the app (Theory Trainer.dc.html)', () => {
   assert.ok(app.includes('correctCount*' + adv.APP.xpPerRight), 'app award() gives ' + adv.APP.xpPerRight + ' XP a right answer');
-  assert.ok(app.includes('.slice(-' + adv.APP.attemptsKeep + ')'), 'app keeps the last ' + adv.APP.attemptsKeep + ' attempts');
+  assert.ok(app.includes('A.ATTEMPTS_KEPT = ' + adv.APP.attemptsKeep + ';'), 'app keeps the last ' + adv.APP.attemptsKeep + ' attempts');
   assert.ok(app.includes("this.BASE = '" + adv.APP.base + "'"), 'same storage prefix as the app');
 });
 
@@ -364,8 +364,8 @@ test("bank: the admin's deletions are left out and corrections shown, like the a
 // =========================================================================================
 // ---------- issue #47: goal and streak, reading settings, read-aloud, two tabs ----------
 
-// The app's own code, run here in node, so each shared rule in coach.js can be checked against
-// what the app does today. When the app switches to the coach.js copies, these checks go.
+// Issue #51: the app now uses these shared rules itself (one copy of each), so the checks that
+// ran the app's own copies against them are replaced by checks that the app calls coach.js.
 // methodSrc('award') -> "award(qCount, correctCount, bonus){ ... }", found by matching braces.
 function methodSrc(name) {
   const at = app.indexOf('\n  ' + name + '(');
@@ -377,95 +377,63 @@ function methodSrc(name) {
   }
   return app.slice(at + 3, i + 1);
 }
-// The app's TTInsights block (its goal-day list), run the way tests/app-files.test.js runs it.
-const insightsSrc = [...app.matchAll(/<script>([\s\S]*?)<\/script>/g)].map(m => m[1]).find(s => s.includes('window.TTInsights ='));
-const I = (() => { const ctx = { window: {} }; vm.runInNewContext(insightsSrc, ctx); return ctx.window.TTInsights; })();
 // A time on a given local day: noon, so no time zone can move it to another day.
 const noon = s => { const [y, m, d] = s.split('-').map(Number); return new Date(y, m - 1, d, 12).getTime(); };
 
-// The streak the app's award() leaves after n answers at time `now`, for a learner's state.
-function appAward(state, n, now) {
+test('#51 goal and streak: the app\'s award() is coach.streakAward with coach.dailyGoal (no copy of its own)', () => {
+  const award = methodSrc('award');
+  assert.match(award, /TTCoach\.streakAward\(this\.state\.streak, this\.state\.attempts, qCount, TTCoach\.dailyGoal\(this\.state\.settings\), Date\.now\(\)\)/);
+  assert.doesNotMatch(award, /todayN|goalDays|recordGoalDay/, 'no streak rule of its own left in award()');
+  assert.doesNotMatch(app, /recordGoalDay = function|goalDaysKept:/, 'no goal-day rule or limit of its own');
+  // Run it: an answer in the app leaves exactly the streak an Adventure answer does.
+  const now = noon('2026-09-25');
+  const state = { streak: { goalDays: ['2026-09-24'] }, settings: { dailyGoal: 10 }, xp: 0,
+    attempts: Array.from({ length: 9 }, (_, i) => ({ q: 'p' + i, t: now - (i + 1) * 60000, ok: true, topic: 1 })) };
   class FixedDate extends Date { constructor(...a) { if (a.length) super(...a); else super(now); } static now() { return now; } }
-  const ctx = { window: { TTCoach: coach, TTInsights: I }, TTCoach: coach, Date: FixedDate };
-  const award = vm.runInNewContext('({' + methodSrc('award') + '})', ctx).award;
-  return award.call({ state, levelInfo: () => ({ level: 1 }) }, n, 0).streak;
-}
-
-test('#47 goal and streak: coach.streakAward leaves the same streak record as the app\'s award()', () => {
-  const now = noon('2026-09-25'), utc = d => new Date(d).toISOString().slice(0, 10);
-  const today = k => Array.from({ length: k }, (_, i) => ({ q: 'q' + i, t: now - (i + 1) * 60000, ok: true, topic: 1 }));
-  const cases = [
-    { streak: { count: 0, last: '', todayDate: '', todayN: 0 }, attempts: [], settings: {} },
-    { streak: { count: 0, last: '', todayDate: utc(now), todayN: 19 }, attempts: today(19), settings: {} },
-    { streak: { count: 4, last: utc(now - 86400000), todayDate: utc(now - 86400000), todayN: 22 }, attempts: today(9), settings: { dailyGoal: 10 } },
-    { streak: { count: 2, last: '2026-01-01', todayDate: '2026-01-01', todayN: 3, goalDays: ['2026-09-20', '2026-09-24'] }, attempts: today(29), settings: { dailyGoal: 30 } },
-    { streak: { count: 1, last: utc(now), todayDate: utc(now), todayN: 40 }, attempts: today(40), settings: { dailyGoal: 20 } }
-  ];
-  for (const c of cases) {
-    for (const n of [1, 3]) {
-      const want = appAward(JSON.parse(JSON.stringify(c)), n, now);
-      const got = coach.streakAward(c.streak, c.attempts, n, coach.dailyGoal(c.settings), now);
-      assert.deepEqual(JSON.parse(JSON.stringify(got)), JSON.parse(JSON.stringify(want)), JSON.stringify(c.settings) + ' + ' + n);
-    }
-  }
+  const ctx = { window: { TTCoach: coach }, TTCoach: coach, Date: FixedDate };
+  const appSide = vm.runInNewContext('({' + methodSrc('award') + '})', ctx).award;
+  const got = appSide.call({ state, levelInfo: () => ({ level: 1 }) }, 1, 1).streak;
+  assert.deepEqual(JSON.parse(JSON.stringify(got)), adv.withAnswer(state, { q: 'x', ok: true, topic: 1, p: 0 }, now, coach).streak);
+  // Every other place that reads her goal asks coach.dailyGoal too.
+  assert.doesNotMatch(app, /dailyGoal *\|\| *20|dailyGoal\) *\|\| *C\.coachDefaults\.planGoal|dailyGoal *\|\| *C\.coachDefaults\.planGoal/, 'no copy of the default goal');
 });
 
-test('#47 goal days: coach.recordGoalDay and its limit match the app\'s TTInsights', () => {
-  assert.equal(coach.coachDefaults.goalDaysKept, I.CFG.goalDaysKept);
-  const cases = [[[], '2026-09-25', 20, 20], [['2026-09-25'], '2026-09-25', 40, 20], [['2026-09-26'], '2026-09-25', 20, 20],
-    [[], '2026-09-25', 19, 20], [null, 'junk', 50, 20], [[], '2026-09-25', 5, 0]];
-  for (const c of cases) assert.deepEqual(JSON.parse(JSON.stringify(coach.recordGoalDay(...c))), JSON.parse(JSON.stringify(I.recordGoalDay(...c))), JSON.stringify(c));
-});
-
-test('#47 reading settings: coach.readingStyle is what the app puts on its page for every choice', () => {
-  // The app's lines, from "const zoom" to the high-contrast one, run for each mix of settings.
-  const from = app.indexOf('const zoom = ['), to = app.indexOf('\n', app.indexOf('if(st.highContrast) dyn.filter'));
-  assert.ok(from > 0 && to > from, 'the app\'s reading-style lines were not found');
-  const appDyn = new Function('st', app.slice(from, to) + '\nreturn dyn;');
-  for (const textSize of [0, 1, 2, undefined]) for (const dyslexiaFont of [false, true]) for (const highContrast of [false, true]) {
-    const st = { textSize, dyslexiaFont, highContrast };
-    assert.deepEqual(coach.readingStyle(st), appDyn(st), JSON.stringify(st));
-  }
+test('#51 reading settings: the app styles its page with coach.readingStyle', () => {
+  assert.match(app, /const dyn = window\.TTCoach \? TTCoach\.readingStyle\(st\) : \{\}, zoom = dyn\.zoom \|\| 1;/);
+  assert.ok(!app.includes('[1, 1.12, 1.25]') && !app.includes('contrast(1.3) saturate(1.15)'), 'no copy of the sizes or the contrast filter');
   // The read-aloud speed when she has not chosen one: the app's default setting and its fallback.
   assert.ok(app.includes('voiceRate:' + coach.READING.voiceRate + ','), 'app default voiceRate');
   assert.ok(app.includes('this.props.speechRate || ' + coach.READING.voiceRate + ';'), 'app speak() fallback');
 });
 
-test('#47 read aloud: coach.pickVoice picks the voice the app\'s bestVoice() picks', () => {
-  const v = (name, lang) => ({ name, lang });
-  const lists = [
-    [v('Alex', 'en-US'), v('Google UK English Female', 'en-GB'), v('Thomas', 'fr-FR'), v('Samantha (Enhanced)', 'en-US')],
-    [v('Daniel', 'en-GB'), v('Karen (Compact)', 'en-AU'), v('Microsoft Sonia Online (Natural)', 'en-GB')],
-    [v('Thomas', 'fr-FR')], []];
-  for (const voices of lists) for (const voiceName of ['', 'Alex', 'Daniel', 'Thomas']) {
-    const fake = { getVoices: () => voices };
-    const ctx = { window: { speechSynthesis: fake }, speechSynthesis: fake };
-    const appSide = vm.runInNewContext('({' + ['voices', 'scoreVoice', 'bestVoice'].map(methodSrc).join(',\n') + '})', ctx);
-    appSide.state = { settings: { voiceName } };
-    const want = appSide.bestVoice(), got = coach.pickVoice(voices, voiceName);
-    assert.equal(got ? got.name : null, want ? want.name : null, JSON.stringify(voices.map(x => x.name)) + ' / ' + voiceName);
-  }
+test('#51 read aloud: the app picks the voice and says the words with coach.js', () => {
+  assert.match(methodSrc('bestVoice'), /window\.TTCoach \? TTCoach\.pickVoice\(this\.voices\(\), this\.state\.settings\.voiceName\) : null/);
+  assert.ok(!app.includes('\n  scoreVoice('), 'no voice scoring of its own');
+  assert.match(app, /const vScore = v => window\.TTCoach \? TTCoach\.voiceScore\(v\) : 0;/);
+  assert.match(app, /voiceOpts: this\.voices\(\)\.slice\(\)\.sort\(\(a,b\)=>vScore\(b\)-vScore\(a\)\)/, 'the Settings voice list is in coach.js order');
+  assert.match(methodSrc('speakQFull'), /TTCoach\.sayQuestion\(q\.question, v\.options\)/);
+  assert.match(methodSrc('answerLearn'), /window\.TTCoach\) this\.speak\(TTCoach\.sayAnswer\(ok, 'ABCD'\[vq\.correctIndex\], vq\.options\[vq\.correctIndex\], q\.explanation \|\| ''\)\)/);
+  assert.match(app, /speakExp: \(\)=>window\.TTCoach && this\.speak\(TTCoach\.sayExplanation\(q\.explanation, q\.ruleRef, plainOpen \? q\.plainExplanation : ''\)\),/);
+  // Run the question read-out: the words are coach.sayQuestion's, options in their order on screen.
+  let said = '';
+  const q = { question: 'What must you do?', options: ['Stop', 'Give way', 'Speed up', 'Sound your horn'] };
+  vm.runInNewContext('({' + methodSrc('speakQFull') + '})', { TTCoach: coach, window: { TTCoach: coach } }).speakQFull
+    .call({ viewQ: x => ({ options: x.options.slice().reverse() }), speak: t => { said = t; } }, q);
+  assert.equal(said, 'What must you do?. Option A: Sound your horn. Option B: Speed up. Option C: Give way. Option D: Stop');
 });
 
-test('#47 read aloud: the words read out are the app\'s own (question, result, explanation)', () => {
-  const q = { question: 'What must you do?', options: ['Stop', 'Give way', 'Speed up', 'Sound your horn'], correctIndex: 1,
-    explanation: 'Give way to traffic.', ruleRef: 'Highway Code rule 1', plainExplanation: 'Let them go first.' };
-  // the question and its options: the app's speakQFull
-  let said = '';
-  const appQ = vm.runInNewContext('({' + methodSrc('speakQFull') + '})', {});
-  appQ.speakQFull.call({ viewQ: x => ({ options: x.options }), speak: t => { said = t; } }, q);
-  assert.equal(coach.sayQuestion(q.question, q.options), said);
-  // the result after answering, when "read aloud automatically" is on: the app's answerLearn
-  const res = app.match(/if\(this\.state\.settings\.autoRead\) this\.speak\((\(ok\?[^\n]*?q\.explanation)\);/);
-  assert.ok(res, 'the app\'s spoken result was not found');
-  const appRes = new Function('ok', 'vq', 'q', 'return ' + res[1]);
-  for (const ok of [true, false]) assert.equal(coach.sayAnswer(ok, 'B', q.options[1], q.explanation), appRes(ok, q, q));
-  // the explanation button: the app's speakExp (with and without the plain re-wording open)
-  const exp = app.match(/speakExp: \(\)=>this\.speak\(([^\n]*?)\),\r?\n/);
+test('#51 bug: the explanation read aloud never says "undefined" when a question has no rule reference', () => {
+  // Found by #47: the app read explanation + '. ' + ruleRef, so a question with no rule reference
+  // (one added by hand, or a server row without one) ended with the word "undefined", and so did
+  // an open plain re-wording that had not been written.
+  const exp = app.match(/speakExp: \(\)=>(?:window\.TTCoach && )?this\.speak\(([^\n]*?)\),\r?\n/);
   assert.ok(exp, 'the app\'s explanation read-out was not found');
-  const appExp = new Function('q', 'plainOpen', 'return ' + exp[1]);
-  assert.equal(coach.sayExplanation(q.explanation, q.ruleRef), appExp(q, false));
-  assert.equal(coach.sayExplanation(q.explanation, q.ruleRef, q.plainExplanation), appExp(q, true));
+  const said = new Function('q', 'plainOpen', 'TTCoach', 'return ' + exp[1]);
+  const noRule = { explanation: 'Give way to traffic on the right.', plainExplanation: 'Let them go first.' };
+  assert.doesNotMatch(said(noRule, false, coach), /undefined/);
+  assert.doesNotMatch(said(noRule, true, coach), /undefined/);
+  assert.doesNotMatch(said({ explanation: 'Why.', ruleRef: 'Rule 1' }, true, coach), /undefined/, 'plain re-wording open but none written');
+  assert.equal(said({ explanation: 'Why.', ruleRef: 'Rule 1', plainExplanation: 'Plainly.' }, true, coach), 'Why.. Plainly.. Rule 1');
 });
 
 test('#47 goal and streak: an Adventure answer records the streak as a practice answer does', () => {

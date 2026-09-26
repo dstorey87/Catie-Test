@@ -221,7 +221,7 @@
     freeze: { every: 7,    // every 7 goal days in a streak earns one freeze …
       max: 2 },            // … and she can hold at most 2 at once
     // --- goal days: how many of the days she met her goal are remembered (recordGoalDay) ---
-    goalDaysKept: 400      // a year and a bit; the app's TTInsights.CFG.goalDaysKept (a test checks they match)
+    goalDaysKept: 400      // a year and a bit (the app and Adventure both keep this many, through recordGoalDay)
   };
   var DAY = 86400000;
 
@@ -567,9 +567,8 @@
   // ---------- 7. rules the app and Adventure mode share (issue #47) ----------
   // Adventure (adventure.html) is its own page, but an answer there must count toward her daily
   // goal and streak, and the page must follow her reading and read-aloud settings, exactly as the
-  // app does. Each rule lives here once so both pages can use the same copy. The app still has its
-  // own copies today (award, TTInsights.recordGoalDay, renderVals, bestVoice, speakQFull ...);
-  // tests/adventure-page.test.js runs those and checks these give the same answers.
+  // app does. Each rule lives here once and both pages use it (the app since issue #51: award,
+  // renderVals, bestVoice and its read-aloud words call these; tests/adventure-page.test.js checks).
 
   // Her daily goal: the number she chose in Settings, or the app's default when she has none.
   function dailyGoal(settings) { return (settings && settings.dailyGoal) || COACH.planGoal; }
