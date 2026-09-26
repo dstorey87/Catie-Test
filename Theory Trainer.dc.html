@@ -471,6 +471,42 @@ window.TTScreen = (function(){
     return bits.length ? 'Built from your answers: ' + bits.join(' · ') : 'Built from your answers as you go';
   };
 
+  // ----- A mock from her weak spots (issue #61) -----
+  // The kinds of test the app saves, and what each is called: the results screen's heading (name),
+  // its label in the dashboard's list of mocks and the mock chart's words (tag, '' for none) and
+  // Admin → Activity's word (say).
+  // kind is the test's own `kind`. A map, so another kind of test is one more entry.
+  S.TEST_KINDS = {
+    mock:   {name: 'Mock test', tag: '', say: 'mock test'},
+    weak:   {name: 'Mock from your weak spots', tag: 'weak spots', say: 'weak-spots mock'},
+    custom: {name: 'Your own test', tag: '', say: 'custom test'}
+  };
+  // A kind's words. A test saved before kinds were kept (or an unknown kind) is a mock.
+  S.testKind = function(kind){ return S.TEST_KINDS[kind] || S.TEST_KINDS.mock; };
+  // Each of coach.js buildWeakMock's reasons in words, in its order: [reason, words after the count].
+  S.WEAK_WORDS = [['stuck', ' you keep missing'], ['missed', ' you got wrong last time'], ['flagged', ' flagged'],
+    ['due', ' due again'], ['weak', ' from your weakest topics'], ['fill', ' spread like the real test']];
+  // The line under "From my weak spots" on the Mock Test screen: what the mock will hold, from
+  // buildWeakMock's reasons ({stuck, missed, flagged, due, weak, fill}: counts). answered: she has
+  // answered a question; names: her weakest topics' names, weakest first. With nothing to build
+  // from, the mock is simply like the real test, and the line says so.
+  S.weakMockDesc = function(r, answered, names){
+    r = r || {};
+    var total = 0, bits = [];
+    S.WEAK_WORDS.forEach(function(w){ total += r[w[0]] || 0; });
+    var real = ', so this one is like the real test: ' + total + ' questions from every topic.';
+    if(!answered) return 'You haven’t answered any questions yet' + real;
+    if(total === (r.fill || 0)) return 'Nothing to catch up on right now' + real;
+    S.WEAK_WORDS.forEach(function(w){
+      var n = r[w[0]] || 0;
+      if(!n) return;
+      // The weakest topics are named, so she can see why those questions are there.
+      var which = w[0] === 'weak' && names && names.length ? ' (' + names.join(', ') + ')' : '';
+      bits.push(n + w[1] + which);
+    });
+    return 'Built from your answers: ' + bits.join(' · ');
+  };
+
   // ----- Accessibility words (issue #10, WCAG 2.2 AA) -----
   // The browser tab's title for the screen showing (2.4.2 Page titled). label is the
   // screen's data-screen-label; none (e.g. before the first screen draws) gives the app name.
@@ -525,7 +561,9 @@ window.TTScreen = (function(){
     tests = tests || [];
     if(!tests.length) return 'Mock test scores: none yet';
     return 'Mock test scores, oldest first: ' + tests.map(function(r){
-      return r.score + ' out of ' + (r.total || 50) + (r.pass ? ', a pass' : ', not a pass');
+      // a kind of test with a label says so, e.g. "(weak spots)" (S.TEST_KINDS, issue #61)
+      var tag = S.testKind(r.kind).tag;
+      return r.score + ' out of ' + (r.total || 50) + (tag ? ' (' + tag + ')' : '') + (r.pass ? ', a pass' : ', not a pass');
     }).join('; ') + '. The dashed line is the pass mark, ' + pass + '.';
   };
 
@@ -1818,18 +1856,24 @@ html{scroll-padding-bottom:160px}
   </div>
   <div style="background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);border-radius:22px;padding:24px">
     <div style="display:flex;flex-direction:column;gap:16px;font-size:18px;line-height:1.5">
-      <div style="display:flex;gap:12px;align-items:center"><span style="flex:none;width:38px;height:38px;border-radius:12px;background:var(--tt-bg-e4f2ef);color:var(--tt-fg-0a5d50);display:flex;align-items:center;justify-content:center;font-family:'Nunito',sans-serif;font-weight:900">50</span>questions from every topic</div>
-      <div style="display:flex;gap:12px;align-items:center"><span style="flex:none;width:38px;height:38px;border-radius:12px;background:var(--tt-bg-e4f2ef);color:var(--tt-fg-0a5d50);display:flex;align-items:center;justify-content:center;font-family:'Nunito',sans-serif;font-weight:900">57</span>minutes on the clock</div>
-      <div style="display:flex;gap:12px;align-items:center"><span style="flex:none;width:38px;height:38px;border-radius:12px;background:var(--tt-bg-e4f2ef);color:var(--tt-fg-0a5d50);display:flex;align-items:center;justify-content:center;font-family:'Nunito',sans-serif;font-weight:900">43</span>correct answers to pass</div>
+      <div style="display:flex;gap:12px;align-items:center"><span style="flex:none;width:38px;height:38px;border-radius:12px;background:var(--tt-bg-e4f2ef);color:var(--tt-fg-0a5d50);display:flex;align-items:center;justify-content:center;font-family:'Nunito',sans-serif;font-weight:900">{{ mockN }}</span>questions from every topic</div>
+      <div style="display:flex;gap:12px;align-items:center"><span style="flex:none;width:38px;height:38px;border-radius:12px;background:var(--tt-bg-e4f2ef);color:var(--tt-fg-0a5d50);display:flex;align-items:center;justify-content:center;font-family:'Nunito',sans-serif;font-weight:900">{{ mockMins }}</span>minutes on the clock</div>
+      <div style="display:flex;gap:12px;align-items:center"><span style="flex:none;width:38px;height:38px;border-radius:12px;background:var(--tt-bg-e4f2ef);color:var(--tt-fg-0a5d50);display:flex;align-items:center;justify-content:center;font-family:'Nunito',sans-serif;font-weight:900">{{ mockPass }}</span>correct answers to pass</div>
     </div>
     <div style="font-size:15.5px;color:var(--tt-fg-6e6a5e);margin-top:18px;line-height:1.5">No feedback until the end, just like the real test. You can flag a question and come back to it. The speaker buttons still work — the real test has a voiceover option too.</div>
   </div>
   <h2 style="font-family:'Nunito',sans-serif;font-weight:800;font-size:16px;margin:18px 0 8px">Which kind of test?</h2>
-  <div style="display:flex;gap:10px">
+  <!-- A grid, not a row: four choices sit two to a row on a phone and four across on a wide screen. -->
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px">
     <sc-for list="{{ testModeChoices }}" as="m" hint-placeholder-count="2">
       <button onClick="{{ m.pick }}" aria-pressed="{{ m.on }}" style="{{ m.style }}"><span style="display:block;font-weight:800;font-size:15.5px">{{ m.name }}</span><span style="display:block;font-size:13px;color:var(--tt-fg-6e6a5e);margin-top:2px">{{ m.sub }}</span></button>
     </sc-for>
   </div>
+  <!-- From my weak spots (issue #61): what this mock will hold and why, from coach.js's reasons
+       (TTScreen.weakMockDesc). role="status" so a screen reader hears it when the choice is made. -->
+  <sc-if value="{{ showWeakLine }}" hint-placeholder-val="{{ false }}">
+    <div role="status" style="margin-top:12px;background:var(--tt-bg-e4f2ef);border:1px solid var(--tt-bd-bfe0d8);border-radius:14px;padding:12px 14px;font-size:15px;line-height:1.5;color:var(--tt-fg-0a5d50)">{{ weakMockLine }}</div>
+  </sc-if>
   <sc-if value="{{ showTestMix }}" hint-placeholder-val="{{ false }}">
     <button onClick="{{ goAnswers }}" style="width:100%;margin-top:14px;background:var(--tt-bg-e4f2ef);border:1px solid var(--tt-bd-bfe0d8);border-radius:14px;min-height:48px;padding:10px 14px;font-size:15px;font-weight:700;color:var(--tt-fg-0a5d50);cursor:pointer;text-align:left">Want exact questions? Tick them in My answers →</button>
     <h2 style="font-family:'Nunito',sans-serif;font-weight:800;font-size:16px;margin:18px 0 8px">Your test: {{ testMixTotal }} questions <span style="color:var(--tt-fg-6e6a5e);font-weight:400;font-size:13.5px">· {{ testMixPass }} to pass</span></h2>
@@ -1931,6 +1975,8 @@ html{scroll-padding-bottom:160px}
 <sc-if value="{{ vTestResults }}" hint-placeholder-val="{{ false }}">
 <div data-screen-label="Mock test results">
   <div style="{{ resultBannerStyle }}">
+    <!-- which kind of test it was (TTScreen.TEST_KINDS, issue #61) -->
+    <div style="font-size:14px;font-weight:800;margin-bottom:4px">{{ resultKind }}</div>
     <div style="font-family:'Nunito',sans-serif;font-weight:900;font-size:44px">{{ resultScore }} / {{ resultTotal }}</div>
     <h1 tabindex="-1" style="margin:0;font-family:'Nunito',sans-serif;font-weight:900;font-size:26px;margin-top:4px">{{ resultLabel }}</h1>
     <div style="font-size:16px;margin-top:6px">{{ resultMsg }}</div>
@@ -3269,7 +3315,8 @@ class Component extends DCLogic {
     const pt = prev.test, ct = s.test;
     if(ct && (!pt || pt.startedAt !== ct.startedAt)){
       if(pt && !pt.ended) this.track('test_abandoned', null, {kind: pt.kind||'mock', answered: Object.keys(pt.answers||{}).length, of: pt.ids.length, secs: secs(pt.startedAt)});
-      this.track('test_start', null, {kind: ct.kind||'mock', n: ct.ids.length, timed: !ct.noTimer});
+      // A weak-spots mock (issue #61) also says why its questions are there (coach.js reasons).
+      this.track('test_start', null, Object.assign({kind: ct.kind||'mock', n: ct.ids.length, timed: !ct.noTimer}, ct.reasons ? {reasons: ct.reasons} : {}));
     }
     if(ct && !ct.ended && ct.ids[ct.i] && (!pt || pt.startedAt !== ct.startedAt || pt.i !== ct.i || s.view!==prev.view) && s.view==='test'){ this._shownAt = now; this.track('question_shown', ct.ids[ct.i], {i: ct.i, test: ct.kind||'mock'}); }
     if(ct && pt && pt.startedAt === ct.startedAt){
@@ -3808,8 +3855,12 @@ class Component extends DCLogic {
   }
   // ---------- stats ----------
   tipAt(topic, salt){ const arr = this.TIPS[topic]||[]; return arr.length ? arr[Math.abs(salt)%arr.length] : ''; }
+  // Her mocks that say how she would do on the real test: every kind except "From my weak
+  // spots", which is made of her hardest questions on purpose (issue #61). That one stays in her
+  // history and chart, but readiness, per-topic mock accuracy and the pass prediction skip it.
+  realMocks(){ return (this.state.tests||[]).filter(t=>t.kind!=='weak'); }
   mockTopicAcc(){
-    const ts = this.state.tests.filter(t=>t.perTopic && Object.keys(t.perTopic).length).slice(-3);
+    const ts = this.realMocks().filter(t=>t.perTopic && Object.keys(t.perTopic).length).slice(-3);
     const agg = {};
     ts.forEach(t=>Object.keys(t.perTopic).forEach(k=>{ agg[k] = agg[k]||{c:0,n:0}; agg[k].c += t.perTopic[k].c; agg[k].n += t.perTopic[k].n; }));
     return agg;
@@ -3837,7 +3888,7 @@ class Component extends DCLogic {
     const at = this.state.attempts.filter(a=>a.src!=='test' && !this.isSignQ(a.q)).slice(-120);
     const totSeen = seen.reduce((a,r)=>a+r.seen,0);
     const recentAcc = at.length>=10 ? at.filter(a=>a.ok).length/at.length : (totSeen ? seen.reduce((a,r)=>a+r.correct,0)/totSeen : 0);
-    const mocks = this.state.tests.slice(-3).map(t=>t.score/(t.total||50));
+    const mocks = this.realMocks().slice(-3).map(t=>t.score/(t.total||50));
     let r;
     if(mocks.length){ const m = mocks.reduce((a,x)=>a+x,0)/mocks.length; r = 0.5*m + 0.25*recentAcc + 0.15*box3 + 0.10*coverage; }
     else r = Math.min(0.6, 0.45*recentAcc + 0.1*box3 + 0.1*coverage);
@@ -3930,27 +3981,47 @@ class Component extends DCLogic {
     const test = {ids: sh(ids), answers:{}, flags:{}, i:0, endAt: Date.now() + (timed ? mins*60000 : 12*3600000), noTimer: !timed, ended:false, startedAt: Date.now(), kind:'custom'};
     this.setState({test, view:'test', testView:'run'}, ()=>this.persist());
   }
+  // The Mock Test screen's Start. testMode is the kind she chose: 'balanced' (Like the real test),
+  // 'random' (Surprise mix), 'weak' (From my weak spots, issue #61) or 'custom' (Build your own).
+  // Every full mock has coach.js's size and clock (coachDefaults mockSize and mockMinutes, the one
+  // place they live) and the same shuffle, timer, flags, review and results; only the questions differ.
   startTest(){
     const sh = a => a.map(x=>[Math.random(),x]).sort((p,q)=>p[0]-q[0]).map(p=>p[1]);
-    const tq = this.questionsFor('test');
-    if(this.state.testMode==='custom'){
+    const tq = this.questionsFor('test'), mode = this.state.testMode;
+    if(mode==='custom'){
       const picked = [];
       this.TOPICS.forEach((_,i)=>{ const n = this.state.testMix[i+1]||0; if(n>0) sh(tq.filter(q=>q.topic===i+1)).slice(0,n).forEach(q=>picked.push(q.id)); });
       if(picked.length===0){ alert('Use the + buttons to pick at least one question.'); return; }
       this.launchTest(picked, this.state.customTimer);
       return;
     }
-    if(tq.length < 50){ alert('Not enough questions are switched on for a full 50-question test. Turn more packs on in the Admin dashboard.'); return; }
-    let ids;
-    if(this.state.testMode==='random'){
-      ids = sh(tq).slice(0,50).map(q=>q.id);
+    // coach.js holds the mock's numbers and its topic rule: without it no mock can be built.
+    if(!window.TTCoach){ alert('The mock test could not start: coach.js did not load. Reload the page, and check the connection if it happens again.'); return; }
+    const M = TTCoach.coachDefaults;
+    if(tq.length < M.mockSize){ alert('Not enough questions are switched on for a full ' + M.mockSize + '-question test. Turn more packs on in the Admin dashboard.'); return; }
+    let ids, kind = 'mock', reasons = null;
+    if(mode==='random'){
+      ids = sh(tq).slice(0, M.mockSize).map(q=>q.id);
+    } else if(mode==='weak'){
+      // From my weak spots: coach.js picks them from her answers (weakMockPlan); it keeps why.
+      const plan = this.weakMockPlan();
+      ids = plan.ids; kind = 'weak'; reasons = plan.reasons;
     } else {
-      const byTopic = this.TOPICS.map((_,i)=> sh(tq.filter(q=>q.topic===i+1)));
-      ids = []; let round = 0;
-      while(ids.length<50 && round<25){ for(let t=0;t<14 && ids.length<50;t++){ const q = byTopic[t][round]; if(q) ids.push(q.id); } round++; }
+      // Like the real test: how many from each topic is coach.js mockMix (one per topic in turn,
+      // topic 1 first); which ones is a shuffle of that topic's questions.
+      const mix = TTCoach.mockMix(tq, M.mockSize);
+      ids = [];
+      Object.keys(mix).forEach(t=>sh(tq.filter(q=>String(q.topic)===t)).slice(0, mix[t]).forEach(q=>ids.push(q.id)));
     }
-    const test = {ids: sh(ids).slice(0,50), answers:{}, flags:{}, i:0, endAt: Date.now() + 57*60000, ended:false, startedAt: Date.now(), kind:'mock'};
+    const test = {ids: sh(ids).slice(0, M.mockSize), answers:{}, flags:{}, i:0, endAt: Date.now() + M.mockMinutes*60000, ended:false, startedAt: Date.now(), kind};
+    if(reasons) test.reasons = reasons;                 // why each question is there (Activity's test_start)
     this.setState({test, view:'test', testView:'run'}, ()=>this.persist());
+  }
+  // The mock from her weak spots (issue #61): coach.js picks it from her answers, flags and mocks,
+  // out of the questions switched on for tests. Worked out for the Mock Test screen's line and at Start.
+  weakMockPlan(){
+    const s = this.state;
+    return TTCoach.buildWeakMock(s.attempts, s.revisionFlags, s.tests, this.questionsFor('test'), Date.now());
   }
   answerTest(i){
     const t = this.state.test; const answers = Object.assign({}, t.answers); answers[t.i]=i;
@@ -3967,7 +4038,8 @@ class Component extends DCLogic {
       if(t.answers[idx]===this.viewQ(q).correctIndex){ score++; pt[q.topic].c++; }
     });
     const total = t.ids.length, passMark = TTScreen.passMark(total);
-    const rec = {date: new Date().toISOString().slice(0,10), score, total, pass: score>=passMark, perTopic: pt, source:'app'};
+    // kind: which kind of test it was (TTScreen.TEST_KINDS), so the history can name it (issue #61)
+    const rec = {date: new Date().toISOString().slice(0,10), score, total, pass: score>=passMark, perTopic: pt, source:'app', kind: t.kind||'mock'};
     const rf = Object.assign({}, this.state.revisionFlags);
     Object.keys(t.flags).forEach(k=>{ if(t.flags[k] && t.ids[k] && !rf[t.ids[k]]) rf[t.ids[k]] = {t: Date.now(), src:'test'}; });
     // Log every answered mock question (src:'test') so it shows in My answers.
@@ -4056,8 +4128,8 @@ class Component extends DCLogic {
   coachNow(){
     const C = TTCoach, s = this.state;
     const opts = {mix: C.mockMix(this.questionsFor('test'), C.coachDefaults.mockSize), topicNames: this.TOPICS};
-    const all = this.questions();
-    return {pred: C.passPrediction(s.attempts, s.tests, all, opts), list: C.improvements(s.attempts, s.tests, all, opts)};
+    const all = this.questions(), real = this.realMocks();   // weak-spots mocks left out (see realMocks)
+    return {pred: C.passPrediction(s.attempts, real, all, opts), list: C.improvements(s.attempts, real, all, opts)};
   }
   // The study plan, rebuilt from scratch every time (that is how it adapts). Topics come
   // best-gain first from improvements; before she has answered anything, all 14 in order.
@@ -4194,9 +4266,10 @@ class Component extends DCLogic {
         case 'session_start': return 'Started ' + (d.label||'practice') + ' (' + d.n + ' questions)';
         case 'session_end': return 'Finished ' + (d.label||'practice') + ': ' + d.correct + '/' + d.answered + ' right, ' + mins(d.secs) + ' min';
         case 'session_left': return 'Left ' + (d.label||'practice') + ' at question ' + ((d.at||0)+1) + ' of ' + d.of;
-        case 'test_start': return 'Started a ' + (d.kind==='custom'?'custom test':'mock test') + ' (' + d.n + ' questions)';
-        case 'test_end': return 'Finished a ' + (d.kind==='custom'?'custom test':'mock') + ': ' + d.score + '/' + d.total + ', ' + mins(d.secs) + ' min';
-        case 'test_abandoned': return 'Left a ' + (d.kind==='custom'?'custom test':'mock') + ' after ' + d.answered + ' of ' + d.of;
+        // which kind of test, in TTScreen.TEST_KINDS' words (mock test, weak-spots mock, custom test)
+        case 'test_start': return 'Started a ' + TTScreen.testKind(d.kind).say + ' (' + d.n + ' questions)';
+        case 'test_end': return 'Finished a ' + TTScreen.testKind(d.kind).say + ': ' + d.score + '/' + d.total + ', ' + mins(d.secs) + ' min';
+        case 'test_abandoned': return 'Left a ' + TTScreen.testKind(d.kind).say + ' after ' + d.answered + ' of ' + d.of;
         case 'hint_used': return 'Used the 50:50 hint:' + qt;
         case 'read_aloud': return 'Read aloud' + (qt||'');
         case 'flag': return 'Flagged:' + qt;
@@ -4458,6 +4531,15 @@ class Component extends DCLogic {
     // "More like the ones I missed" finds bank questions: from bank questions she missed only.
     const doneMissed = Array.from(new Set(slog.filter(e=>!e.ok && e.q && !this.isSignQ(e.q)).map(e=>e.q)));
 
+    // ----- mock test intro -----
+    // The mock's numbers as the screen shows them: coach.js's size and clock, and the pass mark from
+    // the one rule (TTScreen.passMark). Without coach.js they fall back to the screen's blanks.
+    const M = window.TTCoach ? TTCoach.coachDefaults : {};
+    // From my weak spots (issue #61): what the mock will hold, worked out only on this screen with
+    // that choice picked (renderVals runs on every change).
+    const weakLine = view==='testIntro' && s.testMode==='weak' && !!window.TTCoach;
+    const weakPlan = weakLine ? this.weakMockPlan() : null;
+
     // ----- test -----
     let testVals = {};
     const t = s.test;
@@ -4531,6 +4613,8 @@ class Component extends DCLogic {
       }).filter(Boolean);
       resultVals = {
         hasWrong: wrongRows.length>0, wrongN: wrongRows.length, wrongRows, wrongSignSize: 72,
+        // which kind of test this was, in words (issue #61: "Mock from your weak spots")
+        resultKind: TTScreen.testKind(t.kind).name,
         resultScore: t.score, resultTotal: rTotal, resultLabel: pass? 'PASS' : 'Not this time',
         resultMsg: pass? (rTotal===50? 'That would be a pass on the real test. Amazing!' : 'That pace would pass the real test. Amazing!') : ('You need ' + rPassMark + ' to pass \u2014 the dashboard shows exactly what to practise.'),
         resultBannerStyle: 'border-radius:24px;padding:30px;text-align:center;'+(pass?'background:var(--tt-bg-e7f6ec);border:2px solid #2E9E5B;color:var(--tt-fg-1c6b3c)':'background:var(--tt-bg-fbf1dc);border:2px solid #F2A93B;color:var(--tt-fg-8a5a0b)'),
@@ -4558,7 +4642,8 @@ class Component extends DCLogic {
     const chartSay = TTScreen.chartSay(tests, chartPass);
     const historyRows = tests.map((r,i)=>({
       date: this.fmtDate(r.date), score: r.score+'/'+(r.total||50),
-      src: r.source==='app'? '' : (r.source||'external'),
+      // the app's own tests: their kind's label ('weak spots', issue #61); else where it came from
+      src: r.source==='app' ? TTScreen.testKind(r.kind).tag : (r.source||'external'),
       passLabel: r.pass? 'PASS':'FAIL',
       passStyle: 'font-size:12px;font-weight:800;padding:4px 9px;border-radius:8px;'+(r.pass?'background:var(--tt-bg-e7f6ec);color:var(--tt-fg-1c6b3c)':'background:var(--tt-bg-fbeae9);color:var(--tt-fg-b8433d)'),
       pick: ()=>this.setState({openTest: s.openTest===i? -1 : i}),
@@ -5113,6 +5198,10 @@ class Component extends DCLogic {
         dec: ()=>{ const m = Object.assign({}, s.learnMix); m[i+1] = Math.max(0,(m[i+1]||0)-1); this.setState({learnMix:m}); }})),
       startLearn: ()=>{ if(s.learnTopic==='mix'){ const sh = a=>a.map(x=>[Math.random(),x]).sort((p,q)=>p[0]-q[0]).map(p=>p[1]); const ids = []; T.forEach((_,i)=>{ const n = s.learnMix[i+1]||0; if(n>0){ const tp = this.drawPool(i+1); ids.push.apply(ids, tp.slice(0,n).map(q=>q.id)); } }); if(!ids.length){ alert('Add at least one question to the mix first.'); return; } this.buildSession(sh(ids), 'Practice'); } else { const pool = this.drawPool(effSel); this.buildSession(pool.slice(0, s.learnLen).map(q=>q.id), 'Practice'); } },
       startTest: ()=>this.startTest(),
+      // the Mock Test screen's numbers (coach.js), and the weak-spots line (issue #61)
+      mockN: M.mockSize, mockMins: M.mockMinutes, mockPass: M.mockSize ? TTScreen.passMark(M.mockSize) : '',
+      showWeakLine: weakLine,
+      weakMockLine: weakLine ? TTScreen.weakMockDesc(weakPlan.reasons, weakPlan.answered, weakPlan.topics.map(n=>T[n-1])) : '',
       showTestMix: s.testMode==='custom',
       testMixTotal: T.reduce((a,_,i)=>a+(s.testMix[i+1]||0), 0),
       testMixPass: Math.ceil(T.reduce((a,_,i)=>a+(s.testMix[i+1]||0), 0)*0.86) || 0,
@@ -5122,7 +5211,8 @@ class Component extends DCLogic {
       customTimeLabel: s.customTimer ? (Math.max(3, Math.round(T.reduce((a,_,i)=>a+(s.testMix[i+1]||0), 0)*1.14)) + ' min') : 'no time limit',
       flipCustomTimer: ()=>this.setState({customTimer: !s.customTimer}),
       ctTrack: miniTrack(!!s.customTimer), ctKnob: miniKnob(!!s.customTimer), ctOn: TTScreen.pressed(!!s.customTimer),
-      testModeChoices: [{v:'balanced', name:'Like the real test', sub:'even spread across all topics'}, {v:'random', name:'Surprise mix', sub:'50 pulled at random from everything'}, {v:'custom', name:'Build your own', sub:'pick topics and how many'}].map(m=>({name:m.name, sub:m.sub, on: TTScreen.pressed((s.testMode||'balanced')===m.v), pick:()=>this.setState({testMode:m.v}), style:'flex:1;text-align:left;padding:13px 14px;border-radius:14px;cursor:pointer;'+((s.testMode||'balanced')===m.v?'background:var(--tt-bg-e4f2ef);border:2px solid var(--tt-bd-0e7c6b)':'background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2)')})),
+      // The kinds of mock (testMode): one entry each. From my weak spots is issue #61.
+      testModeChoices: [{v:'balanced', name:'Like the real test', sub:'even spread across all topics'}, {v:'random', name:'Surprise mix', sub:(M.mockSize||'') + ' pulled at random from everything'}, {v:'weak', name:'From my weak spots', sub:'your misses, flags and weakest topics'}, {v:'custom', name:'Build your own', sub:'pick topics and how many'}].map(m=>({name:m.name, sub:m.sub, on: TTScreen.pressed((s.testMode||'balanced')===m.v), pick:()=>this.setState({testMode:m.v}), style:'flex:1;text-align:left;padding:13px 14px;border-radius:14px;cursor:pointer;'+((s.testMode||'balanced')===m.v?'background:var(--tt-bg-e4f2ef);border:2px solid var(--tt-bd-0e7c6b)':'background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2)')})),
       doneScore, doneTotal: doneAsked, doneTitle, doneMsg, hasSessRows: sessRows.length>1, sessRows,
       doneTip: sess ? this.tipAt((sess.wrongTopics&&sess.wrongTopics[0]) || weak[0] || 1, doneAsked + (sess.wrongTopics? sess.wrongTopics.length:0)) : '',
       // A topic tip after practice; not after a signs quiz (issue #48), which has no topic.

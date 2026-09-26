@@ -990,3 +990,179 @@ test('#47 read aloud: the question with its options, the result, and the explana
   assert.equal(coach.sayExplanation('Because', 'Rule 1', 'Put simply'), 'Because. Put simply. Rule 1');
   assert.equal(coach.sayExplanation('Because', ''), 'Because', 'no rule reference: never "undefined" read out');
 });
+
+// =========================================================================================
+// ---------- Issue #61: a mock from her weak spots, and a drill that uses her wrong picks ----------
+// The real bank (378 questions, 14 topics of 27, ids like t03q07), so the mock is tested at its
+// real size (50) and with the real test's spread (mockMix: 4 each for topics 1-8, 3 for 9-14).
+const REAL = [1, 2, 3, 4, 5].flatMap(n => require('../questions-' + n + '.json'));
+const REAL_IDS = new Set(REAL.map(q => q.id));
+const RQ = Object.fromEntries(REAL.map(q => [q.id, q]));
+const qid = (t, i) => 't' + String(t).padStart(2, '0') + 'q' + String(i).padStart(2, '0');
+const W0 = Date.UTC(2026, 8, 26, 12);                     // "now" in these tests
+// A wrong option for a real question: the k-th option that isn't the right one (k = 0, 1 or 2).
+const wrongOpt = (id, k) => [0, 1, 2, 3].filter(i => i !== RQ[id].correctIndex)[k];
+// One answer: question id, how many days before W0, right or not, and (for a wrong one) which
+// wrong option she picked (k as in wrongOpt; the app records the bank's option index as p).
+const ans = (id, daysAgo, ok, k) => ({ q: id, t: W0 - daysAgo * DAY, ok, p: ok ? RQ[id].correctIndex : wrongOpt(id, k || 0) });
+// Three misses on three days with three different wrong options: stuck, but no repeated pick.
+const stuckAns = id => [ans(id, 5, false, 0), ans(id, 4, false, 1), ans(id, 3, false, 2)];
+// How many of the mock's questions come from each topic: {topic: n}.
+const perTopic = ids => { const c = {}; ids.forEach(id => { c[RQ[id].topic] = (c[RQ[id].topic] || 0) + 1; }); return c; };
+const MIX = coach.mockMix(REAL, coach.coachDefaults.mockSize);   // the real test's spread
+
+// A realistic learner: 2 stuck questions in topic 11, 2 she got wrong last time (topics 3 and 5),
+// 1 flagged (topic 7, never answered), 2 due again (topics 1 and 2), topic 10 half right, and
+// everything else she has answered right recently (so it is neither due nor weak).
+function catie() {
+  const hist = [];
+  [1, 2, 3, 4, 5, 6, 7, 8, 9, 12, 13, 14].forEach(t => { for (let i = 2; i <= 6; i++) hist.push(ans(qid(t, i), 0.5, true)); });
+  for (let i = 1; i <= 6; i++) hist.push(ans(qid(10, i), 2, false), ans(qid(10, i), 0.5, true));   // topic 10: 50%
+  hist.push(...stuckAns(qid(11, 1)), ...stuckAns(qid(11, 2)));                                      // stuck
+  hist.push(ans(qid(3, 1), 1, false), ans(qid(5, 1), 1, false));                                    // wrong last time
+  hist.push(ans(qid(1, 1), 3, true), ans(qid(2, 1), 3, true));                                      // due again
+  return { hist, flags: { [qid(7, 1)]: { t: W0 - DAY, src: 'learn' } } };
+}
+
+test('#61 weak mock: only questions from the bank, exactly the mock\'s size, none twice', () => {
+  const { hist, flags } = catie();
+  // Answers and a flag on questions that are not in the bank must never bring them in.
+  hist.push(ans(qid(1, 1), 1, false), { q: 'gone', t: W0 - DAY, ok: false, p: 1 }, { q: 'gone', t: W0 - 2 * DAY, ok: false, p: 1 });
+  const m = coach.buildWeakMock(hist, Object.assign({ gone2: { t: 1 } }, flags), [], REAL, W0);
+  assert.equal(m.ids.length, coach.coachDefaults.mockSize);
+  assert.equal(new Set(m.ids).size, m.ids.length, 'no question twice');
+  m.ids.forEach(id => assert.ok(REAL_IDS.has(id), id + ' is not in the bank'));
+});
+
+test('#61 weak mock: stuck, then wrong last time, then flagged, then due, then weakest topics, then fill - and says how many of each', () => {
+  const { hist, flags } = catie();
+  const m = coach.buildWeakMock(hist, flags, [], REAL, W0);
+  assert.equal(m.reasons.stuck, 2);
+  assert.equal(m.reasons.missed, 2);
+  assert.equal(m.reasons.flagged, 1);
+  assert.equal(m.reasons.due, 2);
+  for (const id of [qid(11, 1), qid(11, 2), qid(3, 1), qid(5, 1), qid(7, 1), qid(1, 1), qid(2, 1)]) assert.ok(m.ids.includes(id), id + ' belongs in her weak-spots mock');
+  // Her weakest topics are the coach's own "what to work on" list (improvements), top weakMockTopics.
+  const top = coach.improvements(hist, [], REAL).slice(0, coach.coachDefaults.weakMockTopics).map(x => x.topic);
+  assert.deepEqual(m.topics, top);
+  assert.ok(top.includes(10) && top.includes(11), 'topic 10 (half right) and 11 (all wrong) are her weakest: ' + top);
+  assert.ok(m.reasons.weak > 0, 'the weakest topics add questions');
+  // Every reason is counted once, and the counts add up to the mock.
+  const sum = Object.values(m.reasons).reduce((a, b) => a + b, 0);
+  assert.equal(sum, m.ids.length);
+  assert.deepEqual(Object.keys(m.reasons), ['stuck', 'missed', 'flagged', 'due', 'weak', 'fill']);
+  assert.equal(m.answered, true);
+});
+
+test('#61 weak mock: the topic spread stays close to the real test\'s (mockMix, within weakMockSlack)', () => {
+  // 20 stuck questions, all in topic 11: the mock leans toward them, but only so far.
+  const hist = [];
+  for (let i = 1; i <= 20; i++) hist.push(...stuckAns(qid(11, i)));
+  const slack = coach.coachDefaults.weakMockSlack;
+  const m = coach.buildWeakMock(hist, {}, [], REAL, W0);
+  const c = perTopic(m.ids);
+  Object.keys(MIX).forEach(t => {
+    assert.ok((c[t] || 0) >= MIX[t] - slack && (c[t] || 0) <= MIX[t] + slack, 'topic ' + t + ': ' + (c[t] || 0) + ' vs ' + MIX[t] + ' in the real test');
+  });
+  assert.equal(c[11], MIX[11] + slack, 'topic 11 takes as many as the spread allows');
+  assert.equal(m.reasons.stuck, MIX[11] + slack, 'and they are her stuck ones');
+  // With no slack the spread is exactly the real test's.
+  const exact = coach.buildWeakMock(hist, {}, [], REAL, W0, { weakMockSlack: 0 });
+  assert.deepEqual(perTopic(exact.ids), MIX);
+  assert.equal(exact.reasons.stuck, MIX[11]);
+});
+
+test('#61 weak mock: when a topic is full, the more urgent reason wins its places', () => {
+  // Topic 11: 10 stuck and 10 got wrong last time - room for MIX[11] + slack, all of them stuck.
+  const hist = [];
+  for (let i = 1; i <= 10; i++) hist.push(...stuckAns(qid(11, i)));
+  for (let i = 11; i <= 20; i++) hist.push(ans(qid(11, i), 1, false));
+  const m = coach.buildWeakMock(hist, {}, [], REAL, W0);
+  const t11 = m.ids.filter(id => RQ[id].topic === 11);
+  assert.equal(t11.length, MIX[11] + coach.coachDefaults.weakMockSlack);
+  t11.forEach(id => assert.ok(Number(id.slice(-2)) <= 10, id + ' is not one of her stuck questions'));
+  assert.equal(m.reasons.missed, 0);
+});
+
+test('#61 weak mock: inside a reason, the wrong answer she keeps choosing comes first', () => {
+  // 10 stuck in topic 11; only t11q10 is the same wrong option every time. Only 5 fit.
+  const hist = [];
+  for (let i = 1; i <= 9; i++) hist.push(...stuckAns(qid(11, i)));
+  hist.push(ans(qid(11, 10), 5, false, 1), ans(qid(11, 10), 4, false, 1), ans(qid(11, 10), 3, false, 1));
+  const m = coach.buildWeakMock(hist, {}, [], REAL, W0);
+  assert.ok(m.ids.includes(qid(11, 10)), 'the repeated wrong pick earns its place');
+  assert.ok(!m.ids.includes(qid(11, 9)), 'the last of the otherwise-equal ones makes way');
+});
+
+test('#61 weak mock: a new learner gets the real test\'s spread, and the reason says so', () => {
+  const m = coach.buildWeakMock([], {}, [], REAL, W0);
+  assert.equal(m.ids.length, 50);
+  assert.deepEqual(perTopic(m.ids), MIX, 'exactly like the real test');
+  assert.deepEqual(m.reasons, { stuck: 0, missed: 0, flagged: 0, due: 0, weak: 0, fill: 50 });
+  assert.equal(m.answered, false);
+  assert.deepEqual(m.topics, []);
+});
+
+test('#61 weak mock: the same answers always give the same mock, whatever order the bank comes in', () => {
+  const { hist, flags } = catie();
+  const a = coach.buildWeakMock(hist, flags, [], REAL, W0);
+  const b = coach.buildWeakMock(hist, flags, [], REAL.slice().reverse(), W0);
+  assert.deepEqual(b, a);
+});
+
+test('#61 weak mock: its size, clock and spread rule live in coachDefaults, and a test can pass its own', () => {
+  const C = coach.coachDefaults;
+  assert.equal(C.mockSize, 50);
+  assert.equal(C.mockMinutes, 57, 'the real test: 57 minutes for 50 questions');
+  assert.equal(C.passMark, 43);
+  assert.equal(C.weakMockSlack, 2);
+  assert.equal(C.weakMockTopics, 3);
+  const small = coach.buildWeakMock([], {}, [], REAL, W0, { mockSize: 20 });
+  assert.equal(small.ids.length, 20);
+  assert.deepEqual(perTopic(small.ids), coach.mockMix(REAL, 20));
+});
+
+// ---------- #61: the drill (Today's lesson) ranks her repeated wrong picks and hard questions higher ----------
+// Two questions in one topic, both due again, equal in everything the drill used to look at
+// (misses, when last seen); a drill with room for one shows which ranks higher. The one that
+// should win has the LATER id, so the old tie-break (id order) would pick the other one.
+const RB = ['a1', 'a2', 'z9'].map(id => mk(id, 1));
+const rb = (q, daysAgo, ok, p) => ({ q, t: NOW - daysAgo * DAY, ok, p });
+
+test('#61 drill: a question where she keeps choosing the same wrong answer ranks above an otherwise-equal one', () => {
+  // a1: two misses, two different wrong options. a2: two misses, the same wrong option twice.
+  const hist = [rb('a1', 3, false, 1), rb('a1', 3, false, 2), rb('a2', 3, false, 1), rb('a2', 3, false, 1)];
+  const p = coach.profile(hist, {}, RB, NOW);
+  assert.equal(p.a2.misPick, 2, 'picked option 1 twice');
+  assert.equal(p.a1.misPick, 0, 'no wrong option picked twice');
+  const d = coach.buildDrill(p, RB, { n: 1, newMax: 0 });
+  assert.deepEqual(d.ids, ['a2']);
+});
+
+test('#61 drill: a question her own record shows is hard ranks above one she usually gets right', () => {
+  // Both missed twice, both due. a1: then right 3 times (3 of 5 right). a2: then right once
+  // (1 of 3 right: under hardAcc over at least hardMin tries).
+  const hist = [rb('a1', 10, false), rb('a1', 10, false), rb('a1', 10, true), rb('a1', 10, true), rb('a1', 10, true),
+    rb('a2', 10, false), rb('a2', 10, false), rb('a2', 10, true)];
+  const p = coach.profile(hist, {}, RB, NOW);
+  assert.equal(p.a2.hard, true);
+  assert.equal(p.a1.hard, false);
+  assert.ok(p.a1.due && p.a2.due && p.a1.wrong === p.a2.wrong && p.a1.last === p.a2.last, 'otherwise equal');
+  assert.deepEqual(coach.buildDrill(p, RB, { n: 1, newMax: 0 }).ids, ['a2']);
+  // Two tries are not "several": never hard, however they went.
+  assert.equal(coach.profile([rb('z9', 1, false), rb('z9', 1, false)], {}, RB, NOW).z9.hard, false);
+});
+
+test('#61 drill: repeated picks and difficulty reorder inside a reason, never across one', () => {
+  // A stuck question still comes before a due one with a repeated wrong pick (stuck is first).
+  const hist = [rb('a1', 3, false, 1), rb('a1', 3, false, 1), rb('z9', 5, false, 2), rb('z9', 4, false, 3)];
+  const p = coach.profile(hist, {}, RB, NOW);
+  assert.equal(p.z9.stuck, true);
+  assert.equal(p.a1.stuck, false);
+  const d = coach.buildDrill(p, RB, { n: 1, newMax: 0 });
+  assert.equal(d.ids[0], 'z9');
+  assert.equal(d.reasons.stuck, 1);
+  // The tuning lives in drillDefaults beside the other drill numbers.
+  assert.equal(coach.drillDefaults.hardMin, 3);
+  assert.equal(coach.drillDefaults.hardAcc, 0.5);
+});
