@@ -14,7 +14,7 @@
      scripts from its cache). Without the rules the app now shares with Adventure it counts as not
      loaded that once: every screen copes with no coach.js, and the next open has the new one. -->
 <script>
-if(window.TTCoach && ['dailyGoal', 'streakAward', 'readingStyle', 'pickVoice', 'voiceScore', 'sayQuestion', 'sayAnswer', 'sayExplanation', 'mergeFlags', 'mergeAdventure']
+if(window.TTCoach && ['dailyGoal', 'streakAward', 'readingStyle', 'pickVoice', 'voiceScore', 'sayQuestion', 'sayAnswer', 'sayExplanation', 'mergeFlags', 'mergeAdventure', 'mockPassMark', 'mockClock']
   .some(function(f){ return typeof window.TTCoach[f] !== 'function'; })){
   console.warn('coach.js is older than the app (an update is still arriving): coaching is off until the app is opened again.');
   window.TTCoach = undefined;
@@ -97,10 +97,10 @@ window.TTWelcome = (function(){
   // sw.js VERSION moves on and these don't, so every promotion rewrites them: the newest
   // features, in plain words, written to the learner ("you"). No markdown.
   W.NEWS = {
-    version: 'v19-2026-09-26',
+    version: 'v20-2026-09-26',
     items: [
-      'New in Mock test: From my weak spots, a full practice test built from the questions you find hardest.',
-      'Today\u2019s lesson now starts with the questions where you keep picking the same wrong answer.'
+      'Tidier charts: the pass line\u2019s label no longer covers your latest mock score.',
+      'The Adventure map\u2019s road no longer runs into the world buttons.'
     ]
   };
 
@@ -405,53 +405,118 @@ window.TTScreen = (function(){
   // zoom (1, 1.12 or 1.25), which makes the column and the button bigger together.
   S.floatMin = function(zoom){ return Math.ceil((zoom || 1) * (S.PAGE.max + 2*S.PAGE.side + 2*(S.NOTES.edge + S.NOTES.size))); };
 
+  // ----- The mock's numbers (issue #65) -----
+  // Every one comes from coach.js, the one place it lives: coachDefaults mockSize, mockMinutes and
+  // passMark (a full mock, like the real test: 50 questions, 57 minutes, 43 to pass), and its
+  // mockPassMark and mockClock for a test of any size, which keep the real test's proportions
+  // (Build your own, a test from My answers, the printed paper). The page keeps no copy: these read
+  // coach.js each time. Without it (issue #51: an older copy counts as not loaded) there are none:
+  // they give null, no test starts, and the words leave the numbers out.
+  S.mock = function(){ return window.TTCoach ? window.TTCoach.coachDefaults : null; };
+  // The pass mark and the clock (minutes) for a test of `total` questions.
+  S.passMark = function(total){ var C = window.TTCoach; return C ? C.mockPassMark(total, C.coachDefaults) : null; };
+  S.clock = function(total){ var C = window.TTCoach; return C ? C.mockClock(total, C.coachDefaults) : null; };
+  // What a saved mock is out of: its own total (every mock saved since v2.1 has one); a mock
+  // without one is a full mock.
+  S.outOf = function(r){ var M = S.mock(); return (r && r.total) || (M ? M.mockSize : null); };
+  // The pass mark a test is marked against: the one it started with (startTest and launchTest keep it
+  // on the test, so a test finished after an update is marked as it began), or, for a test started
+  // before tests kept one, the rule.
+  S.testPassMark = function(t){ return t.passMark != null ? t.passMark : S.passMark(t.ids.length); };
+  // The line at the top of Print's test paper, from the paper's own size: a full mock's worth reads
+  // exactly like the real test.
+  S.paperLine = function(total){
+    var mark = S.passMark(total);
+    return mark == null ? 'Answer key on the last page' :
+      total + ' questions · ' + S.clock(total) + ' minutes · pass mark ' + mark + ' · answer key on the last page';
+  };
+  // Why a test or paper could not be made without coach.js. what: 'The mock test could not start'.
+  S.noCoach = function(what){ return what + ': coach.js did not load. Reload the page, and check the connection if it happens again.'; };
+
   // ----- Mock test words (issue #32) -----
-  // The pass mark for a mock of `total` questions: 43 of 50, and the same 86% of a shorter one
-  // (Build your own, a test from My answers), rounded up. The one rule for scoring and for words.
-  S.passMark = function(total){ return Math.ceil(total*0.86); };
   // My Progress's line about her last mock, from her own saved score, the size of that mock and
   // whether it was a pass. e.g. "Last mock: 42/50. The pass mark is 43, so 1 more right answer
   // gets you there." (v12 said "1 more right answers", and "/50" after a 20-question mock.)
+  // Without coach.js there is no pass mark to name, so it gives just the score.
   S.lastMockSay = function(score, total, pass){
     if(pass) return 'Last mock: ' + score + '/' + total + ' — a PASS. One more pass in a row and it is time to book the real thing.';
-    var need = S.passMark(total) - score;
-    return 'Last mock: ' + score + '/' + total + '. The pass mark is ' + S.passMark(total) + ', so ' + need +
+    var mark = S.passMark(total);
+    if(mark == null) return 'Last mock: ' + score + '/' + total + '.';
+    var need = mark - score;
+    return 'Last mock: ' + score + '/' + total + '. The pass mark is ' + mark + ', so ' + need +
       (need === 1 ? ' more right answer gets' : ' more right answers get') + ' you there.';
   };
   // The mock chart's lowest line. It was always 0, which squeezed real scores (mostly 35 to 50)
   // into the top fifth. Now: a margin under her lowest score (or the pass mark, so its line always
-  // shows), rounded down to a whole ten, never under 0. Scores are counted out of 50, as the chart
-  // draws a shorter mock (score / total * 50).
-  S.CHART = {top: 50, margin: 5, step: 10};
+  // shows), rounded down to a whole ten, never under 0. Scores are counted out of a full mock
+  // (coach.js mockSize: the chart's top), as the chart draws a shorter mock (score / total * top).
+  // The chart functions need coach.js; the app draws no chart without it (hasChart).
+  S.CHART = {margin: 5, step: 10};
   S.chartFloor = function(tests, pass){
-    var low = (tests || []).reduce(function(m, r){ return Math.min(m, r.score / (r.total || S.CHART.top) * S.CHART.top); }, pass);
+    var top = S.mock().mockSize;
+    var low = (tests || []).reduce(function(m, r){ return Math.min(m, r.score / S.outOf(r) * top); }, pass);
     return Math.max(0, Math.floor((low - S.CHART.margin) / S.CHART.step) * S.CHART.step);
   };
   // The chart's scale in words, under the drawing (it has no axis numbers), so a line starting
   // at 30 is not read as starting at 0.
-  S.chartScale = function(lo){ return 'The chart runs from ' + lo + ' to ' + S.CHART.top + '.'; };
+  S.chartScale = function(lo){ return 'The chart runs from ' + lo + ' to ' + S.mock().mockSize + '.'; };
   // The chart's moving parts: the dashed pass line and its label, the line through her scores and
   // a dot for each mock, as a plain list of SVG elements {tag, attrs, text}; the app turns each
   // into an element (issue #38). They used to be {{ values }} in the page's SVG attributes, such as
   // y1="{{ passLineY }}", and the browser reads the page before the app fills those in, so every
   // load logged errors like: <line> attribute y1: Expected length, "{{ passLineY }}".
-  //   tests: her saved mocks [{score, total, pass}] (total missing means 50), oldest first
+  //   tests: her saved mocks [{score, total, pass}] (total missing: a full mock), oldest first
   //   lo:    the chart's lowest line (chartFloor); pass: the score the pass line is drawn at
   // The drawing is 340 x 130 (the SVG's viewBox); scores are plotted in the box BOX, with a score
-  // of lo at its bottom and 50 at its top, and a shorter mock drawn out of 50.
+  // of lo at its bottom and a full mock's score at its top, and a shorter mock drawn out of a full one.
   S.CHART.BOX = {x: 12, y: 10, w: 316, h: 110};
+  S.CHART.DOT = 4;                                   // a mock's dot: its radius
+  // The pass line's label ("pass 43"): its font size, its gap from the line, a character's width as
+  // a share of the font size (generous: the digits are narrower), and how far apart the places it
+  // may sit are. It sits at the right end of the line, above it, unless one of her dots touches it
+  // there: then the next place, in turn, below the line at the right end, then further left, above
+  // and then below, to the left end (issue #65: with her last mock near the pass mark it covered
+  // her last dot). Of the places no dot touches, the first her score line does not cross wins.
+  S.CHART.LABEL = {size: 9, gap: 5, em: 0.6, step: 8};
   S.chartMarks = function(tests, lo, pass){
     tests = tests || [];
-    var B = S.CHART.BOX, top = S.CHART.top;
+    var B = S.CHART.BOX, top = S.mock().mockSize, L = S.CHART.LABEL, R = S.CHART.DOT;
     var px = function(i){ return tests.length < 2 ? B.x + B.w/2 : B.x + i*(B.w/(tests.length-1)); };
     var py = function(v){ return B.y + (1 - (v - lo)/(top - lo))*B.h; };
-    var at = function(r){ return r.score / (r.total || top) * top; };      // her score out of 50
+    var at = function(r){ return r.score / S.outOf(r) * top; };      // her score out of a full mock
+    var dots = tests.map(function(r, i){ return {x: px(i), y: py(at(r))}; });
+    // The places the label may sit, best first, as {x: its right end, y: its baseline} with its box
+    // (x1, x2, y1, y2: from a font size above the baseline to a quarter below, for the "p").
+    var text = 'pass ' + pass, w = text.length * L.size * L.em, places = [];
+    for(var x = B.x + B.w; x >= B.x + w; x -= L.step){
+      [py(pass) - L.gap, py(pass) + L.gap + L.size].forEach(function(y){
+        places.push({x: x, y: y, x1: x - w, x2: x, y1: y - L.size, y2: y + L.size/4});
+      });
+    }
+    // How much of the label a place leaves covered: each dot that touches it counts more than all of
+    // her score line can, and the line counts a little for each unit of it inside.
+    var inside = function(b, p, pad){ return p.x + pad >= b.x1 && p.x - pad <= b.x2 && p.y + pad >= b.y1 && p.y - pad <= b.y2; };
+    var covered = function(b){
+      var n = 0;
+      dots.forEach(function(d, i){
+        if(inside(b, d, R)) n += 1000;
+        var e = dots[i + 1], steps = e ? Math.ceil(Math.max(Math.abs(e.x - d.x), Math.abs(e.y - d.y))) : 0;
+        for(var k = 1; k < steps; k++) if(inside(b, {x: d.x + (e.x - d.x)*k/steps, y: d.y + (e.y - d.y)*k/steps}, 1)) n++;
+      });
+      return n;
+    };
+    var best = null;
+    for(var i = 0; i < places.length; i++){
+      var c = covered(places[i]);
+      if(!best || c < best.c) best = {at: places[i], c: c};
+      if(!c) break;                                  // nothing covers it: the first such place wins
+    }
     var marks = [
       {tag:'line', attrs:{x1:B.x, y1:py(pass), x2:B.x + B.w, y2:py(pass), stroke:'#C77E14', 'stroke-width':1.5, 'stroke-dasharray':'5 4'}},
-      {tag:'text', attrs:{x:B.x + B.w, y:py(pass) - 5, 'text-anchor':'end', 'font-size':9, 'font-family':'sans-serif', style:{fill:'var(--tt-fg-8a5a0b)'}}, text:'pass ' + pass},
-      {tag:'polyline', attrs:{points: tests.map(function(r, i){ return px(i) + ',' + py(at(r)); }).join(' '), fill:'none', stroke:'#0E7C6B', 'stroke-width':2.5, 'stroke-linejoin':'round'}}
+      {tag:'text', attrs:{x:best.at.x, y:best.at.y, 'text-anchor':'end', 'font-size':L.size, 'font-family':'sans-serif', style:{fill:'var(--tt-fg-8a5a0b)'}}, text:text},
+      {tag:'polyline', attrs:{points: dots.map(function(d){ return d.x + ',' + d.y; }).join(' '), fill:'none', stroke:'#0E7C6B', 'stroke-width':2.5, 'stroke-linejoin':'round'}}
     ];
-    tests.forEach(function(r, i){ marks.push({tag:'circle', attrs:{cx:px(i), cy:py(at(r)), r:4, fill: r.pass ? '#2E9E5B' : '#D14B45'}}); });
+    tests.forEach(function(r, i){ marks.push({tag:'circle', attrs:{cx:dots[i].x, cy:dots[i].y, r:R, fill: r.pass ? '#2E9E5B' : '#D14B45'}}); });
     return marks;
   };
 
@@ -554,7 +619,7 @@ window.TTScreen = (function(){
 
   // The mock-score chart in words, for a screen reader (WCAG 1.1.1): each saved mock's score,
   // oldest first, whether it was a pass, and where the dashed pass line is. tests: the saved
-  // mocks [{score, total, pass}] (total missing means 50, as the chart draws it); pass: the
+  // mocks [{score, total, pass}] (total missing: a full mock, as the chart draws it); pass: the
   // score the line is drawn at. Only her own saved numbers are used.
   S.chartSay = function(tests, pass){
     tests = tests || [];
@@ -562,7 +627,7 @@ window.TTScreen = (function(){
     return 'Mock test scores, oldest first: ' + tests.map(function(r){
       // a kind of test with a label says so, e.g. "(weak spots)" (S.TEST_KINDS, issue #61)
       var tag = S.testKind(r.kind).tag;
-      return r.score + ' out of ' + (r.total || 50) + (tag ? ' (' + tag + ')' : '') + (r.pass ? ', a pass' : ', not a pass');
+      return r.score + ' out of ' + S.outOf(r) + (tag ? ' (' + tag + ')' : '') + (r.pass ? ', a pass' : ', not a pass');
     }).join('; ') + '. The dashed line is the pass mark, ' + pass + '.';
   };
 
@@ -835,9 +900,10 @@ window.TTChoices = (function(){
   C.VOICE_SPEEDS = [['Slower', 0.85], ['Normal', 0.95], ['Faster', 1.1]];
   C.THEMES = [['Match device', 'auto'], ['Light', 'light'], ['Dark', 'dark']];
   // Print → what to print: v is the value saved (printFormat), then its name and what it is.
+  // sized: the words start with the mock's size, from coach.js (the Print screen puts it in, issue #65).
   C.PRINT_FORMATS = [
     {v:'cards', name:'Flashcards', sub:'4 per page · questions left, answers right · fold down the middle'},
-    {v:'paper', name:'Test paper', sub:'50 numbered questions, answer key on the last page'},
+    {v:'paper', name:'Test paper', sub:'numbered questions, answer key on the last page', sized: true},
     {v:'book', name:'Full answer book', sub:'every question in the bank with its correct answer, explanation and rule'}
   ];
 
@@ -1399,7 +1465,7 @@ html{scroll-padding-bottom:160px}
     <button onClick="{{ goTest }}" style="display:flex;flex-direction:column;align-items:flex-start;gap:8px;background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);border-radius:22px;padding:18px;cursor:pointer;text-align:left">
       <svg width="30" height="30" viewBox="0 0 24 24"><circle cx="12" cy="13" r="8" fill="none" stroke="#0E7C6B" stroke-width="2"/><path d="M12 13 L12 8.5 M9.5 3 L14.5 3" stroke="#0E7C6B" stroke-width="2" stroke-linecap="round"/></svg>
       <span style="font-family:'Nunito',sans-serif;font-weight:900;font-size:18px">Mock Test</span>
-      <span style="font-size:14px;color:var(--tt-fg-6e6a5e)">50 questions, just like the real one</span>
+      <span style="font-size:14px;color:var(--tt-fg-6e6a5e)">{{ homeMockLine }}</span>
     </button>
     <button onClick="{{ goSigns }}" style="display:flex;flex-direction:column;align-items:flex-start;gap:8px;background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);border-radius:22px;padding:18px;cursor:pointer;text-align:left">
       <svg width="30" height="30" viewBox="0 0 24 24"><path d="M12 3 L21.5 20 L2.5 20 Z" fill="none" stroke="#C22A2A" stroke-width="2.2" stroke-linejoin="round"/><path d="M12 10 L12 14.5" stroke="#2A2C33" stroke-width="2.2" stroke-linecap="round"/><circle cx="12" cy="17.2" r="1.2" fill="#2A2C33"/></svg>
@@ -1722,7 +1788,8 @@ html{scroll-padding-bottom:160px}
       </div>
     </sc-for>
   </div>
-  <sc-if value="{{ hasTests }}" hint-placeholder-val="{{ false }}">
+  <!-- The chart needs coach.js's mock numbers (hasChart: her mocks, and coach.js loaded; issue #65) -->
+  <sc-if value="{{ hasChart }}" hint-placeholder-val="{{ false }}">
     <h2 style="font-family:'Nunito',sans-serif;font-weight:800;font-size:18px;margin:26px 0 10px">Your mock tests</h2>
     <div style="background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);border-radius:20px;padding:16px">
       <!-- The pass line, her scores and their dots are elements the app makes (TTScreen.chartMarks):
@@ -2266,6 +2333,8 @@ html{scroll-padding-bottom:160px}
 
   <h2 style="font-family:'Nunito',sans-serif;font-weight:800;font-size:18px;margin:28px 0 10px">Mock test scores</h2>
   <sc-if value="{{ hasTests }}" hint-placeholder-val="{{ false }}">
+    <!-- The chart needs coach.js's mock numbers (hasChart, issue #65); her list below does not -->
+    <sc-if value="{{ hasChart }}" hint-placeholder-val="{{ false }}">
     <div style="background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);border-radius:20px;padding:16px">
       <!-- The pass line, her scores and their dots are elements the app makes (TTScreen.chartMarks):
            as {{ values }} in these SVG attributes the browser read them as bad numbers (#38) -->
@@ -2273,6 +2342,7 @@ html{scroll-padding-bottom:160px}
       <!-- The chart starts near her lowest score, not 0 (TTScreen.chartFloor), so it says its scale -->
       <div style="font-size:13px;color:var(--tt-fg-6e6a5e);margin-top:6px;text-align:right">{{ chartScale }}</div>
     </div>
+    </sc-if>
     <div style="background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2);border-radius:20px;padding:4px 18px;margin-top:12px">
       <sc-for list="{{ historyRows }}" as="h" hint-placeholder-count="3">
         <!-- The row's summary line is a real button that opens its topic breakdown, and says
@@ -2304,7 +2374,7 @@ html{scroll-padding-bottom:160px}
       <div style="font-size:14px;color:var(--tt-fg-6e6a5e);margin-bottom:12px">Enter a result from Theory Test Pro or a Safe Driving for Life mock, so everything lives in one place.</div>
       <div style="display:flex;gap:10px;margin-bottom:12px">
         <label style="flex:1;font-size:13.5px;color:var(--tt-fg-6e6a5e)">Date<input type="date" value="{{ logDate }}" onChange="{{ setLogDate }}" style="display:block;width:100%;box-sizing:border-box;margin-top:4px;padding:10px;border:1px solid var(--tt-bd-e8e1d2);border-radius:10px;font-size:15px"></label>
-        <label style="flex:1;font-size:13.5px;color:var(--tt-fg-6e6a5e)">Score out of 50<input type="number" min="0" max="50" value="{{ logScore }}" onChange="{{ setLogScore }}" style="display:block;width:100%;box-sizing:border-box;margin-top:4px;padding:10px;border:1px solid var(--tt-bd-e8e1d2);border-radius:10px;font-size:15px"></label>
+        <label style="flex:1;font-size:13.5px;color:var(--tt-fg-6e6a5e)">Score out of {{ mockN }}<input type="number" min="0" max="{{ mockN }}" value="{{ logScore }}" onChange="{{ setLogScore }}" style="display:block;width:100%;box-sizing:border-box;margin-top:4px;padding:10px;border:1px solid var(--tt-bd-e8e1d2);border-radius:10px;font-size:15px"></label>
       </div>
       <div style="font-size:13.5px;color:var(--tt-fg-6e6a5e);margin-bottom:8px">Per-topic (optional): correct / asked</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px 16px">
@@ -2765,7 +2835,7 @@ html{scroll-padding-bottom:160px}
   <sc-if value="{{ printIsPaper }}" hint-placeholder-val="{{ false }}">
     <div style="width:194mm;margin:0 auto">
       <div style="font-size:16pt;font-weight:800;padding:4mm 0 1mm">Theory Trainer — practice paper</div>
-      <div style="font-size:10pt;color:var(--tt-fg-555);padding-bottom:4mm">50 questions · 57 minutes · pass mark 43 · answer key on the last page</div>
+      <div style="font-size:10pt;color:var(--tt-fg-555);padding-bottom:4mm">{{ printPaperLine }}</div>
       <sc-for list="{{ printQs }}" as="q" hint-placeholder-count="5">
         <div style="padding:2.5mm 0;border-bottom:1px solid var(--tt-bd-eee);break-inside:avoid">
           <div style="font-size:10.5pt;font-weight:700;line-height:1.35"><span style="color:var(--tt-fg-555)">{{ q.n }}.</span> {{ q.question }}</div>
@@ -2951,6 +3021,7 @@ class Component extends DCLogic {
   }
   badgeList(){
     const b = this.badgeStats(), answered = b.answered, passes = b.passes, streak = b.streak;
+    const M = TTScreen.mock();                         // the mock's pass mark, from coach.js (issue #65)
     const defs = [
       {id:'start', label:'First go', note:'Answer your first question', done: answered>=1, at: answered, need:1},
       {id:'ten', label:'Ten in a row', note:'Ten correct back to back', done: b.bestRun>=10, at: b.bestRun, need:10},
@@ -2958,7 +3029,7 @@ class Component extends DCLogic {
       {id:'fivehundred', label:'Five hundred', note:'500 questions answered', done: answered>=500, at: answered, need:500},
       {id:'streak7', label:'Week on the trot', note:'7-day streak', done: streak>=7, at: streak, need:7},
       {id:'streak30', label:'Month of practice', note:'30-day streak', done: streak>=30, at: streak, need:30},
-      {id:'mock', label:'Mock passed', note:'43 or more on a mock test', done: passes>=1, at: passes, need:1},
+      {id:'mock', label:'Mock passed', note: M ? M.passMark + ' or more on a mock test' : 'Pass a mock test', done: passes>=1, at: passes, need:1},
       {id:'mock3', label:'Three mocks passed', note:'Consistency, not luck', done: passes>=3, at: passes, need:3},
       {id:'topic', label:'Topic mastered', note:'85% on a topic, 10+ answers', done: b.mastered>=1, at: b.mastered, need:1},
       {id:'alltopics', label:'Every topic tried', note:'All 14 DVSA topics attempted', done: b.topics>=14, at: b.topics, need:14}
@@ -3887,7 +3958,7 @@ class Component extends DCLogic {
     const at = this.state.attempts.filter(a=>a.src!=='test' && !this.isSignQ(a.q)).slice(-120);
     const totSeen = seen.reduce((a,r)=>a+r.seen,0);
     const recentAcc = at.length>=10 ? at.filter(a=>a.ok).length/at.length : (totSeen ? seen.reduce((a,r)=>a+r.correct,0)/totSeen : 0);
-    const mocks = this.realMocks().slice(-3).map(t=>t.score/(t.total||50));
+    const mocks = this.realMocks().slice(-3).map(t=>t.score/TTScreen.outOf(t));
     let r;
     if(mocks.length){ const m = mocks.reduce((a,x)=>a+x,0)/mocks.length; r = 0.5*m + 0.25*recentAcc + 0.15*box3 + 0.10*coverage; }
     else r = Math.min(0.6, 0.45*recentAcc + 0.1*box3 + 0.1*coverage);
@@ -3901,7 +3972,7 @@ class Component extends DCLogic {
       out.push('Do a first mock test when you feel ready \u2014 it unlocks the smart practice mix and a proper readiness score.');
     } else {
       // Her last mock in words, out of that mock's own size (TTScreen.lastMockSay, issue #32).
-      out.push(TTScreen.lastMockSay(last.score, last.total || 50, last.pass));
+      out.push(TTScreen.lastMockSay(last.score, TTScreen.outOf(last), last.pass));
       if(last.perTopic && !last.pass){
         const lost = Object.keys(last.perTopic).map(k=>({k, l: last.perTopic[k].n - last.perTopic[k].c})).filter(x=>x.l>0).sort((a,b)=>b.l-a.l).slice(0,2);
         if(lost.length){
@@ -3972,12 +4043,14 @@ class Component extends DCLogic {
     return found.length;
   }
   // ---------- test ----------
-  // Start a test on exactly these questions (Build your own, and My answers).
-  // About 1.14 minutes a question, like the real 57 minutes for 50.
+  // Start a test on exactly these questions (Build your own, and My answers). Its clock and pass
+  // mark keep the real test's proportions: coach.js mockClock and mockPassMark (TTScreen.clock and
+  // passMark, issue #65), so like every mock it needs coach.js. The test keeps its pass mark, so it
+  // is marked as it began (TTScreen.testPassMark).
   launchTest(ids, timed){
+    if(!window.TTCoach){ alert(TTScreen.noCoach('The mock test could not start')); return; }
     const sh = a => a.map(x=>[Math.random(),x]).sort((p,q)=>p[0]-q[0]).map(p=>p[1]);
-    const mins = Math.max(3, Math.round(ids.length*1.14));
-    const test = {ids: sh(ids), answers:{}, flags:{}, i:0, endAt: Date.now() + (timed ? mins*60000 : 12*3600000), noTimer: !timed, ended:false, startedAt: Date.now(), kind:'custom'};
+    const test = {ids: sh(ids), answers:{}, flags:{}, i:0, endAt: Date.now() + (timed ? TTScreen.clock(ids.length)*60000 : 12*3600000), noTimer: !timed, ended:false, startedAt: Date.now(), kind:'custom', passMark: TTScreen.passMark(ids.length)};
     this.setState({test, view:'test', testView:'run'}, ()=>this.persist());
   }
   // The Mock Test screen's Start. testMode is the kind she chose: 'balanced' (Like the real test),
@@ -3995,7 +4068,7 @@ class Component extends DCLogic {
       return;
     }
     // coach.js holds the mock's numbers and its topic rule: without it no mock can be built.
-    if(!window.TTCoach){ alert('The mock test could not start: coach.js did not load. Reload the page, and check the connection if it happens again.'); return; }
+    if(!window.TTCoach){ alert(TTScreen.noCoach('The mock test could not start')); return; }
     const M = TTCoach.coachDefaults;
     if(tq.length < M.mockSize){ alert('Not enough questions are switched on for a full ' + M.mockSize + '-question test. Turn more packs on in the Admin dashboard.'); return; }
     let ids, kind = 'mock', reasons = null;
@@ -4006,15 +4079,23 @@ class Component extends DCLogic {
       const plan = this.weakMockPlan();
       ids = plan.ids; kind = 'weak'; reasons = plan.reasons;
     } else {
-      // Like the real test: how many from each topic is coach.js mockMix (one per topic in turn,
-      // topic 1 first); which ones is a shuffle of that topic's questions.
-      const mix = TTCoach.mockMix(tq, M.mockSize);
-      ids = [];
-      Object.keys(mix).forEach(t=>sh(tq.filter(q=>String(q.topic)===t)).slice(0, mix[t]).forEach(q=>ids.push(q.id)));
+      // Like the real test (realTestPick, the same pick as Print's test paper).
+      ids = [].concat(...this.realTestPick(tq)).map(q=>q.id);
     }
-    const test = {ids: sh(ids).slice(0, M.mockSize), answers:{}, flags:{}, i:0, endAt: Date.now() + M.mockMinutes*60000, ended:false, startedAt: Date.now(), kind};
+    ids = sh(ids).slice(0, M.mockSize);
+    // passMark: the test keeps the pass mark it is marked against (TTScreen.testPassMark, issue #65)
+    const test = {ids, answers:{}, flags:{}, i:0, endAt: Date.now() + M.mockMinutes*60000, ended:false, startedAt: Date.now(), kind, passMark: TTScreen.passMark(ids.length)};
     if(reasons) test.reasons = reasons;                 // why each question is there (Activity's test_start)
     this.setState({test, view:'test', testView:'run'}, ()=>this.persist());
+  }
+  // Like the real test, the one copy (issue #65): how many from each topic is coach.js mockMix (one
+  // per topic in turn, topic 1 first, up to coachDefaults mockSize); which ones is a shuffle of that
+  // topic's questions. tq: the questions switched on for tests. One list per topic, in topic order.
+  // The Mock Test's "Like the real test" and Print's test paper both pick with it.
+  realTestPick(tq){
+    const sh = a => a.map(x=>[Math.random(),x]).sort((p,q)=>p[0]-q[0]).map(p=>p[1]);
+    const mix = TTCoach.mockMix(tq, TTCoach.coachDefaults.mockSize);
+    return Object.keys(mix).map(t=>sh(tq.filter(q=>String(q.topic)===t)).slice(0, mix[t]));
   }
   // The mock from her weak spots (issue #61): coach.js picks it from her answers, flags and mocks,
   // out of the questions switched on for tests. Worked out for the Mock Test screen's line and at Start.
@@ -4036,7 +4117,7 @@ class Component extends DCLogic {
       pt[q.topic] = pt[q.topic] || {c:0,n:0}; pt[q.topic].n++;
       if(t.answers[idx]===this.viewQ(q).correctIndex){ score++; pt[q.topic].c++; }
     });
-    const total = t.ids.length, passMark = TTScreen.passMark(total);
+    const total = t.ids.length, passMark = TTScreen.testPassMark(t);
     // kind: which kind of test it was (TTScreen.TEST_KINDS), so the history can name it (issue #61)
     const rec = {date: new Date().toISOString().slice(0,10), score, total, pass: score>=passMark, perTopic: pt, source:'app', kind: t.kind||'mock'};
     const rf = Object.assign({}, this.state.revisionFlags);
@@ -4061,12 +4142,14 @@ class Component extends DCLogic {
   buildPrint(){
     const s = this.state; let qs = this.questions();
     if(s.printFormat==='paper'){
-      const sh = a => a.map(x=>[Math.random(),x]).sort((p,q)=>p[0]-q[0]).map(p=>p[1]);
-      const tq = this.questionsFor('test');
-      const byTopic = this.TOPICS.map((_,i)=> sh(tq.filter(q=>q.topic===i+1)));
-      const pick = []; let round=0;
-      while(pick.length<50 && round<25){ for(let t=0;t<14 && pick.length<50;t++){ const q=byTopic[t][round]; if(q) pick.push(q); } round++; }
-      return {paper: pick.slice(0,50)};
+      // A mock on paper, picked like the real test (realTestPick: coach.js's size and spread, issue
+      // #65), printed a topic at a time in turn: topic 1, 2, ... 14, then 1 again. Without coach.js
+      // there is no mock to print.
+      if(!window.TTCoach){ alert(TTScreen.noCoach('The test paper could not be made')); return {paper: []}; }
+      const byTopic = this.realTestPick(this.questionsFor('test')), paper = [];
+      const rounds = Math.max(0, ...byTopic.map(l=>l.length));
+      for(let r=0; r<rounds; r++) byTopic.forEach(l=>{ if(r<l.length) paper.push(l[r]); });
+      return {paper};
     }
     if(s.printFormat==='book'){
       return {book: this.TOPICS.map((name,i)=>({name:(i+1)+'. '+name, qs: qs.filter(q=>q.topic===i+1)}))};
@@ -4531,9 +4614,12 @@ class Component extends DCLogic {
     const doneMissed = Array.from(new Set(slog.filter(e=>!e.ok && e.q && !this.isSignQ(e.q)).map(e=>e.q)));
 
     // ----- mock test intro -----
-    // The mock's numbers as the screen shows them: coach.js's size and clock, and the pass mark from
-    // the one rule (TTScreen.passMark). Without coach.js they fall back to the screen's blanks.
-    const M = window.TTCoach ? TTCoach.coachDefaults : {};
+    // The mock's numbers as the screens show them: coach.js's size, clock and pass mark (TTScreen.mock,
+    // issue #65), and for a test of another size the same rule (TTScreen.passMark and clock). Without
+    // coach.js they fall back to the screen's blanks.
+    const M = TTScreen.mock() || {};
+    // Build your own: how many questions she has picked
+    const testMixN = T.reduce((a,_,i)=>a+(s.testMix[i+1]||0), 0);
     // From my weak spots (issue #61): what the mock will hold, worked out only on this screen with
     // that choice picked (renderVals runs on every change).
     const weakLine = view==='testIntro' && s.testMode==='weak' && !!window.TTCoach;
@@ -4593,7 +4679,8 @@ class Component extends DCLogic {
     }
     let resultVals = {};
     if(t && t.ended){
-      const rTotal = t.ids.length, rPassMark = Math.ceil(rTotal*0.86);
+      // the pass mark the test was marked against (TTScreen.testPassMark, issue #65)
+      const rTotal = t.ids.length, rPassMark = TTScreen.testPassMark(t);
       const pass = t.score>=rPassMark;
       const wrongRows = t.ids.map((id,idx)=>{
         const q = this.qById(id); if(!q) return null;
@@ -4615,7 +4702,7 @@ class Component extends DCLogic {
         // which kind of test this was, in words (issue #61: "Mock from your weak spots")
         resultKind: TTScreen.testKind(t.kind).name,
         resultScore: t.score, resultTotal: rTotal, resultLabel: pass? 'PASS' : 'Not this time',
-        resultMsg: pass? (rTotal===50? 'That would be a pass on the real test. Amazing!' : 'That pace would pass the real test. Amazing!') : ('You need ' + rPassMark + ' to pass \u2014 the dashboard shows exactly what to practise.'),
+        resultMsg: pass? (rTotal===M.mockSize? 'That would be a pass on the real test. Amazing!' : 'That pace would pass the real test. Amazing!') : ('You need ' + rPassMark + ' to pass \u2014 the dashboard shows exactly what to practise.'),
         resultBannerStyle: 'border-radius:24px;padding:30px;text-align:center;'+(pass?'background:var(--tt-bg-e7f6ec);border:2px solid #2E9E5B;color:var(--tt-fg-1c6b3c)':'background:var(--tt-bg-fbf1dc);border:2px solid #F2A93B;color:var(--tt-fg-8a5a0b)'),
         resultTopicRows: Object.keys(t.perTopic||{}).map(k=>{
           const p = t.perTopic[k], pct = p.n? Math.round(100*p.c/p.n):0;
@@ -4633,14 +4720,16 @@ class Component extends DCLogic {
       .map(x=>({name:x.name, label: x.n? (x.pct+'% ('+x.n+')') : 'not tried',
         barStyle:'display:block;height:100%;border-radius:5px;width:'+(x.n?x.pct:0)+'%;background:'+(x.pct>=80?'#2E9E5B':x.pct>=50?'#F2A93B':'#D14B45')}));
     const tests = s.tests;
-    // The dashed pass line on the chart (out of 50), drawn with its label "pass 43" by
-    // TTScreen.chartMarks. chartSay is the same chart in words.
-    const chartPass = 43;
+    // The dashed pass line on the chart, at coach.js's pass mark and out of a full mock (issue #65),
+    // drawn with its label ("pass 43") by TTScreen.chartMarks. chartSay is the same chart in words.
+    // Without coach.js there are no mock numbers to draw it by, so the chart is left out (hasChart);
+    // her list of mocks still shows.
+    const chartPass = M.passMark, hasChart = tests.length>0 && !!TTScreen.mock();
     // The chart's lowest line: a little under her lowest score, not 0 (TTScreen.chartFloor, #32).
-    const lo = TTScreen.chartFloor(tests, chartPass);
-    const chartSay = TTScreen.chartSay(tests, chartPass);
+    const lo = hasChart ? TTScreen.chartFloor(tests, chartPass) : 0;
+    const chartSay = hasChart ? TTScreen.chartSay(tests, chartPass) : '';
     const historyRows = tests.map((r,i)=>({
-      date: this.fmtDate(r.date), score: r.score+'/'+(r.total||50),
+      date: this.fmtDate(r.date), score: r.score+'/'+TTScreen.outOf(r),
       // the app's own tests: their kind's label ('weak spots', issue #61); else where it came from
       src: r.source==='app' ? TTScreen.testKind(r.kind).tag : (r.source||'external'),
       passLabel: r.pass? 'PASS':'FAIL',
@@ -4771,7 +4860,9 @@ class Component extends DCLogic {
     // ----- print -----
     const pd = s.printData || {};
     // What to print: TTChoices' list (issue #57), so Admin → Activity names a print the same way.
-    const printFormatChoices = TTChoices.PRINT_FORMATS.map(f=>({name:f.name, sub:f.sub, on: TTScreen.pressed(s.printFormat===f.v), style:'text-align:left;padding:15px 16px;border-radius:16px;cursor:pointer;'+(s.printFormat===f.v?'background:var(--tt-bg-e4f2ef);border:2px solid var(--tt-bd-0e7c6b)':'background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2)'), pick:()=>this.setState({printFormat:f.v})}));
+    // A sized choice's words start with the mock's size (coach.js, issue #65): "50 numbered questions, …".
+    const sizedSub = f => !f.sized ? f.sub : M.mockSize ? M.mockSize + ' ' + f.sub : f.sub[0].toUpperCase() + f.sub.slice(1);
+    const printFormatChoices = TTChoices.PRINT_FORMATS.map(f=>({name:f.name, sub:sizedSub(f), on: TTScreen.pressed(s.printFormat===f.v), style:'text-align:left;padding:15px 16px;border-radius:16px;cursor:pointer;'+(s.printFormat===f.v?'background:var(--tt-bg-e4f2ef);border:2px solid var(--tt-bd-0e7c6b)':'background:var(--tt-bg-fff);border:1px solid var(--tt-bd-e8e1d2)'), pick:()=>this.setState({printFormat:f.v})}));
     const wrongCount = this.questions().filter(q=>(this.rec(q.id).wrong||0)>0).length;
     const printTotal = pd.pages ? pd.pages.length : (pd.book ? pd.book.length : 0);
     const printReady = s.printFormat==='paper' || (s.printRendered||0) >= printTotal;
@@ -4779,9 +4870,9 @@ class Component extends DCLogic {
       printFormatChoices, printIsCards: (s.printFormat==='cards'), printIsPaper: (s.printFormat==='paper'),
       printScope: s.printScope, setPrintScope: e=>this.setState({printScope: e.target.value}),
       printScopeOpts: [{v:'all', label:'The whole bank ('+this.questions().length+' questions)'}, {v:'wrong', label:'Wrong answers only ('+wrongCount+' questions)'}].concat(T.map((n,i)=>({v:String(i+1), label:(i+1)+'. '+n}))),
-      printHint: s.printFormat==='cards' ? 'Print single-sided on A4, fold each page along the centre line so answers sit behind questions, then cut along the dashed lines.' : s.printFormat==='paper' ? 'A fresh 50-question sample across all topics, like the real test.' : 'The complete accounting: all ' + this.questions().length + ' questions with every option, the correct answer marked, the explanation and the Highway Code reference.',
+      printHint: s.printFormat==='cards' ? 'Print single-sided on A4, fold each page along the centre line so answers sit behind questions, then cut along the dashed lines.' : s.printFormat==='paper' ? 'A fresh ' + (M.mockSize ? M.mockSize + '-question ' : '') + 'sample across all topics, like the real test.' :'The complete accounting: all ' + this.questions().length + ' questions with every option, the correct answer marked, the explanation and the Highway Code reference.',
       printBtnLabel: 'Preview and print',
-      printGo: ()=>{ const data = this.buildPrint(); if(s.printFormat==='cards' && (!data.pages || !data.pages.length)) return; this.setState({printPreview:true, printData:data, printRendered: data.pages?8:3}, ()=>this.growPrint()); },
+      printGo: ()=>{ const data = this.buildPrint(); if((s.printFormat==='cards' && (!data.pages || !data.pages.length)) || (data.paper && !data.paper.length)) return; this.setState({printPreview:true, printData:data, printRendered: data.pages?8:3}, ()=>this.growPrint()); },
       printBack: ()=>this.setState({printPreview:false}),
       printNow: ()=>{ if(printReady) window.print(); },
       printPreviewHint: printReady ? 'Use single-sided printing on A4.' : ('Building\u2026 ' + Math.min(s.printRendered||0, printTotal) + ' of ' + printTotal),
@@ -4799,6 +4890,8 @@ class Component extends DCLogic {
           answerLetter:'ABCD'[v.correctIndex], answerText: v.options[v.correctIndex],
           explanation: c.explanation, ruleRef: c.ruleRef};
       })})),
+      // the test paper's top line: its own size, clock and pass mark (TTScreen.paperLine, issue #65)
+      printPaperLine: TTScreen.paperLine((pd.paper||[]).length),
       printQs: (pd.paper||[]).map((q,i)=>({n:i+1, question:q.question, opts:this.viewQ(q).options.map((text,j)=>({letter:'ABCD'[j], text}))})),
       printKey: (pd.paper||[]).map((q,i)=>({n:i+1, a:'ABCD'[this.viewQ(q).correctIndex]}))
     };
@@ -4844,10 +4937,13 @@ class Component extends DCLogic {
       logTopics: T.map((n,i)=>({name:n, c:(s.logPT[i+1]||{}).c||'', n:(s.logPT[i+1]||{}).n||'', cName:'c'+(i+1), nName:'n'+(i+1), cLabel: n + ': questions right', nLabel: n + ': questions asked'})),
       logTopicChange: e=>{ const m = e.target.name, k = Number(m.slice(1)); const pt = Object.assign({}, s.logPT); pt[k] = Object.assign({}, pt[k]); pt[k][m[0]] = e.target.value; this.setState({logPT:pt}); },
       saveLog: ()=>{
-        const score = Number(s.logScore); if(!(score>=0 && score<=50) || s.logScore==='') return;
+        // A mock from elsewhere is a full mock: coach.js's size and pass mark (issue #65), so without
+        // coach.js it cannot be saved.
+        if(!M.mockSize){ alert(TTScreen.noCoach('The mock could not be saved')); return; }
+        const score = Number(s.logScore); if(!(score>=0 && score<=M.mockSize) || s.logScore==='') return;
         const perTopic = {};
         Object.keys(s.logPT).forEach(k=>{ const p = s.logPT[k]; if(p && p.n) perTopic[k] = {c:Number(p.c)||0, n:Number(p.n)||0}; });
-        const rec = {date: s.logDate, score, total:50, pass: score>=43, perTopic, source:'external'};
+        const rec = {date: s.logDate, score, total: M.mockSize, pass: score>=M.passMark, perTopic, source:'external'};
         this.set({tests: s.tests.concat([rec]).sort((a,b)=>a.date<b.date?-1:1), showLogForm:false, logScore:'', logPT:{}});
       }
     };
@@ -5199,15 +5295,19 @@ class Component extends DCLogic {
       startTest: ()=>this.startTest(),
       // the Mock Test screen's numbers (coach.js), and the weak-spots line (issue #61)
       mockN: M.mockSize, mockMins: M.mockMinutes, mockPass: M.mockSize ? TTScreen.passMark(M.mockSize) : '',
+      // Home's Mock Test card, from the same size (issue #65)
+      homeMockLine: M.mockSize ? M.mockSize + ' questions, just like the real one' : 'Just like the real one',
       showWeakLine: weakLine,
       weakMockLine: weakLine ? TTScreen.weakMockDesc(weakPlan.reasons, weakPlan.answered, weakPlan.topics.map(n=>T[n-1])) : '',
       showTestMix: s.testMode==='custom',
-      testMixTotal: T.reduce((a,_,i)=>a+(s.testMix[i+1]||0), 0),
-      testMixPass: Math.ceil(T.reduce((a,_,i)=>a+(s.testMix[i+1]||0), 0)*0.86) || 0,
+      // Build your own keeps the real test's proportions: its pass mark and clock are coach.js's rule
+      // for a test of that size (TTScreen.passMark and clock, issue #65); a topic holds up to a full mock.
+      testMixTotal: testMixN,
+      testMixPass: M.mockSize ? TTScreen.passMark(testMixN) : '',
       testMixRows: T.map((n,i)=>({name:n, count: s.testMix[i+1]||0,
-        inc: ()=>{ const m = Object.assign({}, s.testMix); m[i+1] = Math.min(50,(m[i+1]||0)+1); this.setState({testMix:m}); },
+        inc: ()=>{ const m = Object.assign({}, s.testMix); m[i+1] = Math.min(M.mockSize||0,(m[i+1]||0)+1); this.setState({testMix:m}); },
         dec: ()=>{ const m = Object.assign({}, s.testMix); m[i+1] = Math.max(0,(m[i+1]||0)-1); this.setState({testMix:m}); }})),
-      customTimeLabel: s.customTimer ? (Math.max(3, Math.round(T.reduce((a,_,i)=>a+(s.testMix[i+1]||0), 0)*1.14)) + ' min') : 'no time limit',
+      customTimeLabel: !s.customTimer ? 'no time limit' : M.mockSize ? TTScreen.clock(testMixN) + ' min' : '',
       flipCustomTimer: ()=>this.setState({customTimer: !s.customTimer}),
       ctTrack: miniTrack(!!s.customTimer), ctKnob: miniKnob(!!s.customTimer), ctOn: TTScreen.pressed(!!s.customTimer),
       // The kinds of mock (testMode): one entry each. From my weak spots is issue #61.
@@ -5221,10 +5321,10 @@ class Component extends DCLogic {
       rangeChipStyle: 'padding:10px 16px;border-radius:12px;border:1px solid var(--tt-bd-e8e1d2);background:var(--tt-bg-fff);cursor:pointer;font-size:14px;font-weight:700;color:var(--tt-fg-0e7c6b)',
       toggleRange: ()=>this.setState({range: s.range==='all'?'7d':'all'}),
       topicBars,
-      hasTests: tests.length>0, noTests: tests.length===0,
+      hasTests: tests.length>0, noTests: tests.length===0, hasChart,
       // The chart's drawing, as SVG elements (TTScreen.chartMarks, #38)
-      chartMarks: TTScreen.chartMarks(tests, lo, chartPass).map((m, i)=>React.createElement(m.tag, Object.assign({key:i}, m.attrs), m.text)),
-      chartSay, chartScale: TTScreen.chartScale(lo),
+      chartMarks: hasChart ? TTScreen.chartMarks(tests, lo, chartPass).map((m, i)=>React.createElement(m.tag, Object.assign({key:i}, m.attrs), m.text)) : [],
+      chartSay, chartScale: hasChart ? TTScreen.chartScale(lo) : '',
       historyRows,
       hasHard: hardRows.length>0, noHard: hardRows.length===0, hardRows,
       exportData: ()=>this.download('theory-trainer-backup.json', {settings:st, leitner:s.leitner, attempts:s.attempts, tests:s.tests, overrides:s.overrides, custom:s.custom, deleted:s.deleted}),

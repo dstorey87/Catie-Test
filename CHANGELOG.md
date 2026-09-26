@@ -3,6 +3,17 @@
 Newest first. The version is the service-worker `VERSION` in `sw.js` — it changes on every
 deploy that touches the app's cached files. Earlier history: `git log`.
 
+## v20-2026-09-26
+Tidy-ups (#65, PR #66). 489 tests.
+- **Every mock number comes from one place** (`coach.js` `coachDefaults`: 50 questions, 57 minutes,
+  43 to pass, and `mockPassMark` / `mockClock` for a test of any size). Build your own, Home's Mock
+  Test card, Print's test paper, Log a mock, the chart, the results screen and the badges all read
+  them; a test fails if a typed-in 1.14, 0.86, 43, 50 or 57 comes back. Build your own's timer is
+  worked out in whole numbers (25 questions: 29 minutes, was 28).
+- A test keeps the pass mark it started with.
+- The mock chart's "pass" label no longer covers her last dot when she scored near the pass mark.
+- The Adventure road no longer reaches up into the world tabs.
+
 ## v19-2026-09-26
 A mock test built from her results (#61, PR #62). 475 tests.
 - **Mock Test → From my weak spots**: the real test's format (50 questions, 57 minutes, 43 to pass,

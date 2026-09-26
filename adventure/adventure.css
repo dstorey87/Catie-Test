@@ -137,7 +137,9 @@ main { max-width: 640px; margin: 0 auto; padding: 0 16px 48px; outline: none; }
 
 /* ---------- the map ---------- */
 .map { position: relative; width: 100%; max-width: 380px; margin: 8px auto 0; }
-.road { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+/* The road is drawn only inside the map: its round ends (half its 44-unit edge) reached up into the
+   world-tab rows when drawn outside it (#65). The trees and bushes are kept inside by adventure.js. */
+.road { position: absolute; inset: 0; width: 100%; height: 100%; overflow: hidden; }
 .road path { fill: none; stroke-linecap: round; }
 .road .edge { stroke: var(--road-edge); stroke-width: 44; }
 .road .tar { stroke: var(--road); stroke-width: 34; }

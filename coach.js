@@ -223,6 +223,7 @@
     passMark: 43,          // right answers needed to pass a 50-question mock
     mockSize: 50,          // questions in a full mock
     mockMinutes: 57,       // minutes on the clock for a full mock (the real test: 57 minutes for 50)
+    mockMinMinutes: 3,     // a shorter test's clock never goes under this (Build your own with a question or two)
     // --- a mock from her weak spots (issue #61) ---
     weakMockSlack: 2,      // each topic may have up to this many more (or fewer) questions than the real test's spread
     weakMockTopics: 3,     // "her weakest topics": this many from the top of improvements()
@@ -286,6 +287,25 @@
       if (a && +a.t) { var k = localDay(+a.t); out[k] = (out[k] || 0) + 1; }
     });
     return out;
+  }
+
+  // ---------- 0. a test of any size (issue #65) ----------
+  // A test of `total` questions keeps the real test's proportions, from COACH mockSize, mockMinutes
+  // and passMark (a full mock: exactly those). The one rule for the app's tests (Build your own, a
+  // test from My answers, the printed paper, the mocks) and the pass prediction on a small bank.
+  // opts: a test's own numbers, as everywhere in this file.
+  //   mockPassMark(total): the same share right to pass, rounded up (20 questions need 18)
+  //   mockClock(total):    the same minutes a question, to the nearest minute, and never under
+  //                        mockMinMinutes (20 questions get 23 minutes)
+  // Whole-number sums, so no floating-point dust: 25 x 57 / 50 is 28.5 exactly (29 minutes), where
+  // the app's old "x 1.14" gave 28.
+  function mockPassMark(total, opts) {
+    var o = Object.assign({}, COACH, opts || {});
+    return Math.ceil(total * o.passMark / o.mockSize);
+  }
+  function mockClock(total, opts) {
+    var o = Object.assign({}, COACH, opts || {});
+    return Math.max(o.mockMinMinutes, Math.round(total * o.mockMinutes / o.mockSize));
   }
 
   // ---------- 1. pass prediction ----------
@@ -367,9 +387,9 @@
   function predictFrom(ev, mix, o) {
     var total = 0;
     Object.keys(mix).forEach(function (t) { total += Math.max(0, mix[t] || 0); });
-    // Pass mark scaled like the app's own shorter tests (43/50 = 86%), when the bank is too
-    // small for a full 50.
-    var pass = total === o.mockSize ? o.passMark : Math.ceil(total * o.passMark / o.mockSize);
+    // Pass mark scaled like the app's own shorter tests (mockPassMark), when the bank is too
+    // small for a full mock.
+    var pass = mockPassMark(total, o);
     var out = { enough: ev.all.n >= o.minEvidence, evidence: ev.all.n, total: total, passMark: pass,
       overall: null, expected: null, probability: null, topics: [] };
     if (!ev.all.w || !total) return out;               // no answers yet: nothing to predict from
@@ -980,7 +1000,7 @@
   var api = { mergeFlags: mergeFlags, activity: activity, profile: profile, buildDrill: buildDrill, requeue: requeue, drillDefaults: DRILL,
     passPrediction: passPrediction, improvements: improvements, buildWeakMock: buildWeakMock, studyPlan: studyPlan, misconceptions: misconceptions,
     badgeCloseness: badgeCloseness, streakWithFreeze: streakWithFreeze, mockMix: mockMix, dayCounts: dayCounts, localDay: localDay,
-    coachDefaults: COACH,
+    coachDefaults: COACH, mockPassMark: mockPassMark, mockClock: mockClock,
     dailyGoal: dailyGoal, recordGoalDay: recordGoalDay, streakAward: streakAward, READING: READING, readingStyle: readingStyle,
     voiceScore: voiceScore, pickVoice: pickVoice, sayQuestion: sayQuestion, sayAnswer: sayAnswer, sayExplanation: sayExplanation,
     TOPIC_NAMES: TOPIC_NAMES, ADVENTURE: ADVENTURE, adventureRoute: adventureRoute, adventureStatus: adventureStatus,
