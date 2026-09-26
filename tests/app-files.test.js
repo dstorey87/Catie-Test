@@ -1885,3 +1885,190 @@ test('#57: the Settings and Print screens draw their choices from TTChoices (one
   assert.deepEqual(plain(CH.TEXT_SIZES.map(x => x[1])), [0, 1, 2], 'text sizes 0, 1, 2 as settings.textSize saves them');
   assert.deepEqual(plain(CH.THEMES.map(x => x[1])), ['auto', 'light', 'dark']);
 });
+
+// ---------- Issue #61: a mock from her weak spots ----------
+// The Mock Test screen's "From my weak spots" runs through the app's own mock (startTest, the same
+// clock, flags, review grid, results and history); coach.js buildWeakMock picks the questions.
+// startTest, launchTest, weakMockPlan, endTest and componentDidUpdate are lifted out of the page
+// as they are written and run here with the real coach.js, TTScreen and TTAdv.
+const RQ61 = Object.fromEntries(bank.map(q => [q.id, q]));
+// A stand-in for the app with just what the mock needs. coachDefaults: override the coach's
+// numbers (to prove the mock reads them rather than typing 50 or 57 itself).
+function mockApp(state, coachDefaults) {
+  const C = coachDefaults ? Object.assign({}, coach, { coachDefaults: Object.assign({}, coach.coachDefaults, coachDefaults) }) : coach;
+  const ctx = { TTCoach: C, window: { TTCoach: C }, TTScreen: TS, TTAdv: ADV, Date, Math, Object, Array, String, Number, alerts: [] };
+  ctx.alert = m => ctx.alerts.push(m);
+  vm.runInNewContext('var me = {' + ['startTest', 'launchTest', 'weakMockPlan', 'endTest'].map(methodNamed).join(',\n') + '};', ctx);
+  return Object.assign(ctx.me, {
+    TOPICS: TOPIC_NAMES, ctx,
+    state: Object.assign({ testMode: 'balanced', testMix: {}, attempts: [], revisionFlags: {}, tests: [] }, state),
+    questionsFor: () => bank, qById: id => RQ61[id], viewQ: q => q, seedPerm: () => [0, 1, 2, 3],
+    award: () => ({}), persist() {}, setState(patch, cb) { Object.assign(this.state, patch); if (cb) cb(); }
+  });
+}
+// Her answers: t11q01-t11q03 missed three times (stuck), t03q01 wrong last time, t10q01-t10q06 half
+// right, and t07q01 flagged. now: the time to answer "before".
+function weakLearner(now) {
+  const a = (q, d, ok) => ({ q, t: now - d * DAYMS, ok, p: ok ? RQ61[q].correctIndex : (RQ61[q].correctIndex + 1) % 4, src: 'learn' });
+  const hist = [];
+  ['t11q01', 't11q02', 't11q03'].forEach(q => hist.push(a(q, 5, false), a(q, 4, false), a(q, 3, false)));
+  hist.push(a('t03q01', 1, false));
+  for (let i = 1; i <= 6; i++) hist.push(a('t10q0' + i, 2, false), a('t10q0' + i, 0.5, true));
+  return { attempts: hist, revisionFlags: { t07q01: { t: now - DAYMS, src: 'learn' } }, tests: [] };
+}
+const byTopic61 = ids => { const c = {}; ids.forEach(id => { c[RQ61[id].topic] = (c[RQ61[id].topic] || 0) + 1; }); return c; };
+
+test('#61 words: each kind of test has a name for the results, a history label and Activity\'s word', () => {
+  assert.ok(TS && TS.TEST_KINDS && typeof TS.testKind === 'function', 'TTScreen.TEST_KINDS and TTScreen.testKind');
+  assert.equal(TS.testKind('weak').name, 'Mock from your weak spots');
+  assert.equal(TS.testKind('weak').tag, 'weak spots');
+  assert.equal(TS.testKind('weak').say, 'weak-spots mock');
+  assert.equal(TS.testKind('mock').name, 'Mock test');
+  assert.equal(TS.testKind('mock').tag, '', 'a plain mock has no history label, as before');
+  assert.equal(TS.testKind('custom').say, 'custom test');
+  assert.equal(TS.testKind(undefined), TS.TEST_KINDS.mock, 'a test saved before kinds were kept is a mock');
+  assert.equal(TS.testKind('nonsense'), TS.TEST_KINDS.mock);
+});
+
+test('#61 words: the line under "From my weak spots" says what the mock holds, from the coach\'s reasons', () => {
+  assert.ok(TS && typeof TS.weakMockDesc === 'function', 'TTScreen.weakMockDesc');
+  assert.equal(TS.weakMockDesc({ stuck: 2, missed: 2, flagged: 1, due: 2, weak: 13, fill: 30 }, true, ['Road and traffic signs', 'Rules of the road']),
+    'Built from your answers: 2 you keep missing · 2 you got wrong last time · 1 flagged · 2 due again · 13 from your weakest topics (Road and traffic signs, Rules of the road) · 30 spread like the real test');
+  assert.equal(TS.weakMockDesc({ stuck: 0, missed: 3, flagged: 0, due: 0, weak: 0, fill: 47 }, true, []),
+    'Built from your answers: 3 you got wrong last time · 47 spread like the real test');
+  // A new learner: nothing to build from, so the mock is simply like the real test, and it says so.
+  assert.equal(TS.weakMockDesc({ stuck: 0, missed: 0, flagged: 0, due: 0, weak: 0, fill: 50 }, false, []),
+    'You haven’t answered any questions yet, so this one is like the real test: 50 questions from every topic.');
+  // Answers, but no weak spot at all right now: said plainly, not "Built from your answers: 50 spread ...".
+  assert.equal(TS.weakMockDesc({ fill: 50 }, true, []),
+    'Nothing to catch up on right now, so this one is like the real test: 50 questions from every topic.');
+});
+
+test('#61 From my weak spots: the app\'s own mock, with the coach\'s questions, 57 minutes and kind "weak"', () => {
+  const now = Date.now(), me = mockApp(Object.assign({ testMode: 'weak' }, weakLearner(now)));
+  me.startTest();
+  const t = me.state.test;
+  assert.ok(t, 'a test started');
+  assert.deepEqual(me.ctx.alerts, []);
+  assert.equal(t.kind, 'weak');
+  assert.equal(t.ids.length, coach.coachDefaults.mockSize);
+  assert.equal(new Set(t.ids).size, t.ids.length, 'no question twice');
+  t.ids.forEach(id => assert.ok(RQ61[id], id + ' is not in the bank'));
+  // The same questions the coach picks (the app only shuffles them, as for every mock).
+  const plan = coach.buildWeakMock(me.state.attempts, me.state.revisionFlags, [], bank, now);
+  assert.deepEqual(plain(t.ids.slice().sort()), plan.ids.slice().sort());
+  assert.deepEqual(plain(t.reasons), plan.reasons, 'the test keeps its reasons (for Activity)');
+  for (const id of ['t11q01', 't11q02', 't11q03', 't03q01', 't07q01']) assert.ok(t.ids.includes(id), id + ' is one of her weak spots');
+  const mins = (t.endAt - t.startedAt) / 60000;
+  assert.ok(Math.abs(mins - coach.coachDefaults.mockMinutes) < 0.05, 'the real mock\'s clock: ' + mins);
+  assert.equal(me.state.view, 'test');
+  assert.equal(me.state.testView, 'run');
+});
+
+test('#61 every mock takes its size and clock from coach.js coachDefaults, not a number typed in startTest', () => {
+  for (const mode of ['balanced', 'random', 'weak']) {
+    const me = mockApp({ testMode: mode }, { mockSize: 20, mockMinutes: 30 });
+    me.startTest();
+    const t = me.state.test;
+    assert.equal(t.ids.length, 20, mode + ': mockSize');
+    assert.ok(Math.abs((t.endAt - t.startedAt) / 60000 - 30) < 0.05, mode + ': mockMinutes');
+    assert.equal(t.kind, mode === 'weak' ? 'weak' : 'mock');
+  }
+  // Like the real test: the coach's own copy of its rule (mockMix) is what it now builds from.
+  const me = mockApp({ testMode: 'balanced' });
+  me.startTest();
+  assert.deepEqual(byTopic61(me.state.test.ids), plain(coach.mockMix(bank, 50)));
+  assert.doesNotMatch(methodNamed('startTest'), /\b50\b|\b57\b/, 'no 50 or 57 typed into startTest');
+});
+
+test('#61 a weak-spots mock is saved to her tests marked as that kind; the results screen and history name it', () => {
+  const me = mockApp(Object.assign({ testMode: 'weak' }, weakLearner(Date.now())));
+  me.startTest();
+  me.state.test.answers = { 0: RQ61[me.state.test.ids[0]].correctIndex };
+  me.endTest();
+  const rec = me.state.tests[me.state.tests.length - 1];
+  assert.equal(rec.kind, 'weak');
+  assert.equal(rec.total, 50);
+  assert.equal(rec.source, 'app');
+  assert.equal(me.state.testView, 'results');
+  // A plain mock is saved as a mock.
+  const m2 = mockApp({ testMode: 'balanced' });
+  m2.startTest(); m2.endTest();
+  assert.equal(m2.state.tests[0].kind, 'mock');
+  // The results banner names the kind, and the history's label comes from the same map.
+  assert.match(screen('TEST RESULTS'), /\{\{ resultKind \}\}/);
+  assert.match(app, /resultKind: TTScreen\.testKind\(t\.kind\)\.name,/);
+  assert.match(app, /src: r\.source==='app' \? TTScreen\.testKind\(r\.kind\)\.tag : \(r\.source\|\|'external'\),/);
+  // My Progress has the chart only: its words for a screen reader name the kind too.
+  assert.equal(TS.chartSay([{ score: 41, total: 50, pass: false }, { score: 30, total: 50, pass: false, kind: 'weak', source: 'app' }], 43),
+    'Mock test scores, oldest first: 41 out of 50, not a pass; 30 out of 50 (weak spots), not a pass. The dashed line is the pass mark, 43.');
+});
+
+test('#61 tracked: starting and finishing a weak-spots mock are test_start and test_end events with kind "weak"', () => {
+  const events = [];
+  const ctx = { window: {}, TTScreen: TS, Date, Object };
+  vm.runInNewContext('var me = {' + methodNamed('componentDidUpdate') + '};', ctx);
+  const me = Object.assign(ctx.me, {
+    syncA11y() {}, trackNote() {}, loadAccounts() {}, isSignQ: () => false, sessionQ: () => null,
+    qById: id => RQ61[id], viewQ: q => q, seedPerm: () => [0, 1, 2, 3],
+    track: (kind, qid, data) => events.push({ kind, qid, data })
+  });
+  const reasons = { stuck: 3, missed: 1, flagged: 1, due: 0, weak: 12, fill: 33 };
+  const test = { ids: ['t11q01', 't03q01'], answers: {}, flags: {}, i: 0, endAt: 9e12, ended: false, startedAt: 1000, kind: 'weak', reasons };
+  // One state change, as React makes it: the new state, then componentDidUpdate (it keeps _seen).
+  const step = (state) => { me.state = state; me.componentDidUpdate(); };
+  step({ userId: 'u1', view: 'testIntro', test: null, session: null });
+  step({ userId: 'u1', view: 'test', test, session: null });
+  step({ userId: 'u1', view: 'test', test: Object.assign({}, test, { ended: true, score: 1 }), session: null });
+  const start = events.find(e => e.kind === 'test_start'), end = events.find(e => e.kind === 'test_end');
+  assert.ok(start && end, 'both events: ' + events.map(e => e.kind));
+  assert.deepEqual(plain(start.data), { kind: 'weak', n: 2, timed: true, reasons });
+  assert.equal(end.data.kind, 'weak');
+  // Admin → Activity says which kind it was, from the same map as the results screen.
+  assert.match(app, /case 'test_start': return 'Started a ' \+ TTScreen\.testKind\(d\.kind\)\.say \+/);
+  assert.match(app, /case 'test_end': return 'Finished a ' \+ TTScreen\.testKind\(d\.kind\)\.say \+/);
+  assert.match(app, /case 'test_abandoned': return 'Left a ' \+ TTScreen\.testKind\(d\.kind\)\.say \+/);
+});
+
+test('#61 Mock Test screen: "From my weak spots" beside the others, its line, and the real numbers from coach.js', () => {
+  const intro = screen('TEST INTRO');
+  assert.match(app, /\{v:'weak', name:'From my weak spots', sub:'[^']+'\}/);
+  assert.match(intro, /\{\{ weakMockLine \}\}/);
+  assert.match(app, /weakMockLine: weakLine \? TTScreen\.weakMockDesc\(/);
+  // The intro's three numbers come from coach.js and the one pass-mark rule, not typed in.
+  for (const v of ['mockN', 'mockMins', 'mockPass']) assert.match(intro, new RegExp('\\{\\{ ' + v + ' \\}\\}'));
+  assert.doesNotMatch(intro, />(50|57|43)</, 'no 50, 57 or 43 typed into the Mock Test screen');
+  assert.match(app, /mockN: M\.mockSize, mockMins: M\.mockMinutes, mockPass: M\.mockSize \? TTScreen\.passMark\(M\.mockSize\) : '',/);
+  // Four choices wrap two to a row on a phone (a row of four ran narrow at 390px).
+  assert.match(intro, /<div style="display:grid;grid-template-columns:repeat\(auto-fit,minmax\(140px,1fr\)\);gap:10px">\s*<sc-for list="\{\{ testModeChoices \}\}"/);
+});
+
+test('#61 the How-to guide describes the weak-spots mock and the drill\'s ranking with the numbers coach.js uses', () => {
+  const guideText = fs.readFileSync(path.join(root, 'help.html'), 'utf8').replace(/<[^>]+>/g, ' ').replace(/&amp;/g, '&').replace(/\s+/g, ' ');
+  const C = coach.coachDefaults, D = coach.drillDefaults;
+  const expect = [
+    'From my weak spots',
+    'up to ' + C.weakMockSlack + ' more or ' + C.weakMockSlack + ' fewer',
+    'your ' + C.weakMockTopics + ' weakest topics',
+    'the same wrong answer',
+    D.hardMin + ' or more tries',
+    'under ' + Math.round(D.hardAcc * 100) + '% of the time'
+  ];
+  for (const e of expect) assert.ok(guideText.includes(e), 'help.html should say: "' + e + '"');
+});
+
+test('#61 lead review: a weak-spots mock does not count in readiness, per-topic mock accuracy or the pass prediction', () => {
+  // It is made of her hardest questions on purpose, so its score says nothing about how she would
+  // do on the real (balanced) test. It stays in her history and chart; the estimates skip it.
+  const tests = [
+    { kind: 'balanced', score: 45, total: 50, pass: true, perTopic: { 1: { c: 4, n: 4 } } },
+    { kind: 'weak', score: 20, total: 50, pass: false, perTopic: { 1: { c: 0, n: 10 } } }];
+  const me = vm.runInNewContext('({' + [methodNamed('realMocks'), methodNamed('readiness'), methodNamed('mockTopicAcc')].join(',') + '})', {});
+  me.state = { tests, attempts: [] };
+  me.questions = () => [{ id: 'q1' }]; me.rec = () => ({ seen: 1, box: 3, correct: 1 }); me.isSignQ = () => false;
+  assert.deepEqual(me.realMocks().map(t => t.kind), ['balanced']);
+  // readiness from the balanced mock alone: 0.5*0.9 + 0.25*1 + 0.15*1 + 0.10*1 = 0.95
+  assert.equal(me.readiness(), 95);
+  assert.deepEqual(JSON.parse(JSON.stringify(me.mockTopicAcc())), { 1: { c: 4, n: 4 } });
+  assert.match(methodNamed('coachNow'), /C\.passPrediction\(s\.attempts, real, all, opts\), list: C\.improvements\(s\.attempts, real, all, opts\)/);
+});

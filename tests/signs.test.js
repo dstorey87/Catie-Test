@@ -258,7 +258,7 @@ test('#48: a sign answer counts toward her goal, XP and streak — and the bank\
   vm.runInNewContext('var me = {' + [['answerLearn(i){', 'nextLearn(){'], ['award(qCount, correctCount, bonus){', 'levelInfo(xp){'], ['levelInfo(xp){', 'badgeStats(){'],
     ['badgeStats(){', 'badgeList(){'], ['streakFor(d){', 'maybeLocalNudge(){'], ['sessionQ(id){', 'isSignQ(id){'], ['isSignQ(id){', 'qById(id){'], ['qById(id){', 'setRevFlag(id, on, src){'],
     ['bankQuestions(){', 'questions(){'], ['questions(){', 'rec(id){'], ['rec(id){', 'seedPerm(id){'], ['seedPerm(id){', 'viewQ(q){'], ['viewQ(q){', 'speak(text){'],
-    ['readiness(){', 'advise(){']].map(([a, b]) => method(a, b)).join('\n,') + '};', ctx);
+    ['realMocks(){', 'mockTopicAcc(){'], ['readiness(){', 'advise(){']].map(([a, b]) => method(a, b)).join('\n,') + '};', ctx);
   const qs = bank.filter(q => q.file !== 'questions-free.json');
   const me = Object.assign(ctx.me, {
     state: { bank: qs, deleted: [], overrides: {}, custom: [], leitner: {}, attempts: [], tests: [], xp: 0,

@@ -93,14 +93,24 @@
     weakAcc: 0.7,        // a topic under 70% right is weak …
     weakMin: 5,          // … once it has at least 5 answers
     requeueGap: 3,       // a question missed in a drill comes back after 3 others
-    requeueMax: 2        // … at most twice in the same drill
+    requeueMax: 2,       // … at most twice in the same drill
+    hardMin: 3,          // a question she has tried at least 3 times …
+    hardAcc: 0.5         // … and got right under 50% of the time is "hard for her" and ranks higher (issue #61)
   };
 
   // One line per question: how she's done on it, and whether it's stuck or due.
-  // attempts: [{q, t, ok}] oldest first (the app's own list); flags: {id: …}.
+  // attempts: [{q, t, ok, p?}] oldest first (the app's own list); flags: {id: …}.
+  // Also, for ranking (issue #61):
+  //   rate     her share of right answers on it (null if never answered)
+  //   hard     she has tried it hardMin+ times and got it right under hardAcc of the time
+  //   misPick  how many times she chose the same wrong option on it, once that is repeatPicks+
+  //            (coach misconceptions below); 0 otherwise
   function profile(attempts, flags, bank, now, opts) {
     var o = Object.assign({}, DRILL, opts || {}), Q = byId(bank), per = {}, topic = {};
     now = now || Date.now(); flags = flags || {};
+    // The wrong option she keeps choosing, per question: worked out once, by misconceptions().
+    var misPick = {};
+    misconceptions(attempts, Q, opts).questions.forEach(function (m) { misPick[m.qid] = m.count; });
     (attempts || []).forEach(function (a) {
       var q = Q[a.q]; if (!q) return;
       var r = per[a.q] || (per[a.q] = { id: a.q, topic: q.topic, seen: 0, wrong: 0, run: 0, last: 0, missDays: {} });
@@ -113,12 +123,16 @@
     Object.keys(Q).forEach(function (id) {
       var q = Q[id], r = per[id], tp = topic[q.topic];
       var weakTopic = !!(tp && tp.n >= o.weakMin && tp.ok / tp.n < o.weakAcc);
-      if (!r) { out[id] = { id: id, topic: q.topic, seen: 0, wrong: 0, run: 0, stuck: false, due: false, fresh: true, flagged: !!flags[id], weakTopic: weakTopic }; return; }
+      if (!r) { out[id] = { id: id, topic: q.topic, seen: 0, wrong: 0, run: 0, stuck: false, due: false, fresh: true, flagged: !!flags[id], weakTopic: weakTopic,
+        rate: null, hard: false, misPick: 0 }; return; }
       var days = Object.keys(r.missDays).length;
       var stuck = (r.wrong >= o.stuckMisses || days >= o.stuckDays) && r.run < o.unstuckRun;
       var wait = o.gapDays[Math.min(r.run, o.gapDays.length - 1)] * 86400000;
+      // Her own record on this question: the share she got right, and whether that makes it hard.
+      var rate = (r.seen - r.wrong) / r.seen;
       out[id] = { id: id, topic: q.topic, seen: r.seen, wrong: r.wrong, run: r.run, last: r.last,
-        stuck: stuck, due: now - r.last >= wait, fresh: false, flagged: !!flags[id], weakTopic: weakTopic };
+        stuck: stuck, due: now - r.last >= wait, fresh: false, flagged: !!flags[id], weakTopic: weakTopic,
+        rate: rate, hard: r.seen >= o.hardMin && rate < o.hardAcc, misPick: misPick[id] || 0 };
     });
     return out;
   }
@@ -146,15 +160,27 @@
     return out;
   }
 
+  // Inside one reason, which question needs her most (issue #61), as a sort order:
+  //   1. the wrong answer she keeps choosing (profile's misPick: the most repeats first)
+  //   2. a question her own record shows is hard (profile's hard: the lowest right-rate first)
+  //   3. the most misses, 4. the longest since she saw it, 5. id order, so the same history
+  //      always gives the same order.
+  // Used by the drill (Today's lesson) and the weak-spots mock, so both rank the same way.
+  function byNeed(a, b) {
+    return (b.misPick || 0) - (a.misPick || 0) ||
+      (b.hard ? 1 : 0) - (a.hard ? 1 : 0) ||
+      (a.hard && b.hard ? a.rate - b.rate : 0) ||
+      b.wrong - a.wrong || (a.last || 0) - (b.last || 0) || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0);
+  }
+
   // The drill: {ids, reasons:{stuck, flagged, due, weak, fresh}}.
   function buildDrill(prof, bank, opts) {
     var o = Object.assign({}, DRILL, opts || {}), Q = byId(bank);
     var cands = Object.keys(prof).filter(function (id) { return Q[id]; }).map(function (id) {
       return Object.assign({ why: reasonOf(prof[id]) }, prof[id]);
     }).filter(function (p) { return p.why; });
-    cands.sort(function (a, b) {
-      return RANK[a.why] - RANK[b.why] || b.wrong - a.wrong || (a.last || 0) - (b.last || 0) || (a.id < b.id ? -1 : 1);
-    });
+    // Most urgent reason first (RANK); inside a reason, the one that needs her most (byNeed).
+    cands.sort(function (a, b) { return RANK[a.why] - RANK[b.why] || byNeed(a, b); });
     var picked = [], fresh = 0, reasons = { stuck: 0, flagged: 0, due: 0, weak: 0, fresh: 0 };
     // New questions are capped at newMax only when there's more reviewing than room;
     // with little to review, the drill fills up with new ones instead of coming out short.
@@ -196,6 +222,10 @@
     // --- pass prediction ---
     passMark: 43,          // right answers needed to pass a 50-question mock
     mockSize: 50,          // questions in a full mock
+    mockMinutes: 57,       // minutes on the clock for a full mock (the real test: 57 minutes for 50)
+    // --- a mock from her weak spots (issue #61) ---
+    weakMockSlack: 2,      // each topic may have up to this many more (or fewer) questions than the real test's spread
+    weakMockTopics: 3,     // "her weakest topics": this many from the top of improvements()
     halfLifeDays: 14,      // an answer 14 days older than her newest one counts half as much
     priorAnswers: 3,       // a topic's rate is blended with her overall rate, as if she had 3 extra
                            // answers there at her overall rate (so one lucky answer isn't "100%")
@@ -400,6 +430,112 @@
           ' in a mock — about ' + N + ' more right answers here would add ' +
           (gain < 0.05 ? 'less than 0.1' : '~' + oneDp(gain)) + ' to your expected score.' };
     }).sort(function (a, b) { return b.gain - a.gain || b.lost - a.lost || byNumber(a.topic, b.topic); });
+  }
+
+  // ---------- 2b. a mock from her weak spots (issue #61) ----------
+  // buildWeakMock(attempts, flags, tests, bank, now, opts) -> {ids, reasons, topics, answered}
+  //   attempts, flags, now: as profile() · tests: her saved mocks (improvements() reads them)
+  //   bank: the questions switched on for tests
+  // A full mock (mockSize questions, like the real test) chosen from HER results, in this order:
+  //   stuck    questions she keeps missing (profile's stuck, the same rule as Today's lesson)
+  //   missed   ones she got wrong the last time she answered them
+  //   flagged  ones she flagged
+  //   due      ones due again by the drill's spacing
+  //   weak     more from her weakest topics: the top weakMockTopics of improvements()
+  //   fill     the rest, like the real test: questions she hasn't seen first
+  // Inside a reason, the question that needs her most comes first (byNeed). The topic spread stays
+  // close to the real test's (mockMix: the "Like the real test" rule): each topic has between
+  // weakMockSlack fewer and weakMockSlack more questions than there, so her weak spots lean the
+  // mock without turning it into a one-topic drill.
+  //   ids:      the mock's questions (the app shuffles them, as it does for every mock)
+  //   reasons:  how many came for each reason, for the line that says what the mock holds
+  //   topics:   the weakest topics used, weakest first
+  //   answered: she has answered a bank question (a new learner's mock is just like the real test)
+  // Every id comes from the bank, none twice; same inputs, same mock (no dice).
+  function buildWeakMock(attempts, flags, tests, bank, now, opts) {
+    var o = Object.assign({}, DRILL, COACH, opts || {}), Q = byId(bank);
+    var mix = o.mix || mockMix(Q, o.mockSize), prof = profile(attempts, flags, Q, now, o);
+    // Her weakest topics, the most to gain first (the Home card's "what to work on" order). A topic
+    // where more right answers would add nothing is not weak, so it is left out.
+    var weak = improvements(attempts, tests, Q, Object.assign({}, o, { mix: mix }))
+      .filter(function (x) { return x.gain > 0; }).slice(0, o.weakMockTopics).map(function (x) { return x.topic; });
+    var weakRank = {};
+    weak.forEach(function (t, i) { weakRank[t] = i; });
+
+    // The band each topic stays in: from lo to hi questions (never more than the bank has).
+    var have = {}, lo = {}, hi = {}, size = 0;
+    Object.keys(Q).forEach(function (id) { var t = Q[id].topic; have[t] = (have[t] || 0) + 1; });
+    var topics = Object.keys(have).sort(byNumber);
+    topics.forEach(function (t) {
+      var real = mix[t] || 0;
+      size += real;                                     // the mock's size: the real test's mix, added up
+      lo[t] = Math.max(0, real - o.weakMockSlack);
+      hi[t] = Math.min(have[t], real + o.weakMockSlack);
+    });
+
+    // Why each question would come, most urgent reason first (null: only as fill).
+    var ORDER = ['stuck', 'missed', 'flagged', 'due', 'weak'];
+    function why(p) {
+      if (p.stuck) return 'stuck';
+      if (p.wrong > 0 && p.run === 0) return 'missed';   // her latest answer on it was wrong
+      if (p.flagged) return 'flagged';
+      if (p.seen && p.due) return 'due';
+      if (weakRank[p.topic] != null) return 'weak';
+      return null;
+    }
+    var cands = Object.keys(prof).map(function (id) { return Object.assign({ why: why(prof[id]) }, prof[id]); })
+      .filter(function (p) { return p.why; });
+    // Reason order; the weak ones by how weak their topic is; then the one that needs her most.
+    cands.sort(function (a, b) {
+      return ORDER.indexOf(a.why) - ORDER.indexOf(b.why) ||
+        (a.why === 'weak' ? weakRank[a.topic] - weakRank[b.topic] : 0) || byNeed(a, b);
+    });
+
+    var count = {}, taken = {}, ids = [];
+    var reasons = { stuck: 0, missed: 0, flagged: 0, due: 0, weak: 0, fill: 0 };
+    // Put one question in the mock, and count it for its topic and its reason.
+    function take(p, reason) {
+      taken[p.id] = true; ids.push(p.id); reasons[reason]++;
+      count[p.topic] = (count[p.topic] || 0) + 1;
+    }
+    // How many questions the topics still need to reach their floors (lo).
+    function owed() {
+      var n = 0;
+      topics.forEach(function (t) { n += Math.max(0, lo[t] - (count[t] || 0)); });
+      return n;
+    }
+    // Her weak spots, most urgent first, while their topic has room and the other topics' floors
+    // still fit in what is left of the mock.
+    cands.forEach(function (p) {
+      var c = count[p.topic] || 0;
+      if (ids.length >= size || c >= hi[p.topic]) return;
+      if (ids.length + 1 + owed() - (c < lo[p.topic] ? 1 : 0) > size) return;
+      take(p, p.why);
+    });
+
+    // Fill, like the real test. The questions left in each topic, unseen first, then the ones she
+    // saw longest ago (id order last, so it is always the same).
+    var spare = {};
+    Object.keys(prof).filter(function (id) { return !taken[id]; }).sort(function (a, b) {
+      var x = prof[a], y = prof[b];
+      return (x.seen ? 1 : 0) - (y.seen ? 1 : 0) || (x.last || 0) - (y.last || 0) || (a < b ? -1 : a > b ? 1 : 0);
+    }).forEach(function (id) { (spare[prof[id].topic] || (spare[prof[id].topic] = [])).push(prof[id]); });
+    // First every topic up to its floor …
+    topics.forEach(function (t) {
+      while ((count[t] || 0) < lo[t] && spare[t] && spare[t].length) take(spare[t].shift(), 'fill');
+    });
+    // … then round the topics in order, one question each, up to the real test's count (the
+    // "Like the real test" builder's own rule), until the mock is full.
+    for (var added = true; ids.length < size && added;) {
+      added = false;
+      topics.forEach(function (t) {
+        if (ids.length < size && (count[t] || 0) < (mix[t] || 0) && spare[t] && spare[t].length) {
+          take(spare[t].shift(), 'fill'); added = true;
+        }
+      });
+    }
+    var answered = Object.keys(prof).some(function (id) { return prof[id].seen > 0; });
+    return { ids: ids, reasons: reasons, topics: weak, answered: answered };
   }
 
   // ---------- 3. study plan to the test date ----------
@@ -842,7 +978,7 @@
   }
 
   var api = { mergeFlags: mergeFlags, activity: activity, profile: profile, buildDrill: buildDrill, requeue: requeue, drillDefaults: DRILL,
-    passPrediction: passPrediction, improvements: improvements, studyPlan: studyPlan, misconceptions: misconceptions,
+    passPrediction: passPrediction, improvements: improvements, buildWeakMock: buildWeakMock, studyPlan: studyPlan, misconceptions: misconceptions,
     badgeCloseness: badgeCloseness, streakWithFreeze: streakWithFreeze, mockMix: mockMix, dayCounts: dayCounts, localDay: localDay,
     coachDefaults: COACH,
     dailyGoal: dailyGoal, recordGoalDay: recordGoalDay, streakAward: streakAward, READING: READING, readingStyle: readingStyle,
