@@ -2056,3 +2056,19 @@ test('#61 the How-to guide describes the weak-spots mock and the drill\'s rankin
   ];
   for (const e of expect) assert.ok(guideText.includes(e), 'help.html should say: "' + e + '"');
 });
+
+test('#61 lead review: a weak-spots mock does not count in readiness, per-topic mock accuracy or the pass prediction', () => {
+  // It is made of her hardest questions on purpose, so its score says nothing about how she would
+  // do on the real (balanced) test. It stays in her history and chart; the estimates skip it.
+  const tests = [
+    { kind: 'balanced', score: 45, total: 50, pass: true, perTopic: { 1: { c: 4, n: 4 } } },
+    { kind: 'weak', score: 20, total: 50, pass: false, perTopic: { 1: { c: 0, n: 10 } } }];
+  const me = vm.runInNewContext('({' + [methodNamed('realMocks'), methodNamed('readiness'), methodNamed('mockTopicAcc')].join(',') + '})', {});
+  me.state = { tests, attempts: [] };
+  me.questions = () => [{ id: 'q1' }]; me.rec = () => ({ seen: 1, box: 3, correct: 1 }); me.isSignQ = () => false;
+  assert.deepEqual(me.realMocks().map(t => t.kind), ['balanced']);
+  // readiness from the balanced mock alone: 0.5*0.9 + 0.25*1 + 0.15*1 + 0.10*1 = 0.95
+  assert.equal(me.readiness(), 95);
+  assert.deepEqual(JSON.parse(JSON.stringify(me.mockTopicAcc())), { 1: { c: 4, n: 4 } });
+  assert.match(methodNamed('coachNow'), /C\.passPrediction\(s\.attempts, real, all, opts\), list: C\.improvements\(s\.attempts, real, all, opts\)/);
+});

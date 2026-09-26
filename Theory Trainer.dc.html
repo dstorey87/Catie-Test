@@ -3855,8 +3855,12 @@ class Component extends DCLogic {
   }
   // ---------- stats ----------
   tipAt(topic, salt){ const arr = this.TIPS[topic]||[]; return arr.length ? arr[Math.abs(salt)%arr.length] : ''; }
+  // Her mocks that say how she would do on the real test: every kind except "From my weak
+  // spots", which is made of her hardest questions on purpose (issue #61). That one stays in her
+  // history and chart, but readiness, per-topic mock accuracy and the pass prediction skip it.
+  realMocks(){ return (this.state.tests||[]).filter(t=>t.kind!=='weak'); }
   mockTopicAcc(){
-    const ts = this.state.tests.filter(t=>t.perTopic && Object.keys(t.perTopic).length).slice(-3);
+    const ts = this.realMocks().filter(t=>t.perTopic && Object.keys(t.perTopic).length).slice(-3);
     const agg = {};
     ts.forEach(t=>Object.keys(t.perTopic).forEach(k=>{ agg[k] = agg[k]||{c:0,n:0}; agg[k].c += t.perTopic[k].c; agg[k].n += t.perTopic[k].n; }));
     return agg;
@@ -3884,7 +3888,7 @@ class Component extends DCLogic {
     const at = this.state.attempts.filter(a=>a.src!=='test' && !this.isSignQ(a.q)).slice(-120);
     const totSeen = seen.reduce((a,r)=>a+r.seen,0);
     const recentAcc = at.length>=10 ? at.filter(a=>a.ok).length/at.length : (totSeen ? seen.reduce((a,r)=>a+r.correct,0)/totSeen : 0);
-    const mocks = this.state.tests.slice(-3).map(t=>t.score/(t.total||50));
+    const mocks = this.realMocks().slice(-3).map(t=>t.score/(t.total||50));
     let r;
     if(mocks.length){ const m = mocks.reduce((a,x)=>a+x,0)/mocks.length; r = 0.5*m + 0.25*recentAcc + 0.15*box3 + 0.10*coverage; }
     else r = Math.min(0.6, 0.45*recentAcc + 0.1*box3 + 0.1*coverage);
@@ -4124,8 +4128,8 @@ class Component extends DCLogic {
   coachNow(){
     const C = TTCoach, s = this.state;
     const opts = {mix: C.mockMix(this.questionsFor('test'), C.coachDefaults.mockSize), topicNames: this.TOPICS};
-    const all = this.questions();
-    return {pred: C.passPrediction(s.attempts, s.tests, all, opts), list: C.improvements(s.attempts, s.tests, all, opts)};
+    const all = this.questions(), real = this.realMocks();   // weak-spots mocks left out (see realMocks)
+    return {pred: C.passPrediction(s.attempts, real, all, opts), list: C.improvements(s.attempts, real, all, opts)};
   }
   // The study plan, rebuilt from scratch every time (that is how it adapts). Topics come
   // best-gain first from improvements; before she has answered anything, all 14 in order.

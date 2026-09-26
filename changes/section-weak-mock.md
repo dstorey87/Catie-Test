@@ -46,10 +46,11 @@
   - Her weakest topics are the top 3 of `improvements()` with something to gain.
   - A repeated wrong pick and "hard" reorder questions inside a group. They never lift a
     question into an earlier group.
-  - A weak-spots mock is saved and counted like any mock, so it shows in readiness and the
-    chart (like Build your own). Its scores are likely lower on purpose.
+  - A weak-spots mock is saved like any mock and shows in her history and chart, but readiness,
+    per-topic mock accuracy and the pass prediction leave it out (`realMocks()`, lead review):
+    it is made of her hardest questions on purpose, so it says nothing about the real test.
   - Without `coach.js`, Start the mock now says coach.js did not load (it used to work
     without it).
 - What's left: Build your own still has its own numbers (`1.14` minutes a question, `0.86` pass
   share), and so do Home's "50 questions" card, Print's paper mock and the dashboard's "Log a
-  mock". Readiness does not tell a weak-spots mock from a plain one.
+  mock".
