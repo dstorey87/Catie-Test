@@ -3,6 +3,22 @@
 Newest first. The version is the service-worker `VERSION` in `sw.js` — it changes on every
 deploy that touches the app's cached files. Earlier history: `git log`.
 
+## v18-2026-09-26
+The app and Adventure stay in step (#51) and everything she does is tracked (#57), PR #58. 455 tests.
+- **Two tabs:** with the app open beside Adventure (or a second app tab), the app shows her new answers,
+  goal ring, streak, XP, flags and stars the moment the other saves, with no reload, and never saves
+  back in reply. When another tab saved in between, the app joins the two copies (answers by question
+  and time, sign answers too; flags question by question; Adventure stars stage by stage; XP added up;
+  goal days of both) instead of writing its own copy whole. "Reset all progress" and "Import backup"
+  still replace her answers.
+- The app uses the rules it shares with Adventure (`coach.js`): streak and daily goal, reading style,
+  the voice, and the words read aloud.
+- Fixed: reading an explanation aloud ended with "undefined" when a question had no rule reference.
+- **Admin → Activity** also lists notes added, changed or deleted (where, and how long — never the
+  words), every Settings change (old → new), printing (format and how many), and Adventure stages in
+  plain words.
+- The first open after an update no longer risks a blank page while an older offline `coach.js` is in use.
+
 ## v17-2026-09-25
 Every road sign on the test, by category, with quizzes and Adventure sign worlds (#48, PR #54). 436 tests.
 - **Road Signs has every sign, road marking, light signal and vehicle marking in The Highway Code**:

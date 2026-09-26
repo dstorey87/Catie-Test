@@ -1,6 +1,6 @@
 # Theory Trainer — request checklist
 
-Last updated: 2026-09-25 (v17).
+Last updated: 2026-09-26 (v18).
 
 States: ✅ done & verified · 🟡 built, not yet seen working for real · ⚠️ built, needs your account/keys to go live · 📋 your step (minutes) · ❌ not possible, honest alternative given.
 
@@ -96,14 +96,15 @@ States: ✅ done & verified · 🟡 built, not yet seen working for real · ⚠�
 - 📋 One-time per iPhone/iPad: Settings → Accessibility → Spoken Content → Voices → English (UK) → download an Enhanced voice
 
 ## How to test
-- `node --test` runs every test (436 at v17); CI runs it on every pull request and every push to `develop` and `main`
-- In a browser: serve the repo (`python -m http.server <port> --bind 127.0.0.1`, never port 8765) and drive it with `tests/browser/harness.js` at 390px and 1280px, light and dark. The harness learner has no answers, so tapping Catie opens the quick setup: tap Skip, or seed her as set up with `seed: {'theoryTrainer.d.u1': JSON.stringify({settings: {learnerName: 'Catie', onboardedAt: '2026-09-24'}})}`. Pass `birthYear: null` to see the age question; route `/rest/v1/rpc/admin_accounts` and `/rest/v1/rpc/admin_set_access` (with `role: 'admin'`) to see Accounts; route `/rest/v1/rpc/export_my_data` and `/rest/v1/rpc/delete_my_account` to fake the server's answers; give bank rows `plain_explanation` + `plain_status: 'approved'` to see Explain it differently; seed a learner with answers to see the prediction, the study plan and the "you keep choosing" lines. For Adventure: open the app through the harness (it seeds a signed-in learner), then tap Adventure on Home or go to `/adventure.html`
+- `node --test` runs every test (455 at v18); CI runs it on every pull request and every push to `develop` and `main`
+- In a browser: serve the repo (`python -m http.server <port> --bind 127.0.0.1`, never port 8765) and drive it with `tests/browser/harness.js` at 390px and 1280px, light and dark. The harness learner has no answers, so tapping Catie opens the quick setup: tap Skip, or seed her as set up with `seed: {'theoryTrainer.d.u1': JSON.stringify({settings: {learnerName: 'Catie', onboardedAt: '2026-09-24'}})}`. Pass `birthYear: null` to see the age question; open `adventure.html` as a second page of the same context (`ctx.newPage()`) to test two tabs; route `**/rest/v1/events**` to keep what is POSTed and return it on GET to see Activity; route `/rest/v1/rpc/admin_accounts` and `/rest/v1/rpc/admin_set_access` (with `role: 'admin'`) to see Accounts; route `/rest/v1/rpc/export_my_data` and `/rest/v1/rpc/delete_my_account` to fake the server's answers; give bank rows `plain_explanation` + `plain_status: 'approved'` to see Explain it differently; seed a learner with answers to see the prediction, the study plan and the "you keep choosing" lines. For Adventure: open the app through the harness (it seeds a signed-in learner), then tap Adventure on Home or go to `/adventure.html`
 
 ## What's left
 - 📋 Approve or reject the plain-explanation drafts in Admin → Memory tips → Plain explanations (377 loaded as `draft` on 2026-09-25; t09q24 has none). Until then no learner sees Explain it differently
 - 📋 Approve or reject the 44 re-drafted memory tips (and the ones listed under Local AI)
 - Run the delete-account and age flows once from the app against the live project with a throwaway account (not verified there yet)
-- Adventure two tabs, the app's half (App/UI lane, issue #51, with the exact code): the app should listen for Adventure's saves (`storage` event → `loadUser`), and `persist()` should merge answers and flags with the stored copy instead of writing its copy whole; then use `coach.js`'s shared goal, streak, reading and read-aloud rules instead of its own copies (that also stops "undefined" being read aloud for a question with no rule reference). Until then Adventure repairs a stale app tab's save only while Adventure is open. At the biggest text size on a phone, Adventure's top bar has room for her initial only
+- Two tabs (v18, #51): the app hears another tab's saves (`heardSave`, the `storage` event) and joins its own saves with the stored copy when another tab saved in between (`TTAdv.join`). Left: a stale app tab that missed a save shows old numbers until its next save or the next save it hears; a test in progress in two app tabs at once is not joined (the last save wins that part). At the biggest text size on a phone, Adventure's top bar has room for her initial only
+- Tracking (v18, #57): notes, Settings changes and printing are events too (`trackNote`, `trackSettings`, `trackPrint`; the Settings and Print choices and Activity's words for them live in `TTChoices`). Printing another screen from the browser's own menu is recorded as "Printed <screen>" with no count
 - Adventure: if a learner unlocks more packs, lessons are recut, and saved progress (kept by stage id) then belongs to lessons whose questions have partly changed. With the full bank the route is fixed
 - Two copies to make one (Coach lane, `coach.js`): the Adventure stars total is counted by the page (`starsSummary`) and by the Home card; the scaled mock pass mark is worked out in `coach.js` (`Math.ceil(total * passMark / mockSize)`) and in the app's `TTScreen.passMark`. The 14 topic names are in both `TTCoach.TOPIC_NAMES` and the app's `TOPICS` on purpose (the app keeps its names if `coach.js` fails to load); a test fails if they ever differ
 - The chart's "pass 43" label and the dashboard's "Log a mock" check (`score>=43`) use 43 as a fixed number; that is right for 50-question mocks
@@ -123,6 +124,7 @@ States: ✅ done & verified · 🟡 built, not yet seen working for real · ⚠�
 Tracked as GitHub issues, one per section: https://github.com/dstorey87/Catie-Test/issues (lanes and rules in `CLAUDE.md`).
 
 ## Timeline
+- 2026-09-26 — v18 (`v18-2026-09-26`): the app and Adventure stay in step with two tabs open, and nothing either saves is lost (#51); the app uses the shared coach.js rules (fixes "undefined" read aloud); notes, Settings changes and printing tracked on Activity (#57). 455 tests.
 - 2026-09-25 — v17 (`v17-2026-09-25`): every Highway Code sign, marking, light signal and vehicle marking (205 official pictures + 7 DfT) by category on Road Signs, a quiz per category and for all signs, and 8 Adventure sign worlds (#48). 436 tests.
 - 2026-09-25 — v16 (`v16-2026-09-25`): official GOV.UK road sign pictures (37, credited; 13 more questions show their sign; give-away pictures removed; signs quiz from the bank) (#44), and Adventure counting toward goal and streak, following reading settings and read-aloud, repairing two-tab saves (#47). 422 tests.
 - 2026-09-25 — v15 (`v15-2026-09-25`): #42 — email-link sign-in no longer shows the admin a paywall (backend.js ran twice), payments switched off honestly until Stripe is set up, the admin gives any account free access from Progress dashboard → Accounts, Catie's managed login rotated and proven. 389 tests.
