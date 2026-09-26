@@ -262,7 +262,9 @@ test('the privacy notice\'s "deleted with the account" is true of every table th
 // ---------------------------------------------------------------- 3. no drift from the app
 
 test('every Settings switch in the app is explained in the guide', () => {
-  const block = app.slice(app.indexOf('const toggles = ['), app.indexOf('];', app.indexOf('const toggles = [')));
+  // The switches are TTChoices.SWITCHES in the app's head (issue #57: the Settings screen and
+  // Admin → Activity share them).
+  const block = app.slice(app.indexOf('C.SWITCHES = ['), app.indexOf('];', app.indexOf('C.SWITCHES = [')));
   const names = [...block.matchAll(/\['\w+','([^']+)'/g)].map(m => m[1]);
   assert.ok(names.length >= 6, 'could not read the toggles list from the app');
   for (const n of names) assert.ok(guide.includes(n), 'help.html #settings does not explain "' + n + '"');

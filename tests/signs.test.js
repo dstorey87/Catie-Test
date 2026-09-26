@@ -251,7 +251,8 @@ test('#48: a sign answer counts toward her goal, XP and streak — and the bank\
   const coach = require('../coach.js'), picker = require('../picker.js');
   const ctx = { window: { TTSigns: TS, TTCoach: coach }, Date, Object, Math, JSON, Set, Map };
   vm.runInNewContext(block('TTInsights'), ctx);
-  ctx.TTSigns = TS; ctx.TTCoach = coach; ctx.TTInsights = ctx.window.TTInsights;
+  vm.runInNewContext(block('TTAdv'), ctx);                // TTAdv.ATTEMPTS_KEPT: how many answers are kept
+  ctx.TTSigns = TS; ctx.TTCoach = coach; ctx.TTInsights = ctx.window.TTInsights; ctx.TTAdv = ctx.window.TTAdv;
   // The app's own methods, each from its name to the next method's name. Joined with a comma on
   // a NEW line: a slice can end in a comment.
   vm.runInNewContext('var me = {' + [['answerLearn(i){', 'nextLearn(){'], ['award(qCount, correctCount, bonus){', 'levelInfo(xp){'], ['levelInfo(xp){', 'badgeStats(){'],
