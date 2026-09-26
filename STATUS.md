@@ -1,6 +1,6 @@
 # Theory Trainer — request checklist
 
-Last updated: 2026-09-26 (v19).
+Last updated: 2026-09-26 (v20).
 
 States: ✅ done & verified · 🟡 built, not yet seen working for real · ⚠️ built, needs your account/keys to go live · 📋 your step (minutes) · ❌ not possible, honest alternative given.
 
@@ -97,17 +97,18 @@ States: ✅ done & verified · 🟡 built, not yet seen working for real · ⚠�
 - 📋 One-time per iPhone/iPad: Settings → Accessibility → Spoken Content → Voices → English (UK) → download an Enhanced voice
 
 ## How to test
-- `node --test` runs every test (475 at v19); CI runs it on every pull request and every push to `develop` and `main`
+- `node --test` runs every test (489 at v20); CI runs it on every pull request and every push to `develop` and `main`
 - In a browser: serve the repo (`python -m http.server <port> --bind 127.0.0.1`, never port 8765) and drive it with `tests/browser/harness.js` at 390px and 1280px, light and dark. The harness learner has no answers, so tapping Catie opens the quick setup: tap Skip, or seed her as set up with `seed: {'theoryTrainer.d.u1': JSON.stringify({settings: {learnerName: 'Catie', onboardedAt: '2026-09-24'}})}`. Pass `birthYear: null` to see the age question; open `adventure.html` as a second page of the same context (`ctx.newPage()`) to test two tabs; route `**/rest/v1/events**` to keep what is POSTed and return it on GET to see Activity; route `/rest/v1/rpc/admin_accounts` and `/rest/v1/rpc/admin_set_access` (with `role: 'admin'`) to see Accounts; route `/rest/v1/rpc/export_my_data` and `/rest/v1/rpc/delete_my_account` to fake the server's answers; give bank rows `plain_explanation` + `plain_status: 'approved'` to see Explain it differently; seed a learner with answers to see the prediction, the study plan and the "you keep choosing" lines. For Adventure: open the app through the harness (it seeds a signed-in learner), then tap Adventure on Home or go to `/adventure.html`
 
 ## What's left
+- XP amounts (10 a right answer, 50 for a passed mock) are still typed into the app, not in `coach.js`. Every mock number (size, minutes, pass mark) now lives only in `coach.js` `coachDefaults` (v20, #65).
+- At 390px Print's A4 preview scrolls sideways (the paper is 194 mm wide); not checked whether that is wanted
 - 📋 Approve or reject the plain-explanation drafts in Admin → Memory tips → Plain explanations (377 loaded as `draft` on 2026-09-25; t09q24 has none). Until then no learner sees Explain it differently
 - 📋 Approve or reject the 44 re-drafted memory tips (and the ones listed under Local AI)
 - Two tabs (v18, #51): the app hears another tab's saves (`heardSave`, the `storage` event) and joins its own saves with the stored copy when another tab saved in between (`TTAdv.join`). Left: a stale app tab that missed a save shows old numbers until its next save or the next save it hears; a test in progress in two app tabs at once is not joined (the last save wins that part). At the biggest text size on a phone, Adventure's top bar has room for her initial only
 - Tracking (v18, #57): notes, Settings changes and printing are events too (`trackNote`, `trackSettings`, `trackPrint`; the Settings and Print choices and Activity's words for them live in `TTChoices`). Printing another screen from the browser's own menu is recorded as "Printed <screen>" with no count
 - Adventure: if a learner unlocks more packs, lessons are recut, and saved progress (kept by stage id) then belongs to lessons whose questions have partly changed. With the full bank the route is fixed
 - Two copies to make one (Coach lane, `coach.js`): the Adventure stars total is counted by the page (`starsSummary`) and by the Home card; the scaled mock pass mark is worked out in `coach.js` (`Math.ceil(total * passMark / mockSize)`) and in the app's `TTScreen.passMark`. The 14 topic names are in both `TTCoach.TOPIC_NAMES` and the app's `TOPICS` on purpose (the app keeps its names if `coach.js` fails to load); a test fails if they ever differ
-- The chart's "pass 43" label and the dashboard's "Log a mock" check (`score>=43`) use 43 as a fixed number; that is right for 50-question mocks
 - Accessibility: no screen-reader check by a person (above). At 320px with the app's biggest text size, a few screens scroll sideways slightly (Road signs 14px, Mock test intro 12px, Practise setup 7px, Question editor 6px, Settings 2px, My Progress and the dashboard 1px); WCAG's 320px benchmark uses browser zoom, which passes. A flagged, answered mock square shows only the flag on screen (its spoken name says both)
 - ⚠️ Before charging anyone: a real operator name, address and contact email (and company and ICO numbers, if they apply), a legal review, and Darren's yes or no on the sample choices: lawful bases, liability wording, 30 days' notice of price changes, a full refund within 14 days of the first payment until checkout asks for the waiver, full refunds for wrong charges, a 5-working-day reply to refund emails
 - Not built: change email and change password while signed in; streak repair; the weekly summary email; grouping misconceptions by meaning
@@ -117,13 +118,13 @@ States: ✅ done & verified · 🟡 built, not yet seen working for real · ⚠�
 - The tuning values (14-day half-life, 50-answer minimum, 10-answer what-if, 7-day freeze, hold 2, 70% for the badge nudge, pass-chance colours at 70% and 40%; Adventure's 7-question lessons, 10-question checkpoint, 80% pass and stars at 80/90/100%) are choices, not measurements
 - Not started, and not yet GitHub issues (carried over from the old sections table): React and Babel copied to this site and precached, for true offline; manifest polish (maskable icon, id/scope, viewport tags, offline fallback page); removing the public `questions-1..5.json` and the app's `local()` path (note `tests/bank.test.js` reads those files)
 
-- Adventure map: the road's rounded top reaches up into the bottom of the world-tab row (390, 768 and 1280px); the chart's "pass 43" label can overlap the last dot when her last mock is near 45 (both seen in the v14 check, not new)
 - The help pictures' example learner and capture script were throwaway files, not in the repo: retaking the pictures means writing them again (or adding them to `tools/`)
 
 ## Work in progress
 Tracked as GitHub issues, one per section: https://github.com/dstorey87/Catie-Test/issues (lanes and rules in `CLAUDE.md`).
 
 ## Timeline
+- 2026-09-26 — v20 (`v20-2026-09-26`): every mock number from `coach.js` (no typed-in 43/50/57/1.14/0.86), the chart's pass label clear of her last dot, the Adventure road below the world tabs (#65). 489 tests.
 - 2026-09-26 — v19 (`v19-2026-09-26`): Mock test → From my weak spots (a full mock from her results, left out of readiness and the prediction); the drill ranks repeated wrong picks and hard questions first (#61). Age question, Download my data and Delete my account run end to end against the live database with a throwaway account. 475 tests.
 - 2026-09-26 — v18 (`v18-2026-09-26`): the app and Adventure stay in step with two tabs open, and nothing either saves is lost (#51); the app uses the shared coach.js rules (fixes "undefined" read aloud); notes, Settings changes and printing tracked on Activity (#57). 455 tests.
 - 2026-09-25 — v17 (`v17-2026-09-25`): every Highway Code sign, marking, light signal and vehicle marking (205 official pictures + 7 DfT) by category on Road Signs, a quiz per category and for all signs, and 8 Adventure sign worlds (#48). 436 tests.
