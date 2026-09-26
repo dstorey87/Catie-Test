@@ -1046,7 +1046,7 @@ function fakeApp(store, ls) {
   ctx.TTAdv = ctx.window.TTAdv;
   welcomeAndChoices.forEach(s => vm.runInNewContext(s, ctx));
   ctx.TTChoices = ctx.window.TTChoices;
-  vm.runInNewContext('var me = {' + ['persist', 'set', 'loadUser', 'recordState', 'heardSave', 'mergeSnapshot', 'trackSettings']
+  vm.runInNewContext('var me = {' + ['persist', 'myRecord', 'set', 'loadUser', 'recordState', 'heardSave', 'mergeSnapshot', 'trackSettings']
     .map(methodNamed).join(',\n') + '};', ctx);
   return Object.assign(ctx.me, {
     BASE: 'theoryTrainer', users: [{ id: 'u1', name: 'Catie' }], writes, events: [],
@@ -1202,7 +1202,7 @@ test('#51 item 1: the app hears Adventure save and shows her new answers, XP, fl
   adv.stage('w1s2', { correct: 7, total: 7 }, noon25 + 3000);
   const m = b.log.length;
   const rounds = b.deliver();
-  assert.deepEqual(me.state.attempts.map(a => a.q), ['p1', 'p2', 't03q01', 't03q02'], 'Home counts her Adventure answers');
+  assert.deepEqual(plain(me.state.attempts).map(a => a.q), ['p1', 'p2', 't03q01', 't03q02'], 'Home counts her Adventure answers');
   assert.equal(me.state.xp, 30, 'her XP shows the right Adventure answer');
   assert.ok(me.state.revisionFlags.t03q02, 'the Adventure flag is on her Flagged list');
   assert.ok(me.state.adventure.stages.w1s2, 'the new stage shows on the Home card');
@@ -1234,7 +1234,7 @@ test('#51 item 1: two open tabs settle after one round, whoever saves (no save a
   appAnswer(me2, 'p4', false, noon25 + 3000);
   assert.equal(b.deliver(), 1);
   assert.deepEqual(since(m), ['app2']);
-  assert.deepEqual(me.state.attempts.map(a => a.q), ['p1', 'p2', 't03q01', 'p3', 'p4'], 'the first app tab shows the second one\'s answer');
+  assert.deepEqual(plain(me.state.attempts).map(a => a.q), ['p1', 'p2', 't03q01', 'p3', 'p4'], 'the first app tab shows the second one\'s answer');
   assert.deepEqual(b.rec().attempts.map(a => a.q), ['p1', 'p2', 't03q01', 'p3', 'p4'], 'every answer saved once');
   assert.equal(b.rec().xp, 40, '20 + 10 (Adventure) + 10 (app): each right answer counted once');
 });
@@ -1295,7 +1295,7 @@ test('#51 item 2: "Reset progress" still wipes her answers, in this tab and the 
   // Adventure plays on after the reset: only the new answer; the wiped ones never come back.
   adv.answer('t03q09', true, noon25 + 5000);
   b.deliver();
-  assert.deepEqual(me.state.attempts.map(a => a.q), ['t03q09']);
+  assert.deepEqual(plain(me.state.attempts).map(a => a.q), ['t03q09']);
   // A second app tab that missed the reset (loaded before it, never heard) saves later: its old
   // answers stay wiped (an empty saved list means wiped, as adventure.js reads it); its new one joins.
   const old = Object.assign(startRecord(), { attempts: [{ q: 'p1', t: 1000, ok: true, topic: 1, p: 0 }, { q: 'p2', t: 2000, ok: true, topic: 2, p: 1 }] });
@@ -1338,6 +1338,46 @@ test('#51 item 2: a save joins only when another tab saved in between; otherwise
   assert.equal(JSON.parse(store[KEY1]).xp, 80, 'the other tab\'s 40 XP and this answer\'s 10');
   me.set({ notes: { home: 'Mirrors, signal' } });
   assert.equal(joins, 1, 'and quick again after');
+});
+
+test('#51 item 1: a save heard while this tab has a change on its way is joined in, never put over it', () => {
+  // React runs the app's save once the screen has redrawn. After a timer or a promise (a mock
+  // test's countdown ending) that is a later task, so the other tab's save can be heard first.
+  // Putting her stored record over the screen then dropped the change on its way (found in
+  // review of #51; this test first).
+  const b = browser(startRecord()), me = b.app('app'), adv = b.adventure('adventure');
+  const s = me.state;
+  me.setState({ attempts: s.attempts.concat([{ q: 'p3', t: noon25 + 500, ok: true, topic: 1, p: 0 }]), xp: s.xp + 10 });   // its save comes later
+  adv.answer('t03q01', true, noon25 + 1000);
+  b.deliver();                                                 // heard before the app's own save ran
+  assert.deepEqual(plain(me.state.attempts).map(a => a.q), ['p1', 'p2', 'p3', 't03q01'], 'the screen shows both');
+  assert.equal(me.state.xp, 40);
+  me.persist();                                                // now the app's save runs
+  assert.deepEqual(b.rec().attempts.map(a => a.q), ['p1', 'p2', 'p3', 't03q01']);
+  assert.equal(b.rec().xp, 40, '20 + 10 here + 10 in Adventure: none lost, none twice');
+  const m = b.log.length;
+  b.deliver();
+  assert.deepEqual(b.log.slice(m).filter(w => w.key === KEY1), [], 'Adventure finds nothing of its own missing');
+});
+
+test('#51 bug: the app open from the start knows which copy and XP it shows, so the first save it hears keeps Adventure\'s XP', () => {
+  // Found in review and by the browser check: the constructor loads the active learner without
+  // loadUser, and set neither, so the first join ran with no XP to count from and dropped the XP
+  // earned in Adventure (the app showed 10 XP where 20 was right).
+  const ctor = app.slice(app.indexOf('\n  constructor('), app.indexOf('\n  NOTESN = {'));
+  assert.match(ctor, /savedRaw = localStorage\.getItem\(this\.BASE\+'\.d\.'\+activeId\); saved = JSON\.parse\(savedRaw\) \|\| \{\};/);
+  assert.match(ctor, /this\._rawSeen = savedRaw; this\._xpSeen = saved\.xp \|\| 0;/);
+  // What that gives: a tab showing 20 XP (seen 20) hears Adventure's 30, then 40.
+  const store = { [KEY1]: JSON.stringify(startRecord()) }, me = fakeApp(store);
+  Object.assign(me.state, me.recordState('u1', JSON.parse(store[KEY1])));
+  me._rawSeen = store[KEY1]; me._xpSeen = 20;                   // as the constructor now sets them
+  for (const xp of [30, 40]) {
+    store[KEY1] = JSON.stringify(Object.assign(JSON.parse(store[KEY1]), { xp }));
+    me.heardSave({ key: KEY1, newValue: store[KEY1] });
+  }
+  assert.equal(me.state.xp, 40);
+  me.set({ notes: { home: 'x' } });
+  assert.equal(JSON.parse(store[KEY1]).xp, 40, 'and saved so');
 });
 
 test('#51: an older coach.js (one open while an update arrives) counts as not loaded, so no screen breaks', () => {

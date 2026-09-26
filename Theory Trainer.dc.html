@@ -2821,7 +2821,12 @@ class Component extends DCLogic {
     }
     this.users = users;
     const activeId = localStorage.getItem(this.BASE+'.active') || users[0].id;
-    try { saved = JSON.parse(localStorage.getItem(this.BASE+'.d.'+activeId)) || {}; } catch(e) {}
+    let savedRaw = null;
+    try { savedRaw = localStorage.getItem(this.BASE+'.d.'+activeId); saved = JSON.parse(savedRaw) || {}; } catch(e) { /* none yet, or unreadable: a fresh record */ }
+    // The copy of her record this tab now shows, and its XP: persist and heardSave join another
+    // tab's saves against these (issue #51). Without them the first save heard from Adventure
+    // would lose the XP earned there.
+    this._rawSeen = savedRaw; this._xpSeen = saved.xp || 0;
     try { content = JSON.parse(localStorage.getItem(this.BASE+'.content')) || {}; } catch(e) {}
     let syncCfg = null;
     try { syncCfg = JSON.parse(localStorage.getItem('theoryTrainer.sync')) || null; } catch(e) {}
@@ -3294,10 +3299,7 @@ class Component extends DCLogic {
   // when syncing is on). replace: true when she replaced her answers on purpose (Reset progress,
   // Import backup): her answers are saved as they are, not joined with the saved copy.
   persist(replace){
-    const s = this.state;
-    // Her record from this tab's state. adventure: the app never changes it, so it is only sent
-    // to the join when there is some (a learner who never played gets no entry).
-    const user = {settings:s.settings, plan:s.plan, leitner:s.leitner, attempts:s.attempts, tests:s.tests, revisionFlags:s.revisionFlags, flagCleared:s.flagCleared||{}, xp:s.xp, streak:s.streak, notes:s.notes, avatar:s.avatar, adventure: Object.keys(s.adventure||{}).length ? s.adventure : undefined, updatedAt: Date.now(), testInProgress: (s.test && !s.test.ended) ? s.test : null};
+    const s = this.state, user = this.myRecord();
     const content = {overrides:s.overrides, custom:s.custom, deleted:s.deleted, packNames:s.packNames, packLearn:s.packLearn, packTest:s.packTest, sub:s.sub, updatedAt: Date.now()};
     const u = this.users.find(x=>x.id===s.userId);
     if(u && s.settings.learnerName && u.name!==s.settings.learnerName){ u.name = s.settings.learnerName; try{ localStorage.setItem(this.BASE+'.users', JSON.stringify(this.users)); }catch(e){} }
@@ -3331,6 +3333,12 @@ class Component extends DCLogic {
     this._dirty = true;
     if(window.TTSync && TTSync.configured()){ clearTimeout(this._pushT); this._pushT = setTimeout(()=>this.flushCloud(), 2500); }
   }
+  // Her record as this tab's state has it: what persist saves. adventure: the app never changes it,
+  // so it is only there when she has some (a learner who never played gets no entry).
+  myRecord(){
+    const s = this.state;
+    return {settings:s.settings, plan:s.plan, leitner:s.leitner, attempts:s.attempts, tests:s.tests, revisionFlags:s.revisionFlags, flagCleared:s.flagCleared||{}, xp:s.xp, streak:s.streak, notes:s.notes, avatar:s.avatar, adventure: Object.keys(s.adventure||{}).length ? s.adventure : undefined, updatedAt: Date.now(), testInProgress: (s.test && !s.test.ended) ? s.test : null};
+  }
   // Change her state and save it: every change she makes goes through here. A change to her
   // Settings is also an event for Admin → Activity (trackSettings, issue #57). replace: see persist.
   set(patch, replace){
@@ -3355,11 +3363,13 @@ class Component extends DCLogic {
     return {settings:st, plan: blob.plan||'', leitner:blob.leitner||{}, attempts:blob.attempts||[], tests:blob.tests||[], revisionFlags:blob.revisionFlags||{}, flagCleared:blob.flagCleared||{}, xp:blob.xp||0, streak:blob.streak||{count:0, last:'', todayDate:'', todayN:0}, notes:blob.notes||{}, avatar:blob.avatar||'', adventure:blob.adventure||{}};
   }
   // Another tab saved (the browser's 'storage' event, issue #51): Adventure, or the app open twice.
-  // When it is the record of the learner on screen, her record as it is saved now goes on screen:
-  // her answers (Home's goal ring), streak, XP, flags, stars and settings, so this tab never shows
-  // old numbers. What she is in the middle of here (a practice session, a test, the notes sheet)
+  // When it is the record of the learner on screen, what it saved goes on screen: her answers
+  // (Home's goal ring), streak, XP, flags, stars and settings, so this tab never shows old numbers.
+  // It is JOINED with what this tab holds (TTAdv.join), not put over it: a change made here can be
+  // on its way to being saved (the save runs once the screen has redrawn), and the other tab's copy
+  // doesn't have it yet. What she is in the middle of (a practice session, a test, the notes sheet)
   // stays as it is. Nothing is saved here: a save answering a save is how two open tabs would keep
-  // waking each other forever. This tab's next save is joined with the saved copy anyway (persist).
+  // waking each other forever. This tab's next save carries the joined copy (persist).
   heardSave(e){
     const key = this.BASE+'.d.'+this.state.userId;
     if(!e || e.key !== key || e.newValue == null) return;     // another learner, another key, or removed
@@ -3367,8 +3377,16 @@ class Component extends DCLogic {
     try { raw = localStorage.getItem(key); blob = JSON.parse(raw); }
     catch(err){ console.warn('Another tab saved her progress, but this tab could not read it (' + String(err.message||err) + '). This tab keeps what it shows, and its next save still joins with the saved copy; reload the app to see the other tab’s answers.'); return; }
     if(!blob || typeof blob !== 'object') return;
-    this._rawSeen = raw; this._xpSeen = blob.xp || 0;   // the copy about to be on screen, for persist
-    this.setState(this.recordState(this.state.userId, blob));
+    // The other tab's copy, with the joined parts (answers, flags, stars, XP, streak) joined with this
+    // tab's own. No coach.js (which holds the joining rules): its copy as it is.
+    const next = this.recordState(this.state.userId, blob);
+    if(window.TTCoach){
+      const rec = TTAdv.join(blob, this.myRecord(), TTCoach, {xpSeen: this._xpSeen});
+      TTAdv.JOINED.forEach(k=>{ if(rec[k] !== undefined) next[k] = rec[k]; });
+    }
+    // This tab has now seen that copy; what it shows is that copy plus anything of its own not saved yet.
+    this._rawSeen = raw; this._xpSeen = blob.xp || 0;
+    this.setState(next);
   }
   addLearner(){
     const name = prompt('New learner\u2019s name?'); if(!name || !name.trim()) return;
