@@ -1999,6 +1999,9 @@ test('#61 a weak-spots mock is saved to her tests marked as that kind; the resul
   assert.match(screen('TEST RESULTS'), /\{\{ resultKind \}\}/);
   assert.match(app, /resultKind: TTScreen\.testKind\(t\.kind\)\.name,/);
   assert.match(app, /src: r\.source==='app' \? TTScreen\.testKind\(r\.kind\)\.tag : \(r\.source\|\|'external'\),/);
+  // My Progress has the chart only: its words for a screen reader name the kind too.
+  assert.equal(TS.chartSay([{ score: 41, total: 50, pass: false }, { score: 30, total: 50, pass: false, kind: 'weak', source: 'app' }], 43),
+    'Mock test scores, oldest first: 41 out of 50, not a pass; 30 out of 50 (weak spots), not a pass. The dashed line is the pass mark, 43.');
 });
 
 test('#61 tracked: starting and finishing a weak-spots mock are test_start and test_end events with kind "weak"', () => {

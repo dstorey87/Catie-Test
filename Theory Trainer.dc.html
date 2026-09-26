@@ -560,7 +560,9 @@ window.TTScreen = (function(){
     tests = tests || [];
     if(!tests.length) return 'Mock test scores: none yet';
     return 'Mock test scores, oldest first: ' + tests.map(function(r){
-      return r.score + ' out of ' + (r.total || 50) + (r.pass ? ', a pass' : ', not a pass');
+      // a kind of test with a label says so, e.g. "(weak spots)" (S.TEST_KINDS, issue #61)
+      var tag = S.testKind(r.kind).tag;
+      return r.score + ' out of ' + (r.total || 50) + (tag ? ' (' + tag + ')' : '') + (r.pass ? ', a pass' : ', not a pass');
     }).join('; ') + '. The dashed line is the pass mark, ' + pass + '.';
   };
 
