@@ -1166,3 +1166,48 @@ test('#61 drill: repeated picks and difficulty reorder inside a reason, never ac
   assert.equal(coach.drillDefaults.hardMin, 3);
   assert.equal(coach.drillDefaults.hardAcc, 0.5);
 });
+
+// ---------- #65: a test of any size keeps the real test's proportions ----------
+// Build your own, a test from My answers, the printed paper and the pass prediction on a small bank
+// all take their pass mark and clock from these two, which take theirs from coachDefaults.
+
+test('#65 mockPassMark and mockClock: a full mock is exactly the real test', () => {
+  const D = coach.coachDefaults;
+  assert.equal(coach.mockPassMark(D.mockSize), D.passMark);
+  assert.equal(coach.mockClock(D.mockSize), D.mockMinutes);
+});
+
+test('#65 mockPassMark: the same share right to pass, rounded up', () => {
+  assert.equal(coach.mockPassMark(20), 18);               // 20 x 43/50 = 17.2
+  assert.equal(coach.mockPassMark(10), 9);                // 8.6
+  assert.equal(coach.mockPassMark(1), 1);
+  assert.equal(coach.mockPassMark(0), 0);
+  assert.equal(coach.mockPassMark(700), 602, 'the biggest Build your own (14 topics x 50)');
+});
+
+test('#65 mockClock: the same minutes a question, to the nearest minute, never under the shortest clock', () => {
+  assert.equal(coach.mockClock(20), 23);                  // 20 x 57/50 = 22.8
+  // 25 x 57/50 is 28.5 minutes; the old "x 1.14" rule gave 28 (25 x 1.14 is 28.499... in floating point).
+  assert.equal(coach.mockClock(25), 29);
+  assert.equal(coach.mockClock(1), coach.coachDefaults.mockMinMinutes, 'one question still gets the shortest clock');
+  assert.equal(coach.mockClock(0), coach.coachDefaults.mockMinMinutes);
+  assert.equal(coach.coachDefaults.mockMinMinutes, 3, 'the shortest clock Build your own has always had');
+});
+
+test('#65 mockPassMark and mockClock: every number comes from coachDefaults, and a test can pass its own', () => {
+  const other = { mockSize: 40, mockMinutes: 60, passMark: 30, mockMinMinutes: 5 };
+  assert.equal(coach.mockPassMark(40, other), 30);
+  assert.equal(coach.mockPassMark(20, other), 15);
+  assert.equal(coach.mockClock(40, other), 60);
+  assert.equal(coach.mockClock(20, other), 30);
+  assert.equal(coach.mockClock(2, other), 5);
+});
+
+test('#65 the pass prediction scales its pass mark with mockPassMark (one rule, not a copy)', () => {
+  const small = TB.filter(q => q.topic <= 2);             // 10 questions
+  assert.equal(coach.passPrediction([], [], small).passMark, coach.mockPassMark(10));
+  // A test's own numbers reach the prediction's pass mark through the same rule.
+  assert.equal(coach.passPrediction([], [], small, { mockSize: 40, passMark: 30 }).passMark, coach.mockPassMark(10, { mockSize: 40, passMark: 30 }));
+  const src = require('fs').readFileSync(require('path').join(__dirname, '..', 'coach.js'), 'utf8');
+  assert.equal((src.match(/\* ?o\.passMark ?\/ ?o\.mockSize/g) || []).length, 1, 'the pass-mark sum is written once in coach.js');
+});

@@ -437,7 +437,10 @@ test('insights: the numbers on screen come from coach.js, not copies', () => {
 // TTScreen is a <script> in the page head (plain data and pure functions), run here in node.
 const screenSrc = [...app.matchAll(/<script>([\s\S]*?)<\/script>/g)].map(m => m[1]).find(s => s.includes('window.TTScreen ='));
 // Missing block: TS stays null and each #12 test fails on its own (not the whole file).
-const TS = screenSrc ? (() => { const ctx = { window: {} }; vm.runInNewContext(screenSrc, ctx); return ctx.window.TTScreen; })() : null;
+// It reads the mock's numbers from coach.js (window.TTCoach, issue #65), loaded before it as in the
+// page; screenFor(C) runs it with another coach (or none: C undefined, as after issue #51's check).
+const screenFor = C => { const ctx = { window: { TTCoach: C } }; vm.runInNewContext(screenSrc, ctx); return ctx.window.TTScreen; };
+const TS = screenSrc ? screenFor(coach) : null;
 
 test('#12: the screen helpers live in the real head, not <helmet>', () => {
   assert.ok(TS, 'no window.TTScreen block in the page head');
@@ -1618,7 +1621,8 @@ test('#32 item 4: My Progress says "1 more right answer", counts from the mock s
   assert.equal(TS.passMark(50), 43);
   assert.equal(TS.passMark(20), 18);
   assert.equal(TS.passMark(10), 9);
-  assert.match(app, /const total = t\.ids\.length, passMark = TTScreen\.passMark\(total\);/, 'endTest uses the same rule');
+  // endTest marks against the pass mark the test started with (issue #65), from the same rule.
+  assert.match(app, /const total = t\.ids\.length, passMark = TTScreen\.testPassMark\(t\);/, 'endTest uses the same rule');
   // v12: "so 1 more right answers gets you there".
   assert.equal(TS.lastMockSay(42, 50, false), 'Last mock: 42/50. The pass mark is 43, so 1 more right answer gets you there.');
   assert.equal(TS.lastMockSay(40, 50, false), 'Last mock: 40/50. The pass mark is 43, so 3 more right answers get you there.');
@@ -1626,7 +1630,7 @@ test('#32 item 4: My Progress says "1 more right answer", counts from the mock s
   assert.equal(TS.lastMockSay(12, 20, false), 'Last mock: 12/20. The pass mark is 18, so 6 more right answers get you there.');
   assert.equal(TS.lastMockSay(45, 50, true), 'Last mock: 45/50 — a PASS. One more pass in a row and it is time to book the real thing.');
   assert.equal(TS.lastMockSay(19, 20, true), 'Last mock: 19/20 — a PASS. One more pass in a row and it is time to book the real thing.');
-  assert.match(app, /out\.push\(TTScreen\.lastMockSay\(last\.score, last\.total \|\| 50, last\.pass\)\);/);
+  assert.match(app, /out\.push\(TTScreen\.lastMockSay\(last\.score, TTScreen\.outOf\(last\), last\.pass\)\);/);
   // v12: the dial said "Based on her mocks…" on her own screen. The same slip in two more places.
   assert.match(app, /readySub: s\.tests\.length \? 'Based on your mocks, practice answers and memory boxes\.'/);
   assert.match(app, /sub:'shaped by your mock results \\u2014 weak topics come up more'/);
@@ -1641,11 +1645,11 @@ test('#32 item 5: the mock chart starts a little under her lowest score and says
   assert.equal(TS.chartFloor([{ score: 12 }], 43), 0, 'never below 0');
   assert.equal(TS.chartFloor([{ score: 9, total: 20 }], 43), 10, 'a short mock is drawn out of 50, like the chart line (9/20 is 22.5)');
   assert.equal(TS.chartScale(30), 'The chart runs from 30 to 50.');
-  assert.match(app, /const lo = TTScreen\.chartFloor\(tests, chartPass\);/);
+  assert.match(app, /const lo = hasChart \? TTScreen\.chartFloor\(tests, chartPass\) : 0;/);
   // The drawing (TTScreen.chartMarks since #38) puts a score of lo at the bottom and 50 at the top.
   const dots = TS.chartMarks([{ score: 30, pass: false }, { score: 50, pass: true }], 30, 43).filter(m => m.tag === 'circle');
   assert.deepEqual(plain(dots.map(d => d.attrs.cy)), [TS.CHART.BOX.y + TS.CHART.BOX.h, TS.CHART.BOX.y]);
-  assert.match(app, /chartScale: TTScreen\.chartScale\(lo\),/);
+  assert.match(app, /chartScale: hasChart \? TTScreen\.chartScale\(lo\) : '',/);
   // Both charts (My Progress and the dashboard) say their scale under the drawing.
   const charts = [...tpl.matchAll(/<svg viewBox="0 0 340 130"[\s\S]*?<\/svg>\s*(?:<!--[\s\S]*?-->\s*)?<div[^>]*>\{\{ chartScale \}\}<\/div>/g)];
   assert.equal(charts.length, 2, 'both charts need their scale in words');
@@ -1689,7 +1693,7 @@ test('#38 item 5: no {{ value }} in an SVG attribute the browser reads as a numb
   // Both charts draw their moving parts from TTScreen.chartMarks, as elements the app makes.
   const charts = [...markup.matchAll(/<svg viewBox="0 0 340 130"[^>]*>([\s\S]*?)<\/svg>/g)].map(m => m[1].trim());
   assert.deepEqual(charts, ['{{ chartMarks }}', '{{ chartMarks }}']);
-  assert.match(app, /chartMarks: TTScreen\.chartMarks\(tests, lo, chartPass\)\.map\(\(m, ?i\)=>React\.createElement\(m\.tag, Object\.assign\(\{key:i\}, m\.attrs\), m\.text\)\)/);
+  assert.match(app, /chartMarks: hasChart \? TTScreen\.chartMarks\(tests, lo, chartPass\)\.map\(\(m, ?i\)=>React\.createElement\(m\.tag, Object\.assign\(\{key:i\}, m\.attrs\), m\.text\)\) : \[\],/);
 });
 
 test('#38 item 5: the mock chart draws the pass line, her scores and a dot for each mock, as before', () => {
@@ -1699,9 +1703,13 @@ test('#38 item 5: the mock chart draws the pass line, her scores and a dot for e
   assert.equal(lo, 30);
   const marks = plain(TS.chartMarks(tests, lo, 43));
   const y = v => 10 + (1 - (v - lo) / (50 - lo)) * 110;       // the chart's box: 110 high from y=10
-  // The dashed pass line across the chart, and its label just above its right end.
+  // The dashed pass line across the chart, and its label at its right end: under the line here,
+  // because her last dot (45) sits just above it, where the label used to cover it (#65).
   assert.deepEqual(marks[0], { tag: 'line', attrs: { x1: 12, y1: y(43), x2: 328, y2: y(43), stroke: '#C77E14', 'stroke-width': 1.5, 'stroke-dasharray': '5 4' } });
-  assert.deepEqual(marks[1], { tag: 'text', attrs: { x: 328, y: y(43) - 5, 'text-anchor': 'end', 'font-size': 9, 'font-family': 'sans-serif', style: { fill: 'var(--tt-fg-8a5a0b)' } }, text: 'pass 43' });
+  assert.deepEqual(marks[1], { tag: 'text', attrs: { x: 328, y: y(43) + 14, 'text-anchor': 'end', 'font-size': 9, 'font-family': 'sans-serif', style: { fill: 'var(--tt-fg-8a5a0b)' } }, text: 'pass 43' });
+  // With her last mock well clear of the line, the label sits just above its right end, as before.
+  const clear = plain(TS.chartMarks([{ score: 38, pass: false }, { score: 49, pass: true }], lo, 43))[1];
+  assert.deepEqual([clear.attrs.x, clear.attrs.y, clear.attrs['text-anchor']], [328, y(43) - 5, 'end']);
   // Her scores left to right across the 316-wide box from x=12, a 20-question mock drawn out of 50.
   assert.deepEqual(marks[2], { tag: 'polyline', attrs: { points: '12,' + y(38) + ' 170,' + y(44) + ' 328,' + y(45), fill: 'none', stroke: '#0E7C6B', 'stroke-width': 2.5, 'stroke-linejoin': 'round' } });
   assert.deepEqual(marks.slice(3).map(m => [m.tag, m.attrs.cx, m.attrs.cy, m.attrs.r, m.attrs.fill]),
@@ -1896,13 +1904,14 @@ const RQ61 = Object.fromEntries(bank.map(q => [q.id, q]));
 // numbers (to prove the mock reads them rather than typing 50 or 57 itself).
 function mockApp(state, coachDefaults) {
   const C = coachDefaults ? Object.assign({}, coach, { coachDefaults: Object.assign({}, coach.coachDefaults, coachDefaults) }) : coach;
-  const ctx = { TTCoach: C, window: { TTCoach: C }, TTScreen: TS, TTAdv: ADV, Date, Math, Object, Array, String, Number, alerts: [] };
+  // TTScreen reads the same coach (issue #65: the pass mark and clock of a shorter test)
+  const ctx = { TTCoach: C, window: { TTCoach: C }, TTScreen: coachDefaults ? screenFor(C) : TS, TTAdv: ADV, Date, Math, Object, Array, String, Number, alerts: [] };
   ctx.alert = m => ctx.alerts.push(m);
-  vm.runInNewContext('var me = {' + ['startTest', 'launchTest', 'weakMockPlan', 'endTest'].map(methodNamed).join(',\n') + '};', ctx);
+  vm.runInNewContext('var me = {' + ['startTest', 'launchTest', 'realTestPick', 'weakMockPlan', 'endTest', 'buildPrint'].map(methodNamed).join(',\n') + '};', ctx);
   return Object.assign(ctx.me, {
     TOPICS: TOPIC_NAMES, ctx,
     state: Object.assign({ testMode: 'balanced', testMix: {}, attempts: [], revisionFlags: {}, tests: [] }, state),
-    questionsFor: () => bank, qById: id => RQ61[id], viewQ: q => q, seedPerm: () => [0, 1, 2, 3],
+    questions: () => bank, questionsFor: () => bank, qById: id => RQ61[id], viewQ: q => q, seedPerm: () => [0, 1, 2, 3],
     award: () => ({}), persist() {}, setState(patch, cb) { Object.assign(this.state, patch); if (cb) cb(); }
   });
 }
@@ -2063,7 +2072,7 @@ test('#61 lead review: a weak-spots mock does not count in readiness, per-topic 
   const tests = [
     { kind: 'balanced', score: 45, total: 50, pass: true, perTopic: { 1: { c: 4, n: 4 } } },
     { kind: 'weak', score: 20, total: 50, pass: false, perTopic: { 1: { c: 0, n: 10 } } }];
-  const me = vm.runInNewContext('({' + [methodNamed('realMocks'), methodNamed('readiness'), methodNamed('mockTopicAcc')].join(',') + '})', {});
+  const me = vm.runInNewContext('({' + [methodNamed('realMocks'), methodNamed('readiness'), methodNamed('mockTopicAcc')].join(',') + '})', { TTScreen: TS });
   me.state = { tests, attempts: [] };
   me.questions = () => [{ id: 'q1' }]; me.rec = () => ({ seen: 1, box: 3, correct: 1 }); me.isSignQ = () => false;
   assert.deepEqual(me.realMocks().map(t => t.kind), ['balanced']);
@@ -2071,4 +2080,175 @@ test('#61 lead review: a weak-spots mock does not count in readiness, per-topic 
   assert.equal(me.readiness(), 95);
   assert.deepEqual(JSON.parse(JSON.stringify(me.mockTopicAcc())), { 1: { c: 4, n: 4 } });
   assert.match(methodNamed('coachNow'), /C\.passPrediction\(s\.attempts, real, all, opts\), list: C\.improvements\(s\.attempts, real, all, opts\)/);
+});
+
+// ---------- Issue #65: every mock number from coach.js; the chart's pass label clear of her dots ----------
+// Build your own's clock and pass mark, Home's Mock Test card, Print's test paper, the dashboard's
+// Log a mock and the chart's pass line all come from coach.js: coachDefaults (mockSize, mockMinutes,
+// passMark) and mockPassMark / mockClock, its one rule for a test of any size.
+const noCoach = () => screenFor(undefined);
+const offCoach = me => { Object.assign(me.ctx, { TTCoach: undefined, TTScreen: noCoach() }); me.ctx.window.TTCoach = undefined; return me; };
+// A mock number typed in: 43, 50 or 57 on its own (not part of 500, #2E9E5B, 50% or 0.5), or 1.14 / 0.86.
+const MOCK_LITERAL = /(?<![\w.#%-])(?:43|50|57)(?![\w.%])|\b1\.14\b|(?<!\w)0?\.86\b/;
+const uncommented = src => src.replace(/<!--[\s\S]*?-->/g, '').replace(/^\s*\/\/.*$/gm, '');   // comments may explain the real test
+
+test('#65 no mock number is typed into the app: the places that had one read coach.js', () => {
+  const code = uncommented(app);
+  // The rules for a shorter test were copies: 1.14 minutes a question, 0.86 of the questions to pass.
+  assert.doesNotMatch(code, /\b1\.14\b|(?<!\w)0?\.86\b/);
+  // A saved mock with no total was read as "out of 50" in five places.
+  assert.doesNotMatch(code, /total ?\|\| ?50\b/);
+  // The methods that start, mark, print and weigh a mock. (endTest's "rec.pass?50:0" is the XP a
+  // pass earns, 50 XP, not a mock number; XP is not part of issue #65.)
+  for (const m of ['launchTest', 'startTest', 'endTest', 'realTestPick', 'buildPrint', 'readiness', 'advise']) {
+    assert.doesNotMatch(uncommented(methodNamed(m)).replace('rec.pass?50:0', ''), MOCK_LITERAL, m + '() types in a mock number');
+  }
+  // The screen helpers: the pass mark, the chart's top and "out of".
+  assert.doesNotMatch(uncommented(screenSrc), MOCK_LITERAL, 'TTScreen types in a mock number');
+  // The values the screens show: Build your own, the results, the chart, Log a mock, Print, Home, the badge.
+  const lines = code.split('\n').filter(l => /testMixPass|testMixRows|customTimeLabel|chartPass|rPassMark|resultMsg|printHint|printPaperLine|homeMockLine|const rec = |score: r\.score|id:'mock'/.test(l));
+  assert.ok(lines.length >= 12, 'expected the lines that show a mock number, found ' + lines.length);
+  for (const l of lines) assert.doesNotMatch(l, MOCK_LITERAL, l.trim().slice(0, 140));
+  // The words on the page: Home's card, Log a mock's box, the printed paper and Print's choice.
+  assert.doesNotMatch(screen('HOME'), /\b50 questions\b/);
+  assert.match(screen('HOME'), /\{\{ homeMockLine \}\}/);
+  assert.doesNotMatch(screen('DASHBOARD'), /out of 50|max="50"/);
+  assert.match(screen('DASHBOARD'), /Score out of \{\{ mockN \}\}<input type="number" min="0" max="\{\{ mockN \}\}"/);
+  // (PRINT AREA is the last screen: the page's template ends at </x-dc>. The topic tips after it teach
+  // the real test's facts, "50 questions, 57 minutes, 43 to pass", as words to learn, not settings.)
+  const printArea = screen('PRINT AREA').split('</x-dc>')[0];
+  assert.doesNotMatch(printArea, /\b50 questions|57 minutes|pass mark 43/);
+  assert.match(printArea, /\{\{ printPaperLine \}\}/);
+  assert.doesNotMatch(CH.PRINT_FORMATS.find(f => f.v === 'paper').sub, MOCK_LITERAL);
+});
+
+test('#65 the numbers on screen are read from coach.js: the chart, Log a mock, Home, Print and the badge', () => {
+  assert.match(app, /const chartPass = M\.passMark, hasChart = tests\.length>0 && !!TTScreen\.mock\(\);/, 'the chart\'s pass line');
+  assert.match(app, /const rec = \{date: s\.logDate, score, total: M\.mockSize, pass: score>=M\.passMark, perTopic, source:'external'\};/, 'Log a mock');
+  assert.match(app, /if\(!\(score>=0 && score<=M\.mockSize\) \|\| s\.logScore===''\) return;/, 'Log a mock\'s highest score');
+  assert.match(app, /homeMockLine: M\.mockSize \? M\.mockSize \+ ' questions, just like the real one' : 'Just like the real one',/);
+  assert.match(app, /printPaperLine: TTScreen\.paperLine\(\(pd\.paper\|\|\[\]\)\.length\),/);
+  // Print's "Test paper" choice still reads "50 numbered questions, …", the 50 from coach.js.
+  assert.ok(CH.PRINT_FORMATS.find(f => f.v === 'paper').sized);
+  assert.match(app, /const sizedSub = f => !f\.sized \? f\.sub : M\.mockSize \? M\.mockSize \+ ' ' \+ f\.sub : /);
+  assert.match(app, /TTChoices\.PRINT_FORMATS\.map\(f=>\(\{name:f\.name, sub:sizedSub\(f\),/);
+  assert.match(app, /testMixPass: M\.mockSize \? TTScreen\.passMark\(testMixN\) : '',/);
+  assert.match(app, /customTimeLabel: !s\.customTimer \? 'no time limit' : M\.mockSize \? TTScreen\.clock\(testMixN\) \+ ' min' : '',/);
+  assert.match(app, /const rTotal = t\.ids\.length, rPassMark = TTScreen\.testPassMark\(t\);/, 'the results screen');
+  assert.match(app, /\{id:'mock', label:'Mock passed', note: M \? M\.passMark \+ ' or more on a mock test' : 'Pass a mock test',/);
+  // An older coach.js without the rule counts as not loaded (issue #51), so nothing calls a missing function.
+  assert.match(app, /if\(window\.TTCoach && \[[^\]]*'mockPassMark', 'mockClock'\]/);
+});
+
+test('#65 TTScreen reads the mock\'s numbers from coach.js, and without it has none', () => {
+  const D = coach.coachDefaults;
+  assert.equal(TS.mock(), D);
+  assert.equal(TS.passMark(D.mockSize), D.passMark);
+  assert.equal(TS.passMark(20), coach.mockPassMark(20));
+  assert.equal(TS.clock(20), coach.mockClock(20));
+  assert.equal(TS.outOf({ score: 30 }), D.mockSize, 'a saved mock with no total is a full mock');
+  assert.equal(TS.outOf({ score: 9, total: 20 }), 20);
+  assert.equal(TS.paperLine(D.mockSize), D.mockSize + ' questions · ' + D.mockMinutes + ' minutes · pass mark ' + D.passMark + ' · answer key on the last page');
+  assert.equal(TS.paperLine(20), '20 questions · 23 minutes · pass mark 18 · answer key on the last page', 'a smaller bank: the paper\'s own numbers');
+  // Another coach's numbers reach every one of them: nothing is kept in TTScreen.
+  const other = screenFor(Object.assign({}, coach, { coachDefaults: Object.assign({}, D, { mockSize: 40, mockMinutes: 60, passMark: 30 }) }));
+  assert.equal(other.passMark(40), 30);
+  assert.equal(other.passMark(20), 15);
+  assert.equal(other.clock(20), 30);
+  assert.equal(other.outOf({ score: 30 }), 40);
+  assert.equal(other.chartScale(20), 'The chart runs from 20 to 40.', 'the chart is drawn out of a full mock');
+  assert.equal(other.lastMockSay(28, 40, false), 'Last mock: 28/40. The pass mark is 30, so 2 more right answers get you there.');
+  // No coach.js (issue #51): no numbers, and the words leave them out rather than say "null".
+  const none = noCoach();
+  assert.equal(none.mock(), null);
+  assert.equal(none.passMark(20), null);
+  assert.equal(none.clock(20), null);
+  assert.equal(none.paperLine(0), 'Answer key on the last page');
+  assert.equal(none.lastMockSay(40, 50, false), 'Last mock: 40/50.');
+  assert.equal(none.lastMockSay(45, 50, true), 'Last mock: 45/50 — a PASS. One more pass in a row and it is time to book the real thing.');
+});
+
+test('#65 Build your own: its clock and pass mark keep the real test\'s proportions, from coach.js', () => {
+  const me = mockApp({ testMode: 'custom', testMix: { 1: 10, 2: 10 }, customTimer: true });
+  me.startTest();
+  const t = me.state.test;
+  assert.deepEqual(me.ctx.alerts, []);
+  assert.equal(t.ids.length, 20);
+  assert.equal(t.kind, 'custom');
+  assert.ok(Math.abs((t.endAt - t.startedAt) / 60000 - coach.mockClock(20)) < 0.05, 'mockClock(20): 23 minutes');
+  assert.equal(t.passMark, coach.mockPassMark(20), 'the test keeps its pass mark: 18');
+  // Another coach's numbers flow straight through: nothing is typed in launchTest.
+  const other = mockApp({ testMode: 'custom', testMix: { 1: 10, 2: 10 }, customTimer: true }, { mockSize: 40, mockMinutes: 60, passMark: 30 });
+  other.startTest();
+  assert.ok(Math.abs((other.state.test.endAt - other.state.test.startedAt) / 60000 - 30) < 0.05, '20 x 60/40 minutes');
+  assert.equal(other.state.test.passMark, 15, '20 x 30/40 to pass');
+  // Every full mock keeps its pass mark too.
+  const full = mockApp({ testMode: 'balanced' });
+  full.startTest();
+  assert.equal(full.state.test.passMark, coach.coachDefaults.passMark);
+});
+
+test('#65 a test is marked against the pass mark it started with, even when coach.js is missing by the end', () => {
+  const right = (me, n) => me.state.test.ids.slice(0, n).forEach((id, i) => { me.state.test.answers[i] = RQ61[id].correctIndex; });
+  const me = mockApp({ testMode: 'custom', testMix: { 1: 10, 2: 10 } });
+  me.startTest(); right(me, 18); me.endTest();
+  assert.equal(me.state.tests[0].pass, true, '18 of 20 passes');
+  const low = mockApp({ testMode: 'custom', testMix: { 1: 10, 2: 10 } });
+  low.startTest(); right(low, 17); low.endTest();
+  assert.equal(low.state.tests[0].pass, false, '17 of 20 does not');
+  // A test started before tests kept their pass mark: the rule, as before.
+  const old = mockApp({ testMode: 'custom', testMix: { 1: 10, 2: 10 } });
+  old.startTest(); delete old.state.test.passMark; right(old, 18); old.endTest();
+  assert.equal(old.state.tests[0].pass, true);
+  // Started with coach.js, finished after an update left it unloaded (issue #51): still marked right.
+  const gone = mockApp({ testMode: 'custom', testMix: { 1: 10, 2: 10 } });
+  gone.startTest(); offCoach(gone); right(gone, 18); gone.endTest();
+  assert.equal(gone.state.tests[0].pass, true);
+  assert.equal(gone.state.tests[0].total, 20);
+});
+
+test('#65 without coach.js no test starts (Build your own too), and it says why', () => {
+  for (const mode of ['custom', 'balanced']) {
+    const me = offCoach(mockApp({ testMode: mode, testMix: { 1: 5 } }));
+    me.startTest();
+    assert.equal(me.state.test, undefined, mode);
+    assert.deepEqual(me.ctx.alerts, ['The mock test could not start: coach.js did not load. Reload the page, and check the connection if it happens again.'], mode);
+  }
+});
+
+test('#65 Print\'s test paper is a mock like the real test: coach.js mockMix\'s spread, a topic at a time in turn', () => {
+  const me = mockApp({ printFormat: 'paper' });
+  const paper = me.buildPrint().paper, D = coach.coachDefaults;
+  assert.equal(paper.length, D.mockSize);
+  assert.equal(new Set(paper.map(q => q.id)).size, paper.length, 'no question twice');
+  assert.deepEqual(byTopic61(paper.map(q => q.id)), plain(coach.mockMix(bank, D.mockSize)), 'the same spread as Like the real test');
+  // Printed a topic at a time in turn, as the paper always was: topic 1, 2, ... 14, then 1 again.
+  assert.deepEqual(plain(paper.slice(0, 16).map(q => q.topic)), [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 1, 2]);
+  // Its size is coach.js's: another coach, another paper.
+  assert.equal(mockApp({ printFormat: 'paper' }, { mockSize: 20 }).buildPrint().paper.length, 20);
+  // Without coach.js there is no mock to print, and it says why.
+  const off = offCoach(mockApp({ printFormat: 'paper' }));
+  assert.deepEqual(plain(off.buildPrint()), { paper: [] });
+  assert.match(off.ctx.alerts[0], /^The test paper could not be made: coach\.js did not load\./);
+});
+
+test('#65 the chart\'s pass label keeps clear of her dots, even when her last mock is next to the pass mark', () => {
+  // The label's box, generously: 0.6 of the font size a character, from a font size above the
+  // baseline to a quarter below it (the "p" of pass).
+  const box = m => { const a = m.attrs, w = m.text.length * a['font-size'] * 0.6, x1 = a['text-anchor'] === 'end' ? a.x - w : a.x;
+    return { x1, x2: x1 + w, y1: a.y - a['font-size'], y2: a.y + a['font-size'] / 4 }; };
+  const touches = (b, c) => !(c.attrs.cx + c.attrs.r < b.x1 || c.attrs.cx - c.attrs.r > b.x2 || c.attrs.cy + c.attrs.r < b.y1 || c.attrs.cy - c.attrs.r > b.y2);
+  const run = scores => scores.map(v => ({ score: v, total: 50, pass: v >= 43 }));
+  const cases = [];
+  for (const last of [40, 41, 42, 43, 44, 45, 46]) cases.push(run([38, 41, last]), run([last]), run([30, 35, 38, 40, 41, 42, 44, 45, 43, last]));
+  cases.push(run([44, 45]), run([45, 44]), run([43, 43]), run([42, 44, 43, 45, 44, 42, 43, 44, 45, 44, 43, 42]));
+  for (const tests of cases) {
+    const lo = TS.chartFloor(tests, 43), marks = plain(TS.chartMarks(tests, lo, 43));
+    const label = marks.find(m => m.tag === 'text'), b = box(label);
+    for (const dot of marks.filter(m => m.tag === 'circle')) {
+      assert.ok(!touches(b, dot), 'scores ' + tests.map(t => t.score).join(',') + ': the label at ' + JSON.stringify(label.attrs) + ' covers the dot at ' + dot.attrs.cx + ',' + dot.attrs.cy);
+    }
+    // Always inside the drawing (viewBox 340 x 130).
+    assert.ok(b.x1 >= 0 && b.x2 <= 340 && b.y1 >= 0 && b.y2 <= 130, 'inside the chart: ' + JSON.stringify(b));
+  }
 });

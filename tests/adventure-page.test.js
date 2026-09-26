@@ -549,3 +549,17 @@ test('#47 page: the read-aloud button\'s colours are readable in light and dark 
   assert.equal(light[1].toLowerCase(), '#e4f2ef');
   assert.ok(app.includes("'bg-e4f2ef':'" + darks[0][1].toLowerCase() + "'") && app.includes("'fg-0a5d50':'" + darks[0][2].toLowerCase() + "'"), 'dark values are the app\'s TT_DARK ones');
 });
+
+// ---------- issue #65: the road's top stays out of the world-tab rows ----------
+
+test('#65: the road is drawn only inside the map, so its top never reaches up into the world-tab rows', () => {
+  // v17-v19, measured in a browser at 390, 768 and 1280px: the road starts at the map's top edge
+  // with a round end half its 44-unit edge wide, and .road was overflow: visible, so that end was
+  // drawn above the map, 17.8px (390) and 22.8px (768, 1280) up into the row of sign-world tabs.
+  // Clipped to the map it starts at the map's top edge, under the rows and the map's top margin.
+  assert.match(cssRule(css, '.road'), /overflow: hidden;/);
+  assert.doesNotMatch(css, /\.road \{[^}]*overflow: visible/);
+  assert.ok(widePx('.map', 'margin')[0] > 0, 'a gap between the last row of tabs and the map');
+  // The road still starts at the top edge of the drawing (it comes in from above the map).
+  assert.match(adv.roadPath(adv.nodeLayout(3)), /^M150 0 C/);
+});
