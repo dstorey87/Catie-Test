@@ -2,7 +2,7 @@
 // BUMP VERSION in every deploy that changes any file in CORE — the cache name is
 // the only update signal existing installs get. Merging without a bump ships a
 // stale shell to every install that is currently offline.
-const VERSION = 'v18-2026-09-26';
+const VERSION = 'v19-2026-09-26';
 const C = 'theory-trainer-' + VERSION;
 // CORE is all-or-nothing: the install fails unless every file arrives, so nothing here can
 // be half-cached. The last line is the Adventure page's own files; it also needs config.js,

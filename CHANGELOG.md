@@ -3,6 +3,21 @@
 Newest first. The version is the service-worker `VERSION` in `sw.js` — it changes on every
 deploy that touches the app's cached files. Earlier history: `git log`.
 
+## v19-2026-09-26
+A mock test built from her results (#61, PR #62). 475 tests.
+- **Mock Test → From my weak spots**: the real test's format (50 questions, 57 minutes, 43 to pass,
+  flags, review grid) with questions chosen from her own results — ones she keeps missing, got wrong
+  last time, flagged, due again, then her weakest topics, then the rest spread like the real test;
+  every topic still covered. A line says what it holds and why. Only bank questions.
+- It is saved with its kind and named on the results screen, the dashboard's mock list, the chart's
+  screen-reader words and Admin → Activity. Readiness, per-topic mock accuracy and the pass
+  prediction leave it out: it is her hardest questions on purpose, not a guide to the real test.
+- **Today's lesson and every drill** put first, within each group, a question where she keeps
+  choosing the same wrong answer, then one she gets right under half the time.
+- Every mock's size and clock come from `coach.js` (`mockSize`, the new `mockMinutes`).
+- The age question, Download my data and Delete my account were run end to end from the live app
+  against the live database with a throwaway account (deleted after), and all worked.
+
 ## v18-2026-09-26
 The app and Adventure stay in step (#51) and everything she does is tracked (#57), PR #58. 455 tests.
 - **Two tabs:** with the app open beside Adventure (or a second app tab), the app shows her new answers,
