@@ -1,0 +1,25 @@
+# Keeps the live Supabase project awake, once a day, and fails loudly when it can't reach it
+# (issue #69). Supabase pauses a Free-plan project after a quiet week; while it was paused the app
+# looped its 20-question free sample. What it does and why: tools/keep-awake.js.
+#
+# A failed scheduled run is emailed by GitHub to whoever last changed the schedule below.
+# GitHub switches scheduled workflows off in a public repo after 60 days with no activity; if
+# that happens, switch it back on in the Actions tab (GitHub warns by email first).
+name: keep-server-awake
+on:
+  schedule:
+    - cron: '23 5 * * *'   # every day, 05:23 UTC (off the hour: busy on-the-hour slots run late)
+  workflow_dispatch: {}     # run it by hand: Actions tab, keep-server-awake, Run workflow
+permissions:
+  contents: read
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      # Scheduled runs use the default branch (main), so this reads the live site's config.js.
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: node tools/keep-awake.js
