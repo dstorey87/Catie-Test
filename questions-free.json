@@ -19,14 +19,14 @@
   "topic": 2,
   "question": "The car behind is following you very closely. What should you do?",
   "options": [
-   "Slow gently and increase your gap ahead",
+   "Drive normally and keep a safe gap ahead",
    "Brake hard to warn them",
    "Speed up to get away",
    "Stop and speak to the driver"
   ],
   "correctIndex": 0,
-  "explanation": "A bigger gap in front gives you and the tailgater more room to stop.",
-  "ruleRef": "HC Rule 168",
+  "explanation": "Stay calm and drive normally. Do not speed up or brake to warn them. Keep a safe gap ahead, and let them pass if you can.",
+  "ruleRef": "HC Rule 126 (see also National Highways tailgating advice)",
   "pack": "p1"
  },
  {
@@ -185,14 +185,14 @@
   "topic": 13,
   "question": "How fast should chest compressions be given in CPR?",
   "options": [
-   "100 to 120 per minute",
+   "100 to 120 a minute (about twice a second)",
    "60 per minute",
    "200 per minute",
    "As fast as possible"
   ],
   "correctIndex": 0,
-  "explanation": "Push at 100 to 120 compressions each minute in the centre of the chest.",
-  "ruleRef": "HC Annex 7",
+  "explanation": "Push hard and fast in the centre of the chest, about twice a second. That is 100 to 120 pushes a minute.",
+  "ruleRef": "HC Annex 7; St John Ambulance: How to do CPR",
   "pack": "p1"
  },
  {
@@ -221,8 +221,8 @@
    "Drive faster to finish sooner"
   ],
   "correctIndex": 0,
-  "explanation": "Only proper rest fixes tiredness, so stop somewhere safe as soon as you can.",
-  "ruleRef": "HC Rule 91",
+  "explanation": "If you feel sleepy, stop in a safe place and rest. Opening a window or turning up the radio does not work for long.",
+  "ruleRef": "HC Rule 91 (see also THINK! fatigue advice)",
   "pack": "p1"
  },
  {
@@ -236,8 +236,8 @@
    "Your lights are broken"
   ],
   "correctIndex": 0,
-  "explanation": "A headlight flash only means the same as a horn: I am here.",
-  "ruleRef": "HC Rule 110",
+  "explanation": "Drivers should only flash their lights to say 'I am here'. Never take a flash as a sign to go. Use your own judgement.",
+  "ruleRef": "HC Rule 110 (see also Rule 111)",
   "pack": "p1"
  },
  {
@@ -278,7 +278,7 @@
    "You spot hazards earlier and react in time",
    "It is more relaxing",
    "You can drive faster",
-   "It saves fuel"
+   "So you can drive closer to the car in front"
   ],
   "correctIndex": 0,
   "explanation": "Looking well ahead gives you extra seconds to deal with hazards calmly.",
