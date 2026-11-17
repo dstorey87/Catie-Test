@@ -3,6 +3,22 @@
 Newest first. The version is the service-worker `VERSION` in `sw.js` — it changes on every
 deploy that touches the app's cached files. Earlier history: `git log`.
 
+## v21-2026-11-17
+Server asleep (#69, PR #71) and the question bank re-checked (#70, PR #72). 577 tests.
+- **Fixed: the same 20 questions over and over.** The live Supabase project had paused (free
+  plan, a quiet week; nothing reached it after 2026-09-25), so the app fell back to the
+  20-question free sample and wrongly said "no access yet". Restored 2026-11-17. The app now says
+  "Can't reach the server", what to do, and offers Try again (`window.TTServer` tells "never
+  answered" from "said no"). New daily `keep-server-awake` workflow (`tools/keep-awake.js`): one
+  signed-out database read a day to keep it awake; fails, and GitHub emails, if it can't.
+- **80 of 378 questions corrected** against official sources, each confirmed by a second,
+  independent check (57 as proposed, 24 amended, 0 rejected): 5 had a second true answer, 9 a
+  wrong or out-of-date fact (e.g. the camera sign is white, not yellow; tailgated: drive normally,
+  don't slow down), 21 an unsourced explanation, 19 wording that didn't fit the options, 26 the
+  wrong rule. 5 are free-sample questions. Same rows corrected in the live table and read back
+  (hash matches the files). Drafts written for the old wording set to `rejected` (none approved).
+  Pinned by `tests/data/bank-recheck-2026-11.json` + `tests/bank.test.js`.
+
 ## v20-2026-09-26
 Tidy-ups (#65, PR #66). 489 tests.
 - **Every mock number comes from one place** (`coach.js` `coachDefaults`: 50 questions, 57 minutes,

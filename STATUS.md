@@ -1,12 +1,13 @@
 # Theory Trainer — request checklist
 
-Last updated: 2026-09-26 (v20).
+Last updated: 2026-11-17 (v21).
 
 States: ✅ done & verified · 🟡 built, not yet seen working for real · ⚠️ built, needs your account/keys to go live · 📋 your step (minutes) · ❌ not possible, honest alternative given.
 
 ## The app
 - ✅ 378 original questions, 14 DVSA topics, 4 options, explanation + Highway Code ref; 20 signs with spoken meanings
 - ✅ **Every question checked against current UK rules** (2026-09-24, issue #20, PR #24): 44 corrected, each with its official source, in `questions-1..5.json` and the live Supabase bank (all 378 live rows read back and match the files). Test: `tests/bank.test.js`. The list with sources: https://github.com/dstorey87/Catie-Test/blob/8834baa/changes/section-bank-uk.md
+- ✅ **Question bank re-checked from scratch** (2026-11-17, v21, #70): 80 more corrected, each with its official source and a second independent check, in `questions-1..5.json`, the free sample and the live bank (read back: hash matches). Test: `tests/bank.test.js` with `tests/data/bank-recheck-2026-11.json` (id, why, source, pinned fields). Every question checked to be about driving
 - ❌ The actual DVSA question bank — licensed and not published; ✅ same format and facts, and licensed sets you buy load in as packs
 - ✅ Practise (read-aloud, Leitner boxes, 50:50, auto-advance), mock test (50q/57min, flags, review grid, pass 43), build-your-own test, surprise mix, focus drill, signs quiz
 - ✅ **My answers**: every question she has answered (practice and mock), newest first, with what she said and the right answer; filter wrong/right, or **Same wrong answer again**; tick any → practise them, make a timed or untimed test from them, or get more like them
@@ -61,7 +62,7 @@ States: ✅ done & verified · 🟡 built, not yet seen working for real · ⚠�
 - ✅ A third account, `catiegreaves123@gmail.com` ("Caitlin"), signed itself up on 2026-09-24; no free access until the admin gives it (Accounts)
 - ✅ Two accounts, 2026-09-23: the admin (Darren's Gmail) and Catie's (`darrenstorey87+catie@gmail.com` — a Gmail "+" address, so her emails reach Darren's inbox), both confirmed, Catie on free family access. Both proven to sign in and read the paid bank. Their passwords were generated straight into Vault and never shown: Vault UI → sign in as `darren` → secret → logins → `theory-trainer-admin` / `theory-trainer-catie`. **Catie's was rotated again on 2026-09-25 (Vault version 4, proven by signing in)**: her password had been changed outside Vault after 2026-09-23. **The admin's Vault copy is out of date**: Darren reset the admin password himself from the email link on 2026-09-25 20:13 BST, so the one he chose is the live one
 - ✅ Supabase Authentication → URL Configuration set 2026-09-23: Site URL is the app page, `https://dstorey87.github.io/Catie-Test/**` is an allowed redirect. Checked: a reset request from the app was redirected back to the app, not `localhost:3000`
-- ⚠️ Free tier: the project pauses after about a week with no use, and sign-in then hangs. Found paused 2026-09-23 and restored. Daily use keeps it awake
+- ⚠️ Free tier: the project pauses after a quiet week. Paused 2026-09-23 and again by 2026-11-17 (nothing reached it after 2026-09-25, so learners looped the 20 free questions), restored both times. Since v21 the `keep-server-awake` workflow reads the database once a day and fails (GitHub emails Darren) if it can't; the app says "Can't reach the server" instead of looping the free sample. GitHub switches scheduled workflows off after 60 days without commits: switch it back on in the Actions tab if that happens
 - ⚠️ Confirmation and password-reset emails go through Supabase's built-in mailer, which is rate-limited and for testing only — add an SMTP provider before strangers sign up (ROADMAP item 3)
 - ✅ Every account's data is private at the database level, not by app-side checking
 
@@ -97,13 +98,15 @@ States: ✅ done & verified · 🟡 built, not yet seen working for real · ⚠�
 - 📋 One-time per iPhone/iPad: Settings → Accessibility → Spoken Content → Voices → English (UK) → download an Enhanced voice
 
 ## How to test
-- `node --test` runs every test (489 at v20); CI runs it on every pull request and every push to `develop` and `main`
+- `node --test` runs every test (577 at v21); CI runs it on every pull request and every push to `develop` and `main`
+- `node tools/keep-awake.js`: exit 0 = the live project answered (what the daily workflow runs)
 - In a browser: serve the repo (`python -m http.server <port> --bind 127.0.0.1`, never port 8765) and drive it with `tests/browser/harness.js` at 390px and 1280px, light and dark. The harness learner has no answers, so tapping Catie opens the quick setup: tap Skip, or seed her as set up with `seed: {'theoryTrainer.d.u1': JSON.stringify({settings: {learnerName: 'Catie', onboardedAt: '2026-09-24'}})}`. Pass `birthYear: null` to see the age question; open `adventure.html` as a second page of the same context (`ctx.newPage()`) to test two tabs; route `**/rest/v1/events**` to keep what is POSTed and return it on GET to see Activity; route `/rest/v1/rpc/admin_accounts` and `/rest/v1/rpc/admin_set_access` (with `role: 'admin'`) to see Accounts; route `/rest/v1/rpc/export_my_data` and `/rest/v1/rpc/delete_my_account` to fake the server's answers; give bank rows `plain_explanation` + `plain_status: 'approved'` to see Explain it differently; seed a learner with answers to see the prediction, the study plan and the "you keep choosing" lines. For Adventure: open the app through the harness (it seeds a signed-in learner), then tap Adventure on Home or go to `/adventure.html`
 
 ## What's left
 - XP amounts (10 a right answer, 50 for a passed mock) are still typed into the app, not in `coach.js`. Every mock number (size, minutes, pass mark) now lives only in `coach.js` `coachDefaults` (v20, #65).
 - At 390px Print's A4 preview scrolls sideways (the paper is 194 mm wide); not checked whether that is wanted
-- 📋 Approve or reject the plain-explanation drafts in Admin → Memory tips → Plain explanations (377 loaded as `draft` on 2026-09-25; t09q24 has none). Until then no learner sees Explain it differently
+- 📋 Approve or reject the plain-explanation drafts in Admin → Memory tips → Plain explanations (377 loaded as `draft` on 2026-09-25; t09q24 has none; 69 set to `rejected` on 2026-11-17 because their question's wording changed in the v21 re-check). Until then no learner sees Explain it differently
+- Re-draft the 50 memory tips and 69 plain explanations set to `rejected` in v21 (their questions changed): run the two Local AI tools with Ollama on, then load and review them
 - 📋 Approve or reject the 44 re-drafted memory tips (and the ones listed under Local AI)
 - Two tabs (v18, #51): the app hears another tab's saves (`heardSave`, the `storage` event) and joins its own saves with the stored copy when another tab saved in between (`TTAdv.join`). Left: a stale app tab that missed a save shows old numbers until its next save or the next save it hears; a test in progress in two app tabs at once is not joined (the last save wins that part). At the biggest text size on a phone, Adventure's top bar has room for her initial only
 - Tracking (v18, #57): notes, Settings changes and printing are events too (`trackNote`, `trackSettings`, `trackPrint`; the Settings and Print choices and Activity's words for them live in `TTChoices`). Printing another screen from the browser's own menu is recorded as "Printed <screen>" with no count
@@ -124,6 +127,7 @@ States: ✅ done & verified · 🟡 built, not yet seen working for real · ⚠�
 Tracked as GitHub issues, one per section: https://github.com/dstorey87/Catie-Test/issues (lanes and rules in `CLAUDE.md`).
 
 ## Timeline
+- 2026-11-17 — v21 (`v21-2026-11-17`): the server had paused and learners looped the 20 free questions — restored, the app now says "Can't reach the server", daily keep-server-awake check (#69); 80 questions corrected from a fresh check against official sources, live bank updated (#70). 577 tests.
 - 2026-09-26 — v20 (`v20-2026-09-26`): every mock number from `coach.js` (no typed-in 43/50/57/1.14/0.86), the chart's pass label clear of her last dot, the Adventure road below the world tabs (#65). 489 tests.
 - 2026-09-26 — v19 (`v19-2026-09-26`): Mock test → From my weak spots (a full mock from her results, left out of readiness and the prediction); the drill ranks repeated wrong picks and hard questions first (#61). Age question, Download my data and Delete my account run end to end against the live database with a throwaway account. 475 tests.
 - 2026-09-26 — v18 (`v18-2026-09-26`): the app and Adventure stay in step with two tabs open, and nothing either saves is lost (#51); the app uses the shared coach.js rules (fixes "undefined" read aloud); notes, Settings changes and printing tracked on Activity (#57). 455 tests.
