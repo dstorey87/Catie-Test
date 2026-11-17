@@ -984,6 +984,36 @@ window.TTChoices = (function(){
   return C;
 })();
 </script>
+<script>
+// Is the question server answering? (issue #69) The live Supabase project pauses itself after a
+// quiet week on the free plan, and every call then fails with no HTTP status at all. The app used
+// to treat that like "no access": the paywall said "ask the admin for access" and she practised
+// the same free sample over and over. This block tells the two apart and holds the words she
+// sees. Plain data and pure functions, so tests/app-files.test.js runs this very block in node.
+// Real head, not <helmet> (see CLAUDE.md).
+window.TTServer = (function(){
+  var S = {};
+  // unreachable(err) -> true when the server never answered (a network failure carries no
+  // status) or answered broken (5xx). A 4xx is the server saying no: that is about access.
+  S.unreachable = function(err){ return !!err && (!err.status || err.status >= 500); };
+  S.TITLE = 'Can’t reach the server';
+  S.RETRY = 'Try again';
+  // msg(n): n is how many questions she can practise without the server (the free sample),
+  // counted by the caller, so a different sample never needs these words changed.
+  S.msg = function(n){
+    var left = n > 0 ? 'Until it’s back you can practise the ' + n + ' free sample question' + (n === 1 ? '' : 's') + '.'
+                     : 'Until it’s back there are no questions here to practise.';
+    return 'The app can’t reach its server right now, so it can’t check your access or load all the questions. ' +
+      'This is a problem with the server, not with you. ' + left +
+      ' Check you’re online, then press ' + S.RETRY + ' in a few minutes. Still seeing this tomorrow? Tell the admin.';
+  };
+  // After "Try again" that still gets no answer.
+  S.STILL = 'Still can’t reach the server. Try again in a few minutes, or tell the admin if it lasts until tomorrow.';
+  // The access line on the account card, in place of "no access yet".
+  S.LINE = 'can’t reach the server just now — try again soon';
+  return S;
+})();
+</script>
 </head>
 <body>
 <x-dc>
@@ -2962,6 +2992,7 @@ class Component extends DCLogic {
       authView: 'signin', authEmail: '', authPw: '', authName: '', authMsg: '', authOk: false, authCode: '',
       theme: (()=>{ try { return localStorage.getItem('tt.theme') || 'auto'; } catch(e) { return 'auto'; } })(),
       cfgUrl: '', cfgKey: '', access: null, isAdminAccount: false, bankSource: '', payMsgLive: '', accessBusy: false, uploadBusy: false,
+      serverDown: false,   // #69: the access check got no answer from the server (window.TTServer)
       accts: [], acctsBusy: false, acctsErr: '', acctsMsg: '',
       test: saved.testInProgress || null, testView: 'run', now: Date.now(),
       range: 'all', openTest: -1, showLogForm: false,
@@ -3526,14 +3557,20 @@ class Component extends DCLogic {
   }
   refreshAccess(){
     const on = !!(window.TTBackend && TTBackend.configured() && window.TTAuth && TTAuth.signedIn());
-    if(!on){ this.setState({access:null, accessBusy:false, ageInfo:null, ageChecked:false}); return; }
+    if(!on){ this.setState({access:null, accessBusy:false, serverDown:false, ageInfo:null, ageChecked:false}); return; }
     this.checkAge();
     this.setState({accessBusy:true});
     TTBill.status().then(a=>{
       const gained = a.active && !(this.state.access && this.state.access.active);
-      this.setState({access:a, accessBusy:false, payMsgLive: a.active? '' : this.state.payMsgLive});
+      this.setState({access:a, accessBusy:false, serverDown:false, payMsgLive: a.active? '' : this.state.payMsgLive});
       if(gained || (a.active && this.state.bankSource!=='server')) this.loadBank();
-    }).catch(()=>this.setState({accessBusy:false}));
+    }).catch(e=>{
+      // #69: keep whether the server answered at all. A paused server is not "no access", and
+      // the paywall says which it is (window.TTServer). A server that comes back is picked up by
+      // the next check: access is gained, so the full bank loads again (above).
+      console.error('refreshAccess: the access check (backend.js TTBill.status) failed; the paywall shows why. Next: press Try again, or restore the Supabase project if it is paused.', e);
+      this.setState({accessBusy:false, serverDown: TTServer.unreachable(e)});
+    });
     TTAuth.isAdmin().then(v=>this.setState({isAdminAccount:v})).catch(()=>{});
   }
   // ---------- Admin → Progress dashboard → Accounts (issue #42) ----------
@@ -4424,10 +4461,14 @@ class Component extends DCLogic {
     // Is paying possible at all? config.js payments (backend.js TTBill.enabled). Off, nothing
     // offers Subscribe, Manage subscription or "I've paid" (issue #42).
     const payOn = !!(window.TTBill && TTBill.enabled && TTBill.enabled());
+    // How many questions she can try without access: the free sample she has, else config's trial
+    // count. One number for the "Try N free questions" button and the server-asleep words (#69).
+    const trialN = s.bankSource==='free'? (this.state.bank||[]).length : prices.trial;
     // A day as the admin reads it; free access ends when the NEXT day starts, so the last
     // day included is the moment before (TTAdmin.setAccess).
     const lastDay = iso => new Date(new Date(iso).getTime() - 1).toLocaleDateString('en-GB', {weekday:'short', day:'numeric', month:'short', year:'numeric'});
     const accessLine = s.isAdminAccount ? 'admin account: full access, never charged'
+      : (!acc && s.serverDown) ? TTServer.LINE
       : !acc ? (payOn ? 'no subscription yet' : 'no access yet \u2014 ask the admin for free access')
       : acc.status==='comp' ? (acc.endsAt ? 'free access until the end of ' + lastDay(acc.endsAt) : 'free access')
       : acc.status==='past_due' ? 'last payment failed'
@@ -5099,12 +5140,12 @@ class Component extends DCLogic {
       manageSub: ()=>this.openPortal(),
       // Re-reads this account's access from the server (the entitlements row). It does not
       // talk to Stripe: a payment reaches that row through Stripe's webhook.
-      recheckSub: ()=>{ this.setState({payMsgLive:'Checking your access\u2026'}); this.refreshAccess(); setTimeout(()=>{ if(!(this.state.access && this.state.access.active)) this.setState({payMsgLive: payOn ? 'No active subscription on this account yet.' : 'Still no free access on this account. Ask the admin to give it (Progress dashboard \u2192 Accounts).'}); }, 1600); },
-      recheckLabel: s.accessBusy? 'Checking\u2026' : payOn ? 'I\u2019ve paid' : 'Check my access again',
+      recheckSub: ()=>{ this.setState({payMsgLive:'Checking your access\u2026'}); this.refreshAccess(); setTimeout(()=>{ if(!(this.state.access && this.state.access.active)) this.setState({payMsgLive: this.state.serverDown ? TTServer.STILL : payOn ?'No active subscription on this account yet.' : 'Still no free access on this account. Ask the admin to give it (Progress dashboard \u2192 Accounts).'}); }, 1600); },
+      recheckLabel: s.accessBusy? 'Checking\u2026' : s.serverDown ? TTServer.RETRY : payOn ? 'I\u2019ve paid' : 'Check my access again',
       payOn, payOff: !payOn,
       acctPayVisible: payOn && !s.isAdminAccount,
       trialAvailable: !hardLock && s.bankSource!=='server' && (this.state.bank||[]).length>0,
-      trialLabel: 'Try ' + (s.bankSource==='free'? (this.state.bank||[]).length : prices.trial) + ' free questions',
+      trialLabel: 'Try ' + trialN + ' free questions',
       startTrial: ()=>this.setState({view:'learnSetup'}),
       subTrackStyle: miniTrack(!!subCfg.required), subKnobStyle: miniKnob(!!subCfg.required), subOn: TTScreen.pressed(!!subCfg.required),
       subToggle: ()=>this.set({sub: Object.assign({}, subCfg, {required: !subCfg.required})}),
@@ -5117,8 +5158,8 @@ class Component extends DCLogic {
       planUntil: myPlan.until||'',
       planUntilChange: e=>{ const plans = Object.assign({}, subCfg.plans); plans[s.userId] = Object.assign({}, plans[s.userId], {until: e.target.value}); this.set({sub: Object.assign({}, subCfg, {plans})}); },
       subStatus: st.learnerName + (myPlan.type==='blocked'? ' is blocked \u2014 they cannot use the app.' : myPlan.type==='suspended'? ' is suspended \u2014 practise is paused.' : (myPlan.type==='free' || s.plan==='granted')? ' has full access, free.' : compOk? (' is free until ' + (myPlan.until||'\u2014') + '.') : (subCfg.required? (' is locked until you set access here or they subscribe' + (subCfg.price? (' ('+subCfg.price+')') : '') + '.') : ' has free access \u2014 subscriptions are off.')),
-      payTitle: myPlan.type==='blocked'? 'This account is blocked' : myPlan.type==='suspended'? 'This account is paused' : (acc && acc.status==='past_due')? 'That payment didn\u2019t go through' : 'Unlock the full question bank',
-      payMsg: myPlan.type==='blocked'? 'Ask the admin to unblock it from the dashboard.' : myPlan.type==='suspended'? 'The admin has paused practise for a while \u2014 ask them to switch it back on.' : (acc && acc.status==='past_due')? 'Stripe couldn\u2019t take the last payment. Update the card and everything comes straight back.' : !payOn ? 'Payments aren\u2019t switched on in this app yet, so the full question bank opens with free access from the admin. Ask them: it\u2019s one tap on their Progress dashboard, under Accounts.' : ('All 14 topics, mock tests, progress tracking and read-aloud \u2014 ' + prices.monthly + ' or ' + prices.annual + '.'),
+      payTitle: myPlan.type==='blocked'? 'This account is blocked' : myPlan.type==='suspended'? 'This account is paused' : s.serverDown ? TTServer.TITLE : (acc && acc.status==='past_due')? 'That payment didn\u2019t go through' : 'Unlock the full question bank',
+      payMsg: myPlan.type==='blocked'? 'Ask the admin to unblock it from the dashboard.' : myPlan.type==='suspended'? 'The admin has paused practise for a while \u2014 ask them to switch it back on.' : s.serverDown ? TTServer.msg(trialN) : (acc && acc.status==='past_due')? 'Stripe couldn\u2019t take the last payment. Update the card and everything comes straight back.' : !payOn ? 'Payments aren\u2019t switched on in this app yet, so the full question bank opens with free access from the admin. Ask them: it\u2019s one tap on their Progress dashboard, under Accounts.' : ('All 14 topics, mock tests, progress tracking and read-aloud \u2014 ' + prices.monthly + ' or ' + prices.annual + '.'),
       paySubVisible: !hardLock && payOn,
       subCharging: payOn ? 'Charging is handled by Stripe on the server: subscribers pay in the app, access switches on by itself, and cancelling or a failed payment switches it off again. The amounts come from your Stripe prices (SETUP.md \u00a73) \u2014 this field is only the wording.'
         : 'Payments are switched off (config.js, payments: false), so nobody can subscribe yet and the lock screen shows no Subscribe buttons. Give free access in Accounts above. Switching payments on needs Stripe set up first (SETUP.md \u00a73).',
