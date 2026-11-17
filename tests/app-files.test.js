@@ -2252,3 +2252,39 @@ test('#65 the chart\'s pass label keeps clear of her dots, even when her last mo
     assert.ok(b.x1 >= 0 && b.x2 <= 340 && b.y1 >= 0 && b.y2 <= 130, 'inside the chart: ' + JSON.stringify(b));
   }
 });
+
+// ---------- #69 the server is asleep (window.TTServer) ----------
+// Bug found 2026-11-17: the live Supabase project paused (free plan, a quiet week). Every call
+// failed with no HTTP status, refreshAccess() dropped the error, access stayed null, and the
+// learner was told "no access yet — ask the admin" and given the 20-question free sample over
+// and over. TTServer tells "the server never answered" apart from "the server said no".
+const serverSrc = [...app.matchAll(/<script>([\s\S]*?)<\/script>/g)].map(m => m[1]).find(s => s.includes('window.TTServer ='));
+const SV = serverSrc ? (() => { const ctx = { window: {} }; vm.runInNewContext(serverSrc, ctx); return ctx.window.TTServer; })() : null;
+
+test('#69 a call the server never answered is "unreachable"; a server that said no is not', () => {
+  assert.ok(SV, 'no window.TTServer block in the page head');
+  assert.equal(SV.unreachable(new TypeError('Failed to fetch')), true, 'a network failure (paused project: no answer at all)');
+  assert.equal(SV.unreachable(Object.assign(new Error('x'), { status: 503 })), true, 'the server answered but is broken (5xx)');
+  for (const status of [400, 401, 403, 404]) {
+    assert.equal(SV.unreachable(Object.assign(new Error('x'), { status })), false, status + ' is the server saying no, not asleep');
+  }
+  assert.equal(SV.unreachable(null), false, 'no error, nothing unreachable');
+});
+
+test('#69 while the server is unreachable the paywall says so and what to do, not "ask the admin for access"', () => {
+  assert.ok(SV, 'no window.TTServer block in the page head');
+  // The count is the questions she actually has, never a number written into the words.
+  assert.match(SV.msg(20), /\b20\b/); assert.match(SV.msg(7), /\b7\b/);
+  assert.doesNotMatch(serverSrc, /\b20\b/, 'the sample size is passed in, not written into TTServer');
+  assert.match(SV.msg(20), /try again/i, 'says what to do now');
+  assert.match(SV.msg(20), /admin/i, 'says who to tell if it lasts');
+  assert.match(SV.STILL, /try again/i, '"Check again" that still fails says what to do');
+  // Wiring: refreshAccess keeps the clue instead of dropping it, an answer clears it, and the
+  // paywall's title, words and "check again" use TTServer while it is set.
+  const refresh = app.slice(app.indexOf('  refreshAccess(){'), app.indexOf('  // ---------- Admin → Progress dashboard → Accounts'));
+  assert.match(refresh, /\.catch\(e\s*=>\s*\{[^}]*serverDown:\s*TTServer\.unreachable\(e\)/, 'the access check\'s catch must record whether the server answered');
+  assert.match(refresh, /setState\(\{access:a,[^}]*serverDown:\s*false/, 'an answer from the server clears serverDown');
+  assert.match(app, /payTitle: [^\n]*s\.serverDown\s*\?\s*TTServer\.TITLE/);
+  assert.match(app, /payMsg: [^\n]*s\.serverDown\s*\?\s*TTServer\.msg\(/);
+  assert.match(app, /recheckSub: [^\n]*this\.state\.serverDown\s*\?\s*TTServer\.STILL/);
+});

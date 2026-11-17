@@ -153,3 +153,34 @@ for (const [id, fact, check] of CORRECTIONS) {
   });
 }
 
+
+// ---------- 3. The 2026-11 re-check (issue #70) ----------
+// Darren, 2026-11-17: the questions "aren't right". Every bank question was checked again from
+// scratch against official sources (five agents, one per file), and each finding was confirmed
+// by a second, independent agent that re-opened its source. What each corrected question must
+// now say lives in tests/data/bank-recheck-2026-11.json — its id, why it changed, the source,
+// and the fields it pins (question, right answer, dropped wrong options, explanation, ruleRef) —
+// so a later edit cannot quietly put a wrong fact back. To change one of these on purpose, change
+// its entry in that file in the same commit, with the source that proves the new wording.
+const RECHECK = readJson('tests/data/bank-recheck-2026-11.json');
+
+test('re-check 2026-11: each corrected question is listed once, exists, and names its source', () => {
+  const ids = RECHECK.map(r => r.id);
+  assert.equal(new Set(ids).size, ids.length, 'a question is listed twice in bank-recheck-2026-11.json');
+  for (const r of RECHECK) {
+    assert.ok(byId[r.id], r.id + ' is not in the bank');
+    assert.match(r.source, /^https:\/\//, r.id + ' has no source link');
+    assert.ok(Object.keys(r.expect).length, r.id + ' pins nothing');
+  }
+});
+
+for (const r of RECHECK) {
+  test('re-check ' + r.id + ' (' + r.kind + ') still says what its source says', () => {
+    const q = byId[r.id], e = r.expect, why = ' (' + r.why + ' Source: ' + r.source + ')';
+    if (e.question) assert.equal(q.question, e.question, r.id + ' question changed' + why);
+    if (e.answer) assert.equal(q.options[q.correctIndex], e.answer, r.id + ' right answer changed' + why);
+    for (const o of e.absent || []) assert.ok(!q.options.includes(o), r.id + ' has the removed option "' + o + '" back' + why);
+    if (e.explanation) assert.equal(q.explanation, e.explanation, r.id + ' explanation changed' + why);
+    if (e.ruleRef) assert.equal(q.ruleRef, e.ruleRef, r.id + ' rule reference changed' + why);
+  });
+}

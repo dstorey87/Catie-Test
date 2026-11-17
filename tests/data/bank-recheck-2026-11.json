@@ -1,0 +1,927 @@
+[
+ {
+  "id": "t01q02",
+  "kind": "not-verifiable",
+  "why": "Free sample. 'Only proper rest fixes tiredness' is in no official source; Rule 91 says stop in a safe place, and THINK! says opening a window or turning up the radio does not work for long.",
+  "source": "https://www.think.gov.uk/law/fatigue/",
+  "expect": {
+   "explanation": "If you feel sleepy, stop in a safe place and rest. Opening a window or turning up the radio does not work for long.",
+   "ruleRef": "HC Rule 91 (see also THINK! fatigue advice)"
+  }
+ },
+ {
+  "id": "t01q07",
+  "kind": "unclear",
+  "why": "Medium: 'act on it later' is vague, the Highway Code's actual advice (find a safe place to stop) is not among the options, and the trap option 'Stop in the road to check' is close to it, so a learner who knows the rule could pick the trap.",
+  "source": "https://www.gov.uk/guidance/the-highway-code/general-rules-techniques-and-advice-for-all-drivers-and-riders-103-to-158",
+  "expect": {
+   "question": "You need to check your sat nav. What should you do?",
+   "answer": "Find a safe place to stop first",
+   "absent": [
+    "Look at the screen until you understand"
+   ],
+   "explanation": "Do not let the screen take your eyes off the road. If you need to check it, find a safe place to stop."
+  }
+ },
+ {
+  "id": "t01q18",
+  "kind": "unclear",
+  "why": "'Keep your normal gap' clashed with Rule 151 (in slow traffic never get so close you cannot stop safely); the reference names Rule 151 too.",
+  "source": "https://www.gov.uk/guidance/the-highway-code/general-rules-techniques-and-advice-for-all-drivers-and-riders-103-to-158",
+  "expect": {
+   "answer": "Stay calm and keep a safe gap",
+   "explanation": "Stay calm. In slow traffic, never get so close to the car in front that you cannot stop safely.",
+   "ruleRef": "HC Rule 147 (see also Rule 151)"
+  }
+ },
+ {
+  "id": "t01q24",
+  "kind": "not-verifiable",
+  "why": "Rule 91 says tiredness greatly increases crash risk and recommends a break every two hours, but no official source says 'long drives dull your reactions even when you feel awake' (the answer is not contradicted).",
+  "source": "https://www.gov.uk/guidance/the-highway-code/rules-for-drivers-and-motorcyclists-89-to-102",
+  "expect": {
+   "explanation": "Tiredness greatly increases your risk of a crash. Take a break of at least 15 minutes after every two hours of driving."
+  }
+ },
+ {
+  "id": "t01q27",
+  "kind": "two-right",
+  "why": "Two findings merged. (1) At dawn the sun really is low, and Rule 237 warns about being dazzled by bright sunlight, so the wrong option 'The sun is always low' can look right. (2) 'The early hours are a peak time for sleep-related crashes' is not in Rule 91 or any official source reached; Rule 91 only says alertness is lowest from midnight to 6 am.",
+  "source": "https://www.gov.uk/guidance/the-highway-code/driving-in-adverse-weather-conditions-226-to-237 | https://www.gov.uk/guidance/the-highway-code/rules-for-drivers-and-motorcyclists-89-to-102",
+  "expect": {
+   "answer": "Your body wants to sleep, so you may nod off",
+   "absent": [
+    "The sun is always low"
+   ],
+   "explanation": "Between midnight and 6 am your natural alertness is at its lowest. Do not begin a journey if you are tired: sleep first."
+  }
+ },
+ {
+  "id": "t02q01",
+  "kind": "wrong-ref",
+  "why": "Free sample. Rule 168 is about being overtaken, not tailgating; the old answer 'Slow gently' clashed with official advice to avoid speeding up or slowing down when tailgated and to drive normally (gov.uk / National Highways), and Rule 126 backs keeping a safe gap ahead.",
+  "source": "https://www.gov.uk/government/news/dont-be-a-space-invader-stay-safe-stay-back",
+  "expect": {
+   "answer": "Drive normally and keep a safe gap ahead",
+   "explanation": "Stay calm and drive normally. Do not speed up or brake to warn them. Keep a safe gap ahead, and let them pass if you can.",
+   "ruleRef": "HC Rule 126 (see also National Highways tailgating advice)"
+  }
+ },
+ {
+  "id": "t02q02",
+  "kind": "unclear",
+  "why": "Free sample. 'The same as a horn' was not in the source; Rule 110 (only flash to let others know you are there) and Rule 111 (never take a flash as a signal to go) are both named.",
+  "source": "https://www.gov.uk/guidance/the-highway-code/general-rules-techniques-and-advice-for-all-drivers-and-riders-103-to-158",
+  "expect": {
+   "explanation": "Drivers should only flash their lights to say 'I am here'. Never take a flash as a sign to go. Use your own judgement.",
+   "ruleRef": "HC Rule 110 (see also Rule 111)"
+  }
+ },
+ {
+  "id": "t02q07",
+  "kind": "wrong-ref",
+  "why": "Rule 147 says nothing about planning time and no source links rushing to risk; Rule 97 says plan your route and allow time for breaks and possible delays, so the answer uses its words.",
+  "source": "https://www.gov.uk/guidance/the-highway-code/rules-for-drivers-and-motorcyclists-89-to-102",
+  "expect": {
+   "answer": "So you have time for breaks and delays",
+   "explanation": "The Highway Code says plan your route and allow enough time for breaks and possible delays.",
+   "ruleRef": "HC Rule 97"
+  }
+ },
+ {
+  "id": "t02q19",
+  "kind": "not-verifiable",
+  "why": "No official source names a 'main cause of road rage', and the marked answer just repeats the question; Rule 147 gives a clear lesson to test instead.",
+  "source": "https://www.gov.uk/guidance/the-highway-code/general-rules-techniques-and-advice-for-all-drivers-and-riders-103-to-158",
+  "expect": {
+   "question": "What is the best way to avoid road rage?",
+   "answer": "Stay calm and do not get involved",
+   "absent": [
+    "Bad weather",
+    "Old cars",
+    "Roadworks"
+   ],
+   "explanation": "Do not get angry or involved when someone drives badly. It only makes things worse. If you need to, pull over and calm down."
+  }
+ },
+ {
+  "id": "t03q04",
+  "kind": "wrong-ref",
+  "why": "Low: Annex 6 only says to adjust the head restraint; Rule 97 is the rule that gives its purpose.",
+  "source": "https://www.gov.uk/guidance/the-highway-code/rules-for-drivers-and-motorcyclists-89-to-102",
+  "expect": {
+   "explanation": "A properly adjusted head restraint lowers the risk of neck and spine injury in a crash.",
+   "ruleRef": "HC Rule 97"
+  }
+ },
+ {
+  "id": "t03q06",
+  "kind": "not-verifiable",
+  "why": "'Red warning lights mean a serious problem' is not in Annex 6, which treats any warning light that comes on while driving the same way; also the question asks what the light means but the answer is an action.",
+  "source": "https://www.gov.uk/guidance/the-highway-code/annex-6-vehicle-maintenance-safety-and-security",
+  "expect": {
+   "question": "A warning light comes on while you are driving. What should you do?",
+   "answer": "Stop and check as soon as it is safe",
+   "absent": [
+    "Nothing important",
+    "The car is locked",
+    "Service due next month"
+   ],
+   "explanation": "Do not ignore warning lights. Stop and check, as you could have a serious fault."
+  }
+ },
+ {
+  "id": "t03q08",
+  "kind": "wrong-ref",
+  "why": "Annex 6 never mentions catalytic converters; DfT's explanatory memorandum to SI 2009/1899 says they have been fundamental to reducing air pollution, which backs the existing explanation.",
+  "source": "https://www.legislation.gov.uk/uksi/2009/1899/pdfs/uksiem_20091899_en.pdf",
+  "expect": {
+   "ruleRef": "DfT: catalytic converter regulations 2009 (explanatory memorandum)"
+  }
+ },
+ {
+  "id": "t03q21",
+  "kind": "not-verifiable",
+  "why": "Official sources say to use the vehicle handbook or the maker's data; 'a plate inside the door frame' is not in them (not wrong, just not verified).",
+  "source": "https://www.gov.uk/guidance/the-highway-code/annex-6-vehicle-maintenance-safety-and-security",
+  "expect": {
+   "answer": "The car's handbook",
+   "explanation": "The maker's handbook gives the right pressures for the load you carry."
+  }
+ },
+ {
+  "id": "t03q23",
+  "kind": "not-verifiable",
+  "why": "'Spongy brakes can mean air or a leak in the system' is not in an official source; DVSA only says brakes should not feel spongy or slack (the answer itself is fine).",
+  "source": "https://www.gov.uk/government/publications/car-show-me-tell-me-vehicle-safety-questions/car-show-me-tell-me-vehicle-safety-questions",
+  "expect": {
+   "explanation": "Brakes should not feel spongy or slack. If they do, get them checked before you drive on.",
+   "ruleRef": "DVSA 'show me, tell me' question 1 (see also HC Annex 6)"
+  }
+ },
+ {
+  "id": "t03q25",
+  "kind": "wrong-fact",
+  "why": "DVSA's official answer is that the rigid part should be at least as high as the eye or the top of the ears and close to the head, not 'level with the top of your head'.",
+  "source": "https://www.gov.uk/government/publications/car-show-me-tell-me-vehicle-safety-questions/car-show-me-tell-me-vehicle-safety-questions",
+  "expect": {
+   "answer": "Rigid part at least as high as your eyes or the top of your ears",
+   "explanation": "Set the rigid part at least as high as your eyes or the top of your ears, and as close to the back of your head as is comfortable.",
+   "ruleRef": "DVSA 'show me, tell me' question 3 (see also HC Rule 97)"
+  }
+ },
+ {
+  "id": "t03q26",
+  "kind": "wrong-ref",
+  "why": "Annex 6 says nothing about where to keep keys at home, and no official source was found for this advice. Annex 6 does give clear advice about keys when you leave the car.",
+  "source": "https://www.gov.uk/guidance/the-highway-code/annex-6-vehicle-maintenance-safety-and-security",
+  "expect": {
+   "question": "You leave your car for a few minutes. What should you do?",
+   "answer": "Lock it and take the key with you",
+   "absent": [
+    "In the front door lock",
+    "On a hook by the letterbox",
+    "In the car"
+   ],
+   "explanation": "Even for a few minutes: take the key, lock the car, close the windows and take your things or lock them in the boot.",
+   "ruleRef": "HC Annex 6 (Vehicle security)"
+  }
+ },
+ {
+  "id": "t03q27",
+  "kind": "wrong-ref",
+  "why": "Rule 123 is about not leaving the engine running when stopped. The smooth-driving answer comes from DVSA's national driving standard (eco-safe driving).",
+  "source": "https://www.gov.uk/guidance/national-standard-for-driving-cars-and-light-vans-category-b/role-4-drive-safely-and-responsibly-in-the-traffic-system",
+  "expect": {
+   "explanation": "Look well ahead so you can slow down smoothly and in good time. This uses less fuel and causes less wear.",
+   "ruleRef": "DVSA national standard for driving cars, element 4.2.3 (see also HC Rule 123)"
+  }
+ },
+ {
+  "id": "t04q06",
+  "kind": "wrong-ref",
+  "why": "Low: Rule 126 is about the gap you leave on ice; the stopping-distance fact this question asks about is in Rule 230.",
+  "source": "https://www.gov.uk/guidance/the-highway-code/driving-in-adverse-weather-conditions-226-to-237",
+  "expect": {
+   "ruleRef": "HC Rule 230"
+  }
+ },
+ {
+  "id": "t04q19",
+  "kind": "wrong-ref",
+  "why": "Low: Rule 126 covers gaps in general; Rule 168 is the rule that covers exactly this situation.",
+  "source": "https://www.gov.uk/guidance/the-highway-code/using-the-road-159-to-203",
+  "expect": {
+   "ruleRef": "HC Rule 168"
+  }
+ },
+ {
+  "id": "t04q22",
+  "kind": "unclear",
+  "why": "'Which part of stopping distance stays the same at any speed, in time?' is hard to read, and 'Thinking time' is not a part of stopping distance. The HC stopping-distances chart says thinking distance depends on attention. The figures are text inside the chart image.",
+  "source": "https://assets.publishing.service.gov.uk/media/65f828c3fc7fcf0011c647f9/the-highway-code-stopping-distance.jpg",
+  "expect": {
+   "question": "Which part of stopping distance doubles when your speed doubles?",
+   "answer": "Thinking distance",
+   "explanation": "The Highway Code chart shows thinking distance is 6 m at 20 mph and 12 m at 40 mph: twice as fast, twice as far. Braking distance grows much faster: 6 m to 24 m."
+  }
+ },
+ {
+  "id": "t04q26",
+  "kind": "not-verifiable",
+  "why": "Rule 121 only covers testing your brakes after deep water, not how to drive through it. No official source for 'slowly, in a low gear' or 'stops water flooding the engine', and GOV.UK flood advice says not to drive through flood water at all.",
+  "source": "https://www.gov.uk/guidance/the-highway-code/general-rules-techniques-and-advice-for-all-drivers-and-riders-103-to-158",
+  "expect": {
+   "question": "You have just driven through deep water. What should you do?",
+   "answer": "Test your brakes gently when it is safe",
+   "absent": [
+    "Fast, to get through quickly",
+    "In neutral",
+    "With cruise control on"
+   ],
+   "explanation": "Deep water can make your brakes work less well. Test them gently at the first safe place. If they are weak, press lightly while driving slowly to dry them.",
+   "ruleRef": "HC Rule 121"
+  }
+ },
+ {
+  "id": "t05q02",
+  "kind": "two-right",
+  "why": "Free-sample question. DVSA says planning ahead saves fuel, so the wrong option 'It saves fuel' is also true and a learner who picks it is marked wrong unfairly.",
+  "source": "https://www.gov.uk/government/publications/keep-a-record-of-your-pupils-driving-lessons/how-to-record-your-pupils-driving-lessons-and-a-summary-of-the-skills-they-need",
+  "expect": {
+   "answer": "You spot hazards earlier and react in time",
+   "absent": [
+    "It saves fuel"
+   ]
+  }
+ },
+ {
+  "id": "t05q07",
+  "kind": "unclear",
+  "why": "The question asks 'When are you allowed', which sounds like a law question, but the answer 'You should not drive at all' does not answer 'when'.",
+  "source": "https://www.gov.uk/guidance/the-highway-code/rules-for-drivers-and-motorcyclists-89-to-102",
+  "expect": {
+   "question": "You feel very tired. What should you do about driving?",
+   "answer": "Do not drive until you have rested",
+   "absent": [
+    "Only on motorways",
+    "Only with the window open",
+    "Only for short trips"
+   ],
+   "explanation": "Driving when tired makes a crash much more likely. Rest before you drive."
+  }
+ },
+ {
+  "id": "t05q13",
+  "kind": "unclear",
+  "why": "The picture shown (DfT diagram 545) is the 'Children going to or from school' sign. Calling it a 'children crossing' sign is not its real name, and a learner could mix it up with the school crossing patrol sign.",
+  "source": "https://www.gov.uk/government/publications/know-your-traffic-signs/warning-signs",
+  "expect": {
+   "question": "What should you do when you see the 'children going to or from school' sign?",
+   "explanation": "This sign warns of children going to or from school ahead. Drive slowly and watch for children."
+  }
+ },
+ {
+  "id": "t05q18",
+  "kind": "not-verifiable",
+  "why": "'Affect you for days' had no source; THINK! says it can still be illegal to drive long after the feeling wears off, Rule 96 says the limits are very low.",
+  "source": "https://www.think.gov.uk/dont-put-drugs-in-the-driving-seat/",
+  "expect": {
+   "question": "You took illegal drugs some time ago and now feel fine. Can it still be illegal to drive?",
+   "answer": "Yes, it can be illegal for a long time after",
+   "absent": [
+    "False: effects stop after sleep",
+    "Only alcohol matters"
+   ],
+   "explanation": "Drug limits are set very low. Even when you feel fine, it can still be illegal to drive for a long time after.",
+   "ruleRef": "HC Rule 96 (see also THINK! drug driving advice)"
+  }
+ },
+ {
+  "id": "t05q19",
+  "kind": "two-right",
+  "why": "Rule 116 lets you use hazard lights on a motorway or unrestricted dual carriageway to warn drivers behind of a hazard ahead. So on a 'fast road' the wrong option 'Flash your hazard lights' can be defended.",
+  "source": "https://www.gov.uk/guidance/the-highway-code/general-rules-techniques-and-advice-for-all-drivers-and-riders-103-to-158",
+  "expect": {
+   "answer": "Ease off and be ready to slow down",
+   "absent": [
+    "Flash your hazard lights"
+   ]
+  }
+ },
+ {
+  "id": "t05q24",
+  "kind": "two-right",
+  "why": "Hazard lights on a stopped vehicle warn that it is blocking traffic (Rule 116), so 'The bus is broken' is also a fair answer. Rule 209 is about a bus showing a 'School Bus' sign, not hazard lights.",
+  "source": "https://www.gov.uk/guidance/the-highway-code/road-users-requiring-extra-care-204-to-225",
+  "expect": {
+   "question": "A stopped bus is showing a ‘School Bus’ sign. What might it mean?",
+   "answer": "Children may be getting on or off",
+   "absent": [
+    "The bus is broken"
+   ],
+   "explanation": "Drive carefully and slowly past a stopped bus with a ‘School Bus’ sign: children may be getting on or off."
+  }
+ },
+ {
+  "id": "t05q27",
+  "kind": "not-verifiable",
+  "why": "The idea that you stay groggy after waking is not in Rule 91 or any official source found, so the whole question rests on a fact that is not verified.",
+  "source": "https://www.gov.uk/guidance/the-highway-code/rules-for-drivers-and-motorcyclists-89-to-102",
+  "expect": {
+   "question": "You feel tired before a long drive. What should you do?",
+   "answer": "Get enough sleep before you set off",
+   "absent": [
+    "It is not risky",
+    "The engine is cold",
+    "Traffic is lighter"
+   ],
+   "explanation": "Do not begin a journey if you are tired. Get enough sleep before a long journey."
+  }
+ },
+ {
+  "id": "t06q03",
+  "kind": "wrong-fact",
+  "why": "The explanation says pedestrians who are only waiting 'have priority'. Since 2022 you should give way to them; 'priority' is the word used once they have started to cross.",
+  "source": "https://www.gov.uk/government/news/the-highway-code-8-changes-you-need-to-know-from-29-january-2022",
+  "expect": {
+   "explanation": "When you turn into a side road, you should give way to people crossing or waiting to cross it."
+  }
+ },
+ {
+  "id": "t06q25",
+  "kind": "wrong-ref",
+  "why": "Rule 199 does not say cyclists may ride across a toucan crossing (Rule 25 does), and 'Toucan means two can' is not in an official source.",
+  "source": "https://www.gov.uk/guidance/the-highway-code/rules-for-pedestrians-1-to-35",
+  "expect": {
+   "explanation": "At a toucan crossing, people walking and cycling cross together. Cyclists are allowed to ride across.",
+   "ruleRef": "HC Rule 25 (see also Rule 199)"
+  }
+ },
+ {
+  "id": "t07q06",
+  "kind": "not-verifiable",
+  "why": "'Overhanging trees' is not in Rule 221, and the rule is about large vehicles, not vans. Rule 221 gives the reason as a hazard you cannot see.",
+  "source": "https://www.gov.uk/guidance/the-highway-code/road-users-requiring-extra-care-204-to-225",
+  "expect": {
+   "question": "Why might a large vehicle move to the middle of a narrow road?",
+   "answer": "It may need extra room for a hazard you cannot see",
+   "explanation": "Large vehicles may need extra room to deal with a hazard you cannot see. Hold back and give them space."
+  }
+ },
+ {
+  "id": "t07q07",
+  "kind": "wrong-ref",
+  "why": "Mini-roundabouts are covered by Rule 188, not Rule 187.",
+  "source": "https://www.gov.uk/guidance/the-highway-code/using-the-road-159-to-203",
+  "expect": {
+   "ruleRef": "HC Rule 188 (see also Rule 187)"
+  }
+ },
+ {
+  "id": "t07q16",
+  "kind": "not-verifiable",
+  "why": "'Small vehicles can look further away than they are' is not in the Highway Code. Rule 211 says they could be coming faster than you think.",
+  "source": "https://www.gov.uk/guidance/the-highway-code/road-users-requiring-extra-care-204-to-225",
+  "expect": {
+   "answer": "It could be coming faster than you think",
+   "explanation": "Mopeds and motorbikes are hard to see. They could be coming faster than you think, so look carefully before you pull out."
+  }
+ },
+ {
+  "id": "t07q19",
+  "kind": "wrong-ref",
+  "why": "The HC mentions standing passengers only for trams (Rule 305), not buses or coaches (Rule 223); the answer names the trams so 'them' cannot be misread.",
+  "source": "https://www.gov.uk/guidance/the-highway-code/road-works-level-crossings-and-tramways-288-to-307",
+  "expect": {
+   "question": "Trams can carry many standing passengers. What does this mean for you?",
+   "answer": "Give way to trams when it is safe",
+   "explanation": "Give trams priority when it is safe. Standing passengers could be hurt if the tram had to stop suddenly.",
+   "ruleRef": "HC Rule 305"
+  }
+ },
+ {
+  "id": "t07q20",
+  "kind": "wrong-ref",
+  "why": "The 'crawler lane' part of the answer comes from Rule 139, not Rule 164.",
+  "source": "https://www.gov.uk/guidance/the-highway-code/general-rules-techniques-and-advice-for-all-drivers-and-riders-103-to-158",
+  "expect": {
+   "ruleRef": "HC Rule 139 (see also Rule 222)"
+  }
+ },
+ {
+  "id": "t07q22",
+  "kind": "wrong-fact",
+  "why": "The question teaches that buses pull out with little warning because they 'have priority'. Rule 223 only asks drivers to give priority to buses signalling to pull away, when it is safe.",
+  "source": "https://www.gov.uk/guidance/the-highway-code/road-users-requiring-extra-care-204-to-225",
+  "expect": {
+   "question": "A bus ahead is signalling to pull away from a bus stop. What should you do?",
+   "answer": "Give way to it if you can do so safely",
+   "absent": [
+    "Their mirrors are broken",
+    "Drivers cannot see cars",
+    "They are always late"
+   ],
+   "explanation": "The Highway Code says give priority to buses signalling to pull away from stops, when you can do so safely."
+  }
+ },
+ {
+  "id": "t07q27",
+  "kind": "not-verifiable",
+  "why": "No official source found says drivers must follow an escort vehicle's directions; the HC lists police, DVSA and traffic officers as the people whose signals you MUST obey. It says to approach abnormal loads with caution.",
+  "source": "https://www.gov.uk/guidance/the-highway-code/road-users-requiring-extra-care-204-to-225",
+  "expect": {
+   "answer": "Slow down and be ready to pull in and stop",
+   "explanation": "Wide loads need extra room. Approach with care and be ready to stop and wait.",
+   "ruleRef": "HC Rules 221 and 225"
+  }
+ },
+ {
+  "id": "t08q06",
+  "kind": "unclear",
+  "why": "Rule 119: release the brake fully or ease off the accelerator and steer into the skid straight away; 'accelerator', the GB word, not 'gas'.",
+  "source": "https://www.gov.uk/guidance/the-highway-code/general-rules-techniques-and-advice-for-all-drivers-and-riders-103-to-158",
+  "expect": {
+   "answer": "Let go of the brake or ease off the accelerator, and steer right",
+   "explanation": "First remove the cause: let go of the brake or ease off the accelerator. Then steer the same way as the skid. If the back slides right, steer right straight away."
+  }
+ },
+ {
+  "id": "t08q10",
+  "kind": "wrong-fact",
+  "why": "Rule 114 bans dazzling anyone, including people walking, cycling or riding horses, not only vehicles; the unsourced 'full beam helps you see' clause is dropped.",
+  "source": "https://www.gov.uk/guidance/the-highway-code/general-rules-techniques-and-advice-for-all-drivers-and-riders-103-to-158",
+  "expect": {
+   "answer": "When it will not dazzle anyone",
+   "explanation": "You must not use lights that dazzle others. That includes people walking, cycling or riding horses. Dip full beam when it could dazzle someone.",
+   "ruleRef": "HC Rule 114 (see also Rule 115)"
+  }
+ },
+ {
+  "id": "t08q11",
+  "kind": "wrong-ref",
+  "why": "Rule 153 does not mention rumble strips. Know Your Traffic Signs does, and it supports the answer.",
+  "source": "https://www.gov.uk/government/publications/know-your-traffic-signs/traffic-calming",
+  "expect": {
+   "explanation": "The noise and shaking warn you of a hazard ahead, often a bend or junction, so slow down.",
+   "ruleRef": "Know Your Traffic Signs: traffic calming"
+  }
+ },
+ {
+  "id": "t08q13",
+  "kind": "not-verifiable",
+  "why": "No official source I could open says 'oil and rubber' (or 'oil and dust') makes the first rain slippery. Rule 237 only says rain after a dry spell may make the road slippery. A National Highways page is reported to mention 'oil and grease', but it blocked my download, so that is not verified.",
+  "source": "https://www.gov.uk/guidance/the-highway-code/driving-in-adverse-weather-conditions-226-to-237",
+  "expect": {
+   "question": "It rains after a long dry spell. What can happen to the road?",
+   "answer": "It may become slippery",
+   "absent": [
+    "Rain is naturally slippery",
+    "Tyres are still dry",
+    "Drains overflow at once"
+   ],
+   "explanation": "After a dry spell, rain can make the road slippery. This can affect your steering and braking."
+  }
+ },
+ {
+  "id": "t08q15",
+  "kind": "wrong-ref",
+  "why": "Rule 115 is about oncoming lights only; DfT's 'Minimising headlight glare' guidance says use the rear-view mirror dimming function; 'still shows the vehicle' had no source.",
+  "source": "https://www.gov.uk/government/publications/minimising-headlight-glare-and-its-effects/minimising-headlight-glare-and-its-effects",
+  "expect": {
+   "explanation": "Use your rear-view mirror's anti-dazzle setting. It helps cut glare from lights behind you.",
+   "ruleRef": "DfT: Minimising headlight glare"
+  }
+ },
+ {
+  "id": "t08q26",
+  "kind": "wrong-ref",
+  "why": "GOV.UK flood advice says do not drive through flood water, which can hide uneven roads, broken drain covers and rubbish; not 'holes', and Rule 121 (brakes after water) is not the source.",
+  "source": "https://www.gov.uk/help-during-flood",
+  "expect": {
+   "explanation": "Do not drive through flood water. It can hide uneven roads, broken drain covers and rubbish. Find another way.",
+   "ruleRef": "GOV.UK: What to do before or during a flood"
+  }
+ },
+ {
+  "id": "t09q08",
+  "kind": "unclear",
+  "why": "Emergency areas have blue signs and only may have orange surfacing (Rule 270); first choice is the next exit or a service area, and wait behind the barrier where there is one (Rule 277).",
+  "source": "https://www.gov.uk/guidance/the-highway-code/motorways-253-to-273",
+  "expect": {
+   "explanation": "Leave at the next exit or go to a service area if you can. If not, go to an emergency area (blue sign with an orange SOS phone). Put your hazard lights on. If safe, get out on the side away from traffic and wait behind the barrier if there is one.",
+   "ruleRef": "HC Rules 270 and 277"
+  }
+ },
+ {
+  "id": "t09q09",
+  "kind": "unclear",
+  "why": "The HC says 'Do not overtake on the left' and calls the exception 'keeping up with your lane', so a learner who knows the rule could defend 'Never'. The explanation's 'you may pass on the left' also reads like permission to move left to overtake.",
+  "source": "https://www.gov.uk/guidance/the-highway-code/motorways-253-to-273",
+  "expect": {
+   "question": "On a motorway, when may you pass slower traffic in the lane to your right?",
+   "explanation": "Never move to a lane on your left to overtake. But in slow, queuing traffic you may keep up with your own lane, even if it passes the lane on your right."
+  }
+ },
+ {
+  "id": "t09q17",
+  "kind": "wrong-ref",
+  "why": "Rule 258 is about red X / lane-closure signals, not a car stopped in a live lane with no signals. Rule 126 is the closest rule for slowing so you can stop.",
+  "source": "https://www.gov.uk/guidance/the-highway-code/general-rules-techniques-and-advice-for-all-drivers-and-riders-103-to-158",
+  "expect": {
+   "ruleRef": "HC Rule 126"
+  }
+ },
+ {
+  "id": "t09q20",
+  "kind": "two-right",
+  "why": "The wrong option 'It is the law before every trip' can be defended, because Rule 97 says you MUST make sure your vehicle is roadworthy before setting off. 'Petrol is cheaper beforehand' is also arguably true. The marked answer's 'hard to fix' is not the HC's point.",
+  "source": "https://www.gov.uk/guidance/the-highway-code/rules-for-drivers-and-motorcyclists-89-to-102",
+  "expect": {
+   "answer": "A breakdown on a motorway is dangerous",
+   "absent": [
+    "Petrol is cheaper beforehand",
+    "It is the law before every trip"
+   ],
+   "explanation": "Check your car and fuel before you set off, especially for a motorway trip. A breakdown there leaves you close to fast traffic."
+  }
+ },
+ {
+  "id": "t09q22",
+  "kind": "unclear",
+  "why": "The question does not say 'red circle', and the HC light signals page also shows 'Temporary maximum speed advised' signals, so 'Give advice only' is right for some signs. The picture shows a red-ring limit, but the words should say so too.",
+  "source": "https://www.gov.uk/guidance/the-highway-code/motorways-253-to-273",
+  "expect": {
+   "question": "A speed limit in a red circle shows on a sign over your motorway lane. What does it mean?",
+   "answer": "It is a legal limit you must obey",
+   "absent": [
+    "Give advice only",
+    "Count traffic",
+    "Show the radio station"
+   ],
+   "explanation": "A speed limit in a red circle is the law, even if the road looks clear."
+  }
+ },
+ {
+  "id": "t10q03",
+  "kind": "wrong-fact",
+  "why": "The marked answer says 'Only when your exit road is clear', but Rule 174 also lets you enter to wait when turning right. The explanation says this, so answer and explanation contradict each other.",
+  "source": "https://www.gov.uk/guidance/the-highway-code/using-the-road-159-to-203",
+  "expect": {
+   "answer": "When your exit road or lane is clear"
+  }
+ },
+ {
+  "id": "t10q11",
+  "kind": "unclear",
+  "why": "The question says 'Double solid white lines' and then 'the line nearest you is solid', which is confusing. The answer's 'passing something very slow' is vague: Rule 129 only allows passing a stopped vehicle, or a cycle, horse or road maintenance vehicle going 10 mph or less.",
+  "source": "https://www.gov.uk/guidance/the-highway-code/general-rules-techniques-and-advice-for-all-drivers-and-riders-103-to-158",
+  "expect": {
+   "question": "There are double white lines along the middle of the road. The line nearest you is solid. What does this mean?",
+   "answer": "Do not cross it, except in a few cases such as turning into a side road"
+  }
+ },
+ {
+  "id": "t10q20",
+  "kind": "unclear",
+  "why": "'Always reverse from the main road' went beyond the HC; Rule 201 says do not reverse from a side road into a main road, Rule 200 says find a safe, quiet place to turn.",
+  "source": "https://www.gov.uk/guidance/the-highway-code/using-the-road-159-to-203",
+  "expect": {
+   "explanation": "Never reverse from a side road into a main road. Find a safe, quiet place to turn round.",
+   "ruleRef": "HC Rules 200 and 201"
+  }
+ },
+ {
+  "id": "t11q03",
+  "kind": "not-verifiable",
+  "why": "The unverified 'recognise it even covered in snow' claim is replaced by Know Your Traffic Signs' reason (greater prominence), and the reference names KYTS too.",
+  "source": "https://assets.publishing.service.gov.uk/media/656ef4271104cf0013fa74ef/know-your-traffic-signs-dft.pdf",
+  "expect": {
+   "explanation": "STOP is a red eight-sided sign (an octagon). Its special shape helps it stand out.",
+   "ruleRef": "HC: Traffic signs; Know Your Traffic Signs"
+  }
+ },
+ {
+  "id": "t11q05",
+  "kind": "not-verifiable",
+  "why": "The unverified 'reads even when snow-covered' claim is replaced by Know Your Traffic Signs' reason (greater prominence); Rule 172 covers giving way.",
+  "source": "https://assets.publishing.service.gov.uk/media/656ef4271104cf0013fa74ef/know-your-traffic-signs-dft.pdf",
+  "expect": {
+   "explanation": "The GIVE WAY sign is a triangle pointing down. Its special shape helps it stand out. Give way to traffic on the major road.",
+   "ruleRef": "HC Rule 172; Know Your Traffic Signs"
+  }
+ },
+ {
+  "id": "t11q06",
+  "kind": "wrong-ref",
+  "why": "Rule 124 gives the speed limit table but does not describe this sign; the Traffic signs page does.",
+  "source": "https://www.gov.uk/guidance/the-highway-code/traffic-signs",
+  "expect": {
+   "ruleRef": "HC: Traffic signs"
+  }
+ },
+ {
+  "id": "t11q10",
+  "kind": "wrong-ref",
+  "why": "Rule 175 is about stopping at the stop line; it does not give the light sequence. The Light signals page does.",
+  "source": "https://www.gov.uk/guidance/the-highway-code/light-signals-controlling-traffic",
+  "expect": {
+   "ruleRef": "HC: Light signals controlling traffic"
+  }
+ },
+ {
+  "id": "t11q11",
+  "kind": "wrong-ref",
+  "why": "Rule 175 does not mention red and amber together; the Light signals page does.",
+  "source": "https://www.gov.uk/guidance/the-highway-code/light-signals-controlling-traffic",
+  "expect": {
+   "ruleRef": "HC: Light signals controlling traffic"
+  }
+ },
+ {
+  "id": "t11q15",
+  "kind": "unclear",
+  "why": "The official meaning of this sign (and the app's own caption for the schoolAhead picture) is 'school or playground', so the wrong option 'A playground on the left' is too close to the real meaning.",
+  "source": "https://assets.publishing.service.gov.uk/media/5a82c0fee5274a2e8ab592d9/traffic-signs-images-image-details.xls",
+  "expect": {
+   "answer": "Children going to or from school or a playground ahead",
+   "absent": [
+    "A playground on the left"
+   ],
+   "explanation": "Slow down: children may be crossing on their way to or from school or a playground."
+  }
+ },
+ {
+  "id": "t11q17",
+  "kind": "not-verifiable",
+  "why": "No source says the red car 'shows the banned action'; the HC says red circles are mostly prohibitive, so keep 'mostly'.",
+  "source": "https://www.gov.uk/guidance/the-highway-code/traffic-signs",
+  "expect": {
+   "explanation": "Red circle signs mostly tell you what you must not do. This one means no overtaking."
+  }
+ },
+ {
+  "id": "t11q22",
+  "kind": "wrong-fact",
+  "why": "The official camera sign is a white rectangle with a black border and a black camera (DfT diagram 879), not a yellow box. The HC says it means cameras enforce traffic rules in the area, not only speed.",
+  "source": "https://www.gov.uk/guidance/the-highway-code/traffic-signs",
+  "expect": {
+   "question": "What does a white sign with a black camera symbol mean?",
+   "answer": "Cameras are used here to enforce traffic rules",
+   "explanation": "This sign warns that cameras are used in this area to enforce traffic rules.",
+   "ruleRef": "HC Traffic signs (Information signs)"
+  }
+ },
+ {
+  "id": "t12q12",
+  "kind": "unclear",
+  "why": "[high] The question asks 'Who must insure' but the right answer is not a person, so the options do not fit the question.",
+  "source": "https://www.gov.uk/guidance/the-highway-code/annex-3-motor-vehicle-documentation-and-learner-driver-requirements",
+  "expect": {
+   "question": "Before you drive any car, what must you make sure of?",
+   "answer": "That it is insured for you to drive it",
+   "absent": [
+    "The car's maker",
+    "The garage",
+    "The previous owner"
+   ],
+   "explanation": "You must not drive without insurance. Check the car's policy covers you, or that your own policy does."
+  }
+ },
+ {
+  "id": "t12q13",
+  "kind": "wrong-ref",
+  "why": "[low] HC Annex 3 doesn't mention an excess. MoneyHelper defines it the same way; quote taken from a search result, the page itself not opened (not verified).",
+  "source": "https://www.moneyhelper.org.uk/en/blog/insurance/what-is-excess-insurance",
+  "expect": {
+   "ruleRef": "MoneyHelper: What is excess in insurance?"
+  }
+ },
+ {
+  "id": "t12q15",
+  "kind": "wrong-ref",
+  "why": "[low] HC Annex 3 says when an MOT is needed, not what it shows; 'on that day only' isn't stated.",
+  "source": "https://www.gov.uk/getting-an-mot",
+  "expect": {
+   "explanation": "The MOT test checks that the car meets road safety and environmental standards.",
+   "ruleRef": "gov.uk: Getting an MOT"
+  }
+ },
+ {
+  "id": "t12q16",
+  "kind": "wrong-ref",
+  "why": "[low] HC Annex 3 covers the MOT exemption, not the tax one. The explanation itself is correct.",
+  "source": "https://www.gov.uk/sorn-statutory-off-road-notification | https://www.legislation.gov.uk/ukpga/1994/22/schedule/2",
+  "expect": {
+   "ruleRef": "gov.uk: When you need to make a SORN; VERA 1994 Sch 2 para 22"
+  }
+ },
+ {
+  "id": "t12q17",
+  "kind": "not-verifiable",
+  "why": "[med] No official source says what an insurer asks for at claim time, and HC Annex 3 (the ref) doesn't cover it.",
+  "source": "https://www.gov.uk/guidance/the-highway-code/annex-3-motor-vehicle-documentation-and-learner-driver-requirements",
+  "expect": {
+   "question": "A police officer asks to see your documents. Which of these must you be able to show?",
+   "answer": "Your driving licence",
+   "explanation": "When the police ask, you must be able to show your driving licence, insurance certificate and MOT certificate (if the car needs one)."
+  }
+ },
+ {
+  "id": "t12q19",
+  "kind": "unclear",
+  "why": "[low] The distractor 'Nothing on private roads' can be partly true; swap it for one that is clearly wrong.",
+  "source": "https://www.gov.uk/vehicle-insurance/driving-without-insurance | https://www.gov.uk/vehicle-insurance",
+  "expect": {
+   "answer": "A fine, points, and the car may be seized",
+   "absent": [
+    "Nothing on private roads"
+   ]
+  }
+ },
+ {
+  "id": "t12q20",
+  "kind": "unclear",
+  "why": "[high] The question asks 'Which part of the licence', but the right answer (keeping under 6 points) is not a part of the licence.",
+  "source": "https://www.gov.uk/penalty-points-endorsements/new-drivers",
+  "expect": {
+   "question": "What must a new driver avoid in the first 2 years after passing?",
+   "answer": "Getting 6 or more penalty points",
+   "absent": [
+    "Their photo being clear",
+    "The paper part",
+    "Their address details"
+   ],
+   "explanation": "If you get 6 or more points within 2 years of passing, your licence is cancelled. You must pass the theory and practical tests again."
+  }
+ },
+ {
+  "id": "t12q24",
+  "kind": "not-verifiable",
+  "why": "The explanation claimed more than the cited source; GOV.UK says DVLA cameras detect untaxed vehicles, tax and MOT can be checked online, and HC Annex 3 says roadside cameras detect uninsured drivers, so all three parts of the answer are now backed.",
+  "source": "https://www.gov.uk/guidance/the-highway-code/annex-3-motor-vehicle-documentation-and-learner-driver-requirements",
+  "expect": {
+   "explanation": "You can check a car's tax and MOT online on GOV.UK. DVLA uses cameras to find untaxed cars, and the Highway Code says roadside cameras can find uninsured drivers.",
+   "ruleRef": "HC Annex 3; GOV.UK: How DVLA uses ANPR; GOV.UK: Check the MOT history of a vehicle"
+  }
+ },
+ {
+  "id": "t12q26",
+  "kind": "unclear",
+  "why": "The old question was unclear (asked how to carry licence details); it now asks which documents you must be able to show a police officer, keeping the source's 'if needed' for the MOT, with the seven-day rule in the explanation (HC Annex 3).",
+  "source": "https://www.gov.uk/guidance/the-highway-code/annex-3-motor-vehicle-documentation-and-learner-driver-requirements",
+  "expect": {
+   "question": "A police officer asks to see your documents. Which must you be able to show?",
+   "answer": "Your licence, insurance certificate and MOT certificate (if needed)",
+   "absent": [
+    "Carry the paper part always",
+    "A photo of it is enough",
+    "Licences cannot be checked"
+   ],
+   "explanation": "You must be able to show your driving licence, insurance certificate and (if needed) MOT certificate when a police officer asks. If you cannot, you may be asked to take them to a police station within seven days.",
+   "ruleRef": "HC Annex 3 (Production of documents)"
+  }
+ },
+ {
+  "id": "t13q01",
+  "kind": "wrong-ref",
+  "why": "[med, free sample] HC Annex 7 says 'about twice a second', not '100 to 120 per minute'. The 100-120 figure is St John Ambulance's (NHS CPR page redirects there). The real test follows the HC wording, so show both.",
+  "source": "https://www.gov.uk/guidance/the-highway-code/annex-7-first-aid-on-the-road | https://www.sja.org.uk/first-aid-advice/cpr/",
+  "expect": {
+   "answer": "100 to 120 a minute (about twice a second)",
+   "explanation": "Push hard and fast in the centre of the chest, about twice a second. That is 100 to 120 pushes a minute.",
+   "ruleRef": "HC Annex 7; St John Ambulance: How to do CPR"
+  }
+ },
+ {
+  "id": "t13q06",
+  "kind": "wrong-fact",
+  "why": "[med] The marked answer narrows the rule to 'to keep them breathing' and leaves out 'and you are trained to do so', which HC Rule 283 says. The neck-injury reason is not in the HC.",
+  "source": "https://www.gov.uk/guidance/the-highway-code/breakdowns-and-incidents-274-to-287",
+  "expect": {
+   "answer": "No, unless it is essential and you are trained to do so",
+   "explanation": "Do not take off a motorcyclist's helmet unless it is essential and you are trained to do so.",
+   "ruleRef": "HC Rule 283"
+  }
+ },
+ {
+  "id": "t13q17",
+  "kind": "not-verifiable",
+  "why": "[med] The HC gives the rule (no food or drink) but no reason; no official source found for the 'anaesthetic / hospital treatment' reason.",
+  "source": "https://www.gov.uk/guidance/the-highway-code/annex-7-first-aid-on-the-road",
+  "expect": {
+   "question": "An injured person asks for a drink. What should you do?",
+   "answer": "Do not give them anything to eat or drink",
+   "absent": [
+    "They might spill it",
+    "It wastes time",
+    "They may not like it"
+   ],
+   "explanation": "Do not give them anything to eat or drink. Keep them warm and reassure them."
+  }
+ },
+ {
+  "id": "t13q27",
+  "kind": "not-verifiable",
+  "why": "St John Ambulance lists pale, cold, clammy skin and fast, shallow breathing as signs of shock, not confusion; the ruleRef stays 'St John Ambulance: shock' (pinned by an earlier correction).",
+  "source": "https://www.sja.org.uk/first-aid-advice/shock/",
+  "expect": {
+   "question": "Someone at a crash has pale, cold, clammy skin and fast, shallow breathing. What may be happening?",
+   "explanation": "These can be signs of shock. Call 999, keep them warm and try to keep them calm."
+  }
+ },
+ {
+  "id": "t14q02",
+  "kind": "not-verifiable",
+  "why": "No source says a heavy load makes steering take more effort; Rule 98 and Annex 6 say a load may mean adjusting headlights so they do not dazzle, so the explanation uses their wording.",
+  "source": "https://www.gov.uk/guidance/the-highway-code/rules-for-drivers-and-motorcyclists-89-to-102 | https://www.gov.uk/guidance/the-highway-code/annex-6-vehicle-maintenance-safety-and-security",
+  "expect": {
+   "question": "Your car is heavily loaded. What may you need to adjust?",
+   "answer": "Your headlights, so they do not dazzle others",
+   "absent": [
+    "The car gets faster",
+    "Nothing changes",
+    "Only fuel use changes"
+   ],
+   "explanation": "A heavy load may mean you need to adjust your headlights. They must be set so they do not dazzle other road users.",
+   "ruleRef": "HC Rule 98 and Annex 6"
+  }
+ },
+ {
+  "id": "t14q03",
+  "kind": "wrong-ref",
+  "why": "Rule 98 says nothing about drag or fuel; the Vehicle Certification Agency (DfT) fuel-efficient driving tips say roof boxes and racks add drag and fuel use at speed, so the reference points to the official page.",
+  "source": "https://www.vehicle-certification-agency.gov.uk/fuel-consumption-co2/fuel-consumption-guide/fuel-efficient-driving-tips/",
+  "expect": {
+   "explanation": "Roof racks and boxes add drag (wind resistance). This raises fuel use, most of all at speed. Take them off when you are not using them.",
+   "ruleRef": "Vehicle Certification Agency (DfT): Fuel efficient driving tips"
+  }
+ },
+ {
+  "id": "t14q06",
+  "kind": "wrong-ref",
+  "why": "[high] HC Rule 98 does not mention a breakaway cable (it only requires a secondary coupling), and 'small trailer' misleads: small trailers often have no brakes (gov.uk says brakes are optional under 750kg), so there may be no brake for the cable to apply.",
+  "source": "https://www.gov.uk/guidance/tow-a-trailer-with-a-car-safety-checks | https://www.gov.uk/towing-with-car/trailer-and-towing-equipment",
+  "expect": {
+   "question": "What is a breakaway cable on a trailer for?",
+   "answer": "It puts the trailer's brakes on if the trailer comes off the car",
+   "explanation": "If the trailer comes off the car, the cable puts the trailer's brakes on. You must use a breakaway cable or a secondary coupling.",
+   "ruleRef": "gov.uk: Tow a trailer with a car: safety checks"
+  }
+ },
+ {
+  "id": "t14q08",
+  "kind": "unclear",
+  "why": "[med] The answer to 'Why' is 'the handbook says', which goes in a circle, and the question assumes pressures always go up.",
+  "source": "https://www.gov.uk/guidance/the-highway-code/annex-6-vehicle-maintenance-safety-and-security",
+  "expect": {
+   "question": "You are carrying a heavy load. What should you do about your tyre pressures?",
+   "answer": "Set them to the handbook figure for that load",
+   "absent": [
+    "To make the ride softer",
+    "To save the spare tyre",
+    "It is not needed"
+   ],
+   "explanation": "Tyres must be pumped up to the maker's figure for the load you carry. Check the car's handbook."
+  }
+ },
+ {
+  "id": "t14q09",
+  "kind": "wrong-ref",
+  "why": "[low] HC Rule 98 only says a load must not stick out dangerously; the marking duty is in the Construction and Use Regulations.",
+  "source": "https://www.legislation.gov.uk/uksi/1986/1078/schedule/12 | https://www.legislation.gov.uk/uksi/1986/1078/regulation/82",
+  "expect": {
+   "explanation": "If a load sticks out more than 1 metre at the back, the law says it must be made clearly visible to other road users.",
+   "ruleRef": "Road Vehicles (Construction and Use) Regulations 1986, reg 82 and Sch 12 para 4"
+  }
+ },
+ {
+  "id": "t14q13",
+  "kind": "wrong-fact",
+  "why": "The right-hand-lane ban applies only on motorways with 3 or more lanes (Rule 265); the 60 mph towing limit is in the Rule 124 table.",
+  "source": "https://www.gov.uk/guidance/the-highway-code/motorways-253-to-273",
+  "expect": {
+   "explanation": "When towing, the limit is 60 mph on motorways. On a motorway with 3 or more lanes, you must not use the right-hand lane.",
+   "ruleRef": "HC Rules 124 and 265"
+  }
+ },
+ {
+  "id": "t14q17",
+  "kind": "unclear",
+  "why": "[low] Awkward wording; the fact (2.55 m) is right.",
+  "source": "https://www.gov.uk/towing-with-car/weight-and-width-limits",
+  "expect": {
+   "question": "What is the widest trailer a car may tow?",
+   "explanation": "The widest trailer any vehicle may tow is 2.55 metres."
+  }
+ },
+ {
+  "id": "t14q18",
+  "kind": "wrong-fact",
+  "why": "[low] The explanation says extra weight 'always' means more stopping distance; the HC says it 'may' increase significantly.",
+  "source": "https://www.gov.uk/guidance/the-highway-code/rules-for-drivers-and-motorcyclists-89-to-102",
+  "expect": {
+   "explanation": "Towing can make your stopping distance much longer. Leave bigger gaps."
+  }
+ }
+]
