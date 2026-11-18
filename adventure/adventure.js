@@ -33,6 +33,30 @@
     // how far left/right each stage sits, in turn: a gentle S-bend like a country road
     bends: [0, 0.7, 1, 0.7, 0, -0.7, -1, -0.7] };
 
+  // An old offline copy (issue #75): the first open after a long gap can get this page new and
+  // coach.js from the old copy, and the page then says "Adventure needs an update". The offline
+  // copy refreshes itself in the background, so ONE reload a moment later normally fixes it.
+  var UPDATE = { reloadAfterMs: 2500,                 // time for the background refresh to land
+                 onceKey: 'tt.adv.updateReload' };    // sessionStorage: reload once per visit, never loop
+
+  // reloadWhenUpdated(win): reload once, when the new version takes over (the service
+  // worker's controllerchange) or after UPDATE.reloadAfterMs, whichever is first. Never twice in
+  // one visit, so a copy that truly cannot update just shows the message and its Reload button.
+  function reloadWhenUpdated(win) {
+    try {
+      var ss = win.sessionStorage;
+      if (!ss || ss.getItem(UPDATE.onceKey)) return false;
+      ss.setItem(UPDATE.onceKey, '1');
+      var done = false, go = function () { if (!done) { done = true; win.location.reload(); } };
+      if (win.navigator && win.navigator.serviceWorker) win.navigator.serviceWorker.addEventListener('controllerchange', go);
+      win.setTimeout(go, UPDATE.reloadAfterMs);
+      return true;
+    } catch (e) {
+      // sessionStorage blocked (private browsing): no automatic reload; the Reload button still works
+      return false;
+    }
+  }
+
   // ---------- 2. pure helpers ----------
 
   // The app saves 'light', 'dark' or 'auto'. Returns the data-theme value for <html>,
@@ -89,12 +113,16 @@
 
   // ---------- two tabs (issue #47) ----------
   // The app saves her WHOLE record from what it loaded. An app tab left open while she plays here
-  // can later save its older copy over this page's answers, XP and flags (it keeps only the
-  // 'adventure' part). So this page remembers what it saved while open ("mine") and puts back
+  // can later save its older copy over this page's answers, XP, flags and (when that tab runs
+  // without coach.js, issue #75) stages. So this page remembers what it saved while open ("mine") and puts back
   // anything a later save dropped.
-  //   mine: {attempts: [the attempts this page added], flags: {qid: {on, t}}}
+  //   mine: {attempts: [the attempts this page added], flags: {qid: {on, t}},
+  //          stages: {stageId: the stage record this page saved}}   (stages: issue #75)
   // healRecord(stored, mine, coach, now) -> a NEW record with mine put back, or null when nothing
   // is missing (then nothing needs saving).
+  //   - a stage is missing when the stored copy lacks it or has less of it (coach.mergeAdventure
+  //     joins them, best of each); an app tab without coach.js once saved over three of Catie's
+  //     passed stages, and only her answers came back
   //   - an answer is missing when no attempt has the same question and time; it goes back in
   //     time order, with its XP, and today's goal day is recorded if it now meets her goal
   //   - flags are joined by time with coach.mergeFlags, so a later flag or un-flag in the app wins
@@ -119,8 +147,15 @@
       if (j.flags[id]) rf[id] = j.flags[id];
       if (j.cleared[id]) fc[id] = j.cleared[id];
     });
-    if (!lost.length && !flagsMoved) return null;
+    // stages: this page's joined with the stored ones; changed only when the stored copy lost some
+    var adv = s.adventure, stagesMoved = false;
+    if (Object.keys(m.stages || {}).length) {
+      adv = coach.mergeAdventure(s.adventure, { stages: m.stages });
+      stagesMoved = JSON.stringify(adv) !== JSON.stringify(coach.mergeAdventure(s.adventure, {}));
+    }
+    if (!lost.length && !flagsMoved && !stagesMoved) return null;
     var b = Object.assign({}, s, { revisionFlags: rf, flagCleared: fc, updatedAt: now });
+    if (stagesMoved) b.adventure = adv;
     if (lost.length) {
       // back in the order she answered (a stable sort keeps same-time answers in place), newest kept
       b.attempts = have.concat(lost).map(function (a, i) { return { a: a, i: i }; })
@@ -265,7 +300,7 @@
 
   var api = { APP: APP, WORLD_COLOURS: WORLD_COLOURS, MAP: MAP, themeFor: themeFor, readJSON: readJSON, writeJSON: writeJSON,
     learnerFrom: learnerFrom, blobKey: blobKey, withContent: withContent, withAnswer: withAnswer, withFlag: withFlag,
-    healRecord: healRecord, forgetWiped: forgetWiped,
+    healRecord: healRecord, forgetWiped: forgetWiped, reloadWhenUpdated: reloadWhenUpdated, UPDATE: UPDATE,
     withStage: withStage, shuffle: shuffle, newPlay: newPlay, isComeback: isComeback, answerStep: answerStep, tally: tally,
     passNeed: passNeed, nodeLayout: nodeLayout, roadPath: roadPath, starsSummary: starsSummary, worldSummary: worldSummary,
     stageName: stageName, previousStage: previousStage, nextStage: nextStage, worldIndexOf: worldIndexOf };
@@ -338,7 +373,7 @@
   // open, for putting back after an app tab's older save (healRecord, issue #47)
   var S = { learner: null, route: [], status: null, source: '', world: 0, play: null, q: null, order: null,
     picked: -1, shownAt: 0, last: null, sheet: null, reduced: false, praise: 0, feedback: '',
-    settings: {}, mine: { attempts: [], flags: {} } };
+    settings: {}, mine: { attempts: [], flags: {}, stages: {} } };
   var C = null, A = null;   // TTCoach and its ADVENTURE numbers, once the scripts have loaded
   var byId = {};            // the bank, by question id
   // A question on the route: the bank's, or a sign world's (issue #48: signs.js builds it from the
@@ -453,6 +488,7 @@
       if (!C || typeof C.adventureRoute !== 'function' || !C.ADVENTURE || typeof C.streakAward !== 'function' || typeof C.readingStyle !== 'function') {
         message('Adventure needs an update', 'This copy of the app is older than Adventure mode. Reload the page; if this stays, open Theory Trainer once so it can update itself.',
           '<button class="btn primary" type="button" data-act="reload">Reload</button>');
+        reloadWhenUpdated(root);
         return;
       }
       A = C.ADVENTURE;
@@ -758,7 +794,9 @@
   function finishStage() {
     var p = S.play, r = tally(p), sc = C.adventureScore(r), now = Date.now();
     var before = S.status;
-    save(withStage(blob(), C, p.stage, r, now));
+    var withIt = withStage(blob(), C, p.stage, r, now);
+    save(withIt);
+    S.mine.stages[p.stage] = withIt.adventure.stages[p.stage];   // remembered in case an app tab saves over it (#75)
     refresh(); paintStars();
     track('adventure_stage_end', null, { stage: p.stage, world: p.world, correct: r.correct, total: r.total, pct: sc.pct, passed: sc.passed, stars: sc.stars, bestCombo: p.bestCombo });
     S.last = { play: p, r: r, sc: sc };

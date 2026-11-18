@@ -807,11 +807,21 @@ window.TTAdv = (function(){
     return out;
   }
 
+  // Adventure progress without coach.js (issue #75): every stage in either copy, the saved copy's
+  // where both have it. The app never changes a stage itself, so the saved copy is never older.
+  function keepStages(s, n){
+    var ps = obj(s), pn = obj(n);
+    return Object.assign({}, pn, ps, {stages: Object.assign({}, obj(pn.stages), obj(ps.stages))});
+  }
+
   // join(saved, next, coach, o) -> the record persist() writes: a NEW object (neither input changes).
   //   saved: her record as it is in storage now. Another tab (Adventure, or the app open twice) may
   //          have added to it since this tab last read it. May be missing or junk.
   //   next:  the record built from this tab's state
-  //   coach: TTCoach (the flag and Adventure rules live there: one copy for syncing and this)
+  //   coach: TTCoach (the flag and Adventure rules live there: one copy for syncing and this).
+  //          May be missing (coach.js older than the page for one open, issue #75): the join still
+  //          runs, so nothing another tab saved is lost. Flags are then this tab's, stages the
+  //          union (keepStages), and goal days are not trimmed.
   //   o.xpSeen:  the XP her record had when this tab last read or saved it
   //   o.replace: true when she replaced her answers on purpose (Reset progress, Import backup)
   // Nothing either copy holds is lost:
@@ -831,12 +841,16 @@ window.TTAdv = (function(){
     else if(Array.isArray(s.attempts) && !s.attempts.length && s.updatedAt)
       out.attempts = joinAttempts([], mine.filter(function(x){ return x && +x.t > +s.updatedAt; }));
     else out.attempts = joinAttempts(s.attempts, mine);
-    var f = joinFlags(s, n, coach);
-    out.revisionFlags = f.flags; out.flagCleared = f.cleared;
-    if(s.adventure !== undefined || n.adventure !== undefined) out.adventure = coach.mergeAdventure(s.adventure, n.adventure);
+    if(coach){
+      var f = joinFlags(s, n, coach);
+      out.revisionFlags = f.flags; out.flagCleared = f.cleared;
+    }
+    if(s.adventure !== undefined || n.adventure !== undefined)
+      out.adventure = coach ? coach.mergeAdventure(s.adventure, n.adventure) : keepStages(s.adventure, n.adventure);
     var seen = typeof opt.xpSeen === 'number' ? opt.xpSeen : (+s.xp || 0);
     out.xp = Math.max(0, (+s.xp || 0) + (+n.xp || 0) - seen);
-    if(s.streak || n.streak) out.streak = joinStreak(obj(s.streak), obj(n.streak), coach.coachDefaults.goalDaysKept);
+    // goalDaysKept lives in coach.js; without it every goal day is kept (slice(-undefined) keeps all)
+    if(s.streak || n.streak) out.streak = joinStreak(obj(s.streak), obj(n.streak), coach ? coach.coachDefaults.goalDaysKept : undefined);
     return out;
   };
 
@@ -3461,11 +3475,12 @@ class Component extends DCLogic {
     const key = this.BASE+'.d.'+s.userId;
     let raw = null, rec = user;
     try { raw = localStorage.getItem(key); } catch(e) { raw = null; /* storage blocked: nothing to join */ }
-    // (No coach.js, which holds the joining rules: saved whole, as before issue #51.)
-    if(raw !== this._rawSeen && window.TTCoach){
+    // Joined with or without coach.js (issue #75: a tab without it used to save whole, and that
+    // save wiped the Adventure stages another tab had just saved).
+    if(raw !== this._rawSeen){
       let stored = null;
       try { stored = JSON.parse(raw); } catch(e) { stored = null; /* unreadable: nothing to join; this tab's copy is saved whole */ }
-      rec = TTAdv.join(stored, user, TTCoach, {xpSeen: this._xpSeen, replace: !!replace});
+      rec = TTAdv.join(stored, user, window.TTCoach, {xpSeen: this._xpSeen, replace: !!replace});
     }
     const text = JSON.stringify(rec);
     try { localStorage.setItem(key, text); localStorage.setItem(this.BASE+'.content', JSON.stringify(content)); }
@@ -3526,12 +3541,10 @@ class Component extends DCLogic {
     catch(err){ console.warn('Another tab saved her progress, but this tab could not read it (' + String(err.message||err) + '). This tab keeps what it shows, and its next save still joins with the saved copy; reload the app to see the other tab’s answers.'); return; }
     if(!blob || typeof blob !== 'object') return;
     // The other tab's copy, with the joined parts (answers, flags, stars, XP, streak) joined with this
-    // tab's own. No coach.js (which holds the joining rules): its copy as it is.
+    // tab's own; without coach.js too (issue #75: TTAdv.join copes without it).
     const next = this.recordState(this.state.userId, blob);
-    if(window.TTCoach){
-      const rec = TTAdv.join(blob, this.myRecord(), TTCoach, {xpSeen: this._xpSeen});
-      TTAdv.JOINED.forEach(k=>{ if(rec[k] !== undefined) next[k] = rec[k]; });
-    }
+    const rec = TTAdv.join(blob, this.myRecord(), window.TTCoach, {xpSeen: this._xpSeen});
+    TTAdv.JOINED.forEach(k=>{ if(rec[k] !== undefined) next[k] = rec[k]; });
     // This tab has now seen that copy; what it shows is that copy plus anything of its own not saved yet.
     this._rawSeen = raw; this._xpSeen = blob.xp || 0;
     this.setState(next);

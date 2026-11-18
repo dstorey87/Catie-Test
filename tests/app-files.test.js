@@ -1041,10 +1041,12 @@ const CH = (() => { const ctx = { window: {} }; welcomeAndChoices.forEach(s => v
 // (the cloud sync's merge), with the real coach.js as TTCoach, over a fake localStorage (store).
 // ls: a localStorage to use instead (the two-tab tests pass one that tells the other tabs).
 // Every write is kept in me.writes ([key, value]) and every event in me.events.
-function fakeApp(store, ls) {
-  const writes = [];
+// o.noCoach: the app as it runs when coach.js is older than the page (the page sets TTCoach to
+// undefined for that one open, issue #75).
+function fakeApp(store, ls, o) {
+  const writes = [], C = (o && o.noCoach) ? undefined : coach;
   const localStorage = ls || { getItem: k => (k in store ? store[k] : null), setItem: (k, v) => { store[k] = String(v); writes.push([k, String(v)]); } };
-  const ctx = { window: { TTCoach: coach }, localStorage, JSON, Date, Object, TTCoach: coach, console };
+  const ctx = { window: { TTCoach: C }, localStorage, JSON, Date, Object, TTCoach: C, console };
   vm.runInNewContext(advSrc, ctx);
   ctx.TTAdv = ctx.window.TTAdv;
   welcomeAndChoices.forEach(s => vm.runInNewContext(s, ctx));
@@ -1148,9 +1150,9 @@ function browser(record) {
     } });
   const b = { store, log, tabs, rec: () => JSON.parse(store[KEY1]),
     // The app, open in a tab: loads her record the way it opens (loadUser), then listens.
-    app(name) {
+    app(name, o) {
       const tab = { name, inbox: [] }; tabs.push(tab);
-      tab.me = fakeApp(store, storage(tab));
+      tab.me = fakeApp(store, storage(tab), o);
       tab.me.loadUser('u1');
       tab.inbox.length = 0;                                     // what it heard before it opened: nothing
       tab.hear = e => tab.me.heardSave(e);
@@ -1196,6 +1198,42 @@ function appAnswer(me, q, ok, now) {
   me.set({ attempts: s.attempts.concat([{ q, t: now, ok, topic: 1, p: 0 }]), xp: s.xp + (ok ? 10 : 0),
     streak: coach.streakAward(s.streak, s.attempts, 1, coach.dailyGoal(s.settings), now) });
 }
+
+// ---------- Issue #75: stars lost to an app tab running without coach.js ----------
+// What happened to Catie on 2026-11-18: the first open after an update ran the new page with the
+// old coach.js, so the page switched TTCoach off for that tab. That tab stayed open, missed
+// Adventure's saves (a tab in the background is not always told), then saved its older copy WHOLE.
+// The Adventure tab put her answers back (healRecord) but not her stages, and the sync sent the
+// record with no stars to her account. Now the app joins every save, coach.js or not, and the
+// Adventure page puts back stages it saved as well as answers.
+test('adventure (#75): an app tab without coach.js never saves over Adventure stages', () => {
+  const b = browser(startRecord());
+  const stale = b.app('app-no-coach', { noCoach: true });   // opened first, coach.js too old
+  const adv = b.adventure('adventure');
+  for (let i = 0; i < 7; i++) adv.answer('a' + i, true, noon25 + i * 1000);
+  adv.stage('w1s2', { correct: 7, total: 7 }, noon25 + 8000);
+  stale.inbox = []; b.tabs[0].inbox.length = 0;               // the background tab heard nothing
+  appAnswer(stale, 'p9', true, noon25 + 20000);               // ...then saves its older copy
+  b.deliver();
+  const rec = b.rec();
+  assert.ok(rec.adventure && rec.adventure.stages.w1s2 && rec.adventure.stages.w1s2.stars === 3, 'the new stage survived: ' + JSON.stringify(rec.adventure));
+  assert.ok(rec.adventure.stages.w1s1, 'the old stage survived');
+  assert.equal(rec.attempts.filter(a => a.src === 'adventure').length, 7, 'Adventure\'s answers survived');
+  assert.ok(rec.attempts.some(a => a.q === 'p9'), 'the app\'s own answer is saved');
+});
+
+test('adventure (#75): TTAdv.join works without coach.js and keeps every stage', () => {
+  const saved = { adventure: { stages: { w1s1: { stars: 3, passed: true } } }, attempts: [{ q: 'a', t: 2 }], xp: 30 };
+  const next = { attempts: [{ q: 'b', t: 3 }], xp: 20, notes: { x: 1 } };
+  const out = plain(ADV.join(saved, next, undefined, { xpSeen: 10 }));
+  assert.deepEqual(out.adventure, saved.adventure, 'stored stages kept');
+  assert.deepEqual(out.attempts.map(a => a.q), ['a', 'b'], 'answers from both');
+  assert.equal(out.xp, 40, 'saved XP plus what this tab earned');
+  assert.deepEqual(out.notes, { x: 1 });
+  // a stage only this tab has (it read it before the other copy lost it) is kept too
+  const both = plain(ADV.join({ adventure: { stages: { w1s1: { stars: 1 } } } }, { adventure: { stages: { w1s2: { stars: 2 } } } }, undefined, {}));
+  assert.deepEqual(Object.keys(both.adventure.stages).sort(), ['w1s1', 'w1s2']);
+});
 
 test('#51 item 1: the app hears Adventure save and shows her new answers, XP, flags and stars at once, without saving', () => {
   const b = browser(startRecord()), me = b.app('app'), adv = b.adventure('adventure');
@@ -1400,7 +1438,10 @@ test('#51: an older coach.js (one open while an update arrives) counts as not lo
   assert.match(app, /const dyn = window\.TTCoach \? TTCoach\.readingStyle\(st\) : \{\}/);
   assert.match(app, /const myGoal = window\.TTCoach \? TTCoach\.dailyGoal\(st\) : st\.dailyGoal;/);
   assert.match(methodNamed('award'), /const stk = window\.TTCoach \? TTCoach\.streakAward\(/);
-  assert.match(methodNamed('persist'), /if\(raw !== this\._rawSeen && window\.TTCoach\)\{/);
+  // persist joins with or without coach.js (issue #75: the old `&& window.TTCoach` gate made a
+  // tab without it save whole, over Adventure's stages); TTAdv.join copes with no coach
+  assert.match(methodNamed('persist'), /if\(raw !== this\._rawSeen\)\{/);
+  assert.match(methodNamed('persist'), /TTAdv\.join\(stored, user, window\.TTCoach,/);
 });
 
 test('#51 item 1: the app listens for other tabs\' saves, and the storage event only reads', () => {
