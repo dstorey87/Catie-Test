@@ -480,6 +480,21 @@ test('#47 two tabs: nothing lost means nothing written; nothing is ever counted 
   assert.equal(adv.healRecord(appOld(), { attempts: [], flags: {} }, coach, T0), null, 'nothing saved here yet');
 });
 
+test('#75 two tabs: a stage this page saved that an app tab saved over is put back', () => {
+  // mine.stages: the stages this page finished while open (withStage's result for each).
+  const stages = { w1s2: { best: 1, stars: 3, passed: true, plays: 1, lastAt: T0 + 3000 } };
+  const out = adv.healRecord(appOld(), Object.assign(mine(), { stages }), coach, T0 + 10000);
+  assert.deepEqual(out.adventure.stages.w1s2, stages.w1s2, 'the lost stage is back');
+  assert.deepEqual(out.adventure.stages.w1s1, appOld().adventure.stages.w1s1, 'the stage already saved is kept');
+  // all there (and a better replay saved since): nothing to put back, no save
+  const better = Object.assign(appOld(), { attempts: appOld().attempts.concat(mine().attempts), revisionFlags: { v2: { t: T0 + 2500, src: 'adventure' } },
+    adventure: { stages: { w1s1: { passed: true }, w1s2: Object.assign({}, stages.w1s2, { plays: 2, lastAt: T0 + 4000 }) } } });
+  assert.equal(adv.healRecord(better, Object.assign(mine(), { stages }), coach, T0 + 11000), null);
+  // a record with no adventure at all gets the stages back
+  const none = Object.assign(appOld(), { adventure: undefined });
+  assert.deepEqual(adv.healRecord(none, { attempts: [], flags: {}, stages }, coach, T0).adventure.stages, stages);
+});
+
 test('#47 two tabs: a later choice in the app wins, and a wiped history stays wiped', () => {
   // She un-flagged it in the app after flagging it here: the un-flag stands.
   const unflagged = Object.assign(appOld(), { flagCleared: { v2: T0 + 3000 } });
@@ -562,4 +577,29 @@ test('#65: the road is drawn only inside the map, so its top never reaches up in
   assert.ok(widePx('.map', 'margin')[0] > 0, 'a gap between the last row of tabs and the map');
   // The road still starts at the top edge of the drawing (it comes in from above the map).
   assert.match(adv.roadPath(adv.nodeLayout(3)), /^M150 0 C/);
+});
+
+// ---------- #75: "Adventure needs an update" reloads itself once ----------
+// The first open after a long gap can get this page new and coach.js from the old offline copy.
+// The page reloads ONCE (when the new version takes over, or after UPDATE.reloadAfterMs), never in a loop.
+test('#75 an old offline copy: the page reloads itself once, never twice in a visit', () => {
+  const fakeWin = () => {
+    const ss = {}, w = { reloads: 0, timers: [], listeners: [] };
+    w.sessionStorage = { getItem: k => (k in ss ? ss[k] : null), setItem: (k, v) => { ss[k] = String(v); } };
+    w.location = { reload: () => { w.reloads++; } };
+    w.setTimeout = (f, ms) => { w.timers.push({ f, ms }); };
+    w.navigator = { serviceWorker: { addEventListener: (ev, f) => w.listeners.push({ ev, f }) } };
+    return w;
+  };
+  const w = fakeWin();
+  assert.equal(adv.reloadWhenUpdated(w), true, 'first time: armed');
+  assert.equal(w.timers[0].ms, adv.UPDATE.reloadAfterMs, 'waits the configured time');
+  assert.equal(w.listeners[0].ev, 'controllerchange');
+  w.listeners[0].f(); w.timers[0].f();
+  assert.equal(w.reloads, 1, 'the new version taking over and the timer reload once between them');
+  assert.equal(adv.reloadWhenUpdated(w), false, 'after the reload, still old: no second reload (no loop)');
+  assert.equal(w.reloads, 1);
+  // sessionStorage blocked: no automatic reload, and no crash (the Reload button still works)
+  const blocked = fakeWin(); Object.defineProperty(blocked, 'sessionStorage', { get() { throw new Error('blocked'); } });
+  assert.equal(adv.reloadWhenUpdated(blocked), false);
 });
