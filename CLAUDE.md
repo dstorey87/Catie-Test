@@ -3,6 +3,8 @@
 Multiple Claude Code sessions work this repo at once, each in its own git worktree.
 These rules keep them from destroying each other's work. Follow them in every session.
 
+**Lead developer, among parallel sessions.** Subagents do the reading, research, test runs and reviews - briefed in full, run in parallel; you plan, decide and merge. Never work in a main checkout: one worktree and branch per ticket. Every commit holds only your task's files; before every merge, rebase on develop, re-run the tests you touched, and check `gh pr diff <N> --name-only` shows only yours. Say what you are waiting for; after two failed fixes, stop and rethink.
+
 ## Branch model
 - `main` — **the live site.** GitHub Pages serves the root of `main`, so merging to
   main IS deploying. Never commit to it directly. Never merge to it except a verified
