@@ -1494,7 +1494,10 @@ test('#38 item 1: stages played on each device are joined stage by stage, whiche
   me.mergeSnapshot(otherDevice('u1', { updatedAt: 5, adventure: { stages: { w1s2 } } }));
   const saved = JSON.parse(store['theoryTrainer.d.u1']);
   assert.deepEqual(Object.keys(saved.adventure.stages).sort(), ['w1s1', 'w1s2']);
-  assert.equal(saved.xp, 70, 'this newer record keeps its own XP');
+  // Since #77 the merge keeps the higher XP (it used to keep the newer copy's, 70): XP never goes
+  // down in a merge, and this device's own answer is kept beside the other device's.
+  assert.equal(saved.xp, 90, 'XP never goes down in a merge');
+  assert.equal(saved.attempts.length, 1, 'this device\'s answer is kept');
 });
 
 test('#38 item 1: progress the server lacks is sent back; a learner who never played gets no entry', () => {
@@ -1512,7 +1515,114 @@ test('#38 item 1: progress the server lacks is sent back; a learner who never pl
   const me2 = fakeApp(store2);
   me2.mergeSnapshot(otherDevice('u2'));
   assert.equal(JSON.parse(store2['theoryTrainer.d.u2']).adventure, undefined);
-  assert.match(method('mergeSnapshot(b){', 'pullCloud(){'), /TTCoach\.mergeAdventure\(loc\.adventure, ?remote\.adventure\)/, 'uses the one coach.js rule');
+  // The merge itself lives in TTAdv.joinDevices now (issue #77); it still uses the one coach.js rule.
+  assert.match(method('mergeSnapshot(b){', 'pullCloud(){'), /TTAdv\.joinDevices\(loc, ?remote, ?window\.TTCoach\)/, 'mergeSnapshot joins through TTAdv.joinDevices');
+  assert.match(advSrc, /coach\.mergeAdventure\(l\.adventure, ?r\.adventure\)/, 'joinDevices uses the one coach.js rule');
+});
+
+// ---------- Issue #77: signing in on a new device wiped her progress on the server ----------
+// What happened on the live site on 2026-11-19: a fresh browser (a private window) signed in to an
+// account whose server copy held real progress. Opening the learner saved an EMPTY record at once,
+// stamped with the time now (loadUser -> persist), so it was newer than the server's copy. The
+// cloud merge kept the newer copy whole, empty beat real, and the sync sent the empty record up.
+// These run the app's real loadUser(), mergeSnapshot() and snapshot() over a fake localStorage.
+const DAY = 86400000;
+// Her record as the server holds it: answers, a mock passed, XP, a streak day and a stage.
+const serverRecord = () => ({ settings: { learnerName: 'Catie', onboardedAt: '2026-11-18' }, xp: 1120, updatedAt: Date.now() - DAY,
+  attempts: [{ q: 't01q01', t: Date.now() - DAY - 3000, ok: true, topic: 1, p: 0 }, { q: 't01q02', t: Date.now() - DAY - 2000, ok: false, topic: 1, p: 2 },
+    { q: 't02q01', t: Date.now() - DAY - 1000, ok: true, topic: 2, p: 1 }],
+  tests: [{ date: '2026-11-18', kind: 'mock', pass: true, score: 44, total: 50, source: 'app' }],
+  streak: { count: 1, last: '2026-11-18', todayDate: '2026-11-18', todayN: 3, goalDays: ['2026-11-18'] },
+  revisionFlags: {}, flagCleared: {}, leitner: { t01q01: { box: 2, seen: 1, wrong: 0, correct: 1 } },
+  adventure: { stages: { w1s1: { best: 1, stars: 3, passed: true, plays: 1, lastAt: Date.now() - DAY } } } });
+const fromServer = rec => ({ v: 2, users: [{ id: 'u1', name: 'Catie' }], data: { u1: rec } });
+// fakeApp plus snapshot(), the copy the sync sends to her account.
+const syncApp = (store, o) => {
+  const me = fakeApp(store, null, o);
+  vm.runInNewContext('me.snapshot = ({' + methodNamed('snapshot') + '}).snapshot;', me.ctx);
+  return me;
+};
+
+test('#77: signing in on an empty device takes the server\'s progress, and sends none of it away', () => {
+  const store = {};                                          // a private window: nothing saved
+  const me = syncApp(store);
+  me.loadUser('u1');                                         // the app opens her: an empty record, stamped now
+  assert.ok(JSON.parse(store[KEY1]).updatedAt > serverRecord().updatedAt, 'the set-up: the empty copy IS newer');
+  me.mergeSnapshot(fromServer(serverRecord()));              // the sign-in's pull
+  const saved = JSON.parse(store[KEY1]);
+  assert.equal(saved.xp, 1120, 'her XP');
+  assert.equal(saved.attempts.length, 3, 'her answers');
+  assert.equal(saved.tests.length, 1, 'her mock');
+  assert.deepEqual(saved.leitner, serverRecord().leitner, 'her memory boxes');
+  assert.ok(saved.adventure.stages.w1s1, 'her Adventure stage');
+  assert.equal(me.state.xp, 1120, 'Home shows her XP');
+  assert.equal(me.state.attempts.length, 3, 'Home shows her answers');
+  // The quick setup must not open: she is not a new learner (TTWelcome.onboardingDue).
+  assert.equal(W.onboardingDue({ dataReady: true, settings: me.state.settings, attempts: me.state.attempts, tests: me.state.tests }), false);
+  // What the sync sends back up is her progress, not the empty copy.
+  const up = me.snapshot().data.u1;
+  assert.deepEqual([up.xp, up.attempts.length, up.tests.length], [1120, 3, 1]);
+});
+
+test('#77: answers given on this device before signing in are joined with the server\'s, not swapped', () => {
+  const store = {};
+  const me = syncApp(store);
+  me.loadUser('u1');
+  // Free-sample practice on this device while signed out: newer than the server's copy.
+  me.set({ attempts: [{ q: 't05q01', t: Date.now(), ok: true, topic: 5, p: 0 }], xp: 10 });
+  me.mergeSnapshot(fromServer(serverRecord()));
+  const saved = JSON.parse(store[KEY1]);
+  assert.deepEqual(saved.attempts.map(a => a.q), ['t01q01', 't01q02', 't02q01', 't05q01'], 'every answer from both copies, oldest first');
+  assert.equal(saved.tests.length, 1, 'the server\'s mock is kept');
+  assert.equal(saved.xp, 1120, 'XP never goes down in a merge (the higher copy\'s)');
+  assert.ok(saved.adventure.stages.w1s1);
+});
+
+test('#77: a device with progress is never wiped by an empty server copy', () => {
+  const store = { [KEY1]: JSON.stringify(serverRecord()) };
+  const me = syncApp(store);
+  me.loadUser('u1');
+  // The server's copy is newer but empty (an account's first sync from another empty device).
+  me.mergeSnapshot(fromServer({ settings: { learnerName: 'Catie' }, xp: 0, updatedAt: Date.now() + DAY, attempts: [], tests: [] }));
+  const saved = JSON.parse(store[KEY1]);
+  assert.deepEqual([saved.xp, saved.attempts.length, saved.tests.length], [1120, 3, 1]);
+  assert.equal(me._dirty, true, 'this device\'s progress goes back up');
+});
+
+test('#77: Reset progress on one device still wins over the other device\'s older answers', () => {
+  // This device reset her progress (Settings -> Reset all progress saves with replace = true).
+  const store = { [KEY1]: JSON.stringify(serverRecord()) };
+  const me = syncApp(store);
+  me.loadUser('u1');
+  me.set({ leitner: {}, attempts: [], tests: [], openTest: -1 }, true);
+  const resetAt = JSON.parse(store[KEY1]).resetAt;
+  assert.ok(resetAt > 0, 'the reset is dated in her record');
+  // The server still holds the old answers (from before the reset) plus one given after it elsewhere.
+  const old = serverRecord();
+  old.attempts.push({ q: 't09q09', t: resetAt + 5000, ok: true, topic: 9, p: 0 });
+  old.updatedAt = resetAt + 6000;
+  me.mergeSnapshot(fromServer(old));
+  const saved = JSON.parse(store[KEY1]);
+  assert.deepEqual(saved.attempts.map(a => a.q), ['t09q09'], 'only the answer given after the reset');
+  assert.deepEqual(saved.tests, [], 'the old mock stays wiped');
+  // ...and the other device, merging this reset copy in, drops its old answers too.
+  const other = syncApp({ [KEY1]: JSON.stringify(serverRecord()) });
+  other.loadUser('u1');
+  other.mergeSnapshot(fromServer(JSON.parse(store[KEY1])));
+  assert.deepEqual(plain(other.state.attempts).map(a => a.q), ['t09q09']);
+});
+
+test('#77: TTAdv.joinDevices on its own: inputs unchanged, junk survived, works without coach.js', () => {
+  const l = serverRecord(), r = { xp: 5, attempts: [{ q: 'x', t: 1 }], updatedAt: 2 };
+  const lBefore = JSON.stringify(l), rBefore = JSON.stringify(r);
+  const out = plain(ADV.joinDevices(l, r, undefined));       // no coach.js: still joins
+  assert.equal(JSON.stringify(l), lBefore); assert.equal(JSON.stringify(r), rBefore);
+  assert.equal(out.attempts.length, 4);
+  assert.ok(out.adventure.stages.w1s1, 'stages kept without coach.js');
+  for (const junk of [null, undefined, 'text', 5, []]) {
+    const j = plain(ADV.joinDevices(junk, serverRecord(), coach));
+    assert.equal(j.xp, 1120, 'junk on one side: the other side whole');
+  }
 });
 
 test('adventure: the Home card says the world she is on and her stars, counted from coach.js', () => {
