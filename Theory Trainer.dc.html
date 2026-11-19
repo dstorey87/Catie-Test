@@ -854,6 +854,89 @@ window.TTAdv = (function(){
     return out;
   };
 
+  // ---------- Two DEVICES' copies of her record: the cloud sync's merge (issue #77) ----------
+  // Does this copy of her record hold anything she did? An answer, a finished test, some XP or an
+  // Adventure stage. A device that has only just opened her holds none of these.
+  function hasProgress(r){
+    return (Array.isArray(r.attempts) && r.attempts.length > 0) || (Array.isArray(r.tests) && r.tests.length > 0)
+      || (+r.xp || 0) > 0 || Object.keys(obj(obj(r.adventure).stages)).length > 0;
+  }
+  // Every finished test in either list, once. A test has a day, not a moment, so the same day,
+  // kind, score, total, source and topic scores is one test. Oldest day first (a stable sort).
+  function joinTests(a, b){
+    var seen = {}, all = [];
+    (Array.isArray(a) ? a : []).concat(Array.isArray(b) ? b : []).forEach(function(x){
+      if(!x || typeof x !== 'object') return;                 // junk in a list is left out
+      var key = JSON.stringify([x.date, x.kind, x.score, x.total, x.source, x.perTopic || null]);
+      if(seen[key]) return;
+      seen[key] = true; all.push({x: x, i: all.length});
+    });
+    return all.sort(function(p, q){ return String(p.x.date || '').localeCompare(String(q.x.date || '')) || (p.i - q.i); })
+      .map(function(p){ return p.x; });
+  }
+  // Flags without coach.js: every question flagged or un-flagged in either copy, base's where both
+  // have it (with coach.js, coach.mergeFlags decides by time, as before).
+  function keepFlags(base, other){
+    var flags = Object.assign({}, obj(other.revisionFlags), obj(base.revisionFlags));
+    var cleared = Object.assign({}, obj(other.flagCleared), obj(base.flagCleared));
+    Object.keys(obj(base.revisionFlags)).forEach(function(id){ delete cleared[id]; });
+    Object.keys(obj(base.flagCleared)).forEach(function(id){ delete flags[id]; });
+    return {flags: flags, cleared: cleared};
+  }
+
+  // joinDevices(local, remote, coach) -> one learner's record from this device's copy (local) and
+  // her account's copy on the server (remote): a NEW object (neither input changes).
+  // It used to keep the newer copy whole, and a device that had only just opened her (a new phone,
+  // a private window) saved an EMPTY record stamped with the time now, which then beat her real
+  // progress on the server and was sent up over it (issue #77). Now:
+  //   base      which copy's own parts (settings, notes, memory boxes, plan) are kept:
+  //             - a copy with progress always beats a copy with none, whatever their times;
+  //             - after Reset progress (resetAt, below) the copy that was reset;
+  //             - otherwise the newer copy, as before.
+  //   attempts  every answer in either copy, once (joinAttempts), so answers given on each device
+  //             are all kept, not just the newer device's
+  //   tests     every finished test in either copy, once (joinTests)
+  //   xp        the higher of the two: XP never goes down in a merge
+  //   streak    the further-on day counter, with the goal days of both (joinStreak)
+  //   flags     question by question by time (coach.mergeFlags), or keepFlags without coach.js
+  //   adventure stage by stage, the best of each (coach.mergeAdventure), or every stage (keepStages)
+  //             without coach.js; only when either copy has some
+  //   resetAt   Reset progress / Import backup date her record (the app's set() with replace).
+  //             Answers older than the latest reset are dropped from the copy that wasn't reset, and
+  //             only the reset copy's tests are kept, so a reset on one device is not undone by
+  //             another device's old answers. The reset copy's own answers (an imported backup's,
+  //             which are old) are always kept.
+  A.joinDevices = function(local, remote, coach){
+    var l = obj(local), r = obj(remote);
+    var cut = Math.max(+l.resetAt || 0, +r.resetAt || 0);
+    var lp = hasProgress(l), rp = hasProgress(r);
+    var base;
+    if(cut) base = (+r.resetAt || 0) === cut ? r : l;                        // the reset copy
+    else if(rp && !lp) base = r;                                             // empty never beats progress
+    else if(lp && !rp) base = l;
+    else base = (+r.updatedAt || 0) > (+l.updatedAt || 0) ? r : l;          // both real (or both empty): newer
+    var other = base === r ? l : r, out = Object.assign({}, base);
+    // The answers and tests each copy may give: all of a copy's own when it holds the latest
+    // reset (or there was none), otherwise only answers given after that reset, and no tests.
+    var isReset = function(x){ return !cut || (+x.resetAt || 0) === cut; };
+    var answersOf = function(x){
+      var a = Array.isArray(x.attempts) ? x.attempts : [];
+      return isReset(x) ? a : a.filter(function(y){ return y && +y.t > cut; });
+    };
+    var testsOf = function(x){ return isReset(x) ? x.tests : []; };
+    out.attempts = joinAttempts(answersOf(base), answersOf(other));
+    out.tests = joinTests(testsOf(base), testsOf(other));
+    out.xp = Math.max(+l.xp || 0, +r.xp || 0);
+    if(l.streak || r.streak) out.streak = joinStreak(obj(base.streak), obj(other.streak), coach ? coach.coachDefaults.goalDaysKept : undefined);
+    var f = coach ? coach.mergeFlags({flags: l.revisionFlags, cleared: l.flagCleared}, {flags: r.revisionFlags, cleared: r.flagCleared}) : keepFlags(base, other);
+    out.revisionFlags = f.flags; out.flagCleared = f.cleared;
+    if(l.adventure !== undefined || r.adventure !== undefined)
+      out.adventure = coach ? coach.mergeAdventure(l.adventure, r.adventure) : keepStages(l.adventure, r.adventure);
+    if(cut) out.resetAt = cut;
+    out.updatedAt = Math.max(+l.updatedAt || 0, +r.updatedAt || 0);       // it holds both copies now
+    return out;
+  };
+
   // card(route, status, maxStars) -> the words on Home's Adventure card:
   //   {head, sub, stars, label}
   //   route:    TTCoach.adventureRoute(bank, {signs})   [{world, name, stages: [{id, kind}], track?}]
@@ -3500,12 +3583,15 @@ class Component extends DCLogic {
   // so it is only there when she has some (a learner who never played gets no entry).
   myRecord(){
     const s = this.state;
-    return {settings:s.settings, plan:s.plan, leitner:s.leitner, attempts:s.attempts, tests:s.tests, revisionFlags:s.revisionFlags, flagCleared:s.flagCleared||{}, xp:s.xp, streak:s.streak, notes:s.notes, avatar:s.avatar, adventure: Object.keys(s.adventure||{}).length ? s.adventure : undefined, updatedAt: Date.now(), testInProgress: (s.test && !s.test.ended) ? s.test : null};
+    return {settings:s.settings, plan:s.plan, leitner:s.leitner, attempts:s.attempts, tests:s.tests, revisionFlags:s.revisionFlags, flagCleared:s.flagCleared||{}, xp:s.xp, streak:s.streak, notes:s.notes, avatar:s.avatar, adventure: Object.keys(s.adventure||{}).length ? s.adventure : undefined, resetAt: s.resetAt || undefined, updatedAt: Date.now(), testInProgress: (s.test && !s.test.ended) ? s.test : null};
   }
   // Change her state and save it: every change she makes goes through here. A change to her
   // Settings is also an event for Admin → Activity (trackSettings, issue #57). replace: see persist.
   set(patch, replace){
     if(patch.settings) this.trackSettings(this.state.settings, patch.settings);
+    // A deliberate wipe (Reset progress, Import backup) is dated in her record (resetAt), so the
+    // cloud merge (TTAdv.joinDevices, issue #77) never brings another device's older answers back.
+    if(replace) patch = Object.assign({}, patch, {resetAt: Date.now()});
     this.setState(patch, ()=>this.persist(replace));
   }
   // Opens learner id: her saved record on screen, then saved again (so a new learner has one).
@@ -3523,7 +3609,7 @@ class Component extends DCLogic {
     const u = this.users.find(x=>x.id===id);
     const st = Object.assign({textSize:1, dyslexiaFont:false, highContrast:false, autoRead:false, reducedMotion:false, learnerName:(u&&u.name)||'Learner', parentName:'Admin', voiceName:'', voiceRate:0.95, fiftyFifty:true, autoAdvance:false}, blob.settings);
     if(!blob.settings || !blob.settings.learnerName) st.learnerName = (u&&u.name)||st.learnerName;
-    return {settings:st, plan: blob.plan||'', leitner:blob.leitner||{}, attempts:blob.attempts||[], tests:blob.tests||[], revisionFlags:blob.revisionFlags||{}, flagCleared:blob.flagCleared||{}, xp:blob.xp||0, streak:blob.streak||{count:0, last:'', todayDate:'', todayN:0}, notes:blob.notes||{}, avatar:blob.avatar||'', adventure:blob.adventure||{}};
+    return {settings:st, plan: blob.plan||'', leitner:blob.leitner||{}, attempts:blob.attempts||[], tests:blob.tests||[], revisionFlags:blob.revisionFlags||{}, flagCleared:blob.flagCleared||{}, xp:blob.xp||0, streak:blob.streak||{count:0, last:'', todayDate:'', todayN:0}, notes:blob.notes||{}, avatar:blob.avatar||'', adventure:blob.adventure||{}, resetAt:blob.resetAt||0};
   }
   // Another tab saved (the browser's 'storage' event, issue #51): Adventure, or the app open twice.
   // When it is the record of the learner on screen, what it saved goes on screen: her answers
@@ -3761,24 +3847,21 @@ class Component extends DCLogic {
     Object.keys(data).forEach(id=>{
       let loc = {}; try { loc = JSON.parse(localStorage.getItem(this.BASE+'.d.'+id)) || {}; } catch(e) {}
       const remote = data[id];
-      const m = TTCoach.mergeFlags({flags:loc.revisionFlags, cleared:loc.flagCleared}, {flags:remote.revisionFlags, cleared:remote.flagCleared});
-      // Adventure progress (adventure.html) is joined stage by stage too (#38): the newer record may
-      // come from a device that never played Adventure, and must not wipe the stars saved here.
-      // Only when either copy has some, so a learner who never played gets no entry.
-      const hasAdv = loc.adventure !== undefined || remote.adventure !== undefined;
-      const adv = hasAdv ? TTCoach.mergeAdventure(loc.adventure, remote.adventure) : undefined;
-      const win = (remote.updatedAt||0) > (loc.updatedAt||0) ? remote : loc;
-      const flagsMoved = JSON.stringify(m.flags) !== JSON.stringify(loc.revisionFlags||{});
-      const advMoved = hasAdv && JSON.stringify(adv) !== JSON.stringify(loc.adventure);
-      if(win===remote || flagsMoved || advMoved){
-        const merged = Object.assign({}, win, {revisionFlags:m.flags, flagCleared:m.cleared});
-        if(hasAdv) merged.adventure = adv;
-        try { localStorage.setItem(this.BASE+'.d.'+id, JSON.stringify(merged)); } catch(e) {}
+      // This device's copy and her account's copy, JOINED (TTAdv.joinDevices, issue #77): every
+      // answer, test, flag and Adventure stage from both, and a copy with no progress never beats
+      // one with progress. It used to keep the newer copy whole, so a new phone or a private window
+      // (which saves an empty record, stamped now, as soon as it opens her) wiped her progress.
+      // Works without coach.js too (issue #75).
+      const rec = TTAdv.joinDevices(loc, remote, window.TTCoach);
+      const text = JSON.stringify(rec);
+      if(text !== JSON.stringify(loc)){
+        // The join brought something in: save it here, and show it if she is the learner on screen.
+        try { localStorage.setItem(this.BASE+'.d.'+id, text); }
+        catch(e) { console.warn('Saving the synced progress on this device failed (' + String(e.message||e) + '): storage is full or blocked. Her account still holds it; free some space (or leave private browsing) and press Settings → Sync now.'); }
         if(id===this.state.userId) reloadMe = true;
-        // Our copy gained the other device's flags, or has Adventure progress the server's copy
-        // lacks: send it back.
-        if(win===loc || (hasAdv && JSON.stringify(adv) !== JSON.stringify(remote.adventure))) this._dirty = true;
       }
+      // Her account's copy lacks something this device has (answers, a stage, a flag): send it back.
+      if(text !== JSON.stringify(remote)) this._dirty = true;
     });
     let locC = {}; try { locC = JSON.parse(localStorage.getItem(this.BASE+'.content')) || {}; } catch(e) {}
     const rc = b.content;
